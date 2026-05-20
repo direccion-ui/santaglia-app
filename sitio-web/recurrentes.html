@@ -1151,17 +1151,10 @@ function importarRecExcel(input) {
   const file = input.files[0];
   input.value = '';
   if (!file) return;
-  if (typeof XLSX === 'undefined') { toast('SheetJS no disponible', 'error'); return; }
 
-  const reader = new FileReader();
-  reader.onload = e => {
+  _seleccionarHojaExcel(file, (allRows, nombre) => {
     try {
-      const wb   = XLSX.read(e.target.result, { type: 'array' });
-      const ws   = wb.Sheets[wb.SheetNames[0]];
-      const raw  = XLSX.utils.sheet_to_json(ws, { defval: '' });
-
       // Buscar la fila de encabezados reales (la que contiene "Descripcion")
-      const allRows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
       let headerIdx = allRows.findIndex(r => r.some(c => String(c).toLowerCase().includes('descripcion')));
       if (headerIdx < 0) { toast('No encontré la fila de encabezados (Descripcion, Tipo…)', 'error'); return; }
 
@@ -1234,8 +1227,7 @@ function importarRecExcel(input) {
     } catch(err) {
       toast('Error al leer el archivo: ' + err.message, 'error');
     }
-  };
-  reader.readAsArrayBuffer(file);
+  });
 }
 
 function _mostrarPreviaRec(filas, errores) {

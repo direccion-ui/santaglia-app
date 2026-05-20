@@ -1205,28 +1205,14 @@ function importarTiempoCSV(file) {
 }
 
 function importarTiempoXLSX(file) {
-  const loadSheetJS = (cb) => {
-    if (window.XLSX) { cb(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = cb; s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
-    document.head.appendChild(s);
-  };
-  loadSheetJS(() => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-        const ws   = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
-        if (rows.length < 2) { toast('Excel vacío', 'error'); return; }
-        const headerRow = rows[0].map(String);
-        const getCol    = makeGetColTms(headerRow);
-        const records   = rows.slice(1).map((row, i) => buildTmsFromRow(row.map(String), getCol, i+1));
-        mergeTms(records);
-      } catch(err) { toast('Error al leer Excel: ' + err.message, 'error'); }
-    };
-    reader.readAsArrayBuffer(file);
+  _seleccionarHojaExcel(file, (rows, nombre) => {
+    try {
+      if (rows.length < 2) { toast('Excel vacío', 'error'); return; }
+      const headerRow = rows[0].map(String);
+      const getCol    = makeGetColTms(headerRow);
+      const records   = rows.slice(1).map((row, i) => buildTmsFromRow(row.map(String), getCol, i+1));
+      mergeTms(records);
+    } catch(err) { toast('Error al leer Excel: ' + err.message, 'error'); }
   });
 }
 
