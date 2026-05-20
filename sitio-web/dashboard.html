@@ -434,7 +434,7 @@
 <script>
 
 /* ── Utilidades ── */
-function parseNum(s) { return parseFloat((s||'0').toString().replace(/,/g,''))||0; }
+function parseNum(s) { return parseFloat(String(s||'').replace(/[^0-9.\-]/g,''))||0; }
 function fmtK(n)     { return (n/1000).toFixed(1) + 'K'; }
 function fmtM(n)     { return n>=1000000 ? '$'+(n/1000000).toFixed(2)+'M' : '$'+(n/1000).toFixed(0)+'K'; }
 function fmtFull(n)  { return '$'+Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
