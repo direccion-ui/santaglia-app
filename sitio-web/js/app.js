@@ -521,3 +521,107 @@ document.addEventListener('DOMContentLoaded', async () => {
     _sbSnapshot();    // nivel 3: Supabase nube
   }, 3000);
 });
+
+/* ══════════════════════════════════════════════════════════════
+   Utilidades compartidas para importación Excel/CSV
+   Usadas por: facturacion, financiero, configuracion, tiempo, recurrentes
+   ══════════════════════════════════════════════════════════════ */
+
+/** Carga SheetJS desde CDN (solo una vez) y ejecuta el callback */
+function _cargarSheetJS(cb) {
+  if (window.XLSX) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = cb;
+  s.onerror = () => { if (typeof toast === 'function') toast('No se pudo cargar el lector de Excel (requiere internet)', 'error'); };
+  document.head.appendChild(s);
+}
+
+/**
+ * Lee un archivo Excel (.xlsx/.xls), muestra selector de hojas si hay más de una,
+ * y llama onRows(rows, nombreHoja) con el array de filas de la hoja elegida.
+ * rows[0] = cabeceras, rows[1..] = datos.
+ */
+function _seleccionarHojaExcel(file, onRows) {
+  _cargarSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+        const sheets = wb.SheetNames;
+        if (!sheets.length) { if (typeof toast === 'function') toast('El archivo Excel no tiene hojas', 'error'); return; }
+
+        const leerHoja = nombre => {
+          const ws   = wb.Sheets[nombre];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+          onRows(rows, nombre);
+        };
+
+        if (sheets.length === 1) { leerHoja(sheets[0]); return; }
+        _mostrarSelectorHojas(sheets, leerHoja);
+
+      } catch(err) {
+        if (typeof toast === 'function') toast('Error al leer el Excel: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/** Modal selector de hojas — usado por _seleccionarHojaExcel */
+function _mostrarSelectorHojas(sheets, onSelect) {
+  const existing = document.getElementById('_modal-sheet-selector');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = '_modal-sheet-selector';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#fff;border-radius:12px;padding:1.5rem;min-width:320px;max-width:480px;width:90vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.18);font-family:var(--font);';
+
+  const titulo = document.createElement('div');
+  titulo.style.cssText = 'font-family:var(--brand);font-size:0.95rem;font-weight:800;color:var(--navy);margin-bottom:0.3rem;flex-shrink:0;';
+  titulo.textContent = 'Selecciona la hoja a importar';
+
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:0.73rem;color:var(--text-dim);margin-bottom:1rem;flex-shrink:0;';
+  sub.textContent = `El archivo tiene ${sheets.length} hojas. ¿Cuál contiene los datos?`;
+
+  const lista = document.createElement('div');
+  lista.style.cssText = 'display:flex;flex-direction:column;gap:0.45rem;overflow-y:auto;flex:1 1 auto;padding-right:0.25rem;';
+
+  sheets.forEach(nombre => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'padding:0.6rem 1rem;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);font-size:0.82rem;font-family:var(--font);cursor:pointer;text-align:left;color:var(--text);transition:all 0.15s;flex-shrink:0;';
+    btn.textContent = '📋 ' + nombre;
+    btn.onmouseenter = () => { btn.style.borderColor = 'var(--navy)'; btn.style.background = 'var(--navy-pale)'; };
+    btn.onmouseleave = () => { btn.style.borderColor = 'var(--border)'; btn.style.background = 'var(--bg)'; };
+    btn.onclick = () => { modal.remove(); onSelect(nombre); };
+    lista.appendChild(btn);
+  });
+
+  const cancelar = document.createElement('button');
+  cancelar.style.cssText = 'margin-top:0.85rem;width:100%;padding:0.5rem;border:none;background:none;color:var(--text-dim);font-size:0.75rem;cursor:pointer;flex-shrink:0;';
+  cancelar.textContent = 'Cancelar';
+  cancelar.onclick = () => modal.remove();
+
+  card.append(titulo, sub, lista, cancelar);
+  modal.appendChild(card);
+  modal.onclick = ev => { if (ev.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+/**
+ * Convierte array de rows (de SheetJS) a File CSV en memoria.
+ * Útil para módulos que ya tienen un parser CSV y solo necesitan
+ * adaptar la entrada de Excel.
+ */
+function _rowsToCSVFile(rows, nombre) {
+  const csv = rows.map(r => r.map(c => {
+    const s = String(c ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\n');
+  return new File([csv], (nombre || 'datos') + '.csv', { type: 'text/csv' });
+}
