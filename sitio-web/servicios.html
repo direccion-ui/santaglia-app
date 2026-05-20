@@ -228,6 +228,7 @@
         </div>
         <div style="flex:1;"></div>
         <input type="text" id="srv-buscar" placeholder="Buscar servicio…" oninput="renderServicios()" style="min-width:200px;" />
+        <button class="btn btn-ghost" onclick="limpiarFiltrosServicios()" style="font-size:0.73rem; padding:0.3rem 0.7rem; color:var(--text-dim);">✕ Limpiar</button>
         <div class="view-toggle">
           <button class="view-btn active" id="btn-view-cards" onclick="setView('cards')" title="Tarjetas">⊞</button>
           <button class="view-btn"        id="btn-view-table" onclick="setView('table')" title="Tabla">☰</button>
@@ -483,6 +484,13 @@ function setTipoFilter(btn, tipo) {
   btn.classList.add('active');
   filtroTipo = tipo;
   renderServicios();
+}
+
+function limpiarFiltrosServicios() {
+  document.getElementById('srv-buscar').value = '';
+  const todos = document.querySelector('#tipo-pills [data-tipo=""]');
+  if (todos) setTipoFilter(todos, '');
+  else renderServicios();
 }
 
 function setView(v) {

@@ -236,6 +236,7 @@
         </div>
         <div style="flex:1;"></div>
         <input type="text" id="cli-buscar" placeholder="Buscar nombre, RFC, contacto…" oninput="renderClientes()" style="min-width:240px;" />
+        <button class="btn btn-ghost" onclick="limpiarFiltrosClientes()" style="font-size:0.73rem; padding:0.3rem 0.7rem; color:var(--text-dim);">✕ Limpiar</button>
       </div>
 
       <!-- Table -->
@@ -502,6 +503,13 @@ function setEstadoFilter(btn, estado) {
   btn.classList.add('active');
   filtroEstado = estado;
   renderClientes();
+}
+
+function limpiarFiltrosClientes() {
+  document.getElementById('cli-buscar').value = '';
+  const todos = document.querySelector('#estado-pills [data-estado=""]');
+  if (todos) setEstadoFilter(todos, '');
+  else renderClientes();
 }
 
 /* ══════════════════════════════════════════════════════════

@@ -243,6 +243,7 @@
           <span style="font-size:0.75rem; color:var(--text-dim);">→</span>
           <input type="month" id="asim-hasta" onchange="renderAsim()" title="Hasta" />
           <button class="btn btn-ghost btn-toggle-persona" id="btn-toggle-persona" onclick="togglePersona()">Mostrar desglose por persona</button>
+          <button class="btn btn-ghost" onclick="limpiarFiltrosAsim()" style="font-size:0.73rem; padding:0.3rem 0.7rem; color:var(--text-dim);">✕ Limpiar</button>
         </div>
 
         <!-- Table -->
@@ -765,6 +766,13 @@ function renderHeaderBtns() {
 }
 
 /* ── Toggle persona columns ── */
+function limpiarFiltrosAsim() {
+  ['asim-buscar','asim-desde','asim-hasta'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  renderAsim();
+}
+
 function togglePersona() {
   personaVisible = !personaVisible;
   document.querySelectorAll('.col-persona').forEach(el => el.classList.toggle('visible', personaVisible));

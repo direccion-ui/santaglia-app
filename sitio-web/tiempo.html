@@ -263,6 +263,7 @@
             <option value="no">Solo no facturables</option>
           </select>
           <input type="month" id="log-mes" onchange="renderLog()" style="font-size:0.75rem;" />
+          <button class="btn btn-ghost" onclick="limpiarFiltrosTiempo()" style="font-size:0.73rem; padding:0.3rem 0.7rem; color:var(--text-dim);">✕ Limpiar</button>
         </div>
       </div>
 
@@ -712,6 +713,12 @@ function setCatFilter(cat) {
     const match = cat === '' ? 'todas' : (CAT_META[cat]?.label || '').toLowerCase();
     p.classList.toggle('active', label === match || (cat === '' && label === 'todas'));
   });
+  renderLog();
+}
+
+function limpiarFiltrosTiempo() {
+  ['log-search','log-mes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  ['log-cli','log-cat','log-fact'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   renderLog();
 }
 
