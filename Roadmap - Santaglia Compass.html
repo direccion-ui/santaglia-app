@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santaglia Compass — Hoja de Ruta de Desarrollo</title>
+<style>
+  /* ============================================================
+     RESET & BASE
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:        #1a2d80;
+    --navy-light:  #2a3f9f;
+    --navy-dark:   #101d5a;
+    --navy-faint:  #f0f3ff;
+    --gold:        #d4a843;
+    --gold-light:  #f0c96a;
+    --white:       #ffffff;
+    --gray-50:     #f9fafc;
+    --gray-100:    #f1f3f9;
+    --gray-200:    #e2e7f0;
+    --gray-300:    #c8d0e0;
+    --gray-400:    #9aa3b8;
+    --gray-600:    #5a6480;
+    --gray-800:    #2d3452;
+    --text:        #1e2540;
+    --today-line:  #e03a3a;
+
+    /* Phase colours */
+    --p0: #64748b;   /* Foundation – slate       */
+    --p1: #0891b2;   /* Finanzas   – cyan        */
+    --p2: #059669;   /* Pulse Ops  – emerald     */
+    --p3: #7c3aed;   /* Compass Ops– violet      */
+    --p4: #ea580c;   /* Backend    – orange      */
+    --p5: #db2777;   /* Avanzado   – pink        */
+    --p5b:#16a34a;   /* Despacho   – green       */
+    --p6: #0284c7;   /* SaaS       – sky         */
+    --p7: #b45309;   /* IT/Finanzas– amber       */
+
+    --p0-light: #e2e8f0;
+    --p1-light: #cffafe;
+    --p2-light: #d1fae5;
+    --p3-light: #ede9fe;
+    --p4-light: #ffedd5;
+    --p5-light: #fce7f3;
+    --p5b-light:#dcfce7;
+    --p6-light: #e0f2fe;
+    --p7-light: #fef3c7;
+
+    --bar-h: 24px;
+    --row-h: 44px;
+    --label-w: 230px;
+    --header-h: 70px;
+  }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--gray-50);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ============================================================
+     HEADER
+  ============================================================ */
+  .app-header {
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-light) 100%);
+    color: var(--white);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 20px rgba(26,45,128,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .app-header::after {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+  .app-header::before {
+    content: '';
+    position: absolute;
+    right: 60px; bottom: -80px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    pointer-events: none;
+  }
+  .logo-mark {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800;
+    color: var(--navy-dark);
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    letter-spacing: -1px;
+  }
+  .header-text { flex: 1; }
+  .header-title {
+    font-size: 1.6rem; font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .header-subtitle {
+    margin-top: 4px;
+    font-size: 0.82rem;
+    opacity: 0.7;
+    letter-spacing: 0.5px;
+  }
+  .header-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     TOOLBAR / CONTROLS
+  ============================================================ */
+  .toolbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 12px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-right: 4px;
+  }
+  .btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-300);
+    background: var(--white);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all .15s;
+    letter-spacing: 0.2px;
+  }
+  .btn:hover { border-color: var(--navy); color: var(--navy); background: var(--navy-faint); }
+  .btn.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+
+  .today-pill {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; font-weight: 600; color: var(--today-line);
+    background: #fff0f0; border: 1.5px solid #fca5a5;
+    border-radius: 20px; padding: 4px 12px;
+  }
+  .today-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--today-line);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(1.4); }
+  }
+
+  /* ============================================================
+     MAIN LAYOUT
+  ============================================================ */
+  .page-wrapper {
+    padding: 28px 40px 40px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* ============================================================
+     LEGEND
+  ============================================================ */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-bottom: 20px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 14px 20px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.75rem; font-weight: 600; color: var(--gray-800);
+  }
+  .legend-swatch {
+    width: 28px; height: 10px; border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .legend-extra {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; color: var(--gray-600);
+    padding-left: 16px; border-left: 1px solid var(--gray-200);
+  }
+  .legend-done { width: 28px; height: 10px; border-radius: 5px; background: repeating-linear-gradient(45deg, #d1d5db, #d1d5db 3px, #e5e7eb 3px, #e5e7eb 6px); }
+  .legend-today { width: 3px; height: 18px; background: var(--today-line); border-radius: 2px; }
+  .legend-milestone { font-size: 14px; }
+
+  /* ============================================================
+     GANTT CONTAINER
+  ============================================================ */
+  .gantt-outer {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(26,45,128,0.07);
+  }
+
+  .gantt-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gantt-inner {
+    min-width: 900px;
+    position: relative;
+  }
+
+  /* ============================================================
+     TIME HEADER
+  ============================================================ */
+  .time-header {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--white);
+    border-bottom: 2px solid var(--gray-200);
+  }
+
+  .time-label-spacer {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    flex-shrink: 0;
+    background: var(--navy-dark);
+    display: flex; align-items: flex-end; justify-content: flex-start;
+    padding: 10px 16px;
+    border-right: 2px solid rgba(255,255,255,0.15);
+  }
+  .time-label-spacer span {
+    font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .time-months {
+    flex: 1;
+    position: relative;
+    background: var(--navy-dark);
+    height: var(--header-h);
+    overflow: hidden;
+  }
+
+  .month-cell {
+    position: absolute;
+    top: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .month-name {
+    font-size: 0.72rem; font-weight: 700;
+    color: rgba(255,255,255,0.55);
+    padding: 8px 10px 2px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .month-year {
+    font-size: 0.85rem; font-weight: 800;
+    color: var(--white);
+    padding: 0 10px;
+  }
+
+  /* ============================================================
+     GANTT BODY
+  ============================================================ */
+  .gantt-body {
+    position: relative;
+  }
+
+  /* Vertical grid lines */
+  .grid-lines {
+    position: absolute;
+    top: 0; left: var(--label-w); right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .grid-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--gray-200);
+  }
+  .grid-line.major { background: var(--gray-300); }
+
+  /* Today line */
+  .today-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--today-line);
+    z-index: 15;
+    pointer-events: none;
+  }
+  .today-line::before {
+    content: '▼';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--today-line);
+    line-height: 1;
+  }
+
+  /* ============================================================
+     PHASE SECTIONS
+  ============================================================ */
+  .phase-section {}
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+  }
+  .phase-header:hover { background: var(--gray-200); }
+
+  .phase-label-cell {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .phase-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .phase-name {
+    font-size: 0.78rem; font-weight: 700;
+    color: var(--gray-800);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .phase-toggle {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--gray-400);
+    transition: transform .2s;
+  }
+  .phase-section.collapsed .phase-toggle { transform: rotate(-90deg); }
+
+  .phase-bar-cell {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    height: 40px;
+  }
+  .phase-span-bar {
+    position: absolute;
+    height: 6px;
+    border-radius: 3px;
+    opacity: 0.25;
+  }
+
+  .phase-rows {
+    overflow: hidden;
+  }
+  .phase-section.collapsed .phase-rows {
+    display: none;
+  }
+
+  /* ============================================================
+     TASK ROWS
+  ============================================================ */
+  .task-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--gray-100);
+    height: var(--row-h);
+    position: relative;
+    transition: background .12s;
+  }
+  .task-row:hover { background: var(--navy-faint); }
+  .task-row:last-child { border-bottom: none; }
+
+  .task-label-cell {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    padding: 0 12px 0 28px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gray-200);
+  }
+  .task-status-icon { font-size: 12px; flex-shrink: 0; }
+  .task-name {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .task-name.done { color: var(--gray-400); text-decoration: line-through; }
+  .task-name.active { color: var(--navy); font-weight: 700; }
+
+  .task-bar-cell {
+    flex: 1;
+    position: relative;
+    height: 100%;
+  }
+
+  .task-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: var(--bar-h);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    min-width: 6px;
+    overflow: hidden;
+    transition: filter .15s;
+    cursor: default;
+  }
+  .task-bar:hover { filter: brightness(1.1); }
+
+  .task-bar.done {
+    background: repeating-linear-gradient(
+      45deg,
+      #cbd5e1,
+      #cbd5e1 4px,
+      #e2e8f0 4px,
+      #e2e8f0 8px
+    ) !important;
+    border: 1px solid #94a3b8;
+  }
+
+  .task-bar.active-now {
+    box-shadow: 0 0 0 2px var(--gold), 0 2px 10px rgba(0,0,0,0.2);
+    animation: activeGlow 2.5s ease-in-out infinite;
+  }
+  @keyframes activeGlow {
+    0%,100% { box-shadow: 0 0 0 2px var(--gold), 0 2px 10px rgba(0,0,0,0.15); }
+    50%      { box-shadow: 0 0 0 3px var(--gold-light), 0 4px 16px rgba(0,0,0,0.25); }
+  }
+
+  .bar-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+  .task-bar.done .bar-label { color: rgba(71,85,105,0.8); }
+
+  /* Duration badge */
+  .bar-duration {
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--gray-400);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 4px;
+    padding: 1px 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* ============================================================
+     MILESTONES
+  ============================================================ */
+  .milestone-row {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    border-bottom: 1px dashed var(--gray-200);
+    background: linear-gradient(90deg, var(--navy-faint) 0, var(--navy-faint) var(--label-w), transparent var(--label-w));
+  }
+  .milestone-label-cell {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    padding: 0 12px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gray-200);
+  }
+  .milestone-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--navy);
+    font-style: italic;
+  }
+  .milestone-bar-cell {
+    flex: 1;
+    position: relative;
+    height: 100%;
+  }
+  .milestone-diamond {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    z-index: 12;
+    cursor: default;
+    transition: transform .15s;
+  }
+  .milestone-diamond:hover {
+    transform: translate(-50%, -50%) rotate(45deg) scale(1.3);
+  }
+  .milestone-line {
+    position: absolute;
+    top: 50%; bottom: auto;
+    height: 2px;
+    transform: translateY(-50%);
+    opacity: 0.3;
+  }
+
+  /* ============================================================
+     TOOLTIP
+  ============================================================ */
+  .tooltip {
+    position: fixed;
+    background: var(--gray-800);
+    color: var(--white);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.73rem;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 220px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip strong { font-weight: 700; color: var(--gold-light); display: block; margin-bottom: 2px; }
+
+  /* ============================================================
+     FOOTER
+  ============================================================ */
+  .page-footer {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 0;
+    border-top: 1px solid var(--gray-200);
+    font-size: 0.72rem;
+    color: var(--gray-400);
+  }
+  .footer-brand {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 700; color: var(--navy);
+  }
+  .footer-logo {
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 800; color: var(--navy-dark);
+  }
+
+  /* ============================================================
+     STATS BAR
+  ============================================================ */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 14px 20px;
+    flex: 1;
+    min-width: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stat-sub {
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    margin-top: 2px;
+  }
+
+  /* ============================================================
+     PRINT STYLES
+  ============================================================ */
+  @media print {
+    body { background: white; }
+    .toolbar, .today-pill { display: none; }
+    .page-wrapper { padding: 10px; }
+    .app-header { padding: 16px 20px; }
+    .gantt-outer { box-shadow: none; border: 1px solid #ccc; }
+    .phase-section.collapsed .phase-rows { display: block !important; }
+  }
+
+  /* ============================================================
+     RESPONSIVE
+  ============================================================ */
+  @media (max-width: 768px) {
+    :root { --label-w: 170px; }
+    .app-header { padding: 18px 20px; flex-wrap: wrap; }
+    .page-wrapper { padding: 16px 16px 32px; }
+    .toolbar { padding: 10px 16px; }
+    .stats-bar { gap: 10px; }
+    .stat-card { padding: 10px 14px; min-width: 100px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="app-header">
+  <div class="logo-mark">SC</div>
+  <div class="header-text">
+    <div class="header-title">Santaglia Compass — Hoja de Ruta de Desarrollo</div>
+    <div class="header-subtitle">Plan maestro de desarrollo &nbsp;·&nbsp; Plataforma SaaS de gestión empresarial</div>
+  </div>
+  <div class="header-badge">Mayo 2026 – Q3 2027</div>
+</header>
+
+<!-- ===================== TOOLBAR ===================== -->
+<div class="toolbar">
+  <span class="toolbar-label">Vista:</span>
+  <button class="btn active" onclick="setZoom('all')">Todo</button>
+  <button class="btn" onclick="setZoom('current')">Actual (6 meses)</button>
+  <button class="btn" onclick="setZoom('year')">Este año</button>
+  <span class="toolbar-label" style="margin-left:12px">Fases:</span>
+  <button class="btn" onclick="toggleAll(true)">Expandir todo</button>
+  <button class="btn" onclick="toggleAll(false)">Colapsar todo</button>
+  <div class="today-pill">
+    <div class="today-dot"></div>
+    Hoy: 19 mayo 2026
+  </div>
+</div>
+
+<!-- ===================== PAGE WRAPPER ===================== -->
+<div class="page-wrapper">
+
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- LEGEND -->
+  <div class="legend" id="legendEl"></div>
+
+  <!-- GANTT -->
+  <div class="gantt-outer">
+    <div class="gantt-scroll">
+      <div class="gantt-inner" id="ganttInner">
+        <!-- Built by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- DIFERENCIADORES -->
+  <div id="diferenciadores" style="margin-top:28px;background:var(--white);border:1px solid var(--gray-200);border-radius:16px;padding:24px 28px;box-shadow:0 2px 16px rgba(26,45,128,0.07);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:var(--gold);flex-shrink:0;"></div>
+      <span style="font-size:0.78rem;font-weight:700;color:var(--gray-800);text-transform:uppercase;letter-spacing:0.5px;">Diferenciadores del Producto</span>
+    </div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Analítica histórica de retenciones SAT</strong> — el negocio mantiene su propio registro de pagos vs. CFDIs sin depender del despacho contable
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Detección automática de anomalías de cumplimiento</strong>: pagos vencidos, diferencias significativas, IVA faltante — notificación proactiva al usuario
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Verificación de que pagos pasados fueron correctos</strong> basándose únicamente en CFDIs (sin actualizaciones/multas)
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Programa Partner Despachos</strong>: canal B2B2C con comisiones escalonadas (10–25% según volumen) y opción de mezcla efectivo/créditos de servicio — el despacho nunca toca el flujo de dinero del cliente
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Posicionamiento "además de" (no "en lugar de")</strong> ERPs y despachos — Compass ocupa la capa de inteligencia operativa del dueño que ningún ERP ni despacho cubre
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Monitor SAT pasivo</strong>: descarga mensual automática de Constancia de Situación Fiscal y Opinión de Cumplimiento con historial de 12 meses — alerta inmediata en dashboard y email si la Opinión cambia a Negativo; para despachos partners, vista agregada del estatus de cumplimiento de toda su cartera
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Motor de reconciliación proyectado/real</strong>: detecta desviaciones de importe Y fecha simultáneamente; proyección dual optimista/conservador automática cuando hay cobros pendientes; cobros anticipados reconciliados sin intervención del usuario (early_match automático vía Conexión SAT); drift learning por cliente integrado al CRM — si el patrón de retraso o anticipación se repite 3+ meses, sugiere ajustar el plazo proyectado. Funcionalidad inexistente en el segmento micro-empresa.
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Asistente de soporte guiado</strong> — autoayuda sin fricción, escalación inteligente: flujos de decisión interactivos por módulo (Bancario, Egresos, Proyección, Nómina, Conexión SAT, Documentos); estructura Contexto → Verificar → Identificar causa → Resolver → Confirmar → Escalar; log automático al escalar (módulo, síntoma, pasos intentados). Reduce ~70% tickets Nivel 1. Evolución 2027: Claude API sobre base de conocimiento para respuestas en lenguaje natural.
+        </span>
+      </li>
+      <li style="display:flex;gap:12px;align-items:flex-start;">
+        <span style="color:var(--gold);font-size:1rem;flex-shrink:0;">◆</span>
+        <span style="font-size:0.82rem;color:var(--text);line-height:1.55;">
+          <strong>Puente Compass↔Alegra</strong> — check de contabilización sin cambiar de sistema: el fundador marca cada movimiento bancario como "registrado en Alegra" directamente en Compass; panel de pendientes unificado con 4 contadores accionables (sin contabilizar / pendientes CFDI / CFDIs sin banco / proyecciones vencidas); Compass es la fuente de verdad bancaria y Alegra/CONTPAQi es la realidad contable — el puente elimina la fricción de cruzar entre sistemas sin reemplazar ninguno.
+        </span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="page-footer">
+    <div class="footer-brand">
+      <div class="footer-logo">SC</div>
+      Santaglia Compass
+    </div>
+    <span>Última actualización: 19 Mayo 2026</span>
+    <span>Generado el 19/05/2026 · Confidencial</span>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/* ============================================================
+   DATA
+============================================================ */
+
+// Reference point: today = 2026-05-19
+const TODAY = new Date(2026, 4, 19); // month is 0-indexed
+
+// Timeline: Apr 2026 → Sep 2027
+const TIMELINE_START = new Date(2026, 3, 1);  // Apr 1 2026
+const TIMELINE_END   = new Date(2027, 8, 30); // Sep 30 2027
+
+const PHASES = [
+  {
+    id: 'p0',
+    name: 'Fase 0 — Fundación',
+    color: '#64748b',
+    lightColor: '#e2e8f0',
+    emoji: '🏗️',
+    status: 'done',
+    tasks: [
+      { name: 'Dashboard', start: [2026,3,1], end: [2026,3,15], done: true },
+      { name: 'Autenticación', start: [2026,3,5], end: [2026,3,18], done: true },
+      { name: 'Configuración empresa & apariencia', start: [2026,3,10], end: [2026,3,25], done: true },
+      { name: 'Módulos con tiers (Básico/Estándar/Pro)', start: [2026,3,18], end: [2026,4,5], done: true },
+      { name: 'Colaboradores & catálogos', start: [2026,3,22], end: [2026,4,10], done: true },
+    ],
+    milestone: { name: 'v0.1 — Fundación lista', date: [2026,4,10] }
+  },
+  {
+    id: 'p1',
+    name: 'Fase 1 — Finanzas',
+    color: '#0891b2',
+    lightColor: '#cffafe',
+    emoji: '💰',
+    status: 'done',
+    tasks: [
+      { name: 'Mov. Bancarios', start: [2026,4,1], end: [2026,4,10], done: true },
+      { name: 'Egresos', start: [2026,4,5], end: [2026,4,14], done: true },
+      { name: 'Recurrentes (lógica día hábil)', start: [2026,4,10], end: [2026,4,20], done: true },
+      { name: 'Proyección de flujo de efectivo', start: [2026,4,14], end: [2026,4,28], done: true },
+      { name: 'Nómina: Asimilables + Honorarios (CFDI)', start: [2026,4,20], end: [2026,5,5], done: true },
+      { name: 'Retenciones', start: [2026,5,1], end: [2026,5,8], done: true },
+      { name: 'Facturación básica', start: [2026,5,5], end: [2026,5,12], done: true },
+      { name: 'Proyectos básico & Documentos', start: [2026,5,10], end: [2026,5,17], done: true },
+    ],
+    milestone: { name: 'v0.5 — Módulo Finanzas completo', date: [2026,5,17] }
+  },
+  {
+    id: 'p2',
+    name: 'Fase 2 — Pulse Operaciones',
+    color: '#059669',
+    lightColor: '#d1fae5',
+    emoji: '⚡',
+    status: 'done',
+    tasks: [
+      { name: 'Clientes CRM básico', start: [2026,5,18], end: [2026,5,19], done: true },
+      { name: 'Catálogo de Servicios', start: [2026,5,18], end: [2026,5,19], done: true },
+      { name: 'Registro de Tiempo / Timesheet', start: [2026,5,18], end: [2026,5,19], done: true },
+    ],
+    milestone: { name: 'v1.0 — Pulse lanzado', date: [2026,5,19] }
+  },
+  {
+    id: 'p3',
+    name: 'Fase 3 — Compass Operaciones',
+    color: '#7c3aed',
+    lightColor: '#ede9fe',
+    emoji: '🧭',
+    status: 'active',
+    tasks: [
+      { name: 'Pipeline de ventas', start: [2026,6,29], end: [2026,7,20], done: false },
+      { name: 'Contratos y Retainers', start: [2026,7,20], end: [2026,8,3], done: false },
+      { name: 'Mesa de Ayuda / Tickets', start: [2026,8,3], end: [2026,8,24], done: false },
+      { name: 'Dashboard de Rentabilidad por cliente', start: [2026,8,24], end: [2026,9,7], done: false },
+      { name: 'Analítica de cumplimiento SAT + detección de anomalías en retenciones', start: [2026,8,10], end: [2026,9,7], done: false, tooltip: 'Motor de anomalías que verifica vencimientos (día 17 del mes siguiente), detecta pagos extemporáneos, diferencias >5% entre retenido/pagado, IVA faltante en honorarios, y genera panel de alertas con severidad crítica/advertencia.' },
+      { name: 'Monitor SAT — CSF + Opinión de Cumplimiento', start: [2026,9,7], end: [2026,9,28], done: false, tooltip: 'Descarga automática mensual de Constancia de Situación Fiscal y Opinión de Cumplimiento usando las credenciales de Conexión SAT. Historial 12 meses en Documentos. Alerta inmediata (dashboard + email) si Opinión cambia a Negativo. Vista agregada para despachos partners. Requiere: Supabase (jobs programados) + Conexión SAT (credenciales).' },
+    ],
+    milestone: { name: 'v1.5 — Compass Operaciones', date: [2026,9,28] }
+  },
+  {
+    id: 'p4',
+    name: 'Fase 4 — Backend & Multi-usuario',
+    color: '#ea580c',
+    lightColor: '#ffedd5',
+    emoji: '⚙️',
+    status: 'upcoming',
+    tasks: [
+      { name: 'js/store.js — abstracción de datos', start: [2026,9,14], end: [2026,9,21], done: false },
+      { name: 'Migración a Supabase PostgreSQL', start: [2026,9,21], end: [2026,10,12], done: false },
+      { name: 'Sistema de autenticación real', start: [2026,10,12], end: [2026,10,26], done: false },
+      { name: 'RBAC — roles y permisos', start: [2026,10,26], end: [2026,11,9], done: false },
+      { name: 'Asistente de Soporte Guiado — flujos de decisión interactivos en ayuda.html', start: [2026,9,28], end: [2026,10,19], done: false, tooltip: 'Flujos por módulo: Bancario, Egresos, Proyección, Nómina, Conexión SAT, Documentos. Estructura: Contexto → Verificar condiciones → Identificar causa → Pasos de resolución → Confirmar → Escalar. Escalación con log automático (módulo, síntoma, pasos intentados). ROI: ~70% reducción tickets Nivel 1 (~15–20 min del fundador por ticket evitado). Evolución 2027: integración Claude API sobre base de conocimiento para respuestas en lenguaje natural.' },
+      { name: 'Check "Contabilizado" + Panel Pendientes Dashboard', start: [2026,9,14], end: [2026,10,12], done: false, tooltip: 'Checkbox en tabla de Movimientos Bancarios para marcar cada movimiento como "registrado en Alegra/sistema contable". Badge en Dashboard: contador de movimientos sin contabilizar. Filtro "Ver solo sin contabilizar" en la tabla. Panel Dashboard con 4 contadores accionables: sin contabilizar / pendientes CFDI / CFDIs sin banco / proyecciones vencidas. Puente directo entre Compass (realidad bancaria) y Alegra/CONTPAQi (realidad contable) sin cambiar de sistema.' },
+      { name: 'Cuenta TDC (Tarjeta de Crédito) con proyección consolidada', start: [2026,10,12], end: [2026,11,9], done: false, tooltip: 'Nuevo tipo de cuenta: Tarjeta de Crédito (distinto a cuenta débito/bancaria). Los egresos se registran cargo por cargo (para trazabilidad CFDI y control granular). En el módulo de Proyección: los cargos TDC aparecen consolidados como UN solo movimiento en la fecha límite de pago del ciclo. Widget Dashboard: fecha de corte TDC, saldo acumulado del ciclo, días a la fecha límite de pago. Elimina la distorsión en flujo de efectivo que causa registrar cada cargo como egreso independiente.' },
+      { name: 'Vista móvil diferenciada — tarjetas resumen por mes (< 768 px)', start: [2026,10,19], end: [2026,11,2], done: false, tooltip: 'En pantallas < 768 px (celular / PWA instalada) los módulos de Movimientos Bancarios y Proyección muestran tarjetas por mes en lugar de la tabla de 15+ columnas. Cada tarjeta muestra: mes, entradas, salidas, neto, % conciliados, % contabilizados, y botón "Ver detalle" que expande solo ese mes. La tabla completa queda accesible en desktop. Motivación: la tabla densa es ideal para el usuario power (director, contador) pero abruma al usuario casual (PFAE, primera semana de uso). La Vista móvil reduce el abandono temprano sin sacrificar funcionalidad.' },
+    ],
+    milestone: { name: 'v2.0 — Backend real, multi-usuario', date: [2026,11,9] }
+  },
+  {
+    id: 'p5',
+    name: 'Fase 5 — Funciones Avanzadas',
+    color: '#db2777',
+    lightColor: '#fce7f3',
+    emoji: '🚀',
+    status: 'upcoming',
+    tasks: [
+      { name: 'Toggle Vista Simple / Avanzada — preferencia de usuario persistida', start: [2026,11,9], end: [2026,11,23], done: false, tooltip: 'Botón en la barra de herramientas de Movimientos Bancarios (y Proyección) con dos modos: Vista Avanzada (tabla completa, 15 columnas, todos los filtros — comportamiento actual) y Vista Resumen (tarjetas mensuales con KPIs del mes + acceso a detalle por clic). La preferencia se guarda en localStorage (o en perfil de usuario si está autenticado). Al primer login se muestra un onboarding mínimo: "¿Cómo prefieres trabajar?" que establece la preferencia inicial. Motivación: capturar el segmento PFAE y usuarios menos técnicos sin simplificar el producto para los usuarios power.' },
+      { name: 'Planificación de capacidad y carga', start: [2026,11,16], end: [2026,11,30], done: false },
+      { name: 'Base de conocimiento interna', start: [2026,11,30], end: [2026,12,14], done: false },
+      { name: 'Gestión de subscripciones de clientes', start: [2026,12,14], end: [2026,12,28], done: false },
+      { name: 'Generador de propuestas comerciales', start: [2027,0,4], end: [2027,0,18], done: false },
+      { name: 'Integración ventas → proyección de caja', start: [2027,0,18], end: [2027,1,1], done: false },
+      { name: 'Motor de Reconciliación Proyectado/Real', start: [2027,1,1], end: [2027,2,1], done: false, tooltip: 'Estados: projected → overdue → {matched | deferred | written_off} | projected → early_match (cobro anticipado automático vía Conexión SAT) | projected → matched (en fecha normal). Umbrales: gastos recurrentes ±7 días; ingresos/facturas overdue desde día 0 (impacto inmediato en flujo); cobros anticipados matching hasta -30 días. Alerta overdue con 3 acciones: (1) Registrar cobro real, (2) Diferir con nueva fecha, (3) Cancelar del pronóstico (write-off). Proyección dual automática mientras hay overdue: Optimista (asume que llegan) vs. Conservador (solo confirmados + recurrentes) — el usuario ve el rango real de su caja. Diferimiento positivo: Conexión SAT detecta pago anterior a la fecha proyectada → early_match automático sin intervención → recalcula flujo con saldo mejorado → notificación positiva "Cobro anticipado: [Cliente] pagó $X — N días antes de lo previsto". Drift learning: si un cliente paga sistemáticamente tarde o temprano durante 3+ meses, el sistema sugiere ajustar el plazo proyectado. Perfil de comportamiento de pago por cliente alimenta el módulo CRM. Requiere: Supabase + Conexión SAT (prerequisitos). · Cascada de 3 fuentes: matched_sat (CFDI vía Conexión SAT) → matched_bank (estado de cuenta, para gastos sin CFDI: plataformas extranjeras, Amazon sin RFC, efectivo digital) → matched_manual (captura manual para efectivo). Cada movimiento proyectado lleva campo "tipo de comprobante esperado" (con CFDI / sin CFDI / efectivo) para evitar falsas alertas overdue en gastos que por naturaleza no tienen comprobante fiscal. | SUBFUNCIONES: (C) Proyección→Real sin doble captura: confirmar movimiento proyectado como realizado con un clic; si no tiene CFDI marca "Pendiente CFDI" sin bloquear el flujo; el movimiento pasa de proyectado a realizados sin re-captura manual. (D) CFDI retroactivo reemplaza movimiento manual: cuando Conexión SAT descarga un CFDI nuevo, busca movimientos manuales con importe ±5%, fecha ±5 días, RFC coincidente; si hay match propone vinculación → CFDI reemplaza manual en egresos + proyectados; el movimiento manual queda archivado (no eliminado) para trazabilidad. (E) Sugerencia de recurrente inteligente: al capturar movimiento sin proyección previa, el sistema pregunta "¿Este gasto se repetirá?"; si sí → crea Gasto Recurrente automáticamente con los datos del movimiento; si no → registra como gasto único sin proyección futura. (F) Panel "Pendientes de acción" unificado: widget Dashboard con 4 contadores accionables (sin contabilizar / pendientes CFDI / CFDIs sin banco / proyecciones vencidas); cada contador abre la lista filtrada correspondiente con acciones directas.' },
+    ],
+    milestone: { name: 'v2.5 — Suite avanzada', date: [2027,2,1] }
+  },
+  {
+    id: 'p5b',
+    name: 'Fase 5b — Panel de Despacho (Partner Program)',
+    color: '#16a34a',
+    lightColor: '#dcfce7',
+    emoji: '🤝',
+    status: 'upcoming',
+    tasks: [
+      { name: 'Panel multi-empresa para despachos partners (vista agregada de salud financiera)', start: [2027,0,4], end: [2027,1,1], done: false, tooltip: 'Vista agregada para el despacho con el estado financiero y de compliance de todos sus clientes enrolados en Compass.' },
+      { name: 'Sistema de invitación de clientes con link único y onboarding de 60 días gratis', start: [2027,1,1], end: [2027,1,22], done: false },
+      { name: 'Motor de comisiones: cálculo automático mensual y liquidación al despacho', start: [2027,1,22], end: [2027,2,15], done: false, tooltip: 'Cálculo automático de comisión según tier (10–25%), generación de comprobante y liquidación mensual vía SPEI.' },
+      { name: 'White-label: logo del despacho en el portal del cliente', start: [2027,2,15], end: [2027,3,5], done: false },
+      { name: 'API para integración con software de gestión de práctica del despacho', start: [2027,3,5], end: [2027,4,10], done: false, tooltip: 'API REST para que los despachos con software propio puedan consumir datos de sus clientes en Compass.' },
+    ],
+    milestone: { name: 'v2.8 — Panel de Despacho lanzado', date: [2027,4,10] }
+  },
+  {
+    id: 'p6',
+    name: 'Fase 6 — SaaS Comercial',
+    color: '#0284c7',
+    lightColor: '#e0f2fe',
+    emoji: '🏢',
+    status: 'future',
+    tasks: [
+      { name: 'Arquitectura multi-tenant', start: [2027,2,1], end: [2027,2,29], done: false },
+      { name: 'Portal de autoservicio para clientes', start: [2027,2,29], end: [2027,3,19], done: false },
+      { name: 'Facturación SaaS automatizada', start: [2027,3,19], end: [2027,4,3], done: false },
+      { name: 'Onboarding automatizado', start: [2027,4,3], end: [2027,4,17], done: false },
+      { name: 'Analytics y métricas SaaS', start: [2027,4,17], end: [2027,4,24], done: false },
+    ],
+    milestone: { name: 'v3.0 — Producto SaaS comercial', date: [2027,4,24] }
+  },
+  {
+    id: 'p7',
+    name: 'Fase 7 — IT & Finanzas Avanzado',
+    color: '#b45309',
+    lightColor: '#fef3c7',
+    emoji: '💼',
+    status: 'future',
+    tasks: [
+      { name: 'Inventario de activos IT de clientes', start: [2027,5,1], end: [2027,5,22], done: false },
+      { name: 'Monitor SLA', start: [2027,5,22], end: [2027,6,5], done: false },
+      { name: 'Módulo nómina sueldos IMSS — convencional completa', start: [2027,5,1], end: [2027,7,2], done: false, tooltip: 'Expansión del módulo de Nómina (hoy: honorarios asimilados) hacia nómina convencional con relación laboral IMSS. Cubre el segmento de micro-empresas con 1–10 empleados en plantilla formal. Componentes: (1) Catálogo de empleados con datos IMSS: NSS, salario diario integrado, tabla de riesgo de trabajo, fecha de alta/baja IMSS. (2) Cálculo de cuotas IMSS: patronales y obreras por rama (enfermedad/maternidad, invalidez/vida, retiro/cesantía/vejez, guarderías, riesgo de trabajo) aplicando tablas de UMA vigente. (3) INFONAVIT 5% del SBC + amortización de crédito (descuento por número de crédito). (4) ISR nómina: cálculo mensual acumulado con tabla de subsidio al empleo, ajuste anual de diciembre. (5) CFDI de nómina 4.0: timbrado vía PAC integrado (ya existe para honorarios — se extienden los nodos XML: Percepciones, Deducciones, OtrosPagos, SubsidioAlEmpleo). (6) Archivo SUA bimestral: generación del archivo de autodeterminación para pago de cuotas IMSS + amortizaciones INFONAVIT ante el IMSS. (7) Proporcionales automáticos: prima vacacional (25% mínimo legal), aguinaldo (15 días mínimo), partes proporcionales en altas/bajas y finiquitos básicos. (8) Integración nómina → Proyección: cada período de nómina (quincenal/mensual) se registra automáticamente como gasto fijo recurrente en la proyección de flujo de efectivo — el usuario no captura manualmente la quincena cada vez. Segmento objetivo: Ing. Héctor Domínguez y perfiles similares (talleres, manufactura, comercio con plantilla IMSS). Prerequisito: Supabase (datos de empleados persistentes), módulo de Proyección estable.' },
+      { name: 'Reportes fiscales avanzados', start: [2027,7,2], end: [2027,7,23], done: false },
+    ],
+    milestone: { name: 'v3.5 — IT & Fiscal avanzado', date: [2027,7,23] }
+  }
+];
+
+/* ============================================================
+   UTILITY
+============================================================ */
+function d(arr) {
+  // arr = [year, month(0-indexed), day]
+  return new Date(arr[0], arr[1], arr[2]);
+}
+
+const totalMs = TIMELINE_END - TIMELINE_START;
+
+function toPercent(date) {
+  return ((date - TIMELINE_START) / totalMs) * 100;
+}
+
+function daysBetween(a, b) {
+  return Math.round(Math.abs(b - a) / 86400000);
+}
+
+function formatDate(date) {
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function weeksLabel(a, b) {
+  const w = Math.ceil(daysBetween(a, b) / 7);
+  return w === 1 ? '1 sem' : `${w} sem`;
+}
+
+/* ============================================================
+   BUILD STATS
+============================================================ */
+function buildStats() {
+  let totalTasks = 0, doneTasks = 0, totalWeeks = 0;
+  PHASES.forEach(p => {
+    p.tasks.forEach(t => {
+      totalTasks++;
+      if (t.done) doneTasks++;
+      totalWeeks += Math.ceil(daysBetween(d(t.start), d(t.end)) / 7);
+    });
+  });
+  const pct = Math.round((doneTasks / totalTasks) * 100);
+
+  const statsEl = document.getElementById('statsBar');
+  const stats = [
+    { value: `${doneTasks}/${totalTasks}`, label: 'Tareas completadas', sub: `${pct}% del total` },
+    { value: PHASES.length, label: 'Fases de desarrollo', sub: '3 completadas' },
+    { value: '~' + totalWeeks, label: 'Semanas totales', sub: 'Abr 2026 — Sep 2027' },
+    { value: 'v3.5', label: 'Versión objetivo', sub: 'Q3 2027' },
+    { value: '5', label: 'Roles RBAC', sub: 'Admin, Contador, Comercial…' },
+  ];
+  statsEl.innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-value">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   BUILD LEGEND
+============================================================ */
+function buildLegend() {
+  const el = document.getElementById('legendEl');
+  const items = PHASES.map(p => `
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:${p.color}"></div>
+      ${p.name.split(' — ')[1] || p.name}
+    </div>
+  `).join('');
+
+  el.innerHTML = items + `
+    <div class="legend-extra">
+      <div class="legend-done"></div> Completado
+    </div>
+    <div class="legend-extra">
+      <div class="legend-today"></div> Hoy
+    </div>
+    <div class="legend-extra">
+      <div class="legend-milestone">◆</div> Hito de lanzamiento
+    </div>
+  `;
+}
+
+/* ============================================================
+   BUILD GANTT
+============================================================ */
+let currentZoom = 'all';
+
+function buildGantt() {
+  const container = document.getElementById('ganttInner');
+  container.innerHTML = '';
+
+  // Determine visible range based on zoom
+  let visStart = TIMELINE_START;
+  let visEnd   = TIMELINE_END;
+  if (currentZoom === 'current') {
+    visStart = new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, 1);
+    visEnd   = new Date(TODAY.getFullYear(), TODAY.getMonth() + 5, 30);
+  } else if (currentZoom === 'year') {
+    visStart = new Date(2026, 3, 1);
+    visEnd   = new Date(2026, 11, 31);
+  }
+
+  const visMs = visEnd - visStart;
+  function pct(date) { return ((date - visStart) / visMs) * 100; }
+
+  // ---- TIME HEADER ----
+  const header = document.createElement('div');
+  header.className = 'time-header';
+
+  const spacer = document.createElement('div');
+  spacer.className = 'time-label-spacer';
+  spacer.innerHTML = '<span>Tarea / Entregable</span>';
+  header.appendChild(spacer);
+
+  const monthsEl = document.createElement('div');
+  monthsEl.className = 'time-months';
+
+  // Generate months in range
+  const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  let cur = new Date(visStart.getFullYear(), visStart.getMonth(), 1);
+  while (cur <= visEnd) {
+    const monthStart = new Date(cur.getFullYear(), cur.getMonth(), 1);
+    const monthEnd   = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
+    const left  = Math.max(0, pct(monthStart));
+    const right = Math.min(100, pct(new Date(cur.getFullYear(), cur.getMonth() + 1, 1)));
+    const width = right - left;
+    if (width > 0) {
+      const cell = document.createElement('div');
+      cell.className = 'month-cell';
+      cell.style.cssText = `left:${left}%;width:${width}%`;
+      cell.innerHTML = `
+        <div class="month-name">${MONTH_NAMES[cur.getMonth()].substring(0,3)}</div>
+        <div class="month-year">${cur.getFullYear()}</div>
+      `;
+      monthsEl.appendChild(cell);
+    }
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+  }
+  header.appendChild(monthsEl);
+  container.appendChild(header);
+
+  // ---- GANTT BODY ----
+  const body = document.createElement('div');
+  body.className = 'gantt-body';
+
+  // Grid lines
+  const gridLines = document.createElement('div');
+  gridLines.className = 'grid-lines';
+  let gcur = new Date(visStart.getFullYear(), visStart.getMonth(), 1);
+  while (gcur <= visEnd) {
+    const gl = document.createElement('div');
+    gl.className = 'grid-line major';
+    gl.style.left = pct(gcur) + '%';
+    gridLines.appendChild(gl);
+    gcur = new Date(gcur.getFullYear(), gcur.getMonth() + 1, 1);
+  }
+  body.appendChild(gridLines);
+
+  // Today line
+  if (TODAY >= visStart && TODAY <= visEnd) {
+    const tl = document.createElement('div');
+    tl.className = 'today-line';
+    tl.style.left = `calc(var(--label-w) + (100% - var(--label-w)) * ${pct(TODAY) / 100})`;
+    body.appendChild(tl);
+  }
+
+  // ---- PHASES ----
+  PHASES.forEach((phase, pi) => {
+    const phaseEl = document.createElement('div');
+    phaseEl.className = 'phase-section';
+    phaseEl.id = 'phase-' + phase.id;
+
+    // Phase header
+    const ph = document.createElement('div');
+    ph.className = 'phase-header';
+    ph.innerHTML = `
+      <div class="phase-label-cell">
+        <div class="phase-dot" style="background:${phase.color}"></div>
+        <span class="phase-name">${phase.name}</span>
+        <span class="phase-toggle">▾</span>
+      </div>
+      <div class="phase-bar-cell"></div>
+    `;
+    ph.addEventListener('click', () => {
+      phaseEl.classList.toggle('collapsed');
+    });
+
+    // Phase span bar (subtle background strip)
+    const allStarts = phase.tasks.map(t => d(t.start));
+    const allEnds   = phase.tasks.map(t => d(t.end));
+    const phStart = new Date(Math.min(...allStarts));
+    const phEnd   = new Date(Math.max(...allEnds));
+    const phLeft  = pct(phStart);
+    const phRight = pct(phEnd);
+    if (phLeft < 100 && phRight > 0) {
+      const spanBar = document.createElement('div');
+      spanBar.className = 'phase-span-bar';
+      spanBar.style.cssText = `left:${Math.max(0,phLeft)}%;width:${Math.min(100,phRight)-Math.max(0,phLeft)}%;background:${phase.color}`;
+      ph.querySelector('.phase-bar-cell').appendChild(spanBar);
+    }
+
+    phaseEl.appendChild(ph);
+
+    // Phase rows
+    const rowsEl = document.createElement('div');
+    rowsEl.className = 'phase-rows';
+
+    phase.tasks.forEach((task, ti) => {
+      const taskRow = document.createElement('div');
+      taskRow.className = 'task-row';
+
+      const tStart = d(task.start);
+      const tEnd   = d(task.end);
+
+      // Label cell
+      const labelCell = document.createElement('div');
+      labelCell.className = 'task-label-cell';
+      const icon = task.done ? '✅' : (task.active ? '▶' : '○');
+      const nameClass = task.done ? 'done' : (task.active ? 'active' : '');
+      labelCell.innerHTML = `
+        <span class="task-status-icon">${icon}</span>
+        <span class="task-name ${nameClass}" title="${task.name}">${task.name}</span>
+      `;
+      taskRow.appendChild(labelCell);
+
+      // Bar cell
+      const barCell = document.createElement('div');
+      barCell.className = 'task-bar-cell';
+
+      const left  = pct(tStart);
+      const right = pct(tEnd);
+      const width = right - left;
+
+      if (left < 100 && right > 0) {
+        const bar = document.createElement('div');
+        bar.className = 'task-bar' + (task.done ? ' done' : '') + (task.active ? ' active-now' : '');
+        bar.style.cssText = `
+          left: ${Math.max(0, left)}%;
+          width: ${Math.min(100, right) - Math.max(0, left)}%;
+          background: ${task.done ? '' : phase.color};
+        `;
+
+        if (!task.done) {
+          const lbl = document.createElement('span');
+          lbl.className = 'bar-label';
+          lbl.textContent = weeksLabel(tStart, tEnd);
+          bar.appendChild(lbl);
+        }
+
+        // Duration badge (outside right)
+        const dur = document.createElement('div');
+        dur.className = 'bar-duration';
+        dur.textContent = weeksLabel(tStart, tEnd);
+        dur.style.left = `${Math.min(100, right) - Math.max(0, left)}%`;
+        bar.appendChild(dur);
+
+        // Tooltip
+        bar.addEventListener('mouseenter', (e) => showTooltip(e, task, tStart, tEnd, phase));
+        bar.addEventListener('mousemove', moveTooltip);
+        bar.addEventListener('mouseleave', hideTooltip);
+
+        barCell.appendChild(bar);
+      }
+
+      taskRow.appendChild(barCell);
+      rowsEl.appendChild(taskRow);
+    });
+
+    // Milestone row
+    if (phase.milestone) {
+      const mDate = d(phase.milestone.date);
+      const mRow = document.createElement('div');
+      mRow.className = 'milestone-row';
+
+      const mLabel = document.createElement('div');
+      mLabel.className = 'milestone-label-cell';
+      mLabel.innerHTML = `<span style="font-size:13px">◆</span><span class="milestone-label">${phase.milestone.name}</span>`;
+      mRow.appendChild(mLabel);
+
+      const mBarCell = document.createElement('div');
+      mBarCell.className = 'milestone-bar-cell';
+
+      const mPos = pct(mDate);
+      if (mPos >= 0 && mPos <= 100) {
+        const diamond = document.createElement('div');
+        diamond.className = 'milestone-diamond';
+        diamond.style.cssText = `left:${mPos}%;background:${phase.color};`;
+        diamond.title = phase.milestone.name;
+        diamond.addEventListener('mouseenter', (e) => {
+          showTooltipRaw(e, `◆ ${phase.milestone.name}`, formatDate(mDate));
+        });
+        diamond.addEventListener('mousemove', moveTooltip);
+        diamond.addEventListener('mouseleave', hideTooltip);
+        mBarCell.appendChild(diamond);
+      }
+
+      mRow.appendChild(mBarCell);
+      rowsEl.appendChild(mRow);
+    }
+
+    phaseEl.appendChild(rowsEl);
+    body.appendChild(phaseEl);
+  });
+
+  container.appendChild(body);
+}
+
+/* ============================================================
+   TOOLTIP
+============================================================ */
+const tooltipEl = document.getElementById('tooltip');
+
+function showTooltip(e, task, tStart, tEnd, phase) {
+  const status = task.done ? '✅ Completado' : (task.active ? '▶ En progreso' : '⏳ Próximamente');
+  const extraNote = task.tooltip ? `<br><em style="opacity:.75">${task.tooltip}</em>` : '';
+  tooltipEl.innerHTML = `
+    <strong>${task.name}</strong>
+    ${status}<br>
+    Inicio: ${formatDate(tStart)}<br>
+    Fin: ${formatDate(tEnd)}<br>
+    Duración: ${weeksLabel(tStart, tEnd)}<br>
+    <span style="opacity:.6">${phase.name}</span>${extraNote}
+  `;
+  tooltipEl.classList.add('show');
+  moveTooltip(e);
+}
+
+function showTooltipRaw(e, title, sub) {
+  tooltipEl.innerHTML = `<strong>${title}</strong>${sub}`;
+  tooltipEl.classList.add('show');
+  moveTooltip(e);
+}
+
+function moveTooltip(e) {
+  const x = e.clientX + 14;
+  const y = e.clientY - 10;
+  tooltipEl.style.left = Math.min(x, window.innerWidth - 240) + 'px';
+  tooltipEl.style.top  = Math.min(y, window.innerHeight - 120) + 'px';
+}
+
+function hideTooltip() {
+  tooltipEl.classList.remove('show');
+}
+
+/* ============================================================
+   CONTROLS
+============================================================ */
+function setZoom(z) {
+  currentZoom = z;
+  document.querySelectorAll('.toolbar .btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(
+      z === 'all' ? 'todo' : z === 'current' ? 'actual' : 'año'
+    ));
+  });
+  buildGantt();
+}
+
+function toggleAll(open) {
+  document.querySelectorAll('.phase-section').forEach(s => {
+    s.classList.toggle('collapsed', !open);
+  });
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+buildStats();
+buildLegend();
+buildGantt();
+</script>
+</body>
+</html>

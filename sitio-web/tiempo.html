@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Tiempo</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── KPI bar ── */
+    .kpi-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.25rem; }
+    .kpi-item { background:var(--bg-white); padding:0.85rem 1.1rem; }
+    .kpi-lbl  { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.25rem; }
+    .kpi-val  { font-family:var(--brand); font-size:1.3rem; font-weight:700; color:var(--navy); line-height:1; }
+    .kpi-sub  { font-size:0.65rem; color:var(--text-xs); margin-top:0.15rem; }
+    .kpi-val.green { color:var(--green); }
+    .kpi-val.blue  { color:#1a4db5; }
+    .kpi-val.gold  { color:#8a6000; }
+
+    /* ── Toolbar ── */
+    .toolbar { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin-bottom:0.85rem; }
+    .toolbar input, .toolbar select { padding:0.42rem 0.7rem; font-size:0.78rem; border:1.5px solid var(--border); border-radius:var(--radius); background:var(--bg-white); color:var(--text); }
+    .toolbar input:focus, .toolbar select:focus { outline:none; border-color:var(--navy); }
+
+    /* ── View toggle ── */
+    .view-toggle { display:flex; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .view-btn { padding:0.3rem 0.75rem; font-size:0.72rem; font-family:var(--brand); font-weight:700; border:none; background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.13s; white-space:nowrap; }
+    .view-btn.active { background:var(--navy); color:#fff; }
+
+    /* ── Week navigation ── */
+    .week-nav { display:flex; align-items:center; gap:0.6rem; }
+    .week-label { font-family:var(--brand); font-size:0.8rem; font-weight:700; color:var(--navy); min-width:220px; text-align:center; }
+    .week-btn { background:none; border:1.5px solid var(--border); border-radius:var(--radius); width:26px; height:26px; cursor:pointer; color:var(--text-dim); font-size:0.8rem; display:flex; align-items:center; justify-content:center; transition:all 0.13s; flex-shrink:0; }
+    .week-btn:hover { border-color:var(--navy); color:var(--navy); }
+
+    /* ── Weekly grid ── */
+    .week-grid { width:100%; border-collapse:collapse; font-size:0.73rem; }
+    .week-grid th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.45rem 0.5rem; text-align:center; border-right:1px solid rgba(255,255,255,0.12); }
+    .week-grid th:first-child { text-align:left; width:130px; }
+    .week-grid th.today-col { background:#243580; }
+    .week-grid td { padding:0.28rem 0.35rem; border-bottom:1px solid var(--border); border-right:1px solid var(--border); vertical-align:top; min-height:38px; }
+    .week-grid td:first-child { font-size:0.69rem; color:var(--text-dim); font-family:var(--brand); font-weight:600; border-right:2px solid var(--border); background:#f8f9fc; white-space:nowrap; padding:0.35rem 0.55rem; }
+    .week-grid td.today-col { background:#f0f4ff; }
+    .week-grid tfoot td { border-top:2px solid var(--navy); background:#e8ecf8; font-family:var(--brand); font-size:0.68rem; font-weight:700; color:var(--navy); text-align:center; padding:0.35rem 0.5rem; }
+    .week-grid tfoot td:first-child { text-align:left; }
+    .day-add { cursor:pointer; color:var(--text-xs); font-size:0.65rem; padding:0.1rem 0.2rem; border:none; background:none; width:100%; text-align:left; margin-top:0.1rem; }
+    .day-add:hover { color:var(--navy); }
+    .week-wrap { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); overflow-x:auto; }
+
+    /* ── Time entry chips ── */
+    .t-entry { display:flex; flex-direction:column; background:#f0f4ff; border:1px solid #c5d0f0; border-radius:2px; padding:0.2rem 0.32rem; margin-bottom:0.18rem; cursor:pointer; transition:border-color 0.13s; position:relative; }
+    .t-entry:hover { border-color:var(--navy); }
+    .t-entry.no-fact { background:#fafafa; border-color:var(--border); }
+    .t-entry-top { display:flex; align-items:center; justify-content:space-between; gap:0.3rem; }
+    .t-entry-hrs { font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--navy); flex-shrink:0; }
+    .t-entry-cat { font-size:0.62rem; flex-shrink:0; }
+    .t-entry-desc { font-size:0.6rem; color:var(--text-xs); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+    .t-entry-del { position:absolute; top:2px; right:2px; background:none; border:none; cursor:pointer; color:transparent; font-size:0.6rem; padding:0; line-height:1; }
+    .t-entry:hover .t-entry-del { color:#aaa; }
+    .t-entry-del:hover { color:var(--red) !important; }
+
+    /* ── Log table ── */
+    .table-wrap { overflow-x:auto; max-height:62vh; overflow-y:auto; }
+    .log-table { width:100%; border-collapse:collapse; font-size:0.75rem; min-width:780px; }
+    .log-table thead { position:sticky; top:0; z-index:10; }
+    .log-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.45rem 0.65rem; text-align:left; border-right:1px solid rgba(255,255,255,0.12); white-space:nowrap; }
+    .log-table th:last-child { border-right:none; }
+    .log-table td { padding:0.4rem 0.65rem; border-bottom:1px solid var(--border); border-right:1px solid var(--border); vertical-align:middle; color:var(--text); white-space:nowrap; }
+    .log-table td:last-child { border-right:none; }
+    .log-table tbody tr:nth-child(even) td { background:#f8f9fc; }
+    .log-table tbody tr:hover td { background:var(--navy-pale) !important; }
+    .log-table tfoot td { border-top:2px solid var(--navy); border-bottom:none; background:#e8ecf8; font-weight:700; font-family:var(--brand); font-size:0.68rem; padding:0.4rem 0.65rem; color:var(--navy); }
+    .log-table .num { text-align:right; font-family:'Courier New',monospace; }
+    .log-table .center { text-align:center; }
+
+    /* ── Category badges ── */
+    .cat-badge { display:inline-block; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:0.15rem 0.42rem; border-radius:2px; }
+    .cat-consultoria   { background:#e8f0fb; color:#1a4db5; }
+    .cat-reunion       { background:#fff3e6; color:#8a4500; }
+    .cat-desarrollo    { background:#e6f7ee; color:#1a7a40; }
+    .cat-revision      { background:#f3e8fb; color:#6a1ab5; }
+    .cat-administracion{ background:#f0f2f8; color:#636b80; }
+    .cat-otro          { background:#fafafa; color:#888; border:1px solid var(--border); }
+
+    /* ── Filter pills ── */
+    .filter-pills { display:flex; gap:0.3rem; flex-wrap:wrap; }
+    .filter-pill { padding:0.28rem 0.7rem; font-size:0.68rem; font-family:var(--brand); font-weight:700; border:1.5px solid var(--border); border-radius:99px; background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.14s; white-space:nowrap; }
+    .filter-pill:hover { border-color:var(--navy); color:var(--navy); }
+    .filter-pill.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+    /* ── Row actions ── */
+    .del-row  { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.85rem; padding:0.1rem 0.25rem; border-radius:2px; }
+    .del-row:hover  { color:var(--red); background:#fdecea; }
+    .edit-row { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.78rem; padding:0.15rem 0.4rem; border-radius:2px; font-family:var(--brand); font-weight:600; }
+    .edit-row:hover { color:var(--navy); background:var(--navy-pale); }
+
+    /* ── Modal ── */
+    .modal-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem 1rem; }
+    .modal-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.65rem 1rem; }
+    .span2 { grid-column:1/-1; }
+    .modal-section-hdr { font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs); padding-bottom:0.35rem; border-bottom:1px solid var(--border); margin-bottom:0.75rem; margin-top:1.1rem; }
+    .modal-section-hdr:first-child { margin-top:0; }
+
+    /* ── Quick hours pills ── */
+    .hrs-quick { display:flex; gap:0.28rem; flex-wrap:wrap; }
+    .hrs-pill { padding:0.22rem 0.52rem; font-size:0.68rem; font-family:var(--brand); font-weight:700; border:1.5px solid var(--border); border-radius:99px; background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.13s; }
+    .hrs-pill:hover { border-color:var(--navy); color:var(--navy); }
+    .hrs-pill.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+    /* ── Facturable badge ── */
+    .fact-badge { display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-family:var(--brand); font-weight:700; padding:0.18rem 0.5rem; border-radius:2px; }
+    .fact-badge.si { background:#e6f7ee; color:#1a7a40; }
+    .fact-badge.no { background:#f0f2f8; color:#636b80; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align:center; padding:3.5rem 1rem; color:var(--text-xs); }
+    .empty-state-icon  { font-size:2.5rem; margin-bottom:0.75rem; }
+    .empty-state-title { font-family:var(--brand); font-size:0.9rem; font-weight:700; color:var(--text-dim); margin-bottom:0.4rem; }
+    .empty-state-desc  { font-size:0.73rem; line-height:1.6; }
+
+    @media(max-width:700px) {
+      .kpi-bar { grid-template-columns:1fr 1fr; }
+      .modal-grid-2 { grid-template-columns:1fr; }
+      .modal-grid-3 { grid-template-columns:1fr 1fr; }
+    }
+    @media(max-width:500px) {
+      .kpi-bar { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item active" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Ventas</div>
+          <h1 class="page-heading">Registro de Tiempo</h1>
+          <div class="page-meta" id="tms-meta">Horas trabajadas por cliente, servicio y categoría</div>
+        </div>
+        <div class="flex gap-1">
+          <label class="btn btn-ghost" style="font-size:0.72rem; cursor:pointer; position:relative;">
+            ⬆ Importar CSV / Excel
+            <input type="file" accept=".csv,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="importarArchivoTiempo(this.files[0]);this.value='';" />
+          </label>
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="exportarTiempoCSV()">⬆ Exportar CSV</button>
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="exportarTiempoFactura()">📄 Reporte para factura</button>
+          <button class="btn btn-primary" onclick="abrirNuevoTiempo()">+ Registrar tiempo</button>
+        </div>
+      </div>
+
+      <!-- KPI bar -->
+      <div class="kpi-bar">
+        <div class="kpi-item">
+          <div class="kpi-lbl">Esta semana</div>
+          <div class="kpi-val" id="kpi-semana">0.0</div>
+          <div class="kpi-sub">horas registradas</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Este mes</div>
+          <div class="kpi-val blue" id="kpi-mes">0.0</div>
+          <div class="kpi-sub" id="kpi-mes-sub">horas en el mes</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Facturables</div>
+          <div class="kpi-val green" id="kpi-fact">0.0</div>
+          <div class="kpi-sub">horas facturables este mes</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Tasa facturable</div>
+          <div class="kpi-val gold" id="kpi-tasa">0%</div>
+          <div class="kpi-sub">del total mensual</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" style="margin-bottom:0.55rem;">
+        <div class="view-toggle">
+          <button class="view-btn active" id="vbtn-semana" onclick="setView('semana')">📅 Semanal</button>
+          <button class="view-btn" id="vbtn-log" onclick="setView('log')">📋 Registro</button>
+        </div>
+        <!-- Week nav (semana view) -->
+        <div class="week-nav" id="week-nav">
+          <button class="week-btn" onclick="moveWeek(-1)">◀</button>
+          <span class="week-label" id="week-label">Semana actual</span>
+          <button class="week-btn" onclick="moveWeek(1)">▶</button>
+          <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.28rem 0.6rem;" onclick="goToday()">Hoy</button>
+        </div>
+        <!-- Log filters (log view) -->
+        <div id="log-filters" style="display:none;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="log-search" placeholder="Buscar…" style="min-width:150px;" oninput="renderLog()" />
+          <select id="log-cli" onchange="renderLog()">
+            <option value="">Todos los clientes</option>
+          </select>
+          <select id="log-cat" onchange="renderLog()">
+            <option value="">Todas las categorías</option>
+            <option value="consultoria">Consultoría</option>
+            <option value="reunion">Reunión</option>
+            <option value="desarrollo">Desarrollo</option>
+            <option value="revision">Revisión</option>
+            <option value="administracion">Administración</option>
+            <option value="otro">Otro</option>
+          </select>
+          <select id="log-fact" onchange="renderLog()">
+            <option value="">Todas</option>
+            <option value="si">Solo facturables</option>
+            <option value="no">Solo no facturables</option>
+          </select>
+          <input type="month" id="log-mes" onchange="renderLog()" style="font-size:0.75rem;" />
+        </div>
+      </div>
+
+      <!-- Filter pills (log view) -->
+      <div class="filter-pills" id="log-cat-pills" style="margin-bottom:0.75rem;display:none;">
+        <button class="filter-pill active" onclick="setCatFilter('')">Todas</button>
+        <button class="filter-pill" onclick="setCatFilter('consultoria')">💼 Consultoría</button>
+        <button class="filter-pill" onclick="setCatFilter('reunion')">🗣️ Reunión</button>
+        <button class="filter-pill" onclick="setCatFilter('desarrollo')">⚙️ Desarrollo</button>
+        <button class="filter-pill" onclick="setCatFilter('revision')">🔍 Revisión</button>
+        <button class="filter-pill" onclick="setCatFilter('administracion')">📁 Administración</button>
+        <button class="filter-pill" onclick="setCatFilter('otro')">📌 Otro</button>
+      </div>
+
+      <!-- Weekly view -->
+      <div id="view-semana" class="week-wrap">
+        <table class="week-grid">
+          <thead id="week-head"></thead>
+          <tbody id="week-body"></tbody>
+          <tfoot id="week-foot"></tfoot>
+        </table>
+      </div>
+
+      <!-- Log view -->
+      <div id="view-log" style="display:none;">
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Servicio</th>
+                <th>Categoría</th>
+                <th style="min-width:180px;">Descripción</th>
+                <th style="text-align:right;">Horas</th>
+                <th>Facturable</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+            <tfoot id="log-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- .main -->
+  </main>
+
+  <!-- ══════════════════════════════════════
+       MODAL: Registrar / editar tiempo
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-tiempo" style="display:none;" onclick="if(event.target===this)cerrarModalTiempo()">
+    <div class="modal" style="max-width:540px;width:95%;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-tms-title">Registrar tiempo</div>
+        <button class="modal-close" onclick="cerrarModalTiempo()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+        <input type="hidden" id="tms-id" />
+
+        <!-- Fecha & cliente -->
+        <div class="modal-section-hdr">Fecha y cliente</div>
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label">Fecha *</label>
+            <input type="date" id="tms-fecha" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cliente</label>
+            <select id="tms-cliente" class="form-input">
+              <option value="">Sin cliente / interno</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Servicio & categoría -->
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label">Servicio</label>
+            <select id="tms-servicio" class="form-input" onchange="onServicioChange()">
+              <option value="">Sin servicio específico</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoría *</label>
+            <select id="tms-categoria" class="form-input">
+              <option value="consultoria">💼 Consultoría</option>
+              <option value="reunion">🗣️ Reunión</option>
+              <option value="desarrollo">⚙️ Desarrollo</option>
+              <option value="revision">🔍 Revisión</option>
+              <option value="administracion">📁 Administración</option>
+              <option value="otro">📌 Otro</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label class="form-label">Descripción *</label>
+          <input type="text" id="tms-desc" class="form-input" placeholder="¿Qué se realizó?" maxlength="200" />
+        </div>
+
+        <!-- Horas & tarifa -->
+        <div class="modal-section-hdr">Horas y tarifa</div>
+        <div class="modal-grid-3">
+          <div class="form-group">
+            <label class="form-label">Horas *</label>
+            <input type="number" id="tms-horas" class="form-input" min="0.25" max="24" step="0.25" placeholder="0.0" oninput="actualizarPreviewTms()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tarifa / hora</label>
+            <input type="number" id="tms-tarifa" class="form-input" min="0" step="0.01" placeholder="Opcional" oninput="actualizarPreviewTms()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Moneda</label>
+            <select id="tms-moneda" class="form-input" onchange="actualizarPreviewTms()">
+              <option value="MXN">MXN</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick hours -->
+        <div class="hrs-quick">
+          <button class="hrs-pill" onclick="setHoras(0.5,event)">0:30</button>
+          <button class="hrs-pill" onclick="setHoras(1,event)">1:00</button>
+          <button class="hrs-pill" onclick="setHoras(1.5,event)">1:30</button>
+          <button class="hrs-pill" onclick="setHoras(2,event)">2:00</button>
+          <button class="hrs-pill" onclick="setHoras(3,event)">3:00</button>
+          <button class="hrs-pill" onclick="setHoras(4,event)">4:00</button>
+          <button class="hrs-pill" onclick="setHoras(6,event)">6:00</button>
+          <button class="hrs-pill" onclick="setHoras(8,event)">8:00</button>
+        </div>
+
+        <!-- Preview -->
+        <div id="tms-preview" style="display:none;background:#f5f7ff;border:1px solid #c5d0f0;border-radius:var(--radius);padding:0.55rem 0.85rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.72rem;color:var(--text-dim);">Monto estimado</span>
+            <span style="font-family:var(--brand);font-weight:700;color:var(--navy);font-size:0.9rem;" id="tms-preview-val">$0.00</span>
+          </div>
+        </div>
+
+        <!-- Facturable toggle -->
+        <div style="display:flex;align-items:center;gap:0.75rem;background:#f9fafb;border:1px solid var(--border);border-radius:var(--radius);padding:0.5rem 0.85rem;">
+          <label class="toggle-sw" title="Facturable">
+            <input type="checkbox" id="tms-facturable" checked onchange="actualizarPreviewTms()" />
+            <span class="toggle-sl"></span>
+          </label>
+          <div>
+            <div style="font-family:var(--brand);font-size:0.72rem;font-weight:700;color:var(--navy);">Facturable</div>
+            <div style="font-size:0.62rem;color:var(--text-xs);">Estas horas se incluirán en reportes de facturación</div>
+          </div>
+          <span class="fact-badge si" id="fact-badge-lbl" style="margin-left:auto;">Sí</span>
+        </div>
+
+        <!-- Notas -->
+        <div class="form-group">
+          <label class="form-label">Notas internas</label>
+          <textarea id="tms-notas" class="form-input" rows="2" placeholder="Referencias, observaciones, links…" style="resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="cerrarModalTiempo()">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarTiempo()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MODAL: Reporte para factura
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-reporte" style="display:none;" onclick="if(event.target===this)cerrarReporte()">
+    <div class="modal" style="max-width:660px;width:95%;">
+      <div class="modal-header">
+        <div class="modal-title">Reporte para factura</div>
+        <button class="modal-close" onclick="cerrarReporte()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label">Cliente</label>
+            <select id="rep-cliente" class="form-input" onchange="generarReporte()">
+              <option value="">Todos los clientes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Período (mes)</label>
+            <input type="month" id="rep-mes" class="form-input" onchange="generarReporte()" />
+          </div>
+        </div>
+        <div id="rep-content" style="background:#f9fafb;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-size:0.73rem;min-height:200px;font-family:'Courier New',monospace;white-space:pre-wrap;line-height:1.75;max-height:340px;overflow-y:auto;">Selecciona un cliente y período para generar el reporte…</div>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="copiarReporte()">📋 Copiar texto</button>
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="exportarReporteCsv()">⬆ CSV</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="cerrarReporte()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ═══════════════════════════════════════════════
+// Constants
+// ═══════════════════════════════════════════════
+const KEY_TMS = 'stgl_tiempo';
+
+const CAT_META = {
+  consultoria:    { label:'Consultoría',    cls:'cat-consultoria',    icon:'💼' },
+  reunion:        { label:'Reunión',         cls:'cat-reunion',        icon:'🗣️' },
+  desarrollo:     { label:'Desarrollo',      cls:'cat-desarrollo',     icon:'⚙️' },
+  revision:       { label:'Revisión',        cls:'cat-revision',       icon:'🔍' },
+  administracion: { label:'Administración',  cls:'cat-administracion', icon:'📁' },
+  otro:           { label:'Otro',            cls:'cat-otro',           icon:'📌' },
+};
+
+const DIAS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+// ─── State ───────────────────────────────────
+let currentView     = 'semana';
+let weekOffset      = 0;
+let editingId       = null;
+let activeCatFilter = '';
+
+// ═══════════════════════════════════════════════
+// Storage
+// ═══════════════════════════════════════════════
+function loadTms()      { try { return JSON.parse(localStorage.getItem(KEY_TMS) || '[]'); } catch { return []; } }
+function saveTms(data)  { localStorage.setItem(KEY_TMS, JSON.stringify(data)); }
+
+// ═══════════════════════════════════════════════
+// Integration helpers (reads from Clientes & Servicios modules)
+// ═══════════════════════════════════════════════
+function getClientes() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('stgl_clientes') || '[]');
+    return raw.filter(c => c.estado === 'activo' || c.estado === 'prospecto');
+  } catch { return []; }
+}
+
+function getServicios() {
+  try {
+    if (typeof window.getServiciosActivos === 'function') return window.getServiciosActivos();
+    const raw = JSON.parse(localStorage.getItem('stgl_servicios') || '[]');
+    return raw.filter(s => s.activo !== false);
+  } catch { return []; }
+}
+
+function getClienteNombre(clienteId) {
+  if (!clienteId) return '—';
+  const c = getClientes().find(x => x.id === clienteId);
+  if (c) return c.nombreComercial || c.razonSocial || clienteId;
+  // fallback: search all (inactive)
+  try {
+    const all = JSON.parse(localStorage.getItem('stgl_clientes') || '[]');
+    const f   = all.find(x => x.id === clienteId);
+    return f ? (f.nombreComercial || f.razonSocial || clienteId) : clienteId;
+  } catch { return clienteId; }
+}
+
+function getServicioNombre(servicioId) {
+  if (!servicioId) return '—';
+  const s = getServicios().find(x => x.id === servicioId);
+  if (s) return s.nombre;
+  try {
+    const all = JSON.parse(localStorage.getItem('stgl_servicios') || '[]');
+    const f   = all.find(x => x.id === servicioId);
+    return f ? f.nombre : servicioId;
+  } catch { return servicioId; }
+}
+
+function getServicioTarifa(servicioId) {
+  if (!servicioId) return null;
+  const s = getServicios().find(x => x.id === servicioId);
+  return s ? { precio: s.precio, moneda: s.moneda || 'MXN' } : null;
+}
+
+// ═══════════════════════════════════════════════
+// Week utilities
+// ═══════════════════════════════════════════════
+function getWeekRange(offset) {
+  const now  = new Date();
+  const dow  = now.getDay(); // 0 = Sunday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1) + offset * 7);
+  monday.setHours(0, 0, 0, 0);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function isoDate(d) { return d.toISOString().slice(0, 10); }
+
+function formatWeekLabel(days) {
+  const opts  = { day:'numeric', month:'short' };
+  const start = days[0].toLocaleDateString('es-MX', opts);
+  const end   = days[6].toLocaleDateString('es-MX', opts);
+  const year  = days[0].getFullYear();
+  return `${start} – ${end}, ${year}`;
+}
+
+function isToday(d) {
+  const t = new Date();
+  return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+}
+
+// ═══════════════════════════════════════════════
+// KPI bar
+// ═══════════════════════════════════════════════
+function updateKPIs() {
+  const all   = loadTms();
+  const days  = getWeekRange(0);
+  const startW = isoDate(days[0]);
+  const endW   = isoDate(days[6]);
+  const now    = new Date();
+  const year   = now.getFullYear();
+  const month  = now.getMonth();
+
+  const semanaHrs = all
+    .filter(e => e.fecha >= startW && e.fecha <= endW)
+    .reduce((s, e) => s + (parseFloat(e.horas) || 0), 0);
+
+  const mesEntries = all.filter(e => {
+    const d = new Date(e.fecha + 'T00:00:00');
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+  const mesHrs   = mesEntries.reduce((s, e) => s + (parseFloat(e.horas) || 0), 0);
+  const factHrs  = mesEntries.filter(e => e.facturable !== false).reduce((s, e) => s + (parseFloat(e.horas) || 0), 0);
+  const tasa     = mesHrs > 0 ? Math.round(factHrs / mesHrs * 100) : 0;
+
+  document.getElementById('kpi-semana').textContent = semanaHrs.toFixed(1);
+  document.getElementById('kpi-mes').textContent    = mesHrs.toFixed(1);
+  document.getElementById('kpi-fact').textContent   = factHrs.toFixed(1);
+  document.getElementById('kpi-tasa').textContent   = tasa + '%';
+
+  const mesLabel = new Date(year, month, 1).toLocaleDateString('es-MX', { month:'long', year:'numeric' });
+  document.getElementById('kpi-mes-sub').textContent = `horas en ${mesLabel}`;
+}
+
+// ═══════════════════════════════════════════════
+// View switching
+// ═══════════════════════════════════════════════
+function setView(v) {
+  currentView = v;
+  const isSem = v === 'semana';
+  document.getElementById('view-semana').style.display     = isSem ? '' : 'none';
+  document.getElementById('view-log').style.display        = isSem ? 'none' : '';
+  document.getElementById('week-nav').style.display        = isSem ? '' : 'none';
+  document.getElementById('log-filters').style.display     = isSem ? 'none' : 'flex';
+  document.getElementById('log-cat-pills').style.display   = isSem ? 'none' : 'flex';
+  document.getElementById('vbtn-semana').classList.toggle('active', isSem);
+  document.getElementById('vbtn-log').classList.toggle('active', !isSem);
+  if (isSem) renderWeek(); else renderLog();
+}
+
+// ═══════════════════════════════════════════════
+// Weekly view
+// ═══════════════════════════════════════════════
+function moveWeek(dir) { weekOffset += dir; renderWeek(); }
+function goToday()     { weekOffset = 0; renderWeek(); }
+
+function renderWeek() {
+  const days = getWeekRange(weekOffset);
+  document.getElementById('week-label').textContent = formatWeekLabel(days);
+
+  const all   = loadTms();
+  const byDay = {};
+  days.forEach(d => byDay[isoDate(d)] = []);
+  all.forEach(e => { if (byDay[e.fecha] !== undefined) byDay[e.fecha].push(e); });
+
+  // Collect unique client keys visible this week
+  const weekEntries = all.filter(e => byDay[e.fecha] !== undefined);
+  const clientKeys  = [...new Set(weekEntries.map(e => e.clienteId || '__internal'))];
+  if (clientKeys.length === 0) clientKeys.push('__internal');
+
+  // ── Header ──────────────────────────────────
+  const todayIdx = days.findIndex(d => isToday(d));
+  let headHtml = '<tr><th>Cliente</th>';
+  days.forEach((d, i) => {
+    const cls = i === todayIdx ? ' today-col' : '';
+    headHtml += `<th class="${cls}">${DIAS_ES[d.getDay()]}<br><span style="font-size:0.85em;font-weight:400;">${d.getDate()}</span></th>`;
+  });
+  headHtml += '</tr>';
+  document.getElementById('week-head').innerHTML = headHtml;
+
+  // ── Body ─────────────────────────────────────
+  let bodyHtml = '';
+  clientKeys.forEach(cid => {
+    const cName = cid === '__internal' ? 'Interno' : getClienteNombre(cid);
+    bodyHtml += `<tr><td>${escH(cName)}</td>`;
+    days.forEach((d, i) => {
+      const iso   = isoDate(d);
+      const items = (byDay[iso] || []).filter(e => (e.clienteId || '__internal') === cid);
+      const cls   = i === todayIdx ? ' today-col' : '';
+      bodyHtml += `<td class="${cls}" style="min-width:105px;">`;
+      items.forEach(e => {
+        const catM = CAT_META[e.categoria] || CAT_META.otro;
+        const fact = e.facturable !== false;
+        bodyHtml += `<div class="t-entry${fact ? '' : ' no-fact'}" onclick="editarTiempo('${e.id}')" title="${escH(e.descripcion || '')}">
+          <button class="t-entry-del" onclick="event.stopPropagation();eliminarTiempo('${e.id}')" title="Eliminar">✕</button>
+          <div class="t-entry-top">
+            <span class="t-entry-hrs">${(parseFloat(e.horas)||0).toFixed(1)}h</span>
+            <span class="t-entry-cat">${catM.icon}</span>
+          </div>
+          <div class="t-entry-desc">${escH((e.descripcion || '').slice(0,38))}</div>
+        </div>`;
+      });
+      bodyHtml += `<button class="day-add" onclick="abrirNuevoTiempo('${iso}','${cid === '__internal' ? '' : cid}')">+ añadir</button>`;
+      bodyHtml += '</td>';
+    });
+    bodyHtml += '</tr>';
+  });
+
+  // Extra row to add new entry without client constraint
+  bodyHtml += `<tr><td colspan="8" style="text-align:center;padding:0.25rem;">
+    <button class="day-add" style="color:var(--text-xs);font-size:0.64rem;text-align:center;" onclick="abrirNuevoTiempo()">+ nueva entrada</button>
+  </td></tr>`;
+  document.getElementById('week-body').innerHTML = bodyHtml;
+
+  // ── Footer totals ─────────────────────────────
+  let footHtml = '<tr><td>Total</td>';
+  let weekTotal = 0;
+  days.forEach((d, i) => {
+    const iso  = isoDate(d);
+    const tot  = (byDay[iso] || []).reduce((s, e) => s + (parseFloat(e.horas)||0), 0);
+    weekTotal += tot;
+    const cls  = i === todayIdx ? ' today-col' : '';
+    footHtml += `<td class="${cls}">${tot > 0 ? tot.toFixed(1)+'h' : '—'}</td>`;
+  });
+  footHtml += '</tr>';
+  document.getElementById('week-foot').innerHTML = footHtml;
+}
+
+// ═══════════════════════════════════════════════
+// Log view
+// ═══════════════════════════════════════════════
+function setCatFilter(cat) {
+  activeCatFilter = cat;
+  document.querySelectorAll('#log-cat-pills .filter-pill').forEach(p => {
+    const label = p.textContent.replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ]/g,'').trim().toLowerCase();
+    const match = cat === '' ? 'todas' : (CAT_META[cat]?.label || '').toLowerCase();
+    p.classList.toggle('active', label === match || (cat === '' && label === 'todas'));
+  });
+  renderLog();
+}
+
+function renderLog() {
+  const all    = loadTms();
+  const search = (document.getElementById('log-search')?.value || '').toLowerCase().trim();
+  const cliF   = document.getElementById('log-cli')?.value || '';
+  const catF   = activeCatFilter || document.getElementById('log-cat')?.value || '';
+  const factF  = document.getElementById('log-fact')?.value || '';
+  const mesF   = document.getElementById('log-mes')?.value || '';
+
+  let filtered = all.filter(e => {
+    if (cliF && e.clienteId !== cliF) return false;
+    if (catF && e.categoria !== catF) return false;
+    if (factF === 'si' && e.facturable === false)  return false;
+    if (factF === 'no' && e.facturable !== false)   return false;
+    if (mesF) {
+      const [y, m] = mesF.split('-').map(Number);
+      const d = new Date(e.fecha + 'T00:00:00');
+      if (d.getFullYear() !== y || d.getMonth() + 1 !== m) return false;
+    }
+    if (search) {
+      const hay = [e.descripcion, e.notas, getClienteNombre(e.clienteId), getServicioNombre(e.servicioId)].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+  const body = document.getElementById('log-body');
+  const foot = document.getElementById('log-foot');
+
+  if (filtered.length === 0) {
+    body.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="empty-state-icon">⏱️</div>
+      <div class="empty-state-title">Sin registros</div>
+      <div class="empty-state-desc">No hay entradas que coincidan con los filtros.<br>Usa <strong>+ Registrar tiempo</strong> para empezar.</div>
+    </div></td></tr>`;
+    foot.innerHTML = '';
+    return;
+  }
+
+  let totalHrs = 0, factHrs = 0;
+  body.innerHTML = filtered.map(e => {
+    const hrs  = parseFloat(e.horas) || 0;
+    totalHrs  += hrs;
+    const fact = e.facturable !== false;
+    if (fact) factHrs += hrs;
+    const catM  = CAT_META[e.categoria] || CAT_META.otro;
+    const cName = getClienteNombre(e.clienteId);
+    const sName = getServicioNombre(e.servicioId);
+    return `<tr>
+      <td>${e.fecha}</td>
+      <td>${escH(cName)}</td>
+      <td>${escH(sName)}</td>
+      <td><span class="cat-badge ${catM.cls}">${catM.label}</span></td>
+      <td style="max-width:220px;white-space:normal;font-size:0.7rem;">${escH(e.descripcion || '')}</td>
+      <td class="num">${hrs.toFixed(1)}</td>
+      <td class="center"><span class="fact-badge ${fact ? 'si' : 'no'}">${fact ? 'Sí' : 'No'}</span></td>
+      <td class="center" style="white-space:nowrap;">
+        <button class="edit-row" onclick="editarTiempo('${e.id}')">✏️</button>
+        <button class="del-row" onclick="eliminarTiempo('${e.id}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  foot.innerHTML = `<tr>
+    <td colspan="5">${filtered.length} registro${filtered.length !== 1 ? 's' : ''}</td>
+    <td class="num">${totalHrs.toFixed(1)}</td>
+    <td colspan="2">${factHrs.toFixed(1)} h fact.</td>
+  </tr>`;
+}
+
+// ═══════════════════════════════════════════════
+// Select population (shared across modals)
+// ═══════════════════════════════════════════════
+function populateSelects() {
+  const clientes  = getClientes();
+  const servicios = getServicios();
+
+  // Client selects
+  ['tms-cliente', 'rep-cliente', 'log-cli'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    clientes.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.nombreComercial || c.razonSocial;
+      sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+  });
+
+  // Servicio select
+  const srvSel = document.getElementById('tms-servicio');
+  if (srvSel) {
+    const cur = srvSel.value;
+    while (srvSel.options.length > 1) srvSel.remove(1);
+    servicios.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.nombre + (s.precio ? ` — $${s.precio}/${s.unidad || 'u'}` : '');
+      srvSel.appendChild(o);
+    });
+    if (cur) srvSel.value = cur;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Modal: Nueva / editar entrada
+// ═══════════════════════════════════════════════
+function abrirNuevoTiempo(fecha, clienteId) {
+  editingId = null;
+  populateSelects();
+  document.getElementById('tms-id').value           = '';
+  document.getElementById('tms-fecha').value         = fecha || isoDate(new Date());
+  document.getElementById('tms-cliente').value       = clienteId || '';
+  document.getElementById('tms-servicio').value      = '';
+  document.getElementById('tms-categoria').value     = 'consultoria';
+  document.getElementById('tms-desc').value          = '';
+  document.getElementById('tms-horas').value         = '';
+  document.getElementById('tms-tarifa').value        = '';
+  document.getElementById('tms-moneda').value        = 'MXN';
+  document.getElementById('tms-facturable').checked  = true;
+  document.getElementById('tms-notas').value         = '';
+  document.getElementById('modal-tms-title').textContent = 'Registrar tiempo';
+  document.querySelectorAll('.hrs-pill').forEach(p => p.classList.remove('active'));
+  actualizarPreviewTms();
+  document.getElementById('modal-tiempo').style.display = 'flex';
+  setTimeout(() => document.getElementById('tms-desc').focus(), 80);
+}
+
+function editarTiempo(id) {
+  const e = loadTms().find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+  populateSelects();
+  document.getElementById('tms-id').value           = e.id;
+  document.getElementById('tms-fecha').value         = e.fecha || '';
+  document.getElementById('tms-cliente').value       = e.clienteId || '';
+  document.getElementById('tms-servicio').value      = e.servicioId || '';
+  document.getElementById('tms-categoria').value     = e.categoria || 'consultoria';
+  document.getElementById('tms-desc').value          = e.descripcion || '';
+  document.getElementById('tms-horas').value         = e.horas || '';
+  document.getElementById('tms-tarifa').value        = e.tarifa || '';
+  document.getElementById('tms-moneda').value        = e.moneda || 'MXN';
+  document.getElementById('tms-facturable').checked  = e.facturable !== false;
+  document.getElementById('tms-notas').value         = e.notas || '';
+  document.getElementById('modal-tms-title').textContent = 'Editar entrada';
+  // Highlight matching quick-pill
+  const hVal = parseFloat(e.horas);
+  document.querySelectorAll('.hrs-pill').forEach(p => {
+    const pv = parseFloat(p.textContent.replace(':','.')) || (p.textContent === '0:30' ? 0.5 : 0);
+    p.classList.toggle('active', pv === hVal);
+  });
+  actualizarPreviewTms();
+  document.getElementById('modal-tiempo').style.display = 'flex';
+}
+
+function cerrarModalTiempo() {
+  document.getElementById('modal-tiempo').style.display = 'none';
+  editingId = null;
+}
+
+function setHoras(h, ev) {
+  document.getElementById('tms-horas').value = h;
+  document.querySelectorAll('.hrs-pill').forEach(p => p.classList.remove('active'));
+  if (ev && ev.target) ev.target.classList.add('active');
+  actualizarPreviewTms();
+}
+
+function onServicioChange() {
+  const srvId = document.getElementById('tms-servicio').value;
+  if (!srvId) return;
+  const t = getServicioTarifa(srvId);
+  if (t && !document.getElementById('tms-tarifa').value) {
+    document.getElementById('tms-tarifa').value = t.precio || '';
+    document.getElementById('tms-moneda').value = t.moneda || 'MXN';
+  }
+  actualizarPreviewTms();
+}
+
+function actualizarPreviewTms() {
+  const horas   = parseFloat(document.getElementById('tms-horas').value)  || 0;
+  const tarifa  = parseFloat(document.getElementById('tms-tarifa').value) || 0;
+  const moneda  = document.getElementById('tms-moneda').value || 'MXN';
+  const fact    = document.getElementById('tms-facturable').checked;
+  const badge   = document.getElementById('fact-badge-lbl');
+  if (badge) { badge.textContent = fact ? 'Sí' : 'No'; badge.className = 'fact-badge ' + (fact ? 'si' : 'no'); }
+  const preview = document.getElementById('tms-preview');
+  const preVal  = document.getElementById('tms-preview-val');
+  if (horas > 0 && tarifa > 0) {
+    const total   = horas * tarifa;
+    const cur     = moneda === 'MXN' ? 'MXN' : (moneda === 'USD' ? 'USD' : 'EUR');
+    preVal.textContent = new Intl.NumberFormat('es-MX', { style:'currency', currency: cur }).format(total) + ' ' + moneda;
+    preview.style.display = '';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function guardarTiempo() {
+  const fecha = document.getElementById('tms-fecha').value;
+  const horas = parseFloat(document.getElementById('tms-horas').value);
+  const desc  = document.getElementById('tms-desc').value.trim();
+  if (!fecha)           { alert('Ingresa la fecha.'); return; }
+  if (!horas || horas <= 0) { alert('Ingresa las horas (mínimo 0.25).'); return; }
+  if (!desc)            { alert('Ingresa una descripción del trabajo realizado.'); return; }
+
+  const all = loadTms();
+  const now = new Date().toISOString();
+  const entry = {
+    fecha,
+    clienteId:   document.getElementById('tms-cliente').value   || null,
+    servicioId:  document.getElementById('tms-servicio').value  || null,
+    categoria:   document.getElementById('tms-categoria').value,
+    descripcion: desc,
+    horas,
+    tarifa:      parseFloat(document.getElementById('tms-tarifa').value) || null,
+    moneda:      document.getElementById('tms-moneda').value,
+    facturable:  document.getElementById('tms-facturable').checked,
+    notas:       document.getElementById('tms-notas').value.trim(),
+    actualizado: now,
+  };
+
+  if (editingId) {
+    const idx = all.findIndex(x => x.id === editingId);
+    if (idx === -1) return;
+    Object.assign(all[idx], entry);
+  } else {
+    all.push({ id:'tms-' + Date.now(), creado: now, ...entry });
+  }
+
+  saveTms(all);
+  cerrarModalTiempo();
+  updateKPIs();
+  if (currentView === 'semana') renderWeek(); else renderLog();
+}
+
+function eliminarTiempo(id) {
+  if (!confirm('¿Eliminar esta entrada de tiempo?')) return;
+  saveTms(loadTms().filter(x => x.id !== id));
+  updateKPIs();
+  if (currentView === 'semana') renderWeek(); else renderLog();
+}
+
+// ═══════════════════════════════════════════════
+// Export CSV
+// ═══════════════════════════════════════════════
+function exportarTiempoCSV() {
+  const all = loadTms();
+  if (all.length === 0) { alert('No hay registros para exportar.'); return; }
+  const cols = ['fecha','clienteNombre','servicioNombre','categoria','descripcion','horas','tarifa','moneda','facturable','notas'];
+  const rows = all.map(e => [
+    e.fecha,
+    getClienteNombre(e.clienteId),
+    getServicioNombre(e.servicioId),
+    CAT_META[e.categoria]?.label || e.categoria,
+    e.descripcion || '',
+    e.horas,
+    e.tarifa || '',
+    e.moneda || 'MXN',
+    e.facturable !== false ? 'Sí' : 'No',
+    e.notas || '',
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  descargarCSV([cols.join(','), ...rows].join('\n'), 'tiempo_' + isoDate(new Date()) + '.csv');
+}
+
+function descargarCSV(csv, nombre) {
+  const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href:url, download:nombre });
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════
+// Reporte para factura
+// ═══════════════════════════════════════════════
+function exportarTiempoFactura() {
+  populateSelects();
+  const now = new Date();
+  document.getElementById('rep-mes').value     = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('rep-cliente').value = '';
+  generarReporte();
+  document.getElementById('modal-reporte').style.display = 'flex';
+}
+function cerrarReporte() { document.getElementById('modal-reporte').style.display = 'none'; }
+
+function generarReporte() {
+  const cliId = document.getElementById('rep-cliente').value;
+  const mesV  = document.getElementById('rep-mes').value;
+  const div   = document.getElementById('rep-content');
+
+  if (!mesV) { div.textContent = 'Selecciona un período para generar el reporte…'; div._csvData = null; return; }
+
+  const [y, m] = mesV.split('-').map(Number);
+  const all = loadTms().filter(e => {
+    const d = new Date(e.fecha + 'T00:00:00');
+    if (d.getFullYear() !== y || d.getMonth() + 1 !== m) return false;
+    if (cliId && e.clienteId !== cliId) return false;
+    if (e.facturable === false) return false;
+    return true;
+  }).sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  if (all.length === 0) {
+    div.textContent = 'No hay horas facturables en el período seleccionado.';
+    div._csvData = null;
+    return;
+  }
+
+  const cliNom   = cliId ? getClienteNombre(cliId) : 'Todos los clientes';
+  const mesLabel = new Date(y, m-1, 1).toLocaleDateString('es-MX', { month:'long', year:'numeric' });
+  const totalHrs = all.reduce((s, e) => s + (parseFloat(e.horas)||0), 0);
+
+  // Group by servicio
+  const bySrv = {};
+  all.forEach(e => {
+    const k = e.servicioId || '__gen';
+    if (!bySrv[k]) bySrv[k] = [];
+    bySrv[k].push(e);
+  });
+
+  const line48 = '─'.repeat(48);
+  let txt = `REPORTE DE HORAS FACTURABLES\n${line48}\n`;
+  txt += `Cliente : ${cliNom}\n`;
+  txt += `Período : ${mesLabel}\n`;
+  txt += `Generado: ${new Date().toLocaleDateString('es-MX')}\n`;
+  txt += `${line48}\n\n`;
+
+  Object.entries(bySrv).forEach(([srvId, entries]) => {
+    const srvNom = srvId === '__gen' ? 'Servicios generales' : getServicioNombre(srvId);
+    const srvHrs = entries.reduce((s, e) => s + (parseFloat(e.horas)||0), 0);
+    txt += `▸ ${srvNom}  (${srvHrs.toFixed(1)} h)\n`;
+    entries.forEach(e => {
+      const cat = CAT_META[e.categoria]?.label || e.categoria || '';
+      txt += `  ${e.fecha}  [${cat}]  ${e.descripcion}  —  ${(parseFloat(e.horas)||0).toFixed(1)} h\n`;
+    });
+    txt += '\n';
+  });
+
+  txt += `${line48}\n`;
+  txt += `TOTAL HORAS FACTURABLES: ${totalHrs.toFixed(1)} h\n`;
+
+  // Amount summary if tarifa present
+  const conTarifa = all.filter(e => e.tarifa && e.tarifa > 0);
+  if (conTarifa.length > 0) {
+    const byMon = {};
+    conTarifa.forEach(e => {
+      const mon = e.moneda || 'MXN';
+      byMon[mon] = (byMon[mon] || 0) + (parseFloat(e.horas)||0) * (parseFloat(e.tarifa)||0);
+    });
+    Object.entries(byMon).forEach(([mon, amt]) => {
+      const cur = mon === 'EUR' ? 'EUR' : (mon === 'USD' ? 'USD' : 'MXN');
+      txt += `MONTO ESTIMADO (${mon}): ${new Intl.NumberFormat('es-MX', { style:'currency', currency: cur }).format(amt)}\n`;
+    });
+  }
+
+  div.textContent = txt;
+  div._csvData    = all;
+}
+
+function copiarReporte() {
+  const txt = document.getElementById('rep-content').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn  = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => btn.textContent = orig, 2000);
+  }).catch(() => alert('No se pudo copiar. Selecciona el texto manualmente.'));
+}
+
+function exportarReporteCsv() {
+  const data = document.getElementById('rep-content')._csvData;
+  if (!data || data.length === 0) { alert('Genera el reporte primero.'); return; }
+  const cols = ['fecha','cliente','servicio','categoria','descripcion','horas','tarifa','moneda'];
+  const rows = data.map(e => [
+    e.fecha,
+    getClienteNombre(e.clienteId),
+    getServicioNombre(e.servicioId),
+    CAT_META[e.categoria]?.label || e.categoria,
+    e.descripcion || '',
+    e.horas,
+    e.tarifa || '',
+    e.moneda || 'MXN',
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  descargarCSV([cols.join(','), ...rows].join('\n'), 'reporte_horas.csv');
+}
+
+// ═══════════════════════════════════════════════
+// Utilities
+// ═══════════════════════════════════════════════
+function escH(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function logout() {
+  if (confirm('¿Salir de Santaglia Compass?')) window.location.href = 'index.html';
+}
+
+// ═══════════════════════════════════════════════
+// Import CSV / Excel
+// ═══════════════════════════════════════════════
+function normHTms(s) { return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim(); }
+
+function parseCSVRowTms(line) {
+  const row = []; let cur = '', inQ = false;
+  for (const ch of line + ',') {
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { row.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  return row;
+}
+
+function makeGetColTms(header) {
+  return (row, ...names) => {
+    for (const name of names) {
+      const nm  = normHTms(name);
+      const idx = header.findIndex(h => normHTms(h).includes(nm));
+      if (idx >= 0 && row[idx] !== undefined) return String(row[idx]).replace(/^"|"$/g,'').trim();
+    }
+    return '';
+  };
+}
+
+function buildTmsFromRow(row, getCol, idx) {
+  const fecha = getCol(row,'fecha','date');
+  const horas = parseFloat(getCol(row,'horas','hours','hrs'));
+  const desc  = getCol(row,'descripcion','descripción','description','detalle');
+  if (!fecha || !horas) return null;
+  const factStr = getCol(row,'facturable','billable').toUpperCase();
+  return {
+    id:          '',
+    fecha,
+    clienteId:   null, // resolved by name below if possible
+    servicioId:  null,
+    categoria:   getCol(row,'categoria','categoría','category') || 'consultoria',
+    descripcion: desc,
+    horas,
+    tarifa:      parseFloat(getCol(row,'tarifa','rate','precio')) || null,
+    moneda:      getCol(row,'moneda','currency') || 'MXN',
+    facturable:  factStr !== 'NO' && factStr !== '0' && factStr !== 'FALSE',
+    notas:       getCol(row,'notas','notes','comentarios'),
+    actualizado: new Date().toISOString(),
+  };
+}
+
+function mergeTms(records) {
+  const all = loadTms();
+  let added = 0, skipped = 0;
+  records.forEach((reg, i) => {
+    if (!reg) { skipped++; return; }
+    reg.id     = 'tms-' + Date.now() + '-' + i;
+    reg.creado = new Date().toISOString();
+    all.push(reg); added++;
+  });
+  saveTms(all);
+  toast(`Importado: ${added} entrada${added!==1?'s':''}${skipped ? `, ${skipped} omitida${skipped!==1?'s':''}` : ''}`, 'success');
+  updateKPIs();
+  if (currentView === 'semana') renderWeek(); else renderLog();
+}
+
+function importarArchivoTiempo(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') { importarTiempoXLSX(file); } else { importarTiempoCSV(file); }
+}
+
+function importarTiempoCSV(file) {
+  if (!file) return;
+  const tryParse = (text) => {
+    const clean = text.replace(/^﻿/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    const lines = clean.split('\n').filter(l => l.trim());
+    if (lines.length < 2) { toast('Archivo vacío o sin datos', 'error'); return; }
+    const headerRow = parseCSVRowTms(lines[0]);
+    const getCol    = makeGetColTms(headerRow);
+    const records   = [];
+    for (let i = 1; i < lines.length; i++) records.push(buildTmsFromRow(parseCSVRowTms(lines[i]), getCol, i));
+    mergeTms(records);
+  };
+  const reader = new FileReader();
+  reader.onload = e => {
+    let text = e.target.result;
+    if (text.includes('�')) { const r2 = new FileReader(); r2.onload = e2 => tryParse(e2.target.result); r2.readAsText(file,'windows-1252'); }
+    else { tryParse(text); }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importarTiempoXLSX(file) {
+  const loadSheetJS = (cb) => {
+    if (window.XLSX) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = cb; s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
+    document.head.appendChild(s);
+  };
+  loadSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        if (rows.length < 2) { toast('Excel vacío', 'error'); return; }
+        const headerRow = rows[0].map(String);
+        const getCol    = makeGetColTms(headerRow);
+        const records   = rows.slice(1).map((row, i) => buildTmsFromRow(row.map(String), getCol, i+1));
+        mergeTms(records);
+      } catch(err) { toast('Error al leer Excel: ' + err.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ─── toast helper (if not present from styles.css) ───────────
+function toast(msg, type) {
+  const id = 'toast-' + Date.now();
+  let c = document.getElementById('toasts');
+  if (!c) { c = Object.assign(document.createElement('div'), { id:'toasts' }); c.style.cssText='position:fixed;bottom:1.2rem;right:1.2rem;display:flex;flex-direction:column;gap:0.4rem;z-index:9999;'; document.body.appendChild(c); }
+  const t = document.createElement('div');
+  t.id = id;
+  t.style.cssText = `padding:0.55rem 1rem;border-radius:4px;font-size:0.78rem;font-family:var(--brand);font-weight:600;color:#fff;background:${type==='error'?'#c0392b':type==='success'?'#1a7a40':'#1a2d80'};box-shadow:0 2px 10px rgba(0,0,0,0.18);animation:fadeIn 0.2s;`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(()=>t.remove(),400); }, 3000);
+}
+
+// Cross-page exposure
+window.getTiempoEntries  = () => loadTms();
+window.getTiempoActivos  = () => loadTms().filter(e => e.facturable !== false);
+
+// ═══════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════
+function init() {
+  const now = new Date();
+  const logMes = document.getElementById('log-mes');
+  if (logMes) logMes.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  populateSelects();
+  updateKPIs();
+  renderWeek();
+  setView('semana');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Gastos Recurrentes</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .rc-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.25rem; }
+    .rc-kpi-item { background:var(--bg-white); padding:0.85rem 1.1rem; }
+    .rc-kpi-label { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.2rem; }
+    .rc-kpi-val { font-family:var(--brand); font-size:1.05rem; font-weight:700; color:var(--navy); }
+    .rc-kpi-val.red  { color:var(--red); }
+    .rc-kpi-val.gold { color:#8a6800; }
+    .rc-kpi-sub { font-size:0.63rem; color:var(--text-xs); margin-top:0.1rem; }
+
+    .rc-panel { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:1.5rem; }
+    .rc-panel-hdr { display:flex; align-items:center; gap:0.75rem; padding:0.65rem 1rem; border-bottom:1px solid var(--border); background:#f8f9fc; }
+    .rc-panel-title { font-family:var(--brand); font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--navy); flex:1; }
+
+    .rc-table { width:100%; border-collapse:collapse; font-size:0.73rem; }
+    .rc-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.3rem 0.65rem; text-align:left; white-space:nowrap; border-right:1px solid rgba(255,255,255,0.12); }
+    .rc-table th:last-child { border-right:none; }
+    .rc-table th.num { text-align:right; }
+    .rc-table td { padding:0.22rem 0.65rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .rc-table tbody tr:hover td { background:var(--navy-pale); }
+    .rc-table .num { text-align:right; font-family:'Courier New',monospace; }
+    .rc-table tfoot td { border-top:2px solid var(--navy); background:#e8ecf8; font-weight:700; font-family:var(--brand); font-size:0.7rem; padding:0.4rem 0.65rem; color:var(--navy); }
+
+    .rc-badge { display:inline-block; font-family:var(--brand); font-size:0.55rem; font-weight:700; letter-spacing:0.05em; padding:0.08rem 0.4rem; border-radius:2px; text-transform:uppercase; }
+    .rc-badge-egreso  { background:#fde8e8; color:var(--red); }
+    .rc-badge-ingreso { background:#e6f7ee; color:var(--green); }
+    .rc-badge-on  { background:#e6f7ee; color:var(--green); }
+    .rc-badge-off { background:#f4f5f8; color:var(--text-xs); }
+
+    .rc-act-btn { background:none; border:none; cursor:pointer; font-size:0.78rem; padding:0.1rem 0.25rem; border-radius:2px; color:var(--text-xs); }
+    .rc-act-btn:hover { color:var(--navy); background:var(--navy-pale); }
+
+    /* Day pills */
+    .day-pill { display:inline-block; font-family:var(--brand); font-size:0.62rem; font-weight:700; width:1.5rem; text-align:center; padding:0.08rem 0; border-radius:2px; background:var(--navy-pale); color:var(--navy); }
+
+    /* Periodicidad badges */
+    .per-badge { display:inline-block; font-family:var(--brand); font-size:0.5rem; font-weight:700; letter-spacing:0.04em; padding:0.06rem 0.35rem; border-radius:2px; text-transform:uppercase; white-space:nowrap; }
+    .per-Mensual    { background:#e8ecf8; color:var(--navy); }
+    .per-Semanal    { background:#e6f7ee; color:#145a32; }
+    .per-Quincenal  { background:#eaf4ff; color:#1a6fbf; }
+    .per-Bimestral  { background:#fef3db; color:#7a5000; }
+    .per-Trimestral { background:#fde8e8; color:var(--red); }
+    .per-Semestral  { background:#f4e8fd; color:#6c3483; }
+    .per-Anual      { background:#ffeedd; color:#a04000; }
+
+    /* Month checkboxes in modal */
+    .mes-check-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:0.3rem; margin-top:0.35rem; }
+    .mes-check-btn { padding:0.28rem 0.2rem; font-family:var(--brand); font-size:0.62rem; font-weight:600; border:1px solid var(--border); border-radius:2px; background:var(--bg-white); color:var(--text-dim); cursor:pointer; text-align:center; transition:all 0.12s; }
+    .mes-check-btn:hover { border-color:var(--navy); color:var(--navy); }
+    .mes-check-btn.sel { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+    @media(max-width:800px) { .rc-kpi { grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item active" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Planeación financiera</div>
+          <h1 class="page-heading">Gastos Recurrentes</h1>
+          <div class="page-meta">Catálogo de erogaciones mensuales fijas — base para la proyección de saldos</div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <a href="proyectados.html" class="btn btn-ghost">Ver proyección →</a>
+          <button class="btn btn-ghost" onclick="descargarPlantillaRec()" title="Descarga una plantilla Excel para carga masiva">📥 Plantilla Excel</button>
+          <label class="btn btn-ghost" style="cursor:pointer; position:relative;" title="Importa recurrentes desde la plantilla Excel">
+            📤 Importar Excel
+            <input type="file" accept=".xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="importarRecExcel(this)" />
+          </label>
+          <button class="btn btn-primary" onclick="abrirModalRec()">+ Agregar recurrente</button>
+        </div>
+      </div>
+
+      <!-- TC strip -->
+      <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; padding:0.4rem 0.9rem; margin-bottom:1rem; background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); font-size:0.72rem;">
+        <span style="font-family:var(--brand); font-weight:700; color:var(--navy); letter-spacing:0.04em; font-size:0.68rem; white-space:nowrap;">💱 Tipo de cambio USD/MXN</span>
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <label style="font-family:var(--brand); font-size:0.63rem; font-weight:700; color:var(--red); letter-spacing:0.05em; white-space:nowrap;">TC VENTA <span style="font-weight:400; color:var(--text-xs);">(egresos USD)</span></label>
+          <input type="number" id="rc-tc-venta" value="17.80" min="1" step="0.01"
+            style="width:86px; padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:2px;"
+            oninput="renderAll()" />
+        </div>
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <label style="font-family:var(--brand); font-size:0.63rem; font-weight:700; color:var(--green); letter-spacing:0.05em; white-space:nowrap;">TC COMPRA <span style="font-weight:400; color:var(--text-xs);">(ingresos USD)</span></label>
+          <input type="number" id="rc-tc-compra" value="17.20" min="1" step="0.01"
+            style="width:86px; padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:2px;"
+            oninput="renderAll()" />
+        </div>
+        <span style="color:var(--text-xs); font-size:0.63rem; flex:1;">Los importes en USD se convierten al TC correspondiente para calcular los totales en MXN</span>
+      </div>
+
+      <!-- KPIs -->
+      <div class="rc-kpi">
+        <div class="rc-kpi-item">
+          <div class="rc-kpi-label">Total egresos / mes (MXN)</div>
+          <div class="rc-kpi-val red" id="rc-kpi-egresos">—</div>
+          <div class="rc-kpi-sub" id="rc-kpi-egresos-sub"></div>
+        </div>
+        <div class="rc-kpi-item">
+          <div class="rc-kpi-label">Total ingresos / mes (MXN)</div>
+          <div class="rc-kpi-val" id="rc-kpi-ingresos">—</div>
+          <div class="rc-kpi-sub" id="rc-kpi-ingresos-sub"></div>
+        </div>
+        <div class="rc-kpi-item">
+          <div class="rc-kpi-label">Neto proyectado / mes</div>
+          <div class="rc-kpi-val gold" id="rc-kpi-neto">—</div>
+          <div class="rc-kpi-sub" id="rc-kpi-neto-sub">superávit o déficit mensual en MXN</div>
+        </div>
+        <div class="rc-kpi-item">
+          <div class="rc-kpi-label">Conceptos activos</div>
+          <div class="rc-kpi-val" id="rc-kpi-count">—</div>
+          <div class="rc-kpi-sub" id="rc-kpi-count-sub"></div>
+        </div>
+      </div>
+
+      <!-- Tabla egresos -->
+      <div class="rc-panel">
+        <div class="rc-panel-hdr">
+          <span class="rc-panel-title">💸 Egresos recurrentes</span>
+          <span id="rc-eg-count" style="font-size:0.65rem; color:var(--text-xs);"></span>
+          <input id="rc-buscar-eg" type="text" placeholder="Buscar…"
+            style="padding:0.22rem 0.55rem; font-size:0.7rem; border:1px solid var(--border); border-radius:2px; width:160px;"
+            oninput="renderTablaRec('eg')" />
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="rc-table">
+            <thead>
+              <tr>
+                <th style="min-width:90px;">Calendario</th>
+                <th>Descripción</th>
+                <th>Concepto</th>
+                <th>Cuenta bancaria</th>
+                <th>Cta. Contable</th>
+                <th>Moneda</th>
+                <th class="num">Importe / período</th>
+                <th class="num" style="background:#12205e;">Equiv. MXN/mes</th>
+                <th style="width:54px; text-align:center;">Estado</th>
+                <th style="width:64px; text-align:center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="rc-eg-body"></tbody>
+            <tfoot id="rc-eg-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tabla ingresos -->
+      <div class="rc-panel">
+        <div class="rc-panel-hdr">
+          <span class="rc-panel-title">📥 Ingresos recurrentes</span>
+          <span id="rc-in-count" style="font-size:0.65rem; color:var(--text-xs);"></span>
+          <input id="rc-buscar-in" type="text" placeholder="Buscar…"
+            style="padding:0.22rem 0.55rem; font-size:0.7rem; border:1px solid var(--border); border-radius:2px; width:160px;"
+            oninput="renderTablaRec('in')" />
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="rc-table">
+            <thead>
+              <tr>
+                <th style="min-width:90px;">Calendario</th>
+                <th>Descripción</th>
+                <th>Concepto</th>
+                <th>Cuenta bancaria</th>
+                <th>Cta. Contable</th>
+                <th>Moneda</th>
+                <th class="num">Importe / período</th>
+                <th class="num" style="background:#12205e;">Equiv. MXN/mes</th>
+                <th style="width:54px; text-align:center;">Estado</th>
+                <th style="width:64px; text-align:center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="rc-in-body"></tbody>
+            <tfoot id="rc-in-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ══ MODAL: Agregar / Editar recurrente ══ -->
+<div class="modal-backdrop hidden" id="modal-rec">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-rec-title">Nuevo gasto recurrente</span>
+      <button class="modal-close" onclick="closeModal('modal-rec')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem 1rem;">
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Descripción *</label>
+          <input class="form-input" id="rc-desc" type="text" placeholder="Ej: Nómina asimilable, Renta oficina…" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo *</label>
+          <select class="form-input" id="rc-tipo" onchange="rcTipoChange()">
+            <option value="Egreso">Egreso</option>
+            <option value="Ingreso">Ingreso</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Periodicidad *</label>
+          <select class="form-input" id="rc-period" onchange="rcPeriodChange()">
+            <option value="Mensual">Mensual</option>
+            <option value="Semanal">Semanal (cada semana)</option>
+            <option value="Quincenal">Quincenal (cada 15 días)</option>
+            <option value="Bimestral">Bimestral (cada 2 meses)</option>
+            <option value="Trimestral">Trimestral (cada 3 meses)</option>
+            <option value="Semestral">Semestral (cada 6 meses)</option>
+            <option value="Anual">Anual</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="rc-dia-group">
+          <label class="form-label" id="rc-dia-label">Día estimado de pago (1–28) *</label>
+          <input class="form-input" id="rc-dia" type="number" min="1" max="28" placeholder="1" oninput="rcUpdateEquiv()" />
+        </div>
+
+        <!-- Día de la semana: solo visible para Semanal -->
+        <div class="form-group" id="rc-diasem-group" style="display:none;">
+          <label class="form-label">Día de la semana *</label>
+          <select class="form-input" id="rc-diasem" onchange="rcUpdateEquiv()">
+            <option value="1">Lunes</option>
+            <option value="2">Martes</option>
+            <option value="3">Miércoles</option>
+            <option value="4">Jueves</option>
+            <option value="5">Viernes</option>
+            <option value="6">Sábado</option>
+            <option value="0">Domingo</option>
+          </select>
+        </div>
+
+        <!-- Meses de pago: visible para periodicidades no mensuales ni semanales -->
+        <div class="form-group" id="rc-meses-group" style="grid-column:1/-1; display:none;">
+          <label class="form-label">Meses en que se realiza el pago *</label>
+          <!-- Presets por periodicidad -->
+          <div id="rc-presets-bim" style="display:none; flex-wrap:wrap; gap:0.35rem; margin-bottom:0.5rem;" class="flex">
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([1,3,5,7,9,11])">Ciclo A — impares (Ene·Mar·May·Jul·Sep·Nov)</button>
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([2,4,6,8,10,12])">Ciclo B — pares (Feb·Abr·Jun·Ago·Oct·Dic)</button>
+          </div>
+          <div id="rc-presets-tri" style="display:none; flex-wrap:wrap; gap:0.35rem; margin-bottom:0.5rem;" class="flex">
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([1,4,7,10])">Ene / Abr / Jul / Oct</button>
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([2,5,8,11])">Feb / May / Ago / Nov</button>
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([3,6,9,12])">Mar / Jun / Sep / Dic</button>
+          </div>
+          <div id="rc-presets-sem" style="display:none; flex-wrap:wrap; gap:0.35rem; margin-bottom:0.5rem;" class="flex">
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([1,7])">Ene / Jul</button>
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([2,8])">Feb / Ago</button>
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([3,9])">Mar / Sep</button>
+            <button type="button" class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;" onclick="setMesesPreset([6,12])">Jun / Dic</button>
+          </div>
+          <div class="mes-check-grid" id="rc-meses-checks"></div>
+          <div style="font-size:0.64rem; color:var(--text-xs); margin-top:0.3rem;" id="rc-meses-hint"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Concepto</label>
+          <input class="form-input" id="rc-concepto" type="text" placeholder="Ej: Nómina, Honorarios, Renta…" list="rc-conc-list" />
+          <datalist id="rc-conc-list"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta Contable</label>
+          <input class="form-input" id="rc-cc" type="text" placeholder="Ej: Asimilables, Servicios…" list="rc-cc-list" />
+          <datalist id="rc-cc-list"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta bancaria *</label>
+          <select class="form-input" id="rc-cuenta">
+            <option value="">— Seleccionar —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Moneda</label>
+          <select class="form-input" id="rc-moneda">
+            <option value="MXN">MXN</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="rc-importe-label">Importe por período *</label>
+          <input class="form-input" id="rc-importe" type="number" min="0" step="any" placeholder="0.00" oninput="rcUpdateEquiv()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-input" id="rc-activo">
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </div>
+
+        <!-- Equivalente mensual (calculado, solo informativo) -->
+        <div id="rc-equiv-wrap" style="grid-column:1/-1; display:none; background:#f0f3ff; border-radius:var(--radius); padding:0.5rem 0.8rem; font-size:0.73rem; color:var(--navy);">
+          <span style="font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-xs);">Equivalente mensual estimado →</span>
+          <span id="rc-equiv-val" style="font-weight:700; margin-left:0.5rem;">—</span>
+          <span id="rc-equiv-note" style="font-size:0.63rem; color:var(--text-xs); margin-left:0.4rem;"></span>
+        </div>
+
+        <div class="form-group" id="rc-habil-group">
+          <label class="form-label">Ajustar a día hábil</label>
+          <select class="form-input" id="rc-habil">
+            <option value="no">No — usar fecha exacta</option>
+            <option value="next">Siguiente hábil (lunes) — retenciones SAT, IMSS</option>
+            <option value="prev">Hábil anterior (viernes) — honorarios y pagos anticipados</option>
+          </select>
+          <div style="font-size:0.65rem; color:var(--text-xs); margin-top:0.2rem;">Si la fecha cae en fin de semana, se recorre al día indicado</div>
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Notas</label>
+          <input class="form-input" id="rc-notas" type="text" placeholder="Información adicional…" />
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-rec')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarRec()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+
+const KEY_REC = 'stgl_recurrentes';
+
+/* ══════════════════════════════════════════════════════
+   PERIODICIDAD — constantes y cálculo
+══════════════════════════════════════════════════════ */
+const MESES_CORTOS  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const DIAS_SEMANA   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DIAS_CORTOS   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+// Factor para obtener el equivalente mensual: importe × factor = monto/mes
+const PERIOD_FACTOR = {
+  'Semanal':    52 / 12,   // ≈ 4.333 semanas/mes
+  'Quincenal':  2,          // 2 quincenas/mes
+  'Mensual':    1,
+  'Bimestral':  1 / 2,
+  'Trimestral': 1 / 3,
+  'Semestral':  1 / 6,
+  'Anual':      1 / 12,
+};
+
+const PERIOD_SHORT = {
+  'Semanal':'sem', 'Quincenal':'qna', 'Mensual':'mes',
+  'Bimestral':'bim', 'Trimestral':'trim', 'Semestral':'sem.', 'Anual':'anual',
+};
+
+// Días del mes que caen en un día de semana dado (0=Dom..6=Sáb)
+function _diasDelMesPorSemana(targetDay, year, month) {
+  const mo1   = month + 1;
+  const total = new Date(year, month + 1, 0).getDate();
+  const dates = [];
+  for (let d = 1; d <= total; d++) {
+    if (new Date(year, month, d).getDay() === targetDay)
+      dates.push(`${year}-${String(mo1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  }
+  return dates;
+}
+
+// ¿Cuántos movimientos genera este recurrente en un mes dado?
+function movsPorMes(r, year, month) {
+  const per    = r.periodicidad || 'Mensual';
+  const mo1    = month + 1;
+  const dia    = r.diaEstimado || 1;
+  if (per === 'Semanal') {
+    if (r.diaSemana != null && r.diaSemana !== '')
+      return _diasDelMesPorSemana(parseInt(r.diaSemana), year, month).length;
+    let n = 0;
+    for (let d = dia; d <= 28; d += 7) n++;
+    return n;
+  }
+  if (per === 'Quincenal') return 2;
+  if (per === 'Mensual')   return 1;
+  const mesesPago = r.mesesPago || [];
+  return mesesPago.includes(mo1) ? 1 : 0;
+}
+
+// Fechas de pago de un recurrente en un mes concreto (array de 'YYYY-MM-DD')
+/* Siguiente día hábil (lunes si cae en finde) */
+function nextBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  if (dow === 6) d.setDate(d.getDate() + 2);
+  if (dow === 0) d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+}
+
+/* Hábil anterior (viernes si cae en finde) */
+function prevBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  if (dow === 6) d.setDate(d.getDate() - 1);
+  if (dow === 0) d.setDate(d.getDate() - 2);
+  return d.toISOString().split('T')[0];
+}
+
+function fechasPorMes(r, year, month) {
+  const per  = r.periodicidad || 'Mensual';
+  const mo1  = month + 1;
+  const dia  = Math.min(r.diaEstimado || 1, 28);
+  const pad  = n => String(Math.min(n, 28)).padStart(2, '0');
+  const pfx  = `${year}-${String(mo1).padStart(2,'0')}-`;
+  /* Ajuste a día hábil según dirección: 'next' → lunes, 'prev' → viernes, legacy true → next */
+  const hab = r.ajustarDiaHabil;
+  const ajustar = d =>
+    (hab === 'next' || hab === true || hab === 'true') ? nextBusinessDay(d) :
+    (hab === 'prev')                                   ? prevBusinessDay(d)  : d;
+
+  if (per === 'Semanal') {
+    if (r.diaSemana != null && r.diaSemana !== '')
+      return _diasDelMesPorSemana(parseInt(r.diaSemana), year, month);
+    // Legado: diaEstimado + cada 7 días
+    const dates = [];
+    for (let d = dia; d <= 28; d += 7) dates.push(pfx + pad(d));
+    return dates;
+  }
+  if (per === 'Quincenal') {
+    return [ ajustar(pfx + pad(dia)), ajustar(pfx + pad(Math.min(dia + 15, 28))) ];
+  }
+  if (per === 'Mensual') return [ ajustar(pfx + pad(dia)) ];
+  const mesesPago = r.mesesPago || [];
+  return mesesPago.includes(mo1) ? [ ajustar(pfx + pad(dia)) ] : [];
+}
+
+// Equivalente mensual de un importe en unidades nativas (sin conversión de divisa)
+function importeMensualNativo(importe, periodicidad) {
+  const factor = PERIOD_FACTOR[periodicidad || 'Mensual'] || 1;
+  return (parseFloat(importe) || 0) * factor;
+}
+
+/* ══════════════════════════════════════════════════════
+   DIVISAS — TC y conversión
+══════════════════════════════════════════════════════ */
+function getTCVenta()  { return parseFloat(document.getElementById('rc-tc-venta')?.value)  || 17.80; }
+function getTCCompra() { return parseFloat(document.getElementById('rc-tc-compra')?.value) || 17.20; }
+
+/*
+ * toMXN — convierte un MONTO (ya en unidades nativas) a MXN.
+ *  • Egreso  en USD → TC Venta  (banco vende USD caro)
+ *  • Ingreso en USD → TC Compra (banco compra USD barato)
+ *  • MXN → sin conversión
+ */
+function toMXN(monto, moneda, tipo) {
+  if (moneda !== 'USD') return monto;
+  const tc = (tipo === 'Egreso') ? getTCVenta() : getTCCompra();
+  return monto * tc;
+}
+
+// Equivalente mensual en MXN (combina periodicidad + conversión de divisa)
+function mensualMXN(r) {
+  return toMXN(importeMensualNativo(r.importe, r.periodicidad), r.moneda, r.tipo);
+}
+
+/* ══════════════════════════════════════════════════════
+   FORMATO
+══════════════════════════════════════════════════════ */
+function fmtMXN(n) {
+  if (n === null || n === undefined) return '—';
+  return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function fmtCur(n, moneda) {
+  const prefix = moneda === 'USD' ? 'US$' : '$';
+  return prefix + Number(parseFloat(n)||0).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function escH(s) {
+  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════════════
+   CRUD
+══════════════════════════════════════════════════════ */
+function loadRec()     { return loadRegistry(KEY_REC); }
+function saveRec(data) { saveRegistry(KEY_REC, data); }
+
+/* ══════════════════════════════════════════════════════
+   RENDER — tabla
+══════════════════════════════════════════════════════ */
+function renderTablaRec(tab) {
+  const data   = loadRec();
+  const tipo   = tab === 'eg' ? 'Egreso' : 'Ingreso';
+  const buscar = (document.getElementById(`rc-buscar-${tab}`)?.value || '').toLowerCase();
+  let   rows   = data.filter(r => r.tipo === tipo);
+  if (buscar) rows = rows.filter(r =>
+    [r.descripcion, r.concepto, r.cuenta, r.cuentaCont, r.notas]
+      .join(' ').toLowerCase().includes(buscar));
+  rows.sort((a,b) => (a.diaEstimado||1) - (b.diaEstimado||1));
+
+  const bodyId   = `rc-${tab}-body`;
+  const footId   = `rc-${tab}-foot`;
+  const cntId    = `rc-${tab}-count`;
+  const isEg     = tipo === 'Egreso';
+  const amtColor = isEg ? 'var(--red)' : 'var(--green)';
+  const tcLabel  = isEg ? 'venta' : 'compra';
+  const tc       = isEg ? getTCVenta() : getTCCompra();
+
+  document.getElementById(cntId).textContent =
+    rows.length + ' registro' + (rows.length !== 1 ? 's' : '');
+
+  if (!rows.length) {
+    document.getElementById(bodyId).innerHTML =
+      `<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text-xs);">
+        Sin registros — usa el botón "+ Agregar recurrente"
+      </td></tr>`;
+    document.getElementById(footId).innerHTML = '';
+    return;
+  }
+
+  document.getElementById(bodyId).innerHTML = rows.map(r => {
+    const per      = r.periodicidad || 'Mensual';
+    const esUSD    = r.moneda === 'USD';
+    const mxnMes   = mensualMXN(r);
+    const impNat   = parseFloat(r.importe) || 0;
+    const impMXNmes= importeMensualNativo(impNat, per); // in native currency, per month
+
+    // "Calendario" cell: day pill + period badge + months hint
+    const mesesHint = (r.mesesPago||[]).length
+      ? `<div style="font-size:0.57rem; color:var(--text-xs); margin-top:0.1rem;">
+           ${(r.mesesPago||[]).map(m => MESES_CORTOS[m-1]).join('·')}
+         </div>`
+      : '';
+    const diaPill = (per === 'Semanal' && r.diaSemana != null && r.diaSemana !== '')
+      ? `<span class="day-pill" style="background:#e6f7ee;color:#145a32;min-width:2.2rem;">${DIAS_CORTOS[parseInt(r.diaSemana)]||'?'}</span>`
+      : `<span class="day-pill">${r.diaEstimado||'?'}</span>`;
+    const calCell = `
+      ${diaPill}
+      <span class="per-badge per-${per}" style="margin-left:0.3rem;">${per}</span>
+      ${mesesHint}`;
+
+    // "Importe/período" cell: native currency + period note
+    const impCell = `
+      <span style="font-weight:700; color:${amtColor};">${fmtCur(impNat, r.moneda)}</span>
+      <div style="font-size:0.57rem; color:var(--text-xs); font-weight:400; font-family:var(--font);">/${PERIOD_SHORT[per]||'per.'}</div>`;
+
+    // "Equiv. MXN/mes" cell
+    let equivLines = fmtMXN(mxnMes);
+    let equivSub   = '';
+    if (per !== 'Mensual') {
+      const factor = PERIOD_FACTOR[per] || 1;
+      equivSub += `×${factor % 1 === 0 ? factor : factor.toFixed(3).replace(/0+$/,'') } ${per.toLowerCase()}`;
+    }
+    if (esUSD) {
+      equivSub += (equivSub ? ' · ' : '') + `TC ${tcLabel} ${tc.toFixed(2)}`;
+    }
+    const equivCell = `
+      <td class="num" style="background:#f5f6fa;">
+        <span style="font-weight:700; color:${amtColor};">${equivLines}</span>
+        ${equivSub ? `<div style="font-size:0.57rem; color:var(--text-xs); font-weight:400; font-family:var(--font);">${equivSub}</div>` : ''}
+      </td>`;
+
+    return `
+    <tr style="${r.activo ? '' : 'opacity:0.45;'}">
+      <td>${calCell}</td>
+      <td style="font-weight:500; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+          title="${escH(r.descripcion)}">${escH(r.descripcion||'—')}</td>
+      <td style="font-size:0.69rem; color:var(--text-dim);">${escH(r.concepto||'—')}</td>
+      <td style="font-size:0.69rem; color:var(--text-dim); white-space:nowrap;">${escH(r.cuenta||'—')}</td>
+      <td style="font-size:0.67rem; color:var(--text-xs);">${escH(r.cuentaCont||'—')}</td>
+      <td style="font-size:0.67rem; text-align:center; font-family:var(--brand); font-weight:700;
+                 color:${esUSD ? '#2980b9' : 'var(--navy)'};">${r.moneda||'MXN'}</td>
+      <td class="num">${impCell}</td>
+      ${equivCell}
+      <td style="text-align:center;">
+        <span class="rc-badge ${r.activo ? 'rc-badge-on' : 'rc-badge-off'}">
+          ${r.activo ? 'Activo' : 'Inactivo'}
+        </span>
+      </td>
+      <td style="text-align:center; white-space:nowrap;">
+        <button class="rc-act-btn" onclick="editarRec('${escH(r.id)}')" title="Editar">✏️</button>
+        <button class="rc-act-btn" onclick="toggleActivo('${escH(r.id)}')"
+                title="${r.activo ? 'Desactivar' : 'Activar'}">${r.activo ? '⏸' : '▶'}</button>
+        <button class="rc-act-btn" onclick="eliminarRec('${escH(r.id)}')"
+                title="Eliminar" style="color:var(--red);">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  /* Footer */
+  const activos   = rows.filter(r => r.activo);
+  const totalMXN  = activos.reduce((s, r) => s + mensualMXN(r), 0);
+  const tieneUSD  = activos.some(r => r.moneda === 'USD');
+  const tieneVar  = activos.some(r => (r.periodicidad||'Mensual') !== 'Mensual');
+
+  const partes = [];
+  // Group by currency for the breakdown note
+  const mxnSolo = activos.filter(r => r.moneda === 'MXN')
+    .reduce((s,r) => s + importeMensualNativo(r.importe, r.periodicidad), 0);
+  const usdSolo = activos.filter(r => r.moneda === 'USD')
+    .reduce((s,r) => s + importeMensualNativo(r.importe, r.periodicidad), 0);
+  if (mxnSolo) partes.push(`$${mxnSolo.toLocaleString('es-MX',{minimumFractionDigits:2})} MXN/mes`);
+  if (usdSolo) partes.push(`US$${usdSolo.toLocaleString('es-MX',{minimumFractionDigits:2})}/mes × TC ${tcLabel} ${tc.toFixed(2)}`);
+
+  const footNote = (tieneUSD || tieneVar) && partes.length
+    ? `<div style="font-size:0.6rem; font-weight:400; font-family:var(--font); color:var(--text-xs); margin-top:0.1rem;">${partes.join(' + ')}</div>`
+    : '';
+
+  document.getElementById(footId).innerHTML = `
+    <tr>
+      <td colspan="6" style="font-family:var(--brand); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase;">
+        Equivalente mensual total en MXN (${activos.length} activos de ${rows.length})
+        ${footNote}
+      </td>
+      <td class="num" style="color:var(--text-xs); font-size:0.67rem;">—</td>
+      <td class="num" style="font-size:0.9rem;">${fmtMXN(totalMXN)}</td>
+      <td colspan="2"></td>
+    </tr>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER — KPIs
+══════════════════════════════════════════════════════ */
+function renderKPIs() {
+  const data  = loadRec();
+  const egAct = data.filter(r => r.tipo === 'Egreso'  && r.activo);
+  const inAct = data.filter(r => r.tipo === 'Ingreso' && r.activo);
+
+  const totEgMXN = egAct.reduce((s,r) => s + mensualMXN(r), 0);
+  const totInMXN = inAct.reduce((s,r) => s + mensualMXN(r), 0);
+  const netMXN   = totInMXN - totEgMXN;   // positivo = superávit, negativo = déficit
+
+  const egUSD = egAct.filter(r=>r.moneda==='USD')
+    .reduce((s,r)=>s+importeMensualNativo(r.importe,r.periodicidad),0);
+  const inUSD = inAct.filter(r=>r.moneda==='USD')
+    .reduce((s,r)=>s+importeMensualNativo(r.importe,r.periodicidad),0);
+
+  document.getElementById('rc-kpi-egresos').textContent = fmtMXN(totEgMXN);
+  document.getElementById('rc-kpi-egresos-sub').textContent =
+    egAct.length + ' concepto' + (egAct.length!==1?'s':'') +
+    (egUSD ? ` · US$${egUSD.toLocaleString('es-MX',{minimumFractionDigits:2})}/mes @ TC venta ${getTCVenta().toFixed(2)}` : '');
+
+  document.getElementById('rc-kpi-ingresos').textContent = fmtMXN(totInMXN);
+  document.getElementById('rc-kpi-ingresos-sub').textContent =
+    inAct.length + ' concepto' + (inAct.length!==1?'s':'') +
+    (inUSD ? ` · US$${inUSD.toLocaleString('es-MX',{minimumFractionDigits:2})}/mes @ TC compra ${getTCCompra().toFixed(2)}` : '');
+
+  document.getElementById('rc-kpi-neto').textContent = fmtMXN(Math.abs(netMXN));
+  document.getElementById('rc-kpi-neto-sub').textContent =
+    netMXN >= 0 ? '🟢 superávit — ingresos > egresos' : '🔴 déficit — egresos > ingresos';
+  document.getElementById('rc-kpi-neto').className =
+    'rc-kpi-val ' + (netMXN >= 0 ? '' : 'red');
+
+  document.getElementById('rc-kpi-count').textContent = egAct.length + inAct.length;
+  document.getElementById('rc-kpi-count-sub').textContent = data.length + ' total en catálogo';
+}
+
+function renderAll() {
+  renderTablaRec('eg');
+  renderTablaRec('in');
+  renderKPIs();
+}
+
+/* ── Modal ── */
+let __rcEditId = null;
+
+function populateCuentasSel(sel, selVal) {
+  const saldos = loadRegistry('stgl_saldos').filter(s=>!s.cancelada);
+  sel.innerHTML = '<option value="">— Seleccionar —</option>';
+  saldos.forEach(s => {
+    const o = document.createElement('option');
+    o.value = o.textContent = s.cuenta;
+    if (s.cuenta === selVal) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function populateDataLists() {
+  const movs = (() => {
+    let d=[];
+    try { const r=localStorage.getItem('stgl_mov_excel'); if(r) d=JSON.parse(r); } catch(e){}
+    try { d=[...d,...loadRegistry('stgl_mov_manual')]; } catch(e){}
+    return d;
+  })();
+  const concs = [...new Set(movs.map(m=>m.concepto).filter(Boolean))].sort();
+  const ccs   = [...new Set(movs.map(m=>m.cuentaCont).filter(Boolean))].sort();
+  document.getElementById('rc-conc-list').innerHTML = concs.map(c=>`<option value="${escH(c)}">`).join('');
+  document.getElementById('rc-cc-list').innerHTML   = ccs.map(c=>`<option value="${escH(c)}">`).join('');
+}
+
+function abrirModalRec() {
+  __rcEditId = null;
+  const titleEl = document.getElementById('modal-rec-title');
+  titleEl.textContent = 'Nuevo gasto recurrente';
+  delete titleEl.dataset.editing;
+  ['rc-desc','rc-concepto','rc-cc','rc-notas'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('rc-tipo').value    = 'Egreso';
+  document.getElementById('rc-dia').value     = '';
+  document.getElementById('rc-importe').value = '';
+  document.getElementById('rc-moneda').value  = 'MXN';
+  document.getElementById('rc-activo').value  = 'true';
+  document.getElementById('rc-period').value  = 'Mensual';
+  populateCuentasSel(document.getElementById('rc-cuenta'), '');
+  populateDataLists();
+  rcPeriodChange();
+  openModal('modal-rec');
+}
+
+function editarRec(id) {
+  const r = loadRec().find(x=>x.id===id);
+  if (!r) return;
+  __rcEditId = id;
+  const titleEl = document.getElementById('modal-rec-title');
+  titleEl.textContent = 'Editar recurrente';
+  titleEl.dataset.editing = '1';
+  document.getElementById('rc-desc').value    = r.descripcion||'';
+  document.getElementById('rc-tipo').value    = r.tipo||'Egreso';
+  document.getElementById('rc-dia').value     = r.diaEstimado||1;
+  document.getElementById('rc-concepto').value= r.concepto||'';
+  document.getElementById('rc-cc').value      = r.cuentaCont||'';
+  document.getElementById('rc-moneda').value  = r.moneda||'MXN';
+  document.getElementById('rc-importe').value = r.importe||'';
+  document.getElementById('rc-activo').value  = String(r.activo!==false);
+  /* Compatibilidad: el valor viejo era true/false booleano → mapear a 'next'/'no' */
+  const hab = r.ajustarDiaHabil;
+  document.getElementById('rc-habil').value = (hab === true || hab === 'true') ? 'next' : (hab || 'no');
+  document.getElementById('rc-notas').value   = r.notas||'';
+  document.getElementById('rc-period').value  = r.periodicidad||'Mensual';
+  populateCuentasSel(document.getElementById('rc-cuenta'), r.cuenta||'');
+  populateDataLists();
+  rcPeriodChange();
+  if ((r.periodicidad||'Mensual') === 'Semanal' && r.diaSemana != null) {
+    document.getElementById('rc-diasem').value = String(r.diaSemana);
+  }
+  renderMesesChecks(r.mesesPago||[]);
+  rcUpdateEquiv();
+  openModal('modal-rec');
+}
+
+function guardarRec() {
+  const desc    = document.getElementById('rc-desc').value.trim();
+  const cuenta  = document.getElementById('rc-cuenta').value;
+  const importe = parseFloat(document.getElementById('rc-importe').value);
+  const per     = document.getElementById('rc-period').value;
+  const isSem   = per === 'Semanal';
+
+  if (!desc)               { toast('La descripción es obligatoria','error'); return; }
+  if (!cuenta)             { toast('Selecciona una cuenta bancaria','error'); return; }
+  if (!importe || importe<=0) { toast('El importe debe ser mayor a 0','error'); return; }
+
+  let dia       = 1;
+  let diaSemana = null;
+  if (isSem) {
+    diaSemana = parseInt(document.getElementById('rc-diasem')?.value ?? 1);
+  } else {
+    dia = parseInt(document.getElementById('rc-dia').value);
+    if (!dia || dia < 1 || dia > 28) { toast('Día estimado: debe ser entre 1 y 28','error'); return; }
+  }
+
+  const rec = {
+    descripcion:  desc,
+    tipo:         document.getElementById('rc-tipo').value,
+    periodicidad: per,
+    diaEstimado:  dia,
+    diaSemana,
+    mesesPago:    getMesesSeleccionados(),
+    concepto:     document.getElementById('rc-concepto').value.trim(),
+    cuentaCont:   document.getElementById('rc-cc').value.trim(),
+    cuenta,
+    moneda:       document.getElementById('rc-moneda').value,
+    importe,
+    activo:          document.getElementById('rc-activo').value === 'true',
+    ajustarDiaHabil: document.getElementById('rc-habil').value,   // 'no' | 'next' | 'prev'
+    notas:           document.getElementById('rc-notas').value.trim(),
+  };
+
+  const data = loadRec();
+  if (__rcEditId) {
+    const idx = data.findIndex(x=>x.id===__rcEditId);
+    if (idx>=0) data[idx] = { ...data[idx], ...rec };
+  } else {
+    rec.id = 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
+    data.push(rec);
+  }
+  saveRec(data);
+  closeModal('modal-rec');
+  toast(__rcEditId ? 'Recurrente actualizado' : 'Recurrente agregado','success');
+  renderAll();
+}
+
+function toggleActivo(id) {
+  const data = loadRec();
+  const idx  = data.findIndex(x=>x.id===id);
+  if (idx<0) return;
+  data[idx].activo = !data[idx].activo;
+  saveRec(data);
+  renderAll();
+}
+
+function eliminarRec(id) {
+  const r = loadRec().find(x=>x.id===id);
+  if (!confirm(`¿Eliminar "${r?.descripcion||id}" del catálogo?`)) return;
+  saveRec(loadRec().filter(x=>x.id!==id));
+  toast('Recurrente eliminado','success');
+  renderAll();
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL — interacción periodicidad
+══════════════════════════════════════════════════════ */
+
+// Adjust modal title when tipo changes
+function rcTipoChange() {
+  const tipo    = document.getElementById('rc-tipo')?.value;
+  const titleEl = document.getElementById('modal-rec-title');
+  if (titleEl && !titleEl.dataset.editing) {
+    titleEl.textContent = tipo === 'Ingreso' ? 'Nuevo ingreso recurrente' : 'Nuevo gasto recurrente';
+  }
+  rcUpdateEquiv();
+}
+
+// Show/hide month pickers based on selected periodicidad
+function rcPeriodChange() {
+  const per        = document.getElementById('rc-period')?.value || 'Mensual';
+  const grp        = document.getElementById('rc-meses-group');
+  const presBim    = document.getElementById('rc-presets-bim');
+  const presTri    = document.getElementById('rc-presets-tri');
+  const presSem    = document.getElementById('rc-presets-sem');
+  const diaLabel   = document.getElementById('rc-dia-label');
+  const equivWrap  = document.getElementById('rc-equiv-wrap');
+  const diaGroup   = document.getElementById('rc-dia-group');
+  const diasemGrp  = document.getElementById('rc-diasem-group');
+
+  const needsMeses  = ['Bimestral','Trimestral','Semestral','Anual'].includes(per);
+  const isSemanal   = per === 'Semanal';
+
+  // Semanal: usar selector de día de semana en lugar de número de día
+  if (diaGroup)  diaGroup.style.display  = isSemanal ? 'none' : '';
+  if (diasemGrp) diasemGrp.style.display = isSemanal ? ''     : 'none';
+
+  // Show/hide meses group
+  if (grp) grp.style.display = needsMeses ? '' : 'none';
+
+  // Show correct preset strip
+  if (presBim) presBim.style.display = per === 'Bimestral'   ? 'flex' : 'none';
+  if (presTri) presTri.style.display = per === 'Trimestral'  ? 'flex' : 'none';
+  if (presSem) presSem.style.display = per === 'Semestral'   ? 'flex' : 'none';
+
+  // Render month grid if needed (fresh grid on period change)
+  if (needsMeses) renderMesesChecks([]);
+
+  // Adjust day label for non-semanal
+  if (diaLabel) {
+    if (per === 'Anual') diaLabel.textContent = 'Día del mes de pago (1–28) *';
+    else                 diaLabel.textContent = 'Día estimado de pago (1–28) *';
+  }
+
+  // Show equiv wrap for non-monthly periodicidades
+  if (equivWrap) equivWrap.style.display = per !== 'Mensual' ? '' : 'none';
+
+  rcUpdateEquiv();
+}
+
+// Render the 12 month toggle buttons in the modal
+function renderMesesChecks(selected) {
+  const grid = document.getElementById('rc-meses-checks');
+  if (!grid) return;
+  grid.innerHTML = MESES_CORTOS.map((m, i) => {
+    const num = i + 1;
+    const sel = (selected || []).includes(num);
+    return `<button type="button" class="mes-check-btn${sel?' sel':''}"
+              data-mes="${num}" onclick="toggleMes(this)">${m}</button>`;
+  }).join('');
+  rcUpdateMesesHint();
+}
+
+// Toggle individual month button
+function toggleMes(btn) {
+  btn.classList.toggle('sel');
+  rcUpdateMesesHint();
+  rcUpdateEquiv();
+}
+
+// Update the hint text showing how many months selected
+function rcUpdateMesesHint() {
+  const hint  = document.getElementById('rc-meses-hint');
+  if (!hint) return;
+  const sel   = getMesesSeleccionados();
+  const per   = document.getElementById('rc-period')?.value || '';
+  const needs = { 'Bimestral':6, 'Trimestral':4, 'Semestral':2, 'Anual':1 };
+  const req   = needs[per];
+  if (!sel.length) {
+    hint.textContent = req ? `Selecciona ${req} meses para ${per.toLowerCase()}` : '';
+    hint.style.color = 'var(--red)';
+  } else if (req && sel.length !== req) {
+    hint.textContent = `${sel.length} seleccionados — se esperan ${req}`;
+    hint.style.color = '#8a6800';
+  } else {
+    hint.textContent = `${sel.map(m => MESES_CORTOS[m-1]).join(' · ')}`;
+    hint.style.color = 'var(--text-xs)';
+  }
+}
+
+// Apply a preset set of months (buttons + hint)
+function setMesesPreset(arr) {
+  renderMesesChecks(arr);
+  rcUpdateEquiv();
+}
+
+// Return array of 1-indexed month numbers that are selected
+function getMesesSeleccionados() {
+  const btns = document.querySelectorAll('#rc-meses-checks .mes-check-btn.sel');
+  return [...btns].map(b => parseInt(b.dataset.mes)).filter(Boolean).sort((a,b)=>a-b);
+}
+
+// Live monthly-equivalent preview in modal
+function rcUpdateEquiv() {
+  const equivWrap  = document.getElementById('rc-equiv-wrap');
+  const equivVal   = document.getElementById('rc-equiv-val');
+  const equivNote  = document.getElementById('rc-equiv-note');
+  if (!equivWrap || !equivVal) return;
+
+  const per     = document.getElementById('rc-period')?.value || 'Mensual';
+  const importe = parseFloat(document.getElementById('rc-importe')?.value) || 0;
+  const moneda  = document.getElementById('rc-moneda')?.value || 'MXN';
+  const tipo    = document.getElementById('rc-tipo')?.value   || 'Egreso';
+  const meses   = getMesesSeleccionados();
+
+  // For meses-based periods, check consistency
+  const needsMeses = ['Bimestral','Trimestral','Semestral','Anual'].includes(per);
+
+  // Monthly equivalent (native currency)
+  const factor      = PERIOD_FACTOR[per] || 1;
+  const mensualNat  = importe * factor;
+  const mensualMxn  = toMXN(mensualNat, moneda, tipo);
+
+  if (per === 'Mensual') {
+    equivWrap.style.display = 'none';
+    return;
+  }
+  equivWrap.style.display = '';
+
+  if (!importe) {
+    equivVal.textContent  = '—';
+    equivNote.textContent = '';
+    return;
+  }
+
+  const prefix = moneda === 'USD' ? 'US$' : '$';
+  const impFmt = prefix + importe.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const mxnFmt = '$' + mensualMxn.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  const factorStr = factor === Math.floor(factor)
+    ? factor.toString()
+    : factor.toFixed(3).replace(/0+$/,'');
+
+  let note = `${impFmt} × ${factorStr} (factor ${per.toLowerCase()})`;
+  if (moneda === 'USD') {
+    const tc = tipo === 'Egreso' ? getTCVenta() : getTCCompra();
+    const tcLbl = tipo === 'Egreso' ? 'venta' : 'compra';
+    note += ` × TC ${tcLbl} ${tc.toFixed(2)}`;
+  }
+  if (needsMeses && meses.length) {
+    note += ` — meses: ${meses.map(m=>MESES_CORTOS[m-1]).join('·')}`;
+  }
+
+  equivVal.textContent  = mxnFmt + ' / mes';
+  equivNote.textContent = note;
+}
+
+/* ── Init ── */
+renderAll();
+</script>
+
+<!-- SheetJS para importación de Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- ══ Modal: Importar recurrentes desde Excel ══ -->
+<div class="modal-backdrop hidden" id="modal-import-rec">
+  <div class="modal" style="max-width:780px; width:95vw;">
+    <div class="modal-header">
+      <span class="modal-title">Importar recurrentes desde Excel</span>
+      <button class="modal-close" onclick="cerrarImportRec()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="rec-import-summary" style="font-size:0.78rem; color:var(--text-dim); margin-bottom:0.85rem;"></div>
+      <div style="overflow-x:auto; max-height:360px; overflow-y:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.71rem;">
+          <thead id="rec-import-thead" style="position:sticky;top:0;background:var(--navy);color:#fff;"></thead>
+          <tbody id="rec-import-tbody"></tbody>
+        </table>
+      </div>
+      <div id="rec-import-errors" style="margin-top:0.75rem; font-size:0.7rem; color:var(--red);"></div>
+    </div>
+    <div class="modal-footer" style="display:flex; gap:0.5rem; justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="cerrarImportRec()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-rec-import" onclick="confirmarImportRec()">Importar todos</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   IMPORTACIÓN MASIVA DE RECURRENTES DESDE EXCEL
+══════════════════════════════════════════════ */
+
+let _recImportRows = [];   // filas validadas listas para guardar
+
+const REC_PERIODICIDADES = ['Mensual','Semanal','Bimestral','Trimestral','Semestral','Anual'];
+const REC_TIPOS = ['Egreso','Ingreso'];
+
+/* Helper local — lee stgl_config sin depender de loadCfg() de configuracion.html */
+function _getCfgRec() {
+  try { return JSON.parse(localStorage.getItem('stgl_config') || '{}'); } catch(e) { return {}; }
+}
+
+/* Descarga la plantilla como CSV (se abre en Excel sin dependencias externas) */
+function descargarPlantillaRec() {
+  const saldos = loadRegistry('stgl_saldos').filter(s => !s.cancelada);
+  const cfg    = _getCfgRec();
+
+  // Obtener alias de cada cuenta
+  const ejemploCuenta = saldos.length
+    ? (cfg.cuentasConfig?.[saldos[0].cuenta]?.alias || saldos[0].cuenta)
+    : 'MI-CUENTA';
+
+  const cuentasDisp = saldos.map(s =>
+    cfg.cuentasConfig?.[s.cuenta]?.alias || s.cuenta
+  ).join(' | ') || '(agrega cuentas primero en Configuración)';
+
+  // Filas del CSV
+  const filas = [
+    ['# INSTRUCCIONES'],
+    [`# Cuentas disponibles: ${cuentasDisp}`],
+    ['# Tipo: Egreso o Ingreso'],
+    ['# Dia_Mes: 1 al 28  (para semanales escribe 1)'],
+    ['# Periodicidad: Mensual | Semanal | Bimestral | Trimestral | Semestral | Anual'],
+    ['# Moneda: MXN o USD'],
+    ['# Concepto_Contable: opcional'],
+    ['#'],
+    // Encabezados reales
+    ['Descripcion','Tipo','Cuenta','Importe','Moneda','Dia_Mes','Periodicidad','Concepto_Contable'],
+    // Ejemplos
+    ['Nómina semanal',   'Egreso',  ejemploCuenta, 15000, 'MXN', 1,  'Semanal',  'Sueldos y salarios'],
+    ['Renta oficina',    'Egreso',  ejemploCuenta, 28000, 'MXN', 5,  'Mensual',  'Rentas pagadas'],
+    ['IMSS',             'Egreso',  ejemploCuenta, 12000, 'MXN', 17, 'Mensual',  'Seguridad social'],
+    ['CFE',              'Egreso',  ejemploCuenta, 3500,  'MXN', 20, 'Mensual',  'Servicios'],
+    ['Cobranza cliente', 'Ingreso', ejemploCuenta, 50000, 'MXN', 10, 'Mensual',  'Ventas'],
+  ];
+
+  // Escapar para CSV
+  const csvEsc = v => {
+    const s = String(v ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g,'""')}"` : s;
+  };
+  const csv = filas.map(r => r.map(csvEsc).join(',')).join('\r\n');
+
+  // Descarga con anchor + blob — funciona en Safari con gesto de usuario
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'plantilla-recurrentes.csv';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+
+  // Notificación prominente
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a2d80;color:#fff;font-family:var(--brand);font-size:0.78rem;font-weight:600;padding:0.75rem 1.4rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.25);z-index:9999;display:flex;align-items:center;gap:0.6rem;white-space:nowrap;';
+  div.innerHTML = '📥 <span><strong>plantilla-recurrentes.csv</strong> guardada en tu carpeta de <strong>Descargas</strong></span>';
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 4000);
+}
+
+/* Lee el archivo Excel y muestra la vista previa */
+function importarRecExcel(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') { toast('SheetJS no disponible', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb   = XLSX.read(e.target.result, { type: 'array' });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const raw  = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      // Buscar la fila de encabezados reales (la que contiene "Descripcion")
+      const allRows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      let headerIdx = allRows.findIndex(r => r.some(c => String(c).toLowerCase().includes('descripcion')));
+      if (headerIdx < 0) { toast('No encontré la fila de encabezados (Descripcion, Tipo…)', 'error'); return; }
+
+      const headers  = allRows[headerIdx].map(h => String(h).trim().toLowerCase().replace(/\s+/g,'_'));
+      const dataRows = allRows.slice(headerIdx + 1).filter(r => r.some(c => c !== ''));
+
+      // Mapeo flexible de columnas
+      const col = (row, ...names) => {
+        for (const n of names) {
+          const idx = headers.findIndex(h => h.includes(n));
+          if (idx >= 0 && row[idx] !== undefined && row[idx] !== '') return String(row[idx]).trim();
+        }
+        return '';
+      };
+
+      // Construir alias→nombre de cuenta
+      const saldos   = loadRegistry('stgl_saldos').filter(s => !s.cancelada);
+      const cfgObj   = _getCfgRec();
+      const aliasMapa = {};   // alias → nombre completo
+      saldos.forEach(s => {
+        const alias = (cfgObj.cuentasConfig?.[s.cuenta]?.alias || '').toLowerCase();
+        aliasMapa[s.cuenta.toLowerCase()] = s.cuenta;
+        if (alias) aliasMapa[alias] = s.cuenta;
+      });
+
+      const filas = [];
+      const errores = [];
+
+      dataRows.forEach((row, ri) => {
+        const desc   = col(row, 'descripci', 'nombre', 'desc');
+        const tipo   = col(row, 'tipo');
+        const ctaRaw = col(row, 'cuenta');
+        const imp    = parseFloat(col(row, 'importe', 'monto', 'impo').replace(/,/g,'')) || 0;
+        const mon    = col(row, 'moneda') || 'MXN';
+        const dia    = parseInt(col(row, 'dia', 'día')) || 1;
+        const per    = col(row, 'period') || 'Mensual';
+        const conc   = col(row, 'concepto', 'cta_cont', 'cuenta_cont');
+
+        const errs = [];
+        if (!desc)                                         errs.push('sin descripción');
+        if (!REC_TIPOS.includes(tipo))                     errs.push(`tipo inválido: "${tipo}"`);
+        if (imp <= 0)                                      errs.push('importe ≤ 0');
+        if (dia < 1 || dia > 28)                          errs.push(`día inválido: ${dia}`);
+        if (!REC_PERIODICIDADES.includes(per))             errs.push(`periodicidad: "${per}"`);
+
+        // Resolver cuenta
+        const ctaNombre = aliasMapa[ctaRaw.toLowerCase()] || null;
+        if (!ctaNombre)                                    errs.push(`cuenta no encontrada: "${ctaRaw}"`);
+
+        if (errs.length) { errores.push(`Fila ${ri+1}: ${errs.join(', ')}`); }
+
+        filas.push({
+          _ok:         errs.length === 0,
+          _errs:       errs,
+          descripcion: desc,
+          tipo:        REC_TIPOS.includes(tipo) ? tipo : 'Egreso',
+          cuenta:      ctaNombre || ctaRaw,
+          importe:     imp,
+          moneda:      ['MXN','USD','EUR','CAD','GBP'].includes(mon.toUpperCase()) ? mon.toUpperCase() : 'MXN',
+          diaEstimado: Math.max(1, Math.min(28, dia)),
+          periodicidad: REC_PERIODICIDADES.includes(per) ? per : 'Mensual',
+          concepto:    conc,
+          mesesPago:   [1,2,3,4,5,6,7,8,9,10,11,12],
+          diaSemana:   null,
+        });
+      });
+
+      _recImportRows = filas.filter(f => f._ok);
+      _mostrarPreviaRec(filas, errores);
+    } catch(err) {
+      toast('Error al leer el archivo: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function _mostrarPreviaRec(filas, errores) {
+  const ok  = filas.filter(f => f._ok).length;
+  const bad = filas.length - ok;
+
+  document.getElementById('rec-import-summary').innerHTML =
+    `<strong>${filas.length}</strong> filas leídas — ` +
+    `<span style="color:var(--navy)"><strong>${ok}</strong> válidas</span>` +
+    (bad ? ` · <span style="color:var(--red)"><strong>${bad}</strong> con errores (se omitirán)</span>` : '');
+
+  document.getElementById('rec-import-thead').innerHTML = `<tr>${
+    ['Descripción','Tipo','Cuenta','Importe','Moneda','Día','Periodicidad','Estado'].map(h =>
+      `<th style="padding:0.3rem 0.6rem;font-size:0.58rem;font-weight:700;letter-spacing:0.06em;">${h}</th>`
+    ).join('')
+  }</tr>`;
+
+  document.getElementById('rec-import-tbody').innerHTML = filas.map(f => {
+    const bg = f._ok ? '' : 'background:#fff5f5;';
+    const status = f._ok
+      ? '<span style="color:#059669;">✓</span>'
+      : `<span style="color:var(--red);" title="${f._errs.join(', ')}">✗ ${f._errs[0]}</span>`;
+    return `<tr style="${bg}">
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);">${escH(f.descripcion)}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);">${escH(f.tipo)}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);">${escH(f.cuenta)}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);text-align:right;">${(f.importe||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);">${escH(f.moneda)}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);text-align:center;">${f.diaEstimado}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);">${escH(f.periodicidad)}</td>
+      <td style="padding:0.28rem 0.6rem;border-bottom:1px solid var(--border);">${status}</td>
+    </tr>`;
+  }).join('');
+
+  if (errores.length) {
+    document.getElementById('rec-import-errors').innerHTML =
+      '<strong>Detalles de errores:</strong><br>' + errores.map(escH).join('<br>');
+  } else {
+    document.getElementById('rec-import-errors').innerHTML = '';
+  }
+
+  document.getElementById('btn-confirmar-rec-import').disabled = ok === 0;
+  document.getElementById('btn-confirmar-rec-import').textContent =
+    ok > 0 ? `Importar ${ok} recurrente${ok!==1?'s':''}` : 'Sin filas válidas';
+
+  document.getElementById('modal-import-rec').classList.remove('hidden');
+}
+
+function cerrarImportRec() {
+  document.getElementById('modal-import-rec').classList.add('hidden');
+  _recImportRows = [];
+}
+
+function confirmarImportRec() {
+  if (!_recImportRows.length) return;
+  const existentes = loadRec();
+  const nuevos = _recImportRows.map(f => ({
+    id:           'rec-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+    descripcion:  f.descripcion,
+    tipo:         f.tipo,
+    cuenta:       f.cuenta,
+    importe:      f.importe,
+    moneda:       f.moneda,
+    diaEstimado:  f.diaEstimado,
+    diaSemana:    f.diaSemana,
+    periodicidad: f.periodicidad,
+    concepto:     f.concepto || '',
+    cuentaCont:   '',
+    mesesPago:    f.mesesPago,
+    activo:       true,
+  }));
+  saveRec([...existentes, ...nuevos]);
+  cerrarImportRec();
+  renderAll();
+  toast(`${nuevos.length} recurrente${nuevos.length!==1?'s':''} importado${nuevos.length!==1?'s':''}`, 'success');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan de Negocio — Santaglia Compass</title>
+<style>
+  /* ── Reset & Variables ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1a2d80;
+    --navy2:  #223499;
+    --navy-light: #2c45c8;
+    --accent: #e8a020;
+    --accent2:#f0b540;
+    --light:  #f4f6fb;
+    --mid:    #dde3f4;
+    --text:   #1c1c2e;
+    --muted:  #5a6080;
+    --white:  #ffffff;
+    --radius: 10px;
+    --shadow: 0 2px 16px rgba(26,45,128,.10);
+    --fs-xs:  0.72rem;
+    --fs-sm:  0.85rem;
+    --fs-base:0.95rem;
+    --fs-lg:  1.1rem;
+    --fs-xl:  1.35rem;
+    --fs-2xl: 1.75rem;
+    --fs-3xl: 2.2rem;
+  }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--light);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── Typography ───────────────────────────────────────────────── */
+  h1, h2, h3, h4, h5 { line-height: 1.25; font-weight: 700; }
+  h2 { font-size: var(--fs-2xl); color: var(--navy); }
+  h3 { font-size: var(--fs-xl);  color: var(--navy); }
+  h4 { font-size: var(--fs-lg);  color: var(--navy2); }
+  p  { margin-bottom: .75rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .75rem; }
+  li { margin-bottom: .3rem; }
+  strong { color: var(--navy); }
+
+  /* ── Layout Helpers ───────────────────────────────────────────── */
+  .page-wrap { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  .section {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2.5rem 2.5rem 2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid var(--mid);
+  }
+
+  .section-icon {
+    width: 44px; height: 44px;
+    background: var(--navy);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--mid);
+    color: var(--navy);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .2em .7em;
+    border-radius: 4px;
+  }
+  .tag.accent { background: var(--accent); color: #fff; }
+  .tag.green  { background: #1e7e4a; color: #fff; }
+  .tag.orange { background: #c85a00; color: #fff; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.2rem; }
+
+  .card {
+    background: var(--light);
+    border: 1.5px solid var(--mid);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.25rem 1rem;
+  }
+  .card h4 { margin-bottom: .6rem; }
+  .card.accent-border { border-top: 4px solid var(--accent); }
+  .card.navy-border   { border-top: 4px solid var(--navy);   }
+  .card.green-border  { border-top: 4px solid #1e7e4a;       }
+
+  .highlight-box {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+    color: var(--white);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .highlight-box h4 { color: var(--accent2); margin-bottom: .5rem; }
+  .highlight-box p, .highlight-box li { color: rgba(255,255,255,.9); }
+  .highlight-box strong { color: #fff; }
+
+  /* ── Cover ────────────────────────────────────────────────────── */
+  .cover {
+    background: linear-gradient(145deg, var(--navy) 0%, #0e1d5c 60%, #12235e 100%);
+    color: var(--white);
+    padding: 5rem 3rem 4rem;
+    border-radius: 0 0 var(--radius) var(--radius);
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute; top: -60px; right: -80px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(232,160,32,.18) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .cover::after {
+    content: '';
+    position: absolute; bottom: -100px; left: -60px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(44,69,200,.25) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .cover-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+  .cover-logo {
+    font-size: 1rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 2.5rem;
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .cover-logo span { font-size: 1.4rem; }
+  .cover h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 900; letter-spacing: -.02em;
+    color: var(--white); margin-bottom: .5rem;
+  }
+  .cover-subtitle {
+    font-size: var(--fs-xl); color: var(--accent2);
+    font-weight: 600; margin-bottom: 1.5rem;
+  }
+  .cover-desc {
+    font-size: var(--fs-lg); color: rgba(255,255,255,.75);
+    max-width: 640px; margin-bottom: 2.5rem; line-height: 1.7;
+  }
+  .cover-meta {
+    display: flex; gap: 2rem; flex-wrap: wrap;
+    font-size: var(--fs-sm); color: rgba(255,255,255,.55);
+    border-top: 1px solid rgba(255,255,255,.15);
+    padding-top: 1.5rem; margin-top: 1rem;
+  }
+  .cover-meta strong { color: var(--accent2); }
+
+  .cover-kpi-row {
+    display: flex; gap: 1.5rem; margin-bottom: 2.5rem; flex-wrap: wrap;
+  }
+  .cover-kpi {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 10px; padding: .85rem 1.25rem;
+    backdrop-filter: blur(4px);
+  }
+  .cover-kpi .num { font-size: 1.7rem; font-weight: 900; color: var(--accent2); }
+  .cover-kpi .lbl { font-size: var(--fs-xs); color: rgba(255,255,255,.6); letter-spacing: .05em; text-transform: uppercase; }
+
+  /* ── Business Model Canvas ────────────────────────────────────── */
+  .bmc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px;
+    font-size: var(--fs-sm);
+  }
+  .bmc-block {
+    background: var(--white);
+    border: 1.5px solid var(--mid);
+    border-radius: 8px;
+    padding: 1rem 1rem .8rem;
+    position: relative;
+  }
+  .bmc-block .bmc-title {
+    font-size: var(--fs-xs); font-weight: 800; text-transform: uppercase;
+    letter-spacing: .07em; margin-bottom: .6rem;
+    display: flex; align-items: center; gap: .4rem;
+  }
+  .bmc-block ul { padding-left: 1.1rem; }
+  .bmc-block li { margin-bottom: .25rem; font-size: var(--fs-xs); line-height: 1.45; }
+
+  /* Canvas color bands */
+  .bmc-kp   { background: #eef1fc; border-color: #b4c0ef; }
+  .bmc-kp .bmc-title   { color: var(--navy); }
+  .bmc-ka   { background: #eef1fc; border-color: #b4c0ef; }
+  .bmc-ka .bmc-title   { color: var(--navy); }
+  .bmc-kr   { background: #eef1fc; border-color: #b4c0ef; }
+  .bmc-kr .bmc-title   { color: var(--navy); }
+  .bmc-vp   { background: #fff8ec; border-color: #f0c870; border-width: 2.5px; }
+  .bmc-vp .bmc-title   { color: #a06000; }
+  .bmc-cr   { background: #f2fdf5; border-color: #7dd4a0; }
+  .bmc-cr .bmc-title   { color: #1a6635; }
+  .bmc-ch   { background: #f2fdf5; border-color: #7dd4a0; }
+  .bmc-ch .bmc-title   { color: #1a6635; }
+  .bmc-cs   { background: #fef4f4; border-color: #f0a0a0; }
+  .bmc-cs .bmc-title   { color: #8b1a1a; }
+  .bmc-cost { background: #f6f0fc; border-color: #c4a8e8; }
+  .bmc-cost .bmc-title { color: #5a1f8a; }
+  .bmc-rev  { background: #fff3e0; border-color: #f5be70; border-width: 2px; }
+  .bmc-rev .bmc-title  { color: #8b4800; }
+
+  .bmc-span2 { grid-column: span 2; }
+  .bmc-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* ── Competitive Table ────────────────────────────────────────── */
+  .comp-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-top: 1rem; }
+  .comp-table th {
+    background: var(--navy); color: var(--white);
+    padding: .75rem 1rem; text-align: left; font-weight: 700;
+    font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .05em;
+  }
+  .comp-table th:first-child { border-radius: 8px 0 0 0; }
+  .comp-table th:last-child  { border-radius: 0 8px 0 0; }
+  .comp-table td { padding: .7rem 1rem; border-bottom: 1px solid var(--mid); vertical-align: top; }
+  .comp-table tr:nth-child(even) td { background: var(--light); }
+  .comp-table tr:last-child td:first-child  { border-radius: 0 0 0 8px; }
+  .comp-table tr:last-child td:last-child   { border-radius: 0 0 8px 0; }
+  .chk { color: #1e7e4a; font-weight: 700; }
+  .x   { color: #c0392b; font-weight: 700; }
+  .partial { color: #c87000; font-weight: 700; }
+
+  /* ── Financial Tables ─────────────────────────────────────────── */
+  .fin-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-top: 1rem; }
+  .fin-table th {
+    background: var(--navy); color: var(--white);
+    padding: .65rem 1rem; text-align: right; font-weight: 700;
+    font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .04em;
+  }
+  .fin-table th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+  .fin-table th:last-child  { border-radius: 0 8px 0 0; }
+  .fin-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--mid); text-align: right; }
+  .fin-table td:first-child { text-align: left; font-weight: 600; color: var(--navy); }
+  .fin-table tr:nth-child(even) td { background: var(--light); }
+  .fin-table .subtotal td { background: var(--mid); font-weight: 700; }
+  .fin-table .total td { background: var(--navy); color: var(--white); font-weight: 900; font-size: var(--fs-base); }
+  .fin-table .total td:first-child { color: var(--accent2); border-radius: 0 0 0 8px; }
+  .fin-table .total td:last-child  { border-radius: 0 0 8px 0; }
+  .pos { color: #1e7e4a; }
+  .neg { color: #c0392b; }
+
+  /* ── Roadmap ──────────────────────────────────────────────────── */
+  .roadmap-phases { display: flex; gap: 0; position: relative; }
+  .roadmap-phases::before {
+    content: '';
+    position: absolute; top: 28px; left: 40px; right: 40px; height: 3px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--accent) 100%);
+    z-index: 0;
+  }
+  .roadmap-phase {
+    flex: 1; text-align: center; position: relative; z-index: 1; padding: 0 .5rem;
+  }
+  .roadmap-dot {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; margin: 0 auto 1rem;
+    border: 3px solid var(--white);
+    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  }
+  .dot-done    { background: var(--navy); }
+  .dot-active  { background: var(--navy-light); }
+  .dot-soon    { background: var(--accent); }
+  .dot-future  { background: var(--muted); }
+  .roadmap-phase h5 { font-size: var(--fs-sm); color: var(--navy); margin-bottom: .4rem; }
+  .roadmap-phase p  { font-size: var(--fs-xs); color: var(--muted); line-height: 1.4; }
+  .roadmap-period { font-size: var(--fs-xs); font-weight: 700; color: var(--accent); display: block; margin-bottom: .3rem; }
+
+  /* ── Pricing Cards ────────────────────────────────────────────── */
+  .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 1rem; }
+  .pricing-card {
+    border-radius: var(--radius);
+    border: 2px solid var(--mid);
+    overflow: hidden;
+    background: var(--white);
+  }
+  .pricing-card.featured {
+    border-color: var(--navy);
+    box-shadow: 0 8px 32px rgba(26,45,128,.18);
+    transform: translateY(-6px);
+  }
+  .pricing-head {
+    background: var(--light); padding: 1.5rem 1.5rem 1rem;
+    text-align: center; border-bottom: 1px solid var(--mid);
+  }
+  .pricing-card.featured .pricing-head { background: var(--navy); }
+  .pricing-head .tier-name {
+    font-size: var(--fs-sm); font-weight: 800; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted); margin-bottom: .3rem;
+  }
+  .pricing-card.featured .tier-name { color: var(--accent2); }
+  .pricing-head .price {
+    font-size: 2.2rem; font-weight: 900; color: var(--navy); line-height: 1;
+  }
+  .pricing-card.featured .price { color: var(--white); }
+  .pricing-head .price span { font-size: 1rem; font-weight: 400; color: var(--muted); }
+  .pricing-card.featured .price span { color: rgba(255,255,255,.6); }
+  .pricing-head .target { font-size: var(--fs-xs); color: var(--muted); margin-top: .4rem; }
+  .pricing-card.featured .target { color: rgba(255,255,255,.6); }
+  .pricing-body { padding: 1.25rem 1.5rem; }
+  .pricing-body ul { list-style: none; padding: 0; }
+  .pricing-body li {
+    padding: .35rem 0; font-size: var(--fs-sm); border-bottom: 1px solid var(--mid);
+    display: flex; align-items: flex-start; gap: .5rem;
+  }
+  .pricing-body li:last-child { border-bottom: none; }
+  .pricing-body li::before { content: '✓'; color: #1e7e4a; font-weight: 900; flex-shrink: 0; }
+
+  /* ── Persona Cards ────────────────────────────────────────────── */
+  .persona {
+    background: var(--white);
+    border: 1.5px solid var(--mid);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    border-left: 5px solid var(--navy);
+  }
+  .persona-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .persona-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .persona-name { font-weight: 800; color: var(--navy); font-size: var(--fs-lg); margin-bottom: .1rem; }
+  .persona-role { font-size: var(--fs-sm); color: var(--muted); }
+  .persona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .75rem; }
+  .persona-item label { display: block; font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .2rem; }
+  .persona-item p { font-size: var(--fs-sm); margin: 0; }
+
+  /* ── Strategy Steps ───────────────────────────────────────────── */
+  .gtm-steps { display: flex; flex-direction: column; gap: 1rem; }
+  .gtm-step {
+    display: flex; gap: 1.25rem; align-items: flex-start;
+    background: var(--light); border-radius: var(--radius);
+    padding: 1.25rem; border-left: 4px solid var(--navy);
+  }
+  .gtm-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--navy); color: var(--white);
+    font-weight: 900; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .gtm-content h5 { color: var(--navy); margin-bottom: .3rem; font-size: var(--fs-base); }
+  .gtm-content p  { margin: 0; font-size: var(--fs-sm); color: var(--muted); }
+
+  /* ── Modules Grid ─────────────────────────────────────────────── */
+  .modules-wrap { display: flex; flex-direction: column; gap: 1.25rem; }
+  .module-group h5 {
+    font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); font-weight: 700; margin-bottom: .6rem;
+  }
+  .module-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .module-chip {
+    padding: .35em .85em; border-radius: 20px; font-size: var(--fs-xs); font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .chip-live   { background: #d4f0e0; color: #0d5930; border: 1px solid #8dd4b0; }
+  .chip-road   { background: #fde8c0; color: #7a4000; border: 1px solid #f0b870; }
+  .chip-future { background: #e0e6f8; color: #1a2d80; border: 1px solid #aab8ee; }
+
+  /* ── Footer ───────────────────────────────────────────────────── */
+  .doc-footer {
+    text-align: center; padding: 2rem 1rem;
+    font-size: var(--fs-xs); color: var(--muted); border-top: 1px solid var(--mid);
+    margin-top: 1rem;
+  }
+  .doc-footer strong { color: var(--navy); }
+
+  /* ── Nav ──────────────────────────────────────────────────────── */
+  .toc {
+    background: var(--white); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 1.5rem 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .toc h4 { color: var(--navy); margin-bottom: .75rem; font-size: var(--fs-base); }
+  .toc-list { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: 0; }
+  .toc-list a {
+    display: inline-block;
+    background: var(--light); border: 1px solid var(--mid);
+    color: var(--navy); text-decoration: none; font-size: var(--fs-xs); font-weight: 600;
+    padding: .35em .9em; border-radius: 20px; transition: all .2s;
+  }
+  .toc-list a:hover { background: var(--navy); color: var(--white); }
+
+  /* ── Metric Pills ─────────────────────────────────────────────── */
+  .metric-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .metric {
+    flex: 1; min-width: 150px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+    color: var(--white); border-radius: var(--radius); padding: 1.2rem 1.5rem;
+    text-align: center;
+  }
+  .metric .val { font-size: 2rem; font-weight: 900; color: var(--accent2); display: block; }
+  .metric .lbl { font-size: var(--fs-xs); color: rgba(255,255,255,.65); text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ── Print ────────────────────────────────────────────────────── */
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    .cover { border-radius: 0; }
+    .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid-page; }
+    .bmc-block li { font-size: 8pt; }
+    .roadmap-phases::before { display: none; }
+    .toc { display: none; }
+    h2 { font-size: 16pt; }
+    .pricing-card.featured { transform: none; }
+    a { color: inherit; text-decoration: none; }
+    .page-wrap { padding: 0 .5rem 2rem; }
+    .grid-2, .grid-3, .grid-4, .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 900px) {
+    .bmc-grid { grid-template-columns: 1fr 1fr; }
+    .grid-3, .pricing-grid { grid-template-columns: 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .roadmap-phases { flex-direction: column; }
+    .roadmap-phases::before { display: none; }
+    .metric-row { flex-direction: column; }
+  }
+  @media (max-width: 600px) {
+    .section { padding: 1.5rem 1rem; }
+    .cover { padding: 3rem 1.5rem 2.5rem; }
+    .grid-2, .grid-3, .grid-4, .pricing-grid { grid-template-columns: 1fr; }
+    .persona-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Ishikawa Diagram ─────────────────────────────────────────── */
+  .ishi-wrap { position:relative; margin: 1.5rem 0; }
+  .ishi-spine {
+    position:absolute; top:50%; left:5%; right:5%;
+    height:5px; background:linear-gradient(90deg,var(--navy),var(--accent));
+    border-radius:3px; z-index:0;
+  }
+  .ishi-effect {
+    position:absolute; right:4%; top:50%; transform:translateY(-50%);
+    background:var(--navy); color:#fff; border-radius:10px;
+    padding:.65rem 1.1rem; font-weight:800; font-size:.85rem;
+    text-align:center; max-width:130px; line-height:1.3; z-index:2;
+    box-shadow:0 4px 16px rgba(26,45,128,.3);
+  }
+  .ishi-bones {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:1rem; position:relative; z-index:1;
+    padding: 0 145px 0 0;
+  }
+  .ishi-bone {
+    background:var(--white); border:2px solid var(--mid);
+    border-radius:10px; padding:1rem;
+  }
+  .ishi-bone.top { border-top:4px solid var(--navy); }
+  .ishi-bone.bot { border-bottom:4px solid var(--accent); }
+  .ishi-bone-title {
+    font-weight:800; font-size:.78rem; text-transform:uppercase;
+    letter-spacing:.06em; margin-bottom:.6rem;
+    display:flex; align-items:center; gap:.4rem;
+  }
+  .ishi-bone.top .ishi-bone-title { color:var(--navy); }
+  .ishi-bone.bot .ishi-bone-title { color:#8b4800; }
+  .ishi-causes { list-style:none; padding:0; margin:0; }
+  .ishi-causes li {
+    font-size:.75rem; padding:.28rem 0;
+    border-bottom:1px solid var(--mid); color:var(--muted);
+    line-height:1.35;
+  }
+  .ishi-causes li:last-child { border-bottom:none; }
+  .ishi-causes li strong { color:var(--navy); font-size:.73rem; }
+  .ishi-root {
+    margin-top:1.25rem;
+    background:linear-gradient(135deg,var(--navy) 0%,#1a4a9a 100%);
+    border-radius:10px; padding:1.25rem 1.5rem;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:.75rem;
+  }
+  .ishi-root-item { color:#fff; }
+  .ishi-root-item .ri-letter {
+    font-size:1.6rem; font-weight:900; color:var(--accent2,#f0b540);
+    line-height:1; display:block; margin-bottom:.2rem;
+  }
+  .ishi-root-item .ri-label {
+    font-size:.72rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; color:rgba(255,255,255,.7); margin-bottom:.25rem;
+  }
+  .ishi-root-item .ri-desc { font-size:.75rem; color:rgba(255,255,255,.85); line-height:1.35; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-inner">
+    <div class="cover-logo"><span>🧭</span> SANTAGLIA</div>
+    <h1>Santaglia Compass</h1>
+    <div class="cover-subtitle">Plan de Negocio &amp; Business Model Canvas</div>
+    <p class="cover-desc">
+      Plataforma SaaS de gestión empresarial diseñada para consultores y
+      despachos de servicios en México — 100% en español, con cumplimiento
+      fiscal SAT/CFDI nativo y escalabilidad desde freelancer hasta empresa
+      multi-usuario.
+    </p>
+    <div class="cover-kpi-row">
+      <div class="cover-kpi">
+        <div class="num">$299</div>
+        <div class="lbl">MXN/mes — Tier Básico</div>
+      </div>
+      <div class="cover-kpi">
+        <div class="num">3 Tiers</div>
+        <div class="lbl">Básico · Estándar · Pro</div>
+      </div>
+      <div class="cover-kpi">
+        <div class="num">2026–28</div>
+        <div class="lbl">Horizonte de proyección</div>
+      </div>
+      <div class="cover-kpi">
+        <div class="num">+500</div>
+        <div class="lbl">Empresas objetivo — Año 2</div>
+      </div>
+      <div class="cover-kpi">
+        <div class="num">~310,000</div>
+        <div class="lbl">Micro-empresas 1–10 colaboradores en México</div>
+      </div>
+    </div>
+    <div class="cover-meta">
+      <span><strong>Fundador:</strong> Carlos Sánchez de Tagle Ruiz</span>
+      <span><strong>Versión:</strong> 1.0 — Mayo 2026</span>
+      <span><strong>Actualizado:</strong> <span id="updated-date">19 de mayo de 2026</span></span>
+      <span><strong>Clasificación:</strong> CONFIDENCIAL</span>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+<!-- ── Table of Contents ─────────────────────────────────────── -->
+<div class="toc">
+  <h4>Contenido</h4>
+  <ul class="toc-list">
+    <li><a href="#resumen">1. Resumen Ejecutivo</a></li>
+    <li><a href="#canvas">2. Business Model Canvas</a></li>
+    <li><a href="#propuesta">3. Propuesta de Valor</a></li>
+    <li><a href="#segmentos">4. Segmentos de Cliente</a></li>
+    <li><a href="#pricing">5. Modelo de Ingresos</a></li>
+    <li><a href="#partner">Partner Despachos</a></li>
+    <li><a href="#ishikawa">Posicionamiento Ishikawa</a></li>
+    <li><a href="#competencia">6. Análisis Competitivo</a></li>
+    <li><a href="#gtm">7. Go-to-Market</a></li>
+    <li><a href="#finanzas">8. Proyecciones Financieras</a></li>
+    <li><a href="#tecnologia">9. Hoja de Ruta Tecnológica</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     1. RESUMEN EJECUTIVO
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="resumen">
+  <div class="section-header">
+    <div class="section-icon">📋</div>
+    <div>
+      <div class="tag">Sección 1</div>
+      <h2>Resumen Ejecutivo</h2>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:1.5rem">
+    <div>
+      <h4>El problema</h4>
+      <p>Las micro-empresas mexicanas de <strong>1 a 10 colaboradores</strong> — consultoras, despachos, talleres, distribuidoras, agencias y comercios — gestionan su operación en una mezcla caótica de hojas de cálculo, WhatsApp, correo y herramientas genéricas que no hablan entre sí. El resultado: información duplicada, errores fiscales costosos y tiempo directivo desperdiciado en administración en lugar de hacer crecer el negocio.</p><p>El criterio de exclusión no es el sector sino el tamaño: <strong>quien ya tiene un ERP no es nuestro cliente</strong> — ya resolvió el problema de otra forma. Nuestro mercado son quienes son demasiado pequeños para costear e implementar un ERP, pero demasiado complejos para seguir en Excel.</p>
+
+      <p>Las soluciones existentes (CONTPAQi, Aspel, SAP Business One) son caras, complejas de implementar
+      y requieren capturista o contador dedicado. Las plataformas internacionales (QuickBooks, Monday,
+      Notion) ignoran por completo la realidad fiscal del SAT, el CFDI 4.0 y el régimen de honorarios.</p>
+
+      <h4 style="margin-top:1.25rem">La solución</h4>
+      <p><strong>Santaglia Compass</strong> es una plataforma web modular de gestión empresarial construida
+      específicamente para la micro-empresa mexicana de 1 a 10 colaboradores. Integra en un solo sistema:
+      finanzas y tesorería, nómina (asimilables a salarios + honorarios), facturación SAT, proyectos,
+      CRM, documentos y proyecciones — con una curva de aprendizaje mínima y sin necesidad de soporte
+      técnico permanente — diseñado para operar <strong>junto a</strong> ERPs y despachos contables, no en lugar de ellos.</p>
+    </div>
+    <div>
+      <div class="highlight-box">
+        <h4>Por qué ahora</h4>
+        <ul>
+          <li>La reforma al CFDI 4.0 (2022) y la complementación RESICO (2023) dejaron a miles de despachos
+              buscando soluciones actualizadas</li>
+          <li>El trabajo remoto pos-COVID normalizó el uso de plataformas cloud entre MiPyMEs mexicanas</li>
+          <li>El SAT endurece auditorías a honorarios y asimilables — compliance ya no es opcional</li>
+          <li>La IA generativa reduce drásticamente el costo de construir software de nicho</li>
+        </ul>
+      </div>
+      <div class="highlight-box" style="margin-top:1rem">
+        <h4>Modelo de negocio en una línea</h4>
+        <p>SaaS recurrente mensual directo al cliente + Programa Partner Despachos (canal B2B2C): el despacho refiere clientes, Santaglia factura directamente al cliente, el despacho recibe comisión mensual escalonada según volumen. El despacho nunca toca el flujo de dinero.</p>
+      </div>
+      <div class="highlight-box" style="margin-top:1rem">
+        <h4>Ventaja del fundador</h4>
+        <p>Carlos Sánchez de Tagle es el usuario #1 del producto. Lo usa para gestionar su propia
+        consultoría, lo que garantiza retroalimentación diaria, casos de uso reales y credibilidad
+        con clientes potenciales del mismo perfil.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric">
+      <span class="val">~310,000</span>
+      <span class="lbl">Micro-empresas 1–10 colaboradores objetivo en México</span>
+    </div>
+    <div class="metric">
+      <span class="val">$299–$1,999</span>
+      <span class="lbl">MXN/mes por empresa</span>
+    </div>
+    <div class="metric">
+      <span class="val">$4.8M</span>
+      <span class="lbl">MXN ARR proyectado Año 3 (conservador)</span>
+    </div>
+    <div class="metric">
+      <span class="val">82%</span>
+      <span class="lbl">Margen bruto SaaS estimado</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     2. BUSINESS MODEL CANVAS
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="canvas">
+  <div class="section-header">
+    <div class="section-icon">🗂️</div>
+    <div>
+      <div class="tag">Sección 2</div>
+      <h2>Business Model Canvas</h2>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:var(--fs-sm);margin-bottom:1.25rem">
+    Modelo Osterwalder — 9 bloques. Los colores identifican las áreas funcionales del modelo.
+  </p>
+
+  <!-- Row 1: KP | KA | VP | CR | CS -->
+  <div class="bmc-grid">
+
+    <!-- Socios Clave -->
+    <div class="bmc-block bmc-kp" style="grid-row: 1">
+      <div class="bmc-title">🤝 Socios Clave</div>
+      <ul>
+        <li>Despachos contables que refieren clientes (canal B2B2C)</li>
+        <li>SAT (fuente oficial de CFDIs vía Descarga Masiva — RFC+CIEC o e.firma)</li>
+        <li>Supabase / Vercel — infraestructura cloud</li>
+        <li>Stripe / Conekta — procesamiento de pagos recurrentes</li>
+        <li>Anthropic / OpenAI — AI features en roadmap</li>
+        <li>Comunidades de consultores independientes (AMCHAM, COPARMEX)</li>
+      </ul>
+    </div>
+
+    <!-- Actividades Clave -->
+    <div class="bmc-block bmc-ka" style="grid-row: 1">
+      <div class="bmc-title">⚙️ Actividades Clave</div>
+      <ul>
+        <li>Desarrollo continuo de módulos (sprint semanal)</li>
+        <li>Sincronización automática SAT (RFC+CIEC / e.firma) — Conexión SAT</li>
+        <li>Onboarding y migración de datos (Excel → Compass)</li>
+        <li>Soporte y capacitación a usuarios</li>
+        <li>Ventas directas y gestión del canal contable</li>
+        <li>Marketing de contenido (YouTube, LinkedIn, TikTok fiscal)</li>
+        <li>Mantenimiento de base de conocimiento y flujos del Asistente de Soporte</li>
+      </ul>
+    </div>
+
+    <!-- Propuesta de Valor -->
+    <div class="bmc-block bmc-vp bmc-span2" style="grid-row: 1 / 3; grid-column: 3">
+      <div class="bmc-title">💎 Propuesta de Valor</div>
+      <ul>
+        <li><strong>Un solo sistema</strong> para finanzas, nómina, ingresos y egresos fiscales, proyectos y documentos</li>
+        <li>100% en español con terminología fiscal mexicana (SAT, CFDI, ISR, IVA, RESICO, asimilables)</li>
+        <li>Migración gradual desde Excel — importa tus datos hoy, sin "big bang"</li>
+        <li>RBAC nativo — roles configurables por módulo desde el Tier Estándar</li>
+        <li>Sin requerir contador dedicado ni soporte técnico permanente</li>
+        <li><strong>Conexión SAT automática:</strong> descarga CFDIs emitidos y recibidos directo del SAT (RFC+CIEC o e.firma) — siempre actualizado, sin captura manual</li>
+        <li><strong>Monitor SAT:</strong> descarga automática mensual de Constancia de Situación Fiscal y Opinión de Cumplimiento — alerta inmediata si la opinión cambia a Negativo</li>
+        <li><strong>Reconciliación automática:</strong> detecta desviaciones de importe y fecha; proyección dual (optimista/conservador) automática con cobros pendientes; cobros anticipados sin intervención; el usuario solo ve lo que necesita decidir; gastos sin CFDI (plataformas extranjeras, efectivo) reconciliados vía estado de cuenta bancario o captura manual</li>
+        <li>Precio accesible vs. ERP tradicionales (ahorra $5k–$40k MXN/mes)</li>
+        <li>El fundador lo usa en su propia empresa — credibilidad real</li>
+        <li><strong>Puente con sistema contable externo (Alegra, CONTPAQi) vía check de contabilización:</strong> marca movimientos ya registrados en el sistema paralelo, panel de pendientes accionable en Dashboard, sin doble captura.</li>
+      </ul>
+    </div>
+
+    <!-- Relación con Clientes -->
+    <div class="bmc-block bmc-cr" style="grid-row: 1">
+      <div class="bmc-title">💬 Relación con Clientes</div>
+      <ul>
+        <li>Onboarding guiado (video + checklist interactivo)</li>
+        <li>Soporte por WhatsApp Business y chat in-app</li>
+        <li>Base de conocimiento + tutoriales en video</li>
+        <li>Comunidad de usuarios (Discord / grupo WhatsApp)</li>
+        <li>Revisión mensual de uso con clientes Pro</li>
+        <li>Feedback loop directo al roadmap</li>
+      </ul>
+    </div>
+
+    <!-- Segmentos -->
+    <div class="bmc-block bmc-cs" style="grid-row: 1">
+      <div class="bmc-title">👥 Segmentos de Clientes</div>
+      <ul>
+        <li>Micro-empresa 1–10 colaboradores (cualquier sector)</li>
+        <li>Consultor / freelancer con subcontratistas</li>
+        <li>Despacho de servicios profesionales (legal, contable, arquitectura)</li>
+        <li>Distribuidora / comercio micro B2B</li>
+        <li>Taller o empresa mixta (servicios + productos)</li>
+        <li>Despacho contable como canal (B2B2C)</li>
+        <li>PyMEs que usan TDC como método principal de pago y sistemas contables externos paralelos (Alegra, CONTPAQi, Aspel)</li>
+        <li><strong>Empresas con nómina convencional (IMSS):</strong> talleres, manufactura, comercio con empleados — nómina quincenal/mensual como gasto fijo más predecible y crítico para el flujo de caja</li>
+        <li><strong>Personas Físicas con Actividad Empresarial (PFAE):</strong> honorarios, RESICO, régimen general — mismo dolor bancario/CFDI, estructura más simple, precio de entrada más bajo</li>
+      </ul>
+    </div>
+
+    <!-- Recursos Clave -->
+    <div class="bmc-block bmc-kr" style="grid-row: 2; grid-column: 1">
+      <div class="bmc-title">🏗️ Recursos Clave</div>
+      <ul>
+        <li>Código propietario (HTML/CSS/JS + Supabase backend)</li>
+        <li>Know-how fiscal SAT — conocimiento profundo del fundador</li>
+        <li>Datos operativos reales (caso de uso propio)</li>
+        <li>Reputación personal del fundador como consultor</li>
+        <li>Red de contactos en el ecosistema de servicios profesionales</li>
+      </ul>
+    </div>
+
+    <!-- Canales -->
+    <div class="bmc-block bmc-ch" style="grid-row: 2; grid-column: 2">
+      <div class="bmc-title">📣 Canales</div>
+      <ul>
+        <li>Venta directa (referidos del propio despacho del fundador)</li>
+        <li>Canal contable — despachos que re-venden o recomiendan</li>
+        <li>LinkedIn — contenido de autoridad para directores y dueños</li>
+        <li>YouTube — tutoriales fiscales + demos del producto</li>
+        <li>Prueba gratuita 30 días (self-service)</li>
+        <li>Asociaciones gremiales (AMCHAM, Cámara de Comercio)</li>
+      </ul>
+    </div>
+
+    <!-- Estructura de Costos -->
+    <div class="bmc-block bmc-cost" style="grid-row: 2; grid-column: 4; grid-column: 4 / 6">
+      <div class="bmc-title">💸 Estructura de Costos</div>
+      <ul>
+        <li><strong>Fijos:</strong> Infraestructura cloud (Supabase, Vercel, Cloudflare) ~$2,500 MXN/mes iniciales</li>
+        <li><strong>Variables:</strong> Costo Stripe por transacción (~3%); sin costo de PAC/timbrado (solo lectura SAT)</li>
+        <li><strong>Desarrollo:</strong> Tiempo del fundador (bootstrap) → freelancers/LATAM developers en Año 2</li>
+        <li><strong>Marketing:</strong> Producción de contenido, campañas Meta/Google (~$15k MXN/mes en Año 2)</li>
+        <li><strong>Soporte:</strong> CSM part-time desde 200 clientes activos</li>
+        <li><strong>Soporte humano Nivel 1:</strong> $0 — cubierto por el Asistente de Soporte Guiado. El chatbot de flujos de decisión elimina ~70% de tickets antes de llegar al equipo humano, protegiendo el margen EBITDA a escala.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Bottom Row: Costs | Revenue -->
+  <div class="bmc-bottom" style="margin-top:8px">
+    <div class="bmc-block bmc-cost">
+      <div class="bmc-title">📊 Inversión Escalonada — Año 1 (filosofía bootstrap)</div>
+      <table style="width:100%;font-size:0.75rem;border-collapse:collapse;margin-top:.5rem">
+        <thead>
+          <tr style="background:rgba(0,0,0,.06)">
+            <th style="padding:4px 6px;text-align:left">Etapa</th>
+            <th style="padding:4px 6px;text-align:left">Período</th>
+            <th style="padding:4px 6px;text-align:right">Costo</th>
+            <th style="padding:4px 6px;text-align:left">Qué se activa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:4px 6px;font-weight:600">0 — Laboratorio</td>
+            <td style="padding:4px 6px">Ene–Jun 2026</td>
+            <td style="padding:4px 6px;text-align:right;color:#1e7e4a"><strong>~$500</strong></td>
+            <td style="padding:4px 6px">Dominio + Cloudflare. Hosting estático gratuito (GitHub Pages). Sin marketing ni PAC.</td>
+          </tr>
+          <tr style="background:rgba(0,0,0,.03)">
+            <td style="padding:4px 6px;font-weight:600">1 — Beta cerrada</td>
+            <td style="padding:4px 6px">Jul–Sep 2026</td>
+            <td style="padding:4px 6px;text-align:right;color:#c87000"><strong>~$4,500</strong></td>
+            <td style="padding:4px 6px">Supabase free tier (migración backend), herramientas SaaS básicas ($1,500/mes). Sin marketing pagado.</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;font-weight:600">2 — Lanzamiento</td>
+            <td style="padding:4px 6px">Oct–Dic 2026</td>
+            <td style="padding:4px 6px;text-align:right;color:#c0392b"><strong>~$33,500</strong></td>
+            <td style="padding:4px 6px">Supabase Pro, Stripe activo, marketing digital rampeado ($8–10k/mes). Conexión SAT sin costo adicional. Financiado por primeros ingresos SaaS + consultoría.</td>
+          </tr>
+          <tr style="background:rgba(0,0,0,.06);font-weight:700">
+            <td colspan="2" style="padding:5px 6px">Total Año 1 (desembolso real)</td>
+            <td style="padding:5px 6px;text-align:right">~$38,500</td>
+            <td style="padding:5px 6px;font-weight:400;font-style:italic">vs $86k en modelo plano · ahorro 55%</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.7rem;margin-top:.5rem;color:#555">⚡ Desembolso comprometido <em>antes</em> del primer cliente pagador: <strong>~$5,000 MXN</strong> (solo Etapas 0+1). Break-even SaaS puro: ≈18 clientes · ~Nov 2026.</p>
+    </div>
+    <div class="bmc-block bmc-rev">
+      <div class="bmc-title">💰 Flujos de Ingresos</div>
+      <ul>
+        <li><strong>SaaS recurrente mensual:</strong> $299 / $799 / $1,999 MXN por empresa/mes</li>
+        <li><strong>Onboarding premium:</strong> $2,500–$8,000 MXN por implementación (pago único)</li>
+        <li><strong>Migración de datos Excel:</strong> $1,500–$5,000 MXN por proyecto</li>
+        <li><strong>Canal contable:</strong> 20% comisión recurrente al despacho referidor</li>
+        <li><strong>Consultoría del fundador:</strong> Ingreso puente mientras el SaaS escala</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     3. PROPUESTA DE VALOR
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="propuesta">
+  <div class="section-header">
+    <div class="section-icon">💎</div>
+    <div>
+      <div class="tag">Sección 3</div>
+      <h2>Propuesta de Valor Detallada</h2>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:1.75rem">
+    <div class="card accent-border">
+      <h4>🇲🇽 Nativo Mexicano</h4>
+      <p style="font-size:var(--fs-sm)">No es una traducción de software gringo. Cada término, flujo y reporte fue diseñado para el contexto fiscal mexicano: ISR, IVA, RESICO, asimilables a salarios, honorarios, retenciones bimestrales y constancia de retenciones. El usuario no necesita buscar equivalencias — el sistema habla su idioma.</p>
+    </div>
+    <div class="card accent-border">
+      <h4>📊 Migración sin dolor</h4>
+      <p style="font-size:var(--fs-sm)">El usuario puede empezar con un solo módulo (p.ej. Mov. Bancarios o Retenciones) mientras sigue en Excel para el resto. La adopción es gradual, módulo por módulo, sin "big bang" que paralice la operación.</p>
+    </div>
+    <div class="card accent-border">
+      <h4>🔐 Datos fiscales desde la fuente</h4>
+      <p style="font-size:var(--fs-sm)">Los CFDIs emitidos y recibidos se descargan directamente del SAT — no de un intermediario ni de catálogos propios. Cuando el SAT actualiza un registro, Compass lo refleja en la siguiente sincronización. Las reglas de detección de anomalías en retenciones (ISR, IVA, fechas límite SAT) se mantienen actualizadas por el equipo.</p>
+    </div>
+    <div class="card navy-border">
+      <h4>👥 Multi-usuario con roles</h4>
+      <p style="font-size:var(--fs-sm)">Desde el Tier Estándar, el sistema soporta colaboradores con permisos granulares por módulo. El dueño decide quién puede ver finanzas, quién registra egresos y quién solo gestiona proyectos — sin exponer toda la información a todos.</p>
+    </div>
+    <div class="card navy-border">
+      <h4>📱 Web-first, mobile-ready</h4>
+      <p style="font-size:var(--fs-sm)">Funciona desde cualquier navegador moderno — desktop, tablet o celular. No requiere instalación, no ocupa espacio en disco y se actualiza automáticamente. El equipo trabaja desde cualquier lugar.</p>
+    </div>
+    <div class="card navy-border">
+      <h4>🤖 AI en roadmap</h4>
+      <p style="font-size:var(--fs-sm)">En Año 2, Compass incorporará asistente fiscal con IA: alertas de vencimientos SAT, sugerencias de deducibilidad, análisis de cashflow y generación automática de reportes narrativos para el cliente final.</p>
+    </div>
+    <div class="card green-border">
+      <h4>🔄 Conexión SAT automática</h4>
+      <p style="font-size:var(--fs-sm)">El sistema descarga directamente del SAT todos los CFDIs emitidos y recibidos del contribuyente usando sus propias credenciales (RFC+CIEC o e.firma). Sincronización automática 2–4 veces al día, configurable. Flujo de caja, retenciones, nómina y proyectos siempre actualizados sin captura manual — y sin el costo ni el riesgo de un PAC.</p>
+    </div>
+    <div class="card green-border">
+      <h4>🛡️ Monitor SAT mensual</h4>
+      <p style="font-size:var(--fs-sm)">Compass descarga automáticamente cada mes la Constancia de Situación Fiscal y la Opinión de Cumplimiento directamente del SAT, usando las mismas credenciales de Conexión SAT. Ambos documentos se guardan con historial de 12 meses en el módulo de Documentos. Si la Opinión cambia a <strong>Negativo</strong>, el sistema emite una alerta inmediata en el dashboard y por email — no te enteras cuando ya es tarde. Para despachos: visibilidad del estatus de cumplimiento de toda su cartera de clientes en un solo lugar.</p>
+    </div>
+    <div class="card green-border">
+      <h4>🔄 Reconciliación automática proyectado/real</h4>
+      <p style="font-size:var(--fs-sm)">El motor cruza cada movimiento real (vía Conexión SAT o importación Excel) contra su proyectado por cuenta + descripción + importe. Maneja dos dimensiones de desviación simultáneamente:</p>
+      <ul style="font-size:var(--fs-sm);margin-top:0.5rem">
+        <li><strong>Desviación de importe:</strong> si la luz llegó por $2,340 en lugar de $2,000, el saldo se corrige automáticamente. Si la diferencia es sistemática (&gt;15% por 3 meses), sugiere actualizar el estimado.</li>
+        <li><strong>Retraso en cobro (overdue):</strong> gastos tienen ventana ±7 días; ingresos/facturas son overdue desde el día 0 porque cualquier retraso impacta el flujo. Alerta con 3 opciones: registrar el cobro real, diferir con nueva fecha esperada, o cancelar del pronóstico.</li>
+        <li><strong>Proyección dual automática:</strong> mientras haya cobros overdue, el dashboard muestra en paralelo el escenario optimista (asume que llegan) y el conservador (los excluye). El dueño ve el rango real de su caja en los próximos 30 días.</li>
+        <li><strong>Cobro anticipado (early match):</strong> si Conexión SAT detecta que un cliente pagó antes de la fecha proyectada, el sistema lo reconcilia automáticamente sin intervención del usuario, recalcula el flujo con el saldo mejorado y envía una notificación positiva. Si el patrón se repite, sugiere ajustar el plazo proyectado para ese cliente.</li>
+        <li><strong>Drift learning por cliente:</strong> registra si un cliente paga sistemáticamente tarde o temprano. Después de 3 ocurrencias, sugiere ajustar el plazo proyectado. El perfil de comportamiento de pago alimenta el módulo CRM.</li>
+        <li><strong>Gastos sin CFDI:</strong> no todo gasto llega vía SAT — plataformas extranjeras (Netflix, AWS), Amazon sin RFC, estacionamientos y efectivo no generan CFDI mexicano. El motor usa una cascada de tres fuentes: CFDI del SAT → estado de cuenta bancario → captura manual. Cada movimiento proyectado puede marcarse como "con CFDI", "sin CFDI" o "efectivo" para que el motor busque en la fuente correcta y no genere alertas falsas.</li>
+      </ul>
+    </div>
+    <div class="card green-border">
+      <h4>🤖 Asistente de soporte guiado</h4>
+      <p style="font-size:var(--fs-sm)">Sistema de autoayuda interactivo con flujos de decisión por módulo. El usuario identifica su problema, sigue pasos guiados y resuelve sin esperar atención humana. Escalación automática con log completo si no se resuelve. <strong>Reduce tickets de soporte en ~70%.</strong></p>
+    </div>
+    <div class="card accent-border">
+      <h4>🔗 Puente Compass ↔ Contabilidad</h4>
+      <p style="font-size:var(--fs-sm)">Compass es la fuente de verdad bancaria (flujo de caja real). Para el fundador o usuario que lleva contabilidad paralela en Alegra, CONTPAQi u otro sistema, Compass cierra la brecha sin duplicar captura:</p>
+      <ul style="font-size:var(--fs-sm);margin-top:0.5rem">
+        <li><strong>Check "Contabilizado":</strong> cada movimiento real puede marcarse como ya registrado en el sistema contable externo. Badge en Dashboard con contador de pendientes por contabilizar.</li>
+        <li><strong>Panel "Pendientes de acción":</strong> 4 contadores accionables en Dashboard — sin contabilizar, pendientes de CFDI, CFDIs del SAT sin movimiento bancario asociado, y proyecciones vencidas sin confirmar.</li>
+        <li><strong>Proyección → Real sin doble captura:</strong> confirmar un movimiento proyectado como realizado con opción "Pendiente CFDI" cuando aún no llega el comprobante.</li>
+        <li><strong>CFDI retroactivo vs. movimiento manual:</strong> cuando llega un CFDI del SAT que coincide con un movimiento capturado manualmente (importe ±5%, fecha ±5 días, RFC), el sistema propone vincularlo y reemplazar el registro manual.</li>
+        <li><strong>Compatible con TDC como método principal:</strong> los cargos de tarjeta de crédito se agrupan y consolidan, no requieren transferencias bancarias para ser reconciliados.</li>
+        <li>Integración pensada para Alegra, CONTPAQi y Aspel como sistemas contables externos paralelos — Compass no los reemplaza, los complementa.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h4>Módulos activos vs. soluciones en el mercado</h4>
+    <p>Santaglia Compass es el único sistema que combina <strong>nómina de honorarios + asimilables</strong>, <strong>movimientos bancarios</strong>, <strong>proyección de flujo de caja con reconciliación automática</strong>, <strong>retenciones ISR/IVA con detección de anomalías SAT</strong>, <strong>gestión de proyectos</strong>, <strong>Conexión SAT directa (RFC+CIEC / e.firma)</strong>, <strong>Monitor SAT mensual (CSF + Opinión de Cumplimiento)</strong> y <strong>motor de reconciliación proyectado/real</strong> — en una sola plataforma accesible para una micro-empresa de 1–10 colaboradores en México, sin módulos adicionales de pago y sin depender de un PAC.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     4. SEGMENTOS DE CLIENTE
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="segmentos">
+  <div class="section-header">
+    <div class="section-icon">👥</div>
+    <div>
+      <div class="tag">Sección 4</div>
+      <h2>Segmentos de Cliente &amp; Personas</h2>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:1.5rem">
+
+    <div class="persona">
+      <div class="persona-header">
+        <div class="persona-avatar">🧑‍💼</div>
+        <div>
+          <div class="persona-name">Rodrigo Fuentes</div>
+          <div class="persona-role">Consultor independiente · CDMX · 38 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Ex-directivo corporativo, factura $120k–$200k MXN/mes en honorarios. Trabaja solo con 2 subcontratistas.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>Pierde 6–8 horas al mes reconciliando movimientos bancarios en Excel y preparando datos para el contador.</p>
+        </div>
+        <div class="persona-item">
+          <label>Herramientas actuales</label>
+          <p>Excel + Google Drive + WhatsApp + un contador externo a quien le pasa PDFs.</p>
+        </div>
+        <div class="persona-item">
+          <label>Tier objetivo</label>
+          <p><strong>Básico $299/mes</strong> — capaz de pagar sin pensarlo dos veces.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="persona">
+      <div class="persona-header">
+        <div class="persona-avatar">👩‍💼</div>
+        <div>
+          <div class="persona-name">Mariana Ortega</div>
+          <div class="persona-role">Socia directora de despacho legal · Monterrey · 44 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Despacho de 8 personas (4 socios, 2 asociados, 1 asistente, 1 contadora). Factura $1.2M MXN/mes.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>No tiene visibilidad de rentabilidad por proyecto, duplica esfuerzo en reportes para socios y no sabe si su equipo está sobre o sub-cargado.</p>
+        </div>
+        <div class="persona-item">
+          <label>Herramientas actuales</label>
+          <p>CONTPAQi para contabilidad, Excel para proyectos, Clio costoso y en inglés. Ninguno conectado.</p>
+        </div>
+        <div class="persona-item">
+          <label>Tier objetivo</label>
+          <p><strong>Pro $1,999/mes</strong> — RBAC completo + módulos de tiempo y rentabilidad.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="persona">
+      <div class="persona-header">
+        <div class="persona-avatar">🧑‍💻</div>
+        <div>
+          <div class="persona-name">Lic. Armando Castillo</div>
+          <div class="persona-role">Contador público · despacho propio · Guadalajara · 51 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Atiende 35 clientes MiPyME. Él mismo sufre con el caos documental y recomienda herramientas a sus clientes.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>Sus clientes no le mandan información ordenada a tiempo. Le llegan PDFs sueltos, facturas sin conciliar y nóminas en Excel sin formato.</p>
+        </div>
+        <div class="persona-item">
+          <label>Rol en el sistema</label>
+          <p>Canal de distribución B2B2C: adopta Compass para sus clientes y recibe 20% de la suscripción mensual.</p>
+        </div>
+        <div class="persona-item">
+          <label>Impacto</label>
+          <p>Puede referir 10–30 clientes activos → <strong>$60k–$180k MXN/año en comisiones</strong> para él.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="persona">
+      <div class="persona-header">
+        <div class="persona-avatar">🎨</div>
+        <div>
+          <div class="persona-name">Sofía Ramírez</div>
+          <div class="persona-role">Directora de agencia de marketing · CDMX · 33 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Agencia de 12 personas, maneja 8–15 cuentas simultáneas. Factura $600k–$900k MXN/mes.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>No sabe cuál cliente es más rentable, no tiene forma de hacer seguimiento de horas por proyecto y el cashflow la sorprende mensualmente.</p>
+        </div>
+        <div class="persona-item">
+          <label>Herramientas actuales</label>
+          <p>Notion (proyectos) + Aspel COI (contabilidad externa) + Excel cashflow + WhatsApp para todo lo demás.</p>
+        </div>
+        <div class="persona-item">
+          <label>Tier objetivo</label>
+          <p><strong>Estándar $799/mes</strong> → Pro cuando active módulo de Tiempo y Rentabilidad.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="persona" style="border-left-color:#0891b2">
+      <div class="persona-header">
+        <div class="persona-avatar" style="background:linear-gradient(135deg,#0891b2,#38bdf8)">🏭</div>
+        <div>
+          <div class="persona-name">Ing. Héctor Domínguez</div>
+          <div class="persona-role">Director de taller de manufactura · Toluca · 50 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Taller metalmecánico de 9 empleados con nómina quincenal formal (IMSS, INFONAVIT, SAR). Factura $350k–$550k MXN/mes a 4–6 clientes B2B con contratos anuales.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>La nómina quincenal es su egreso más predecible pero también el que más afecta su flujo: cada quincena salen $90k antes de cobrar a clientes con crédito 30–60 días. No tiene proyección de caja; descubre el problema cuando ya está en descubierto.</p>
+        </div>
+        <div class="persona-item">
+          <label>Complejidad nómina</label>
+          <p>ISR timbrado quincenal, cuotas IMSS patronales y obreras, INFONAVIT 5%, amortizaciones de crédito, prima vacacional, aguinaldo proporcional. Todo calculado manualmente en Excel y enviado al contador para timbrar en nómina.</p>
+        </div>
+        <div class="persona-item">
+          <label>Tier objetivo</label>
+          <p><strong>Estándar $799/mes</strong> — módulo Nómina convencional (cálculo IMSS/ISR + timbrado), Proyección de caja con nómina como gasto fijo recurrente, y Movimientos bancarios.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="persona" style="border-left-color:#7c3aed">
+      <div class="persona-header">
+        <div class="persona-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🧾</div>
+        <div>
+          <div class="persona-name">Patricia Vargas</div>
+          <div class="persona-role">Persona Física con Actividad Empresarial · Querétaro · 41 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Nutrióloga clínica independiente. Factura honorarios $80k–$130k MXN/mes. Régimen General + IVA. Sin empleados, con dos asistentes por honorarios asimilados.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>Mezcla finanzas personales y del negocio en la misma cuenta. No sabe cuánto pagar de ISR trimestral hasta que el contador la llama. La sorprende el "recorte fiscal" cada abril.</p>
+        </div>
+        <div class="persona-item">
+          <label>Herramientas actuales</label>
+          <p>Excel con estados de cuenta copy-paste + contador externo que sólo la llama cuando hay problemas. Ve la tabla de movimientos bancarios como "demasiado complicada".</p>
+        </div>
+        <div class="persona-item">
+          <label>Tier objetivo</label>
+          <p><strong>Básico $299/mes</strong> — necesita Vista Resumen (tarjetas por mes) y flujo de caja básico, no la tabla completa de 15 columnas.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="persona" style="border-left-color:var(--accent)">
+      <div class="persona-header">
+        <div class="persona-avatar" style="background:linear-gradient(135deg,#b45309,#d97706)">🏪</div>
+        <div>
+          <div class="persona-name">Roberto Ibáñez</div>
+          <div class="persona-role">Dueño de distribuidora de insumos · Puebla · 46 años</div>
+        </div>
+      </div>
+      <div class="persona-grid">
+        <div class="persona-item">
+          <label>Situación</label>
+          <p>Distribuidora de 6 personas: 2 administrativos fijos + 4 agentes de ventas por comisión. Factura $400k–$700k MXN/mes a clientes B2B con CFDI.</p>
+        </div>
+        <div class="persona-item">
+          <label>Dolor principal</label>
+          <p>No sabe si el mes cierra con saldo positivo hasta que el contador le dice. Sus agentes de ventas le mandan notas en WhatsApp y él las captura en Excel cada fin de semana.</p>
+        </div>
+        <div class="persona-item">
+          <label>Herramientas actuales</label>
+          <p>Excel para todo + contador externo mensual + grupos de WhatsApp por cliente. Nunca ha considerado un ERP porque "es para empresas grandes".</p>
+        </div>
+        <div class="persona-item">
+          <label>Tier objetivo</label>
+          <p><strong>Estándar $799/mes</strong> — flujo de caja, CFDI, nómina de agentes por honorarios y control de egresos.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="background:var(--light)">
+    <h4>Tamaño de mercado — criterio: tamaño, no sector</h4>
+    <p style="font-size:var(--fs-sm);color:var(--muted);margin-bottom:1rem">
+      El criterio de segmentación es <strong>estructural</strong>: quienes son demasiado pequeños para un ERP pero demasiado complejos para seguir en Excel. Incluye tres grupos: (1) micro-empresas formales con o sin nómina IMSS, (2) Personas Físicas con Actividad Empresarial (PFAE), y (3) despachos como canal B2B2C. Las empresas con nómina convencional representan mayor complejidad operativa pero también mayor disposición de pago — la nómina quincenal es su gasto fijo más crítico y el que más distorsiona su flujo de caja.
+    </p>
+    <div class="grid-3" style="margin-top:.75rem;gap:1rem">
+      <div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--navy)">~1.2M</div>
+        <div style="font-size:var(--fs-sm);color:var(--muted)">Micro-empresas formales de 1–10 empleados en México (INEGI 2023)</div>
+      </div>
+      <div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--navy)">+~5M</div>
+        <div style="font-size:var(--fs-sm);color:var(--muted)">PFAE activos con obligaciones fiscales periódicas (ISR trimestral, IVA mensual) — segundo segmento objetivo con menor ticket y mayor volumen</div>
+      </div>
+      <div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--navy)">~310,000</div>
+        <div style="font-size:var(--fs-sm);color:var(--muted)">Segmento primario: servicios profesionales + comercio micro + talleres + agencias (facturación $1M–$30M MXN/año)</div>
+      </div>
+      <div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--navy)">~80,000</div>
+        <div style="font-size:var(--fs-sm);color:var(--muted)">Mercado direccionable inicial (CDMX + Monterrey + Guadalajara)</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;font-size:var(--fs-xs)">
+      <div style="background:#fff;border-radius:8px;padding:.75rem;border:1.5px solid var(--mid);text-align:center">
+        <div style="font-size:1.1rem;font-weight:900;color:var(--navy)">~45k</div>
+        <div style="color:var(--muted)">Firmas de servicios profesionales</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:.75rem;border:1.5px solid var(--mid);text-align:center">
+        <div style="font-size:1.1rem;font-weight:900;color:var(--navy)">~120k</div>
+        <div style="color:var(--muted)">Micro-comercio B2B (distribuidoras, agentes, importadores)</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:.75rem;border:1.5px solid var(--mid);text-align:center">
+        <div style="font-size:1.1rem;font-weight:900;color:var(--navy)">~85k</div>
+        <div style="color:var(--muted)">Talleres, manufactura y reparación con nómina IMSS (1–10 empleados)</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:.75rem;border:1.5px solid var(--mid);text-align:center">
+        <div style="font-size:1.1rem;font-weight:900;color:var(--navy)">~60k</div>
+        <div style="color:var(--muted)">Freelancers y unipersonales con colaboradores itinerantes (honorarios asimilados)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     5. MODELO DE INGRESOS
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="pricing">
+  <div class="section-header">
+    <div class="section-icon">💰</div>
+    <div>
+      <div class="tag">Sección 5</div>
+      <h2>Modelo de Ingresos</h2>
+    </div>
+  </div>
+
+  <div class="pricing-grid">
+
+    <div class="pricing-card">
+      <div class="pricing-head">
+        <div class="tier-name">Básico</div>
+        <div class="price">$299<span>/mes</span></div>
+        <div class="target">Consultor independiente · 1 usuario</div>
+      </div>
+      <div class="pricing-body">
+        <ul>
+          <li>Dashboard financiero</li>
+          <li>Movimientos bancarios</li>
+          <li>Registro de egresos</li>
+          <li>Gastos recurrentes</li>
+          <li>Proyección de flujo de caja</li>
+          <li>Nómina asimilables + honorarios (hasta 5 personas)</li>
+          <li>Retenciones ISR / IVA</li>
+          <li>Conexión SAT — sync automático de CFDIs emitidos y recibidos (RFC+CIEC o e.firma)</li>
+          <li>Galería de documentos (2 GB)</li>
+          <li>Soporte por email</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-head">
+        <div class="tier-name">⭐ Estándar</div>
+        <div class="price">$799<span>/mes</span></div>
+        <div class="target">Despacho 2–10 personas · hasta 10 usuarios</div>
+      </div>
+      <div class="pricing-body">
+        <ul>
+          <li>Todo lo de Básico</li>
+          <li>Usuarios adicionales (hasta 10) con RBAC</li>
+          <li>Catálogo de colaboradores</li>
+          <li>Gestión de proyectos y tareas</li>
+          <li>CRM básico de clientes</li>
+          <li>Catálogo de servicios</li>
+          <li>Facturación sin límite de CFDIs</li>
+          <li>Contratos digitales</li>
+          <li>Galería y documentos (20 GB)</li>
+          <li>Soporte WhatsApp Business</li>
+          <li>Onboarding guiado incluido</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-head">
+        <div class="tier-name">Pro</div>
+        <div class="price">$1,999<span>/mes</span></div>
+        <div class="target">Empresa de servicios 10–20 personas · usuarios ilimitados</div>
+      </div>
+      <div class="pricing-body">
+        <ul>
+          <li>Todo lo de Estándar</li>
+          <li>Usuarios ilimitados</li>
+          <li>Registro de tiempo por proyecto</li>
+          <li>Análisis de rentabilidad por cliente</li>
+          <li>Pipeline de ventas</li>
+          <li>Propuestas comerciales</li>
+          <li>Capacidad del equipo</li>
+          <li>Suscripciones de clientes</li>
+          <li>Base de conocimiento interna</li>
+          <li>Almacenamiento ilimitado</li>
+          <li>Soporte prioritario + sesión mensual CSM</li>
+          <li>API para integraciones (roadmap)</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="grid-2" style="margin-top:1.75rem">
+    <div class="card green-border">
+      <h4>Ingresos adicionales</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li><strong>Onboarding premium:</strong> $2,500 MXN (Básico), $4,500 MXN (Estándar), $8,000 MXN (Pro)</li>
+        <li><strong>Migración de datos desde Excel:</strong> $1,500–$5,000 MXN por empresa</li>
+        <li><strong>Capacitación personalizada:</strong> $1,200 MXN/hora</li>
+        <li><strong>Desarrollo de módulo a medida:</strong> cotización por proyecto</li>
+      </ul>
+    </div>
+    <div class="card green-border">
+      <h4>Programa de canal contable</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Despachos contables reciben <strong>20% de la suscripción mensual</strong> de clientes referidos</li>
+        <li>Acceso a portal de canal con métricas de sus clientes</li>
+        <li>Co-branding opcional ("Powered by Compass")</li>
+        <li>Soporte de pre-venta técnica para sus demos</li>
+        <li>Contable con 10 clientes Estándar genera: <strong>$19,176 MXN/año</strong> en comisiones</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     5b. PROGRAMA PARTNER DESPACHOS
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="partner">
+  <div class="section-header">
+    <div class="section-icon">🤝</div>
+    <div>
+      <div class="tag">Canal B2B2C</div>
+      <h2>Programa Partner — Despachos Contables</h2>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:1.5rem">
+    <div>
+      <h4>Modelo de flujo de dinero</h4>
+      <p style="font-size:var(--fs-sm);color:var(--muted)">
+        El despacho <strong>nunca maneja el flujo financiero</strong>. Santaglia factura y cobra directamente al cliente.
+        El despacho recibe una comisión mensual de Santaglia según su volumen de clientes activos.
+        Esto elimina el riesgo de cobranza del canal y simplifica la fiscalidad del despacho (ingreso por comisión, no reventa).
+      </p>
+      <div style="background:var(--light);border-radius:10px;padding:1.1rem 1.25rem;margin-top:.75rem;font-size:var(--fs-sm);">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem">
+          <span style="background:var(--navy);color:#fff;border-radius:6px;padding:.3rem .7rem;font-weight:700;font-size:.78rem">Cliente</span>
+          <span style="color:var(--muted)">──paga─→</span>
+          <span style="background:linear-gradient(135deg,var(--navy),var(--navy-light,#2c45c8));color:#fff;border-radius:6px;padding:.3rem .7rem;font-weight:700;font-size:.78rem">Santaglia</span>
+          <span style="color:var(--muted)">──comisión─→</span>
+          <span style="background:#1e7e4a;color:#fff;border-radius:6px;padding:.3rem .7rem;font-weight:700;font-size:.78rem">Despacho</span>
+        </div>
+        <p style="margin:0;font-size:.72rem;color:var(--muted)">El cliente paga tarifa con descuento partner. El despacho recibe comisión mensual sin riesgo de cobranza.</p>
+      </div>
+    </div>
+    <div>
+      <h4>¿Por qué el despacho promovería Compass?</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li><strong>Reduce consultas de bajo valor:</strong> el cliente se autoresponde preguntas básicas; el despacho dedica ese tiempo a trabajo de mayor facturación</li>
+        <li><strong>Diferenciación competitiva:</strong> "Nuestros clientes tienen plataforma de inteligencia financiera incluida"</li>
+        <li><strong>Clientes más preparados:</strong> llegan a junta con sus datos, no perdiendo tiempo en recopilarlos</li>
+        <li><strong>Ingreso pasivo recurrente:</strong> comisión mensual sobre toda su cartera de clientes enrolados</li>
+        <li><strong>Stickiness:</strong> el historial del cliente vive en Compass → el despacho está estratégicamente ligado a la plataforma</li>
+        <li><strong>Dashboard de cumplimiento de cartera:</strong> el despacho ve la Opinión de Cumplimiento de todos sus clientes en un solo lugar — sin perseguir a cada uno</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tiers table -->
+  <h4 style="margin-bottom:.75rem">Estructura de tiers y compensación</h4>
+  <div style="overflow-x:auto;margin-bottom:1.5rem">
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Tier</th>
+        <th>Clientes activos</th>
+        <th>Precio al cliente</th>
+        <th>Comisión al despacho</th>
+        <th>Opciones de compensación</th>
+        <th>Panel despacho</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Referente</strong></td>
+        <td>1–5</td>
+        <td>Tarifa estándar</td>
+        <td>10% en efectivo</td>
+        <td>Solo efectivo (Opción A)</td>
+        <td class="chk">✓ Gratis</td>
+      </tr>
+      <tr>
+        <td><strong>Asociado</strong></td>
+        <td>6–15</td>
+        <td>–10%</td>
+        <td>10% efectivo <em>o</em> híbrido</td>
+        <td>A: 10% cash · B: 6% cash + créditos 1.33x</td>
+        <td class="chk">✓ Gratis + multi-usuario</td>
+      </tr>
+      <tr>
+        <td><strong>Socio</strong></td>
+        <td>16–30</td>
+        <td>–15%</td>
+        <td>12% efectivo <em>o</em> mezcla</td>
+        <td>A: 12% cash · B: 7% + créditos 1.5x · C: créditos 2x</td>
+        <td class="chk">✓ + White-label + API</td>
+      </tr>
+      <tr>
+        <td><strong>Alianza Estratégica</strong></td>
+        <td>31+</td>
+        <td>–20%</td>
+        <td>Negociado (15–25%)</td>
+        <td>Acuerdo personalizado, revenue share en nuevos clientes</td>
+        <td class="chk">✓ + Account manager + SLA</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- Opcion mix -->
+  <div class="grid-3" style="margin-bottom:1.5rem">
+    <div class="card accent-border">
+      <h4>Opción A — Todo efectivo</h4>
+      <p style="font-size:var(--fs-sm)">Comisión íntegra en depósito bancario mensual. Ideal para despachos pequeños con necesidad de flujo de caja inmediato. Máxima simplicidad.</p>
+    </div>
+    <div class="card navy-border" style="border-top-color:var(--navy)">
+      <h4>Opción B — Híbrido (recomendado)</h4>
+      <p style="font-size:var(--fs-sm)">Porcentaje menor en efectivo + créditos de servicio con valor nominal mayor al equivalente en cash. Los créditos desbloquean white-label, API, soporte prioritario. Despachos medianos y grandes obtienen mayor valor total.</p>
+    </div>
+    <div class="card green-border">
+      <h4>Opción C — Todo créditos</h4>
+      <p style="font-size:var(--fs-sm)">Máximo valor nominal (hasta 2x del cash equivalente). Ideal para despachos grandes que necesitan capacidades operativas avanzadas más que flujo inmediato. Los créditos no caducan.</p>
+    </div>
+  </div>
+
+  <!-- Anti-abuse -->
+  <div class="highlight-box">
+    <h4>Control de uso y anti-abuso</h4>
+    <div class="grid-2">
+      <div>
+        <p><strong>Técnico (modelo SaaS):</strong> El Panel de Despacho muestra únicamente empresas con licencia activa vinculada al partner. Un cliente sin cuenta simplemente no existe en el panel — no hay forma de gestionar datos de empresas no enroladas.</p>
+        <p style="margin:0"><strong>Económico:</strong> Cualquier cliente que el despacho invite obtiene <em>60 días gratis</em>. Sin fricción → sin incentivo para hacer trampa.</p>
+      </div>
+      <div>
+        <p><strong>Contractual:</strong> El Partner Agreement establece que el uso del sistema para empresas no licenciadas es causal de suspensión y pérdida de todas las comisiones acumuladas. El despacho tiene demasiado que perder por un cliente individual.</p>
+        <p style="margin:0"><strong>Gravedad natural:</strong> Gestionar 10 clientes en Compass y 3 en Excel crea inconsistencia operativa que los despachos detestan. La plataforma naturalmente atrae a todos los clientes.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     5c. ANÁLISIS ISHIKAWA — ¿Por qué contratar Compass además de un ERP o despacho?
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="ishikawa">
+  <div class="section-header">
+    <div class="section-icon">🐟</div>
+    <div>
+      <div class="tag">Análisis estratégico</div>
+      <h2>¿Por qué "además de" y no "en lugar de"?</h2>
+    </div>
+  </div>
+
+  <p style="color:var(--muted);font-size:var(--fs-sm);margin-bottom:.5rem">
+    Santaglia Compass no compite con ERPs ni con despachos contables. Ocupa una capa que ninguno de ellos cubre:
+    <strong>la inteligencia operativa en tiempo real para el dueño del negocio</strong>.
+    El diagrama de Ishikawa muestra las causas raíz que llevan a esa decisión de adopción.
+  </p>
+  <p style="background:var(--light);border-left:4px solid var(--accent);padding:.75rem 1rem;border-radius:0 8px 8px 0;font-size:var(--fs-sm);margin-bottom:1.5rem">
+    <strong>Efecto a explicar:</strong> "El dueño del negocio decide contratar Compass <em>además</em> de contar ya con un ERP y/o un despacho externo."
+  </p>
+
+  <!-- Ishikawa visual -->
+  <div class="ishi-bones">
+
+    <!-- Fila superior (3 huesos) -->
+    <div class="ishi-bone top">
+      <div class="ishi-bone-title">👤 Personas</div>
+      <ul class="ishi-causes">
+        <li>El ERP fue diseñado para el contador, <strong>no para el dueño</strong></li>
+        <li>El despacho rota personal → <strong>la historia del negocio se pierde</strong></li>
+        <li>El dueño necesita respuestas a las 11 pm <strong>sin llamar a nadie</strong></li>
+        <li>Cambio de despacho = re-educación costosa y riesgo de continuidad</li>
+      </ul>
+    </div>
+
+    <div class="ishi-bone top">
+      <div class="ishi-bone-title">⚙️ Procesos</div>
+      <ul class="ishi-causes">
+        <li>La proyección de flujo de caja <strong>siempre es manual</strong>, incluso con ERP</li>
+        <li>Verificar retenciones históricas requiere cruzar CFDI + banco + SAT: <strong>nadie lo hace</strong></li>
+        <li>El ciclo factura → cobro → proyección → nómina <strong>no está integrado</strong> en ninguna herramienta SMB</li>
+        <li>Cada pregunta al despacho cuesta tiempo y dinero de ambos lados</li>
+      </ul>
+    </div>
+
+    <div class="ishi-bone top">
+      <div class="ishi-bone-title">💡 Tecnología</div>
+      <ul class="ishi-causes">
+        <li>Los ERPs <strong>registran transacciones</strong>; no proyectan ni detectan anomalías</li>
+        <li>Personalizar un ERP para anomaly detection = costo de consultoría prohibitivo</li>
+        <li>Los CFDIs del SAT <strong>no se convierten solos</strong> en inteligencia de negocio</li>
+        <li>No existe pipeline XML SAT → proyección de flujo en ninguna solución SMB estándar</li>
+      </ul>
+    </div>
+
+    <!-- Fila inferior (3 huesos) -->
+    <div class="ishi-bone bot">
+      <div class="ishi-bone-title">📊 Información</div>
+      <ul class="ishi-causes">
+        <li>El histórico de retenciones <strong>pertenece de facto al despacho</strong>, no al negocio</li>
+        <li>El dueño no sabe si el próximo mes cubre nómina <strong>sin llamar al contador</strong></li>
+        <li>Anomalías de cumplimiento (retención mal calculada, pago tardío) pasan <strong>desapercibidas meses</strong></li>
+        <li>Sin visibilidad propia, el dueño toma decisiones estratégicas con datos retrasados</li>
+      </ul>
+    </div>
+
+    <div class="ishi-bone bot">
+      <div class="ishi-bone-title">🌍 Entorno</div>
+      <ul class="ishi-causes">
+        <li>Complejidad regulatoria creciente (CFDI 4.0, retenciones, RESICO) → <strong>el dueño necesita visibilidad propia</strong></li>
+        <li>Los despachos están saturados con consultas básicas que podrían ser autoservicio</li>
+        <li>Incertidumbre económica → el <strong>flujo de caja es la métrica de supervivencia</strong></li>
+        <li>Normalización del cloud entre PyMEs post-COVID → menor resistencia a adopción</li>
+      </ul>
+    </div>
+
+    <div class="ishi-bone bot">
+      <div class="ishi-bone-title">🏛️ Gestión</div>
+      <ul class="ishi-causes">
+        <li>El dueño <strong>no puede verificar</strong> el trabajo del despacho de forma independiente</li>
+        <li>Sin "single source of truth" para la salud del negocio en tiempo real</li>
+        <li>Decisiones de crecimiento (¿puedo firmar ese contrato?) se toman <strong>sin datos de flujo confiables</strong></li>
+        <li>La dependencia total del despacho es un <strong>riesgo operativo concentrado</strong></li>
+      </ul>
+    </div>
+
+  </div><!-- /ishi-bones -->
+
+  <!-- Causas raíz (conclusiones del Ishikawa) -->
+  <div class="ishi-root" style="margin-top:1.25rem">
+    <div class="ishi-root-item">
+      <span class="ri-letter">A</span>
+      <div class="ri-label">Soberanía de datos</div>
+      <div class="ri-desc">"Mi historial financiero debe ser mío, no de mi despacho"</div>
+    </div>
+    <div class="ishi-root-item">
+      <span class="ri-letter">B</span>
+      <div class="ri-label">Autoservicio inteligente</div>
+      <div class="ri-desc">"Necesito responder mis propias preguntas sin depender de nadie"</div>
+    </div>
+    <div class="ishi-root-item">
+      <span class="ri-letter">C</span>
+      <div class="ri-label">Proyección prospectiva</div>
+      <div class="ri-desc">"Necesito saber si puedo comprometer ese gasto el mes que viene"</div>
+    </div>
+    <div class="ishi-root-item">
+      <span class="ri-letter">D</span>
+      <div class="ri-label">Verificación de compliance</div>
+      <div class="ri-desc">"Quiero confirmar que las retenciones fueron correctas, no solo confiar"</div>
+    </div>
+    <div class="ishi-root-item">
+      <span class="ri-letter">E</span>
+      <div class="ri-label">Puente despacho-dueño</div>
+      <div class="ri-desc">"Quiero llegar informado a cada junta con mi contador, no solo recibir cifras"</div>
+    </div>
+  </div>
+
+  <!-- Mapa de posicionamiento -->
+  <div style="margin-top:1.5rem; background:var(--light); border-radius:10px; padding:1.25rem 1.5rem; border:1.5px solid var(--mid);">
+    <h4 style="margin-bottom:.75rem">Mapa de posicionamiento correcto</h4>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; font-size:var(--fs-sm);">
+      <div style="text-align:center; padding:1rem; background:#fff; border-radius:8px; border:2px solid var(--mid);">
+        <div style="font-size:1.5rem; margin-bottom:.4rem">🏢</div>
+        <strong>ERP (CONTPAQi, SAP…)</strong>
+        <p style="color:var(--muted);font-size:.75rem;margin:.4rem 0 0">Registro contable-fiscal. Requiere contador. Fuente de verdad transaccional.</p>
+        <div style="margin-top:.5rem; font-size:.7rem; font-weight:700; color:#1e7e4a; background:#d4f0e0; padding:.2em .6em; border-radius:4px; display:inline-block">COMPLEMENTO ✓</div>
+      </div>
+      <div style="text-align:center; padding:1rem; background:linear-gradient(135deg,var(--navy),#1a4a9a); border-radius:8px; border:2px solid var(--navy);">
+        <div style="font-size:1.5rem; margin-bottom:.4rem">🧭</div>
+        <strong style="color:#fff">Santaglia Compass</strong>
+        <p style="color:rgba(255,255,255,.75);font-size:.75rem;margin:.4rem 0 0">Inteligencia operativa para el dueño. Proyección. Compliance. Autoservicio.</p>
+        <div style="margin-top:.5rem; font-size:.7rem; font-weight:700; color:var(--navy); background:var(--accent2,#f0b540); padding:.2em .6em; border-radius:4px; display:inline-block">CAPA PROPIA ★</div>
+      </div>
+      <div style="text-align:center; padding:1rem; background:#fff; border-radius:8px; border:2px solid var(--mid);">
+        <div style="font-size:1.5rem; margin-bottom:.4rem">📒</div>
+        <strong>Despacho Contable</strong>
+        <p style="color:var(--muted);font-size:.75rem;margin:.4rem 0 0">Compliance fiscal. Declaraciones. Asesoría. Canal de distribución B2B2C.</p>
+        <div style="margin-top:.5rem; font-size:.7rem; font-weight:700; color:#1e7e4a; background:#d4f0e0; padding:.2em .6em; border-radius:4px; display:inline-block">CANAL + ALIADO ✓</div>
+      </div>
+    </div>
+    <p style="font-size:.75rem; color:var(--muted); margin-top:.75rem; margin-bottom:0; text-align:center">
+      Competidor real: <strong>el status quo</strong> (Excel + WhatsApp al contador). Santaglia no reemplaza a nadie — ocupa la capa que nadie más tiene.
+    </p>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     6. ANÁLISIS COMPETITIVO
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="competencia">
+  <div class="section-header">
+    <div class="section-icon">⚔️</div>
+    <div>
+      <div class="tag">Sección 6</div>
+      <h2>Análisis Competitivo</h2>
+    </div>
+  </div>
+
+  <p style="color:var(--muted);font-size:var(--fs-sm);margin-bottom:1rem">
+    Santaglia Compass no compite con ERPs ni con despachos — es complementario a ambos. El competidor real es el <strong>status quo</strong>: Excel, WhatsApp y dependencia total del contador. Esta tabla evalúa las alternativas que el cliente considera hoy.
+  </p>
+
+  <div style="overflow-x:auto">
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Criterio</th>
+        <th>Excel/Drive</th>
+        <th>CONTPAQi</th>
+        <th>Aspel</th>
+        <th>QuickBooks MX</th>
+        <th>Monday/Notion</th>
+        <th><strong>Compass</strong></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Precio mensual estimado</td>
+        <td>~$0–$300</td>
+        <td>$1,500–$8,000+</td>
+        <td>$900–$4,000+</td>
+        <td>$599–$1,799</td>
+        <td>$300–$2,000</td>
+        <td><strong>$299–$1,999</strong></td>
+      </tr>
+      <tr>
+        <td>Curva de aprendizaje</td>
+        <td class="partial">Media</td>
+        <td class="x">Alta (requiere contador)</td>
+        <td class="x">Alta</td>
+        <td class="partial">Media</td>
+        <td class="chk">Baja</td>
+        <td class="chk"><strong>Baja</strong></td>
+      </tr>
+      <tr>
+        <td>CFDI 4.0 nativo</td>
+        <td class="x">✗ Manual</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="partial">Parcial</td>
+        <td class="x">✗</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>Nómina asimilables/honorarios</td>
+        <td class="x">✗</td>
+        <td class="partial">Parcial (módulo extra)</td>
+        <td class="partial">Parcial</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="chk"><strong>✓ Nativo</strong></td>
+      </tr>
+      <tr>
+        <td>Retenciones ISR/IVA</td>
+        <td class="x">✗</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="partial">Parcial</td>
+        <td class="x">✗</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>Gestión de proyectos</td>
+        <td class="partial">Básico</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="chk">✓</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>Proyección de flujo de caja</td>
+        <td class="partial">Manual</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="partial">Básico</td>
+        <td class="x">✗</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>Multi-usuario con RBAC</td>
+        <td class="x">✗</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="chk"><strong>✓ (Estándar+)</strong></td>
+      </tr>
+      <tr>
+        <td>Cloud / sin instalación</td>
+        <td class="partial">Parcial</td>
+        <td class="x">✗ (instalación)</td>
+        <td class="x">✗ (instalación)</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>100% español MX</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="chk">✓</td>
+        <td class="partial">Parcial</td>
+        <td class="x">✗ (inglés)</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>Todo-en-uno (finanzas + proyectos + docs)</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗ (sin finanzas)</td>
+        <td class="chk"><strong>✓</strong></td>
+      </tr>
+      <tr>
+        <td>Detección de anomalías de compliance SAT</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="x">✗</td>
+        <td class="chk"><strong>✓ Nativo</strong></td>
+      </tr>
+      <tr>
+        <td>Posición respecto a Compass</td>
+        <td style="color:#c0392b;font-weight:700">Competidor principal</td>
+        <td style="color:#1e7e4a;font-weight:700">Complementario ✓</td>
+        <td style="color:#1e7e4a;font-weight:700">Complementario ✓</td>
+        <td style="color:#c87000;font-weight:700">Parcial</td>
+        <td style="color:#c87000;font-weight:700">Parcial</td>
+        <td style="font-weight:700;color:var(--navy)">—</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="grid-2" style="margin-top:1.5rem">
+    <div class="card">
+      <h4>Ventaja diferencial sostenible</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li><strong>Criterio de mercado por tamaño, no por sector:</strong> cualquier micro-empresa de 1–10 colaboradores es cliente potencial — servicios, comercio, talleres, agencias. El ERP es el sustituto, no la competencia</li>
+        <li>Ningún competidor combina hoy gestión de proyectos + nómina de honorarios + <strong>sincronización fiscal SAT automática</strong> + flujo de caja + detección de anomalías en un solo sistema accesible para micro-empresas</li>
+        <li>El conocimiento fiscal profundo del fundador es una barrera real — actualizar para CFDI 4.0 requiere tiempo y expertise que no cualquier SaaS genérico tiene</li>
+        <li>Detección de anomalías de compliance SAT (retenciones vencidas, diferencias significativas, IVA faltante) — funcionalidad única en el segmento</li>
+        <li>El modelo Partner Despacho crea un canal de distribución con alineación de incentivos: el despacho gana cuando el cliente usa Compass</li>
+        <li>Los datos de uso real generan un flywheel: más usuarios → mejor producto → más usuarios</li>
+        <li><strong>Monitor SAT pasivo:</strong> alerta automática ante Opinión de Cumplimiento Negativa — el cliente lo sabe el mismo día, no cuando ya perdió un contrato o línea de crédito</li>
+        <li><strong>Motor de reconciliación proyectado/real:</strong> detecta desviaciones de importe Y fecha simultáneamente; proyección dual optimista/conservador automática cuando hay cobros pendientes; cobros anticipados reconciliados sin intervención del usuario; drift learning por cliente integrado al CRM. Funcionalidad inexistente en el segmento micro-empresa</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Riesgos competitivos</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li><strong>CONTPAQi lanza SaaS:</strong> posible, pero su legado de instalación los hace lentos en la transición cloud</li>
+        <li><strong>Startup bien financiada:</strong> mitigable con velocidad de iteración y comunidad de usuarios leales</li>
+        <li><strong>Cambio regulatorio SAT:</strong> riesgo compartido con todos los competidores; Compass lo convierte en ventaja por velocidad de actualización</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     7. GO-TO-MARKET
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="gtm">
+  <div class="section-header">
+    <div class="section-icon">🚀</div>
+    <div>
+      <div class="tag">Sección 7</div>
+      <h2>Estrategia Go-to-Market</h2>
+    </div>
+  </div>
+
+  <div class="gtm-steps">
+    <div class="gtm-step">
+      <div class="gtm-num">1</div>
+      <div class="gtm-content">
+        <h5>Fase 0 — Propio negocio como laboratorio (Ene–Jun 2026)</h5>
+        <p>Carlos usa Compass en su propia consultoría, documenta cada fricción, itera semanalmente. Objetivo: sistema estable con 0 pérdida de datos y todos los módulos actuales en producción. KPI: 90 días sin bugs críticos. <span class="tag" style="margin-left:.5rem">En curso</span></p>
+      </div>
+    </div>
+    <div class="gtm-step">
+      <div class="gtm-num">2</div>
+      <div class="gtm-content">
+        <h5>Fase 1 — Beta cerrada con red cercana (Jul–Sep 2026)</h5>
+        <p>Invitar a 10–15 consultores y dueños de despachos del entorno personal de Carlos. Acceso gratuito o $99/mes. Objetivo: retroalimentación real, casos de uso adicionales, testimonios y primeros casos de éxito documentados. KPI: NPS &gt; 50, 5+ testimonios en video.</p>
+      </div>
+    </div>
+    <div class="gtm-step">
+      <div class="gtm-num">3</div>
+      <div class="gtm-content">
+        <h5>Fase 2 — Lanzamiento canal contable (Oct–Dic 2026)</h5>
+        <p>Presentar Compass a 20–30 despachos contables en CDMX/MTY/GDL vía asociaciones gremiales y referidos. Lanzar el <strong>Programa Partner</strong>: el despacho se registra gratis, invita a sus clientes con link único, Santaglia cobra directo al cliente y paga comisión mensual al despacho (10–25% según volumen). Objetivo: 50 clientes de pago activos con al menos 5 despachos partners. KPI: MRR $25,000 MXN para Dic 2026.</p>
+      </div>
+    </div>
+    <div class="gtm-step">
+      <div class="gtm-num">4</div>
+      <div class="gtm-content">
+        <h5>Fase 3 — Contenido + comunidad (Ene–Jun 2027)</h5>
+        <p>YouTube (tutoriales fiscales + demos), LinkedIn (contenido de autoridad para dueños de despacho), comunidad privada en WhatsApp/Discord. Campaña de Google Ads segmentada por keywords fiscales. Objetivo: 200 clientes activos. KPI: MRR $120,000 MXN para Jun 2027.</p>
+      </div>
+    </div>
+    <div class="gtm-step">
+      <div class="gtm-num">5</div>
+      <div class="gtm-content">
+        <h5>Fase 4 — Escalamiento y equipo (Jul 2027 en adelante)</h5>
+        <p>Contratar primer Customer Success Manager (CSM), desarrollador LATAM part-time, y activar campañas Meta Ads. Explorar alianzas con colegios de contadores y universidades (referral en graduados). Objetivo: 500 clientes activos. KPI: MRR $400,000 MXN para Dic 2027.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top:1.5rem">
+    <div class="card">
+      <h4>Métricas de adquisición</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>CAC objetivo: &lt; $1,500 MXN por cliente</li>
+        <li>LTV objetivo: $14,400+ MXN (24 meses × $600 ARPU)</li>
+        <li>LTV/CAC objetivo: &gt; 5×</li>
+        <li>Prueba gratuita: 30 días sin tarjeta</li>
+        <li>Conversión trial → pago objetivo: 35%</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Tácticas de retención</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Churn anual objetivo: &lt; 15%</li>
+        <li>Check-in mensual automático (email con métricas del mes)</li>
+        <li>Webinars mensuales de fiscal + producto</li>
+        <li>Programa de referidos: 1 mes gratis por cliente referido</li>
+        <li>Score de salud del cliente (login, módulos usados, datos cargados)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Expansión de ingresos</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Upsell Básico → Estándar al incorporar un colaborador</li>
+        <li>Upsell Estándar → Pro al activar Tiempo/Rentabilidad</li>
+        <li>NRR objetivo Año 2: 110%+ (expansión supera churn)</li>
+        <li>Módulos AI de pago como add-on premium en 2028</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     8. PROYECCIONES FINANCIERAS
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="finanzas">
+  <div class="section-header">
+    <div class="section-icon">📈</div>
+    <div>
+      <div class="tag">Sección 8</div>
+      <h2>Proyecciones Financieras 2026–2028</h2>
+    </div>
+  </div>
+  <p style="font-size:var(--fs-sm);color:var(--muted);margin-bottom:1.25rem">
+    Escenario conservador. ARPU mensual blended estimado: $650 MXN (mix de tiers). No incluye salario del fundador en 2026; a partir de 2027 se contempla retiro mensual ($180,000/año). <strong>Modalidad 40 IMSS (~$90,000/año) considerada como costo fijo de primer orden desde 2026 Q2.</strong> Tasa de reinversión óptima dado el contexto real del fundador: ~43% del EBITDA sobre el piso de retención mínima (~$525,000/año). Cifras en pesos mexicanos (MXN).
+  </p>
+
+  <!-- Inversión escalonada -->
+  <h4 style="margin-bottom:.75rem">Plan de inversión escalonado — filosofía bootstrap</h4>
+  <div class="grid-3" style="margin-bottom:1.75rem">
+    <div class="card" style="border-left:4px solid #1e7e4a">
+      <h4 style="color:#1e7e4a">⚗️ Etapa 0 · Laboratorio</h4>
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">Ene – Jun 2026</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#1e7e4a;margin-bottom:.25rem">~$500 <span style="font-size:.9rem;font-weight:400">MXN</span></div>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Dominio + Cloudflare CDN</li>
+        <li>Hosting: GitHub Pages (gratis)</li>
+        <li>Backend: localStorage — sin Supabase</li>
+        <li>Tools: las ya activas para consultoría (sin costo incremental)</li>
+        <li><strong>Marketing: $0</strong> — Carlos usa el sistema, documenta fricciones, itera</li>
+      </ul>
+      <div style="margin-top:.5rem;padding:.4rem .6rem;background:#f0fdf4;border-radius:6px;font-size:.7rem">
+        💡 El sistema ya existe — el único gasto real es el dominio
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #c87000">
+      <h4 style="color:#c87000">🧪 Etapa 1 · Beta cerrada</h4>
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">Jul – Sep 2026</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#c87000;margin-bottom:.25rem">~$4,500 <span style="font-size:.9rem;font-weight:400">MXN</span></div>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Supabase free tier (migración backend — 500 MB, 50k MAU)</li>
+        <li>Herramientas SaaS básicas: $1,500/mes</li>
+        <li>Stripe: $0 (beta gratuita o $99 simbólico)</li>
+        <li>Conexión SAT: $0 — servicio de Descarga Masiva del SAT es gratuito para el contribuyente</li>
+        <li><strong>Marketing: $0</strong> — invitados directos, sin paid</li>
+      </ul>
+      <div style="margin-top:.5rem;padding:.4rem .6rem;background:#fff7ed;border-radius:6px;font-size:.7rem">
+        🎯 Objetivo: NPS &gt;50 y 5 testimonios antes del lanzamiento
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #c0392b">
+      <h4 style="color:#c0392b">🚀 Etapa 2 · Lanzamiento</h4>
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">Oct – Dic 2026</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#c0392b;margin-bottom:.25rem">~$33,500 <span style="font-size:.9rem;font-weight:400">MXN</span></div>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Supabase Pro: ~$500/mes</li>
+        <li>Conexión SAT: $0 — sin costo de PAC; el servicio SAT es acceso directo del contribuyente</li>
+        <li>Stripe 3%: proporcional a ingresos</li>
+        <li>Herramientas SaaS: $2,000/mes</li>
+        <li>Marketing digital: $8,000–10,000/mes (rampeado)</li>
+        <li>Comisiones canal contable: proporcional</li>
+      </ul>
+      <div style="margin-top:.5rem;padding:.4rem .6rem;background:#fef2f2;border-radius:6px;font-size:.7rem">
+        ✅ Financiado por ingresos SaaS + consultoría del fundador
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen de autosustentabilidad -->
+  <div style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.75rem;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;text-align:center">
+    <div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Desembolso antes del primer cliente pagador</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#1e7e4a;margin:.2rem 0">~$5,000</div>
+      <div style="font-size:.7rem;color:var(--muted)">MXN (solo Etapas 0+1)</div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Break-even SaaS puro</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#1e7e4a;margin:.2rem 0">~18 clientes</div>
+      <div style="font-size:.7rem;color:var(--muted)">≈ Nov 2026 · $11,700 MRR mín.</div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Total desembolso Año 1 (real)</div>
+      <div style="font-size:1.5rem;font-weight:800;color:var(--navy);margin:.2rem 0">~$38,500</div>
+      <div style="font-size:.7rem;color:var(--muted)">vs $86k modelo plano · ahorro 55%</div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Capital externo requerido</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#1e7e4a;margin:.2rem 0">$0</div>
+      <div style="font-size:.7rem;color:var(--muted)">100% bootstrap · consultoría como puente</div>
+    </div>
+  </div>
+
+  <!-- Clientes por mes -->
+  <h4 style="margin-bottom:.75rem">Crecimiento de clientes activos</h4>
+  <div style="overflow-x:auto;margin-bottom:1.75rem">
+  <table class="fin-table">
+    <thead>
+      <tr>
+        <th>Período</th>
+        <th>Clientes Básico</th>
+        <th>Clientes Estándar</th>
+        <th>Clientes Pro</th>
+        <th>Total Clientes</th>
+        <th>MRR (MXN)</th>
+        <th>ARR (MXN)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Q3 2026 (beta)</td><td>8</td><td>4</td><td>1</td><td>13</td><td>$7,591</td><td>—</td></tr>
+      <tr><td>Q4 2026</td><td>20</td><td>18</td><td>5</td><td>43</td><td>$30,175</td><td>—</td></tr>
+      <tr class="subtotal"><td>Dic 2026 (cierre año 1)</td><td>20</td><td>18</td><td>5</td><td>43</td><td>$30,175</td><td>~$180,000</td></tr>
+      <tr><td>Mar 2027</td><td>45</td><td>40</td><td>12</td><td>97</td><td>$67,355</td><td>—</td></tr>
+      <tr><td>Jun 2027</td><td>75</td><td>70</td><td>22</td><td>167</td><td>$115,673</td><td>—</td></tr>
+      <tr><td>Sep 2027</td><td>120</td><td>110</td><td>38</td><td>268</td><td>$185,582</td><td>—</td></tr>
+      <tr class="subtotal"><td>Dic 2027 (cierre año 2)</td><td>170</td><td>155</td><td>55</td><td>380</td><td>$260,345</td><td>~$1,560,000</td></tr>
+      <tr><td>Mar 2028</td><td>220</td><td>210</td><td>80</td><td>510</td><td>$352,770</td><td>—</td></tr>
+      <tr><td>Jun 2028</td><td>280</td><td>275</td><td>110</td><td>665</td><td>$461,525</td><td>—</td></tr>
+      <tr><td>Sep 2028</td><td>340</td><td>340</td><td>145</td><td>825</td><td>$573,455</td><td>—</td></tr>
+      <tr class="total"><td>Dic 2028 (cierre año 3)</td><td>400</td><td>410</td><td>185</td><td>995</td><td>$694,565</td><td>~$4,800,000</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- P&L -->
+  <h4 style="margin-bottom:.75rem">Estado de Resultados Simplificado</h4>
+  <div style="overflow-x:auto;margin-bottom:1.75rem">
+  <table class="fin-table">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>2026 (H2)</th>
+        <th>2027 (Año completo)</th>
+        <th>2028 (Año completo)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Ingresos SaaS recurrentes</td><td class="pos">$140,000</td><td class="pos">$1,180,000</td><td class="pos">$4,200,000</td></tr>
+      <tr><td>Onboarding &amp; migración</td><td class="pos">$45,000</td><td class="pos">$220,000</td><td class="pos">$480,000</td></tr>
+      <tr><td>Consultoría del fundador (puente)</td><td class="pos">$600,000</td><td class="pos">$480,000</td><td class="pos">$180,000</td></tr>
+      <tr class="subtotal"><td>Ingresos totales</td><td class="pos">$785,000</td><td class="pos">$1,880,000</td><td class="pos">$4,860,000</td></tr>
+      <tr><td>Infraestructura cloud (Supabase, Vercel, etc.)</td><td class="neg">−$18,000</td><td class="neg">−$55,000</td><td class="neg">−$130,000</td></tr>
+      <tr><td>Conexión SAT (servicio Descarga Masiva — sin PAC)</td><td class="neg">−$0</td><td class="neg">−$0</td><td class="neg">−$0</td></tr>
+      <tr><td>Procesador de pagos (Stripe/Conekta ~3%)</td><td class="neg">−$5,500</td><td class="neg">−$41,400</td><td class="neg">−$142,800</td></tr>
+      <tr><td>Herramientas SaaS (Notion, Loom, etc.)</td><td class="neg">−$12,000</td><td class="neg">−$18,000</td><td class="neg">−$24,000</td></tr>
+      <tr class="subtotal"><td>Costo de ventas total</td><td class="neg">−$40,500</td><td class="neg">−$136,400</td><td class="neg">−$364,800</td></tr>
+      <tr><td>Margen Bruto</td><td>$744,500 <span style="color:var(--muted)">(95%)</span></td><td>$1,743,600 <span style="color:var(--muted)">(93%)</span></td><td>$4,495,200 <span style="color:var(--muted)">(92%)</span></td></tr>
+      <tr><td>Marketing &amp; ventas</td><td class="neg">−$30,000</td><td class="neg">−$180,000</td><td class="neg">−$420,000</td></tr>
+      <tr><td>Desarrollo (freelancers / LATAM dev)</td><td class="neg">−$0</td><td class="neg">−$240,000</td><td class="neg">−$480,000</td></tr>
+      <tr><td>CSM / soporte</td><td class="neg">−$0</td><td class="neg">−$120,000</td><td class="neg">−$240,000</td></tr>
+      <tr><td>Comisiones canal contable</td><td class="neg">−$7,000</td><td class="neg">−$59,000</td><td class="neg">−$210,000</td></tr>
+      <tr><td>Gastos generales / legal / contable</td><td class="neg">−$24,000</td><td class="neg">−$36,000</td><td class="neg">−$60,000</td></tr>
+      <tr><td>Retiro fundador</td><td class="neg">−$0</td><td class="neg">−$180,000</td><td class="neg">−$360,000</td></tr>
+      <tr class="subtotal"><td>Gastos operativos totales</td><td class="neg">−$61,000</td><td class="neg">−$815,000</td><td class="neg">−$1,770,000</td></tr>
+      <tr class="total"><td>EBITDA</td><td class="pos">$683,500</td><td class="pos">$928,600</td><td class="pos">$2,725,200</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- Escenarios de reinversión -->
+  <h4 style="margin-bottom:.75rem">Escenarios de reinversión del EBITDA</h4>
+  <p style="font-size:var(--fs-sm);color:var(--muted);margin-bottom:1rem">
+    La tasa óptima de reinversión no es un porcentaje abstracto — es función del piso de retención mínima real del fundador.
+    Con la consultoría ajustada, gastos médicos recurrentes y la Modalidad 40 IMSS como costo fijo de primer orden (~$90,000/año),
+    el piso de retención desde el SaaS es ~$525,000/año. Todo lo que exceda ese piso puede reinvertirse eficientemente.
+  </p>
+  <div style="overflow-x:auto;margin-bottom:1.75rem">
+  <table class="fin-table">
+    <thead>
+      <tr>
+        <th>Escenario</th>
+        <th>Retenido 2027</th>
+        <th>¿Cubre piso?</th>
+        <th>Clientes adicionales</th>
+        <th>MRR Dic 2027</th>
+        <th>EBITDA 2028 est.</th>
+        <th>Acumulado 2Y</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Original (0% reinversión)</td>
+        <td class="pos">$928,600</td>
+        <td style="color:#1e7e4a;font-weight:700">✅ Holgado</td>
+        <td>—</td>
+        <td>$260,345</td>
+        <td>$2,725,200</td>
+        <td>$3,653,800</td>
+      </tr>
+      <tr class="subtotal">
+        <td><strong>~43% — Óptimo real ⭐</strong></td>
+        <td><strong>~$525,000</strong></td>
+        <td style="color:#1e7e4a;font-weight:700"><strong>✅ Exacto</strong></td>
+        <td><strong>~+115</strong></td>
+        <td><strong>~$330,000</strong></td>
+        <td><strong>~$3,300,000</strong></td>
+        <td><strong>~$3,825,000</strong></td>
+      </tr>
+      <tr>
+        <td>50% reinversión</td>
+        <td class="neg">$464,300</td>
+        <td style="color:#c87000;font-weight:700">⚠️ Sin Modalidad 40</td>
+        <td>~+140</td>
+        <td>~$351,000</td>
+        <td>~$3,450,000</td>
+        <td>~$3,914,300</td>
+      </tr>
+      <tr>
+        <td>65% reinversión</td>
+        <td class="neg">$325,010</td>
+        <td style="color:#c0392b;font-weight:700">❌ Riesgoso</td>
+        <td>~+170</td>
+        <td>~$372,000</td>
+        <td>~$3,625,000</td>
+        <td>~$3,950,010</td>
+      </tr>
+      <tr>
+        <td>75% reinversión</td>
+        <td class="neg">$232,150</td>
+        <td style="color:#c0392b;font-weight:700">❌ Muy riesgoso</td>
+        <td>~+200</td>
+        <td>~$392,000</td>
+        <td>~$3,800,000</td>
+        <td>~$4,032,150</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- Piso de retención y reencuadre estratégico -->
+  <div style="background:linear-gradient(135deg,#fff8e1 0%,#fff3cd 100%);border:1px solid #f59f00;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.75rem">
+    <h4 style="color:#7a5000;margin-bottom:.75rem">🔴 Modalidad 40 IMSS — Prioridad de primer orden</h4>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:.75rem;text-align:center">
+      <div>
+        <div style="font-size:.7rem;color:#7a5000;text-transform:uppercase;letter-spacing:.04em">Costo mensual estimado</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#c67000">~$7,500</div>
+        <div style="font-size:.7rem;color:#7a5000">MXN/mes · salario topado 25 UMAs</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:#7a5000;text-transform:uppercase;letter-spacing:.04em">Costo anual</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#c67000">~$90,000</div>
+        <div style="font-size:.7rem;color:#7a5000">MXN/año — costo fijo no negociable</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:#7a5000;text-transform:uppercase;letter-spacing:.04em">% del EBITDA 2027</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#1e7e4a">9.7%</div>
+        <div style="font-size:.7rem;color:#7a5000">↓ 3.3% en 2028 (escala con el negocio)</div>
+      </div>
+    </div>
+    <p style="font-size:.75rem;color:#7a5000;margin:0">
+      57 años · 1,200 semanas cotizadas · objetivo jubilación 62–65 años. Iniciar lo antes posible para recuperar derechos conservados y maximizar el cálculo de la pensión.
+      <strong>Recomendación: consultar con un gestor de seguridad social certificado para diseñar la estrategia específica de semanas y calendario.</strong>
+      A partir de 2028, con EBITDA proyectado de $2.7M+, la Modalidad 40 representa menos del 4% del EBITDA — financieramente trivial.
+    </p>
+  </div>
+
+  <!-- Reencuadre estratégico del SaaS -->
+  <div style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.75rem">
+    <h4 style="color:#1e7e4a;margin-bottom:.5rem">El SaaS como vehículo de seguridad para el retiro</h4>
+    <p style="font-size:.75rem;color:#166534;margin:0">
+      Con la consultoría cubriendo apenas los gastos personales base y los proyectos extraordinarios cada vez menos frecuentes,
+      Santaglia Compass no es solo un proyecto de crecimiento — es la infraestructura financiera del retiro del fundador.
+      Escalar el SaaS más rápido equivale directamente a mayor seguridad en la jubilación:
+      <strong>en 2028, con ~1,000 clientes activos y EBITDA de $2.7M+, el negocio puede sostener simultáneamente la Modalidad 40,
+      el retiro del fundador, la reinversión en crecimiento y un fondo de contingencia personal</strong> —
+      incluso si la consultoría se reduce o se detiene. El horizonte de 5–7 años hacia la jubilación es exactamente
+      el tiempo que necesita el SaaS para alcanzar esa escala.
+    </p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card accent-border">
+      <h4>Supuestos clave</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Churn mensual: 2% (24% anual, conservador)</li>
+        <li>ARPU blended: $650 MXN/mes (mix tiers)</li>
+        <li>Conversión trial: 30%</li>
+        <li>Crecimiento canal contable: 2–4 despachos/mes desde Q4 2026</li>
+        <li>Tipo de cambio: solo MXN, sin exposición USD material</li>
+      </ul>
+    </div>
+    <div class="card navy-border">
+      <h4>Hitos financieros</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li><strong>Punto de equilibrio SaaS:</strong> ~80 clientes (Q2 2027)</li>
+        <li><strong>MRR $100k:</strong> estimado Jun 2027</li>
+        <li><strong>MRR $500k:</strong> estimado Q2 2028</li>
+        <li><strong>ARR $4.8M MXN:</strong> cierre 2028</li>
+        <li><strong>Inversión externa:</strong> opcional post-200 clientes</li>
+        <li><strong>Modalidad 40 activa:</strong> desde 2026 — costo absorbido por el SaaS desde los primeros meses de ingresos recurrentes</li>
+      </ul>
+    </div>
+    <div class="card green-border">
+      <h4>Necesidades de capital</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Inversión inicial requerida: <strong>$0</strong> — 100% bootstrap</li>
+        <li>Desembolso antes del primer cliente pagador: <strong>~$5,000 MXN</strong></li>
+        <li>Total Año 1 real: <strong>~$38,500 MXN</strong> (vs $86k modelo plano)</li>
+        <li><strong>Modalidad 40 IMSS (prioridad 🔴):</strong> ~$90,000/año — costo fijo de primer orden, no negociable, con ventana de tiempo crítica para jubilación 62–65 años</li>
+        <li>Piso de retención mínima desde SaaS: <strong>~$525,000/año</strong> (suplemento personal + Modalidad 40 + reserva operativa)</li>
+        <li>Tasa de reinversión óptima dado el contexto real: <strong>~43%</strong> del EBITDA disponible sobre el piso</li>
+        <li>Ronda opcional 2027: $500k–$1.5M MXN — considerada solo si el SaaS supera proyecciones base en H1 2027</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     9. HOJA DE RUTA TECNOLÓGICA
+══════════════════════════════════════════════════════════════ -->
+<div class="section" id="tecnologia">
+  <div class="section-header">
+    <div class="section-icon">🛠️</div>
+    <div>
+      <div class="tag">Sección 9</div>
+      <h2>Hoja de Ruta Tecnológica</h2>
+    </div>
+  </div>
+
+  <!-- Module status -->
+  <div class="modules-wrap" style="margin-bottom:2rem">
+    <div class="module-group">
+      <h5>Módulos en producción (activos)</h5>
+      <div class="module-chips">
+        <span class="module-chip chip-live">Dashboard</span>
+        <span class="module-chip chip-live">Mov. Bancarios</span>
+        <span class="module-chip chip-live">Egresos</span>
+        <span class="module-chip chip-live">Gastos Recurrentes</span>
+        <span class="module-chip chip-live">Proyección Flujo</span>
+        <span class="module-chip chip-live">Nómina Asimilables</span>
+        <span class="module-chip chip-live">Nómina Honorarios</span>
+        <span class="module-chip chip-live">Retenciones</span>
+        <span class="module-chip chip-live">Proyectos</span>
+        <span class="module-chip chip-live">Documentos</span>
+        <span class="module-chip chip-live">Galería</span>
+        <span class="module-chip chip-live">Configuración</span>
+        <span class="module-chip chip-live">Catálogo Colaboradores</span>
+      </div>
+    </div>
+    <div class="module-group">
+      <h5>Roadmap 2026 (en desarrollo)</h5>
+      <div class="module-chips">
+        <span class="module-chip chip-road">CRM Clientes</span>
+        <span class="module-chip chip-road">Catálogo Servicios</span>
+        <span class="module-chip chip-road">Registro de Tiempo</span>
+        <span class="module-chip chip-road">Pipeline de Ventas</span>
+        <span class="module-chip chip-road">Contratos Digitales</span>
+        <span class="module-chip chip-road">Soporte / Tickets</span>
+        <span class="module-chip chip-road">Backend Supabase (migración)</span>
+        <span class="module-chip chip-road">Auth multi-usuario</span>
+        <span class="module-chip chip-road">Conexión SAT (RFC+CIEC / e.firma)</span>
+        <span class="module-chip chip-road">Monitor SAT (CSF + Opinión de Cumplimiento)</span>
+        <span class="module-chip chip-road">Asistente de Soporte Guiado</span>
+        <span class="module-chip chip-road">Check Contabilizado + Panel Alegra</span>
+        <span class="module-chip chip-road">Panel Pendientes Dashboard</span>
+      </div>
+    </div>
+    <div class="module-group">
+      <h5>Roadmap 2027–2028 (planeado)</h5>
+      <div class="module-chips">
+        <span class="module-chip chip-future">Rentabilidad por cliente</span>
+        <span class="module-chip chip-future">Capacidad del equipo</span>
+        <span class="module-chip chip-future">Base de Conocimiento</span>
+        <span class="module-chip chip-future">Suscripciones de clientes</span>
+        <span class="module-chip chip-future">Propuestas comerciales</span>
+        <span class="module-chip chip-future">Asistente fiscal con IA</span>
+        <span class="module-chip chip-future">API pública</span>
+        <span class="module-chip chip-future">App móvil (PWA)</span>
+        <span class="module-chip chip-future">Multi-tenant SaaS</span>
+        <span class="module-chip chip-future">Sincronización SAT multi-RFC (empresas con varias razones sociales)</span>
+        <span class="module-chip chip-future">Reportes AI narrativos</span>
+        <span class="module-chip chip-future">Reconciliación Proyectado/Real</span>
+        <span class="module-chip chip-future">Cuenta TDC consolidada</span>
+        <span class="module-chip chip-future">CFDI retroactivo vs. movimiento manual</span>
+        <span class="module-chip chip-future">Sugerencia de recurrente inteligente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Roadmap phases timeline -->
+  <h4 style="margin-bottom:1.5rem">Fases de desarrollo</h4>
+  <div class="roadmap-phases">
+    <div class="roadmap-phase">
+      <div class="roadmap-dot dot-done">✓</div>
+      <span class="roadmap-period">Ene–Jun 2026</span>
+      <h5>Fase 0 — MVP Sólido</h5>
+      <p>14 módulos en producción. localStorage + JS puro. Usado en producción real por el fundador.</p>
+    </div>
+    <div class="roadmap-phase">
+      <div class="roadmap-dot dot-active">🔄</div>
+      <span class="roadmap-period">Jul–Dic 2026</span>
+      <h5>Fase 1 — Multi-usuario</h5>
+      <p>Migración a Supabase. Auth y RBAC. CRM, Servicios, Tiempo, Pipeline, Contratos. <strong>Conexión SAT</strong> (RFC+CIEC + e.firma, sync 2–4x/día). <strong>Monitor SAT</strong> (CSF + Opinión de Cumplimiento mensual, alerta Negativo). Beta cerrada.</p>
+    </div>
+    <div class="roadmap-phase">
+      <div class="roadmap-dot dot-soon">🚀</div>
+      <span class="roadmap-period">Ene–Jun 2027</span>
+      <h5>Fase 2 — Lanzamiento</h5>
+      <p>Producto completo Tier Pro. Canal contable activo. Marketing de contenido. 200 clientes.</p>
+    </div>
+    <div class="roadmap-phase">
+      <div class="roadmap-dot dot-future">⭐</div>
+      <span class="roadmap-period">Jul–Dic 2027</span>
+      <h5>Fase 3 — Escalamiento</h5>
+      <p>AI features, API, Conexión SAT multi-RFC. Motor de reconciliación proyectado/real. Equipo: 1 dev + 1 CSM. 500 clientes.</p>
+    </div>
+    <div class="roadmap-phase">
+      <div class="roadmap-dot dot-future">🌐</div>
+      <span class="roadmap-period">2028+</span>
+      <h5>Fase 4 — Multi-tenant</h5>
+      <p>SaaS completo white-label para despachos contables. Expansión a LATAM (Colombia, Perú).</p>
+    </div>
+  </div>
+
+  <!-- Stack tecnológico -->
+  <div class="grid-2" style="margin-top:2rem">
+    <div class="card navy-border">
+      <h4>Stack actual</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li><strong>Frontend:</strong> HTML5, CSS3, JavaScript ES6+ (vanilla)</li>
+        <li><strong>Almacenamiento:</strong> localStorage (migración a Supabase en curso)</li>
+        <li><strong>Hosting:</strong> Vercel / Cloudflare Pages</li>
+        <li><strong>Autenticación:</strong> Supabase Auth (en implementación)</li>
+        <li><strong>Conexión SAT:</strong> Descarga Masiva SAT vía RFC+CIEC o e.firma (.cer+.key) — sync programado 2–4x/día</li>
+        <li><strong>Pagos:</strong> Stripe (plan) / Conekta (alternativa MX)</li>
+      </ul>
+    </div>
+    <div class="card navy-border">
+      <h4>Principios de arquitectura</h4>
+      <ul style="font-size:var(--fs-sm)">
+        <li>Sin frameworks pesados — carga rápida en conexiones lentas de México</li>
+        <li>Offline-first para módulos de captura (sin perder datos con internet inestable)</li>
+        <li>Seguridad by design: RLS en Supabase, datos aislados por tenant</li>
+        <li>Exportación total de datos en CSV/Excel — el usuario no queda "atrapado"</li>
+        <li>Actualizaciones fiscales vía configuración, sin redeploy del cliente</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════════════ -->
+<div class="doc-footer">
+  <div style="margin-bottom:.5rem">
+    <strong>Santaglia Compass</strong> — Plan de Negocio v1.0
+  </div>
+  <div style="margin-bottom:.3rem">
+    Elaborado por <strong>Carlos Sánchez de Tagle Ruiz</strong> &nbsp;|&nbsp;
+    Mayo 2026 &nbsp;|&nbsp;
+    Actualizado: <span id="footer-date">19 de mayo de 2026</span>
+  </div>
+  <div style="color:#c0392b;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:var(--fs-xs);margin-top:.75rem">
+    ⚠ CONFIDENCIAL — Uso exclusivo de socios e inversionistas autorizados
+  </div>
+</div>
+
+</div><!-- /page-wrap -->
+
+<script>
+  // Set today's date dynamically
+  (function() {
+    const months = [
+      'enero','febrero','marzo','abril','mayo','junio',
+      'julio','agosto','septiembre','octubre','noviembre','diciembre'
+    ];
+    const d = new Date();
+    const str = d.getDate() + ' de ' + months[d.getMonth()] + ' de ' + d.getFullYear();
+    const els = document.querySelectorAll('#updated-date, #footer-date');
+    els.forEach(el => el.textContent = str);
+  })();
+</script>
+</body>
+</html>

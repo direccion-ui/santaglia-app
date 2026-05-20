@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Servicios</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── KPI bar ── */
+    .kpi-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.25rem; }
+    .kpi-item { background:var(--bg-white); padding:0.85rem 1.1rem; }
+    .kpi-lbl  { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.25rem; }
+    .kpi-val  { font-family:var(--brand); font-size:1.3rem; font-weight:700; color:var(--navy); line-height:1; }
+    .kpi-sub  { font-size:0.65rem; color:var(--text-xs); margin-top:0.15rem; }
+    .kpi-val.green { color:var(--green); }
+    .kpi-val.gold  { color:#8a6000; }
+
+    /* ── Toolbar ── */
+    .toolbar { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin-bottom:0.9rem; }
+    .toolbar input, .toolbar select { padding:0.42rem 0.7rem; font-size:0.78rem; border:1.5px solid var(--border); border-radius:var(--radius); background:var(--bg-white); color:var(--text); }
+    .toolbar input:focus, .toolbar select:focus { outline:none; border-color:var(--navy); }
+
+    /* ── Filter pills ── */
+    .filter-pills { display:flex; gap:0.3rem; flex-wrap:wrap; }
+    .filter-pill { padding:0.28rem 0.7rem; font-size:0.68rem; font-family:var(--brand); font-weight:700; border:1.5px solid var(--border); border-radius:99px; background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.14s; white-space:nowrap; }
+    .filter-pill:hover { border-color:var(--navy); color:var(--navy); }
+    .filter-pill.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+    /* ── View toggle ── */
+    .view-toggle { display:flex; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .view-btn { padding:0.3rem 0.6rem; font-size:0.8rem; border:none; background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.13s; }
+    .view-btn.active { background:var(--navy); color:#fff; }
+
+    /* ── Cards grid ── */
+    .srv-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:0.75rem; }
+    .srv-card {
+      border:1px solid var(--border); border-radius:var(--radius);
+      background:var(--bg-white); padding:1rem 1.1rem;
+      transition:border-color 0.15s, box-shadow 0.15s;
+      position:relative; display:flex; flex-direction:column; gap:0.5rem;
+    }
+    .srv-card:hover { border-color:#b0bcec; box-shadow:0 2px 10px rgba(26,45,128,0.08); }
+    .srv-card.inactive { opacity:0.55; }
+    .srv-card-header { display:flex; align-items:flex-start; gap:0.65rem; }
+    .srv-card-icon { font-size:1.5rem; flex-shrink:0; line-height:1; }
+    .srv-card-title { flex:1; min-width:0; }
+    .srv-card-name { font-family:var(--brand); font-size:0.82rem; font-weight:700; color:var(--navy); line-height:1.2; }
+    .srv-card-clave { font-family:monospace; font-size:0.65rem; color:var(--text-xs); margin-top:0.12rem; }
+    .srv-card-desc { font-size:0.7rem; color:var(--text-dim); line-height:1.5; }
+    .srv-card-price { font-family:var(--brand); font-size:1.05rem; font-weight:700; color:var(--navy); }
+    .srv-card-price-sub { font-size:0.64rem; color:var(--text-xs); font-weight:400; margin-left:0.25rem; }
+    .srv-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:0.5rem; border-top:1px solid var(--border); }
+    .srv-card-sat { font-family:monospace; font-size:0.62rem; color:var(--text-xs); }
+    .srv-card-actions { display:flex; gap:0.25rem; }
+    .srv-card-btn { background:none; border:none; cursor:pointer; font-size:0.75rem; padding:0.18rem 0.4rem; border-radius:2px; color:var(--text-xs); font-family:var(--brand); font-weight:600; }
+    .srv-card-btn:hover { color:var(--navy); background:var(--navy-pale); }
+    .srv-card-btn.del:hover { color:var(--red); background:#fdecea; }
+
+    /* ── Type badge ── */
+    .tipo-badge { display:inline-block; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:0.15rem 0.45rem; border-radius:2px; }
+    .tb-hora         { background:#e6f7ee; color:#1a7a40; }
+    .tb-proyecto     { background:#e8f0fb; color:#1a4db5; }
+    .tb-retainer     { background:#fff3e6; color:#8a4500; }
+    .tb-licencia     { background:#f0ebff; color:#5a2db5; }
+    .tb-capacitacion { background:#fff8e1; color:#8a6000; }
+    .tb-otro         { background:#f0f2f8; color:#636b80; }
+
+    /* ── Active dot ── */
+    .active-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .dot-on  { background:var(--green); }
+    .dot-off { background:#ccd0db; }
+
+    /* ── Table view ── */
+    .table-wrap { overflow-x:auto; max-height:64vh; overflow-y:auto; }
+    .srv-table { width:100%; border-collapse:collapse; font-size:0.77rem; min-width:760px; }
+    .srv-table thead { position:sticky; top:0; z-index:10; }
+    .srv-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.5rem 0.65rem; text-align:left; white-space:nowrap; border-right:1px solid rgba(255,255,255,0.12); }
+    .srv-table th:last-child { border-right:none; }
+    .srv-table td { padding:0.42rem 0.65rem; border-bottom:1px solid var(--border); border-right:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+    .srv-table td:last-child { border-right:none; }
+    .srv-table tbody tr:nth-child(even) td { background:#f8f9fc; }
+    .srv-table tbody tr:hover td { background:var(--navy-pale) !important; }
+    .srv-table .num { text-align:right; font-family:'Courier New',monospace; }
+    .del-row  { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.85rem; padding:0.1rem 0.25rem; border-radius:2px; }
+    .del-row:hover { color:var(--red); background:#fdecea; }
+    .edit-row { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.75rem; padding:0.15rem 0.4rem; border-radius:2px; font-family:var(--brand); font-weight:600; }
+    .edit-row:hover { color:var(--navy); background:var(--navy-pale); }
+
+    /* ── Empty state ── */
+    .empty-state { text-align:center; padding:3.5rem 1rem; color:var(--text-xs); }
+    .empty-state-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+    .empty-state-title { font-family:var(--brand); font-size:0.9rem; font-weight:700; color:var(--text-dim); margin-bottom:0.4rem; }
+    .empty-state-desc { font-size:0.73rem; line-height:1.6; }
+
+    /* ── Modal ── */
+    .modal-section-hdr { font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs); padding-bottom:0.35rem; border-bottom:1px solid var(--border); margin-bottom:0.75rem; margin-top:1.1rem; }
+    .modal-section-hdr:first-child { margin-top:0; }
+    .modal-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem 1rem; }
+    .modal-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.65rem 1rem; }
+    .span2 { grid-column:1/-1; }
+    .sat-hint { font-size:0.62rem; color:var(--text-xs); margin-top:0.2rem; line-height:1.4; }
+
+    /* ── IVA toggle ── */
+    .iva-row { display:flex; align-items:center; gap:0.75rem; }
+    .toggle-sw { position:relative; display:inline-block; width:34px; height:18px; flex-shrink:0; }
+    .toggle-sw input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-sl { position:absolute; cursor:pointer; inset:0; background:#ccd0db; border-radius:18px; transition:background 0.2s; }
+    .toggle-sl:before { position:absolute; content:""; height:12px; width:12px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.25); }
+    .toggle-sw input:checked + .toggle-sl { background:var(--navy); }
+    .toggle-sw input:checked + .toggle-sl:before { transform:translateX(16px); }
+
+    @media(max-width:700px) {
+      .kpi-bar { grid-template-columns:1fr 1fr; }
+      .modal-grid-2, .modal-grid-3 { grid-template-columns:1fr; }
+      .srv-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item active" href="servicios.html">Servicios</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Ventas</div>
+          <h1 class="page-heading">Catálogo de Servicios</h1>
+          <div class="page-meta" id="srv-meta">Define lo que vendes con nombre, tarifa y clave SAT</div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="descargarPlantillaSrv()">⬇ Plantilla</button>
+          <label class="btn btn-ghost" style="font-size:0.72rem; cursor:pointer; position:relative;">
+            ⬆ Importar CSV / Excel
+            <input type="file" accept=".csv,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="importarArchivoSrv(this.files[0]);this.value='';" />
+          </label>
+          <button class="btn btn-primary" onclick="abrirNuevoServicio()">+ Nuevo servicio</button>
+        </div>
+      </div>
+
+      <!-- KPI bar -->
+      <div class="kpi-bar">
+        <div class="kpi-item">
+          <div class="kpi-lbl">Total servicios</div>
+          <div class="kpi-val" id="kpi-total">0</div>
+          <div class="kpi-sub" id="kpi-total-sub">en catálogo</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Activos</div>
+          <div class="kpi-val green" id="kpi-activos">0</div>
+          <div class="kpi-sub">disponibles para facturar</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Retainers</div>
+          <div class="kpi-val gold" id="kpi-retainers">0</div>
+          <div class="kpi-sub">servicios recurrentes</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Por hora</div>
+          <div class="kpi-val" id="kpi-hora" style="color:#1a4db5;">0</div>
+          <div class="kpi-sub">servicios a tarifa horaria</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="filter-pills" id="tipo-pills">
+          <button class="filter-pill active" data-tipo="" onclick="setTipoFilter(this,'')">Todos</button>
+          <button class="filter-pill" data-tipo="hora"         onclick="setTipoFilter(this,'hora')">⏱ Por hora</button>
+          <button class="filter-pill" data-tipo="proyecto"     onclick="setTipoFilter(this,'proyecto')">📁 Por proyecto</button>
+          <button class="filter-pill" data-tipo="retainer"     onclick="setTipoFilter(this,'retainer')">🔄 Retainer</button>
+          <button class="filter-pill" data-tipo="licencia"     onclick="setTipoFilter(this,'licencia')">🔑 Licencia</button>
+          <button class="filter-pill" data-tipo="capacitacion" onclick="setTipoFilter(this,'capacitacion')">📚 Capacitación</button>
+        </div>
+        <div style="flex:1;"></div>
+        <input type="text" id="srv-buscar" placeholder="Buscar servicio…" oninput="renderServicios()" style="min-width:200px;" />
+        <div class="view-toggle">
+          <button class="view-btn active" id="btn-view-cards" onclick="setView('cards')" title="Tarjetas">⊞</button>
+          <button class="view-btn"        id="btn-view-table" onclick="setView('table')" title="Tabla">☰</button>
+        </div>
+      </div>
+
+      <!-- Cards view -->
+      <div id="view-cards">
+        <div class="srv-grid" id="srv-grid"></div>
+        <div class="empty-state" id="srv-empty-cards" style="display:none;">
+          <div class="empty-state-icon">🗂</div>
+          <div class="empty-state-title">Sin servicios aún</div>
+          <div class="empty-state-desc">Define tu primer servicio con el botón de arriba.<br>Los datos fiscales (clave SAT) se pre-llenarán al facturar.</div>
+        </div>
+      </div>
+
+      <!-- Table view -->
+      <div id="view-table" style="display:none;">
+        <div class="table-wrap">
+          <table class="srv-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Clave</th>
+                <th>Nombre del servicio</th>
+                <th>Tipo</th>
+                <th style="text-align:right;">Precio base</th>
+                <th>Moneda · Unidad</th>
+                <th>IVA</th>
+                <th>Clave SAT</th>
+                <th style="text-align:center;">Activo</th>
+                <th style="width:70px;"></th>
+              </tr>
+            </thead>
+            <tbody id="srv-tbody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="srv-empty-table" style="display:none;">
+          <div class="empty-state-icon">🗂</div>
+          <div class="empty-state-title">Sin servicios</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ══ MODAL: Alta / Edición de Servicio ══ -->
+<div class="modal-backdrop hidden" id="modal-servicio">
+  <div class="modal" style="max-width:620px; max-height:94vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title" id="srv-modal-titulo">Nuevo servicio</span>
+      <button class="modal-close" onclick="closeModal('modal-servicio')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="srv-id" />
+
+      <!-- ── Identificación ── -->
+      <div class="modal-section-hdr">Identificación</div>
+      <div class="modal-grid-2">
+        <div class="form-group span2">
+          <label class="form-label">Nombre del servicio *</label>
+          <input class="form-input" id="srv-nombre" type="text" placeholder="Consultoría estratégica de negocios" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clave interna</label>
+          <input class="form-input" id="srv-clave" type="text" placeholder="CONS-001" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()" />
+          <div class="sat-hint">Código corto de referencia interna (opcional)</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de servicio *</label>
+          <select class="form-input" id="srv-tipo" onchange="onTipoChange()">
+            <option value="hora">⏱ Por hora</option>
+            <option value="proyecto">📁 Por proyecto (precio fijo)</option>
+            <option value="retainer">🔄 Retainer mensual</option>
+            <option value="licencia">🔑 Licencia / Suscripción</option>
+            <option value="capacitacion">📚 Capacitación / Taller</option>
+            <option value="otro">◾ Otro</option>
+          </select>
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-input" id="srv-desc" rows="2" placeholder="Análisis, diagnóstico y definición de estrategia empresarial…" style="resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-input" id="srv-activo">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo (archivado)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ── Tarifa ── -->
+      <div class="modal-section-hdr">Tarifa</div>
+      <div class="modal-grid-3">
+        <div class="form-group">
+          <label class="form-label">Precio base *</label>
+          <input class="form-input" id="srv-precio" type="number" min="0" step="any" placeholder="0.00" style="text-align:right;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Moneda</label>
+          <select class="form-input" id="srv-moneda">
+            <option value="MXN">MXN</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unidad de cobro</label>
+          <select class="form-input" id="srv-unidad">
+            <option value="hora">/ hora</option>
+            <option value="mes">/ mes</option>
+            <option value="proyecto">por proyecto</option>
+            <option value="dia">/ día</option>
+            <option value="sesion">/ sesión</option>
+            <option value="usuario">/ usuario / mes</option>
+            <option value="otro">otro</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:#f8f9fc; border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem 0.85rem; font-size:0.72rem; color:var(--text-dim); margin-top:0.1rem;" id="srv-precio-preview">
+        Introduce el precio para ver el ejemplo de facturación.
+      </div>
+
+      <!-- ── Datos SAT ── -->
+      <div class="modal-section-hdr">Datos fiscales (SAT)</div>
+      <div style="background:#fff8e1; border:1px solid #f5c842; border-radius:var(--radius); padding:0.55rem 0.85rem; font-size:0.72rem; color:var(--text-dim); margin-bottom:0.85rem;">
+        💡 Estos datos se usan al generar CFDIs. Si no los conoces, el sistema pre-llenará valores comunes para consultoría.
+      </div>
+      <div class="modal-grid-2">
+        <div class="form-group">
+          <label class="form-label">Clave producto/servicio SAT</label>
+          <input class="form-input" id="srv-clave-sat" type="text" placeholder="80131601" maxlength="8"
+            list="srv-sat-list" oninput="onClaveSatInput(this.value)" />
+          <datalist id="srv-sat-list">
+            <option value="80131601">80131601 — Consultoría de gestión de negocios</option>
+            <option value="80131500">80131500 — Servicios de consultoría</option>
+            <option value="80141600">80141600 — Servicios de marketing y publicidad</option>
+            <option value="81111500">81111500 — Servicios de TI y sistemas</option>
+            <option value="81112200">81112200 — Mantenimiento y soporte de software</option>
+            <option value="84111505">84111505 — Servicios de asesoría fiscal</option>
+            <option value="84111506">84111506 — Servicios de auditoría</option>
+            <option value="86111100">86111100 — Servicios de capacitación y educación</option>
+            <option value="84121800">84121800 — Servicios de RR.HH. y nómina</option>
+            <option value="81101500">81101500 — Desarrollo de software</option>
+          </datalist>
+          <div class="sat-hint" id="srv-sat-desc">—</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clave de unidad SAT</label>
+          <input class="form-input" id="srv-unidad-sat" type="text" placeholder="E48" maxlength="3"
+            list="srv-usat-list" oninput="this.value=this.value.toUpperCase()" />
+          <datalist id="srv-usat-list">
+            <option value="HUR">HUR — Hora</option>
+            <option value="E48">E48 — Unidad de servicio</option>
+            <option value="MES">MES — Mes</option>
+            <option value="DIA">DIA — Día</option>
+            <option value="ACT">ACT — Actividad</option>
+            <option value="H87">H87 — Pieza</option>
+          </datalist>
+          <div class="sat-hint">HUR=hora · E48=servicio · MES=mes · DIA=día</div>
+        </div>
+        <div class="form-group span2">
+          <div class="iva-row">
+            <label class="toggle-sw">
+              <input type="checkbox" id="srv-iva" checked onchange="onIvaChange()" />
+              <span class="toggle-sl"></span>
+            </label>
+            <span style="font-family:var(--brand); font-size:0.72rem; font-weight:600; color:var(--text-dim);">Aplica IVA</span>
+            <div id="srv-iva-tasa-wrap" style="display:flex; align-items:center; gap:0.4rem; margin-left:0.5rem;">
+              <span style="font-size:0.72rem; color:var(--text-dim);">Tasa:</span>
+              <input class="form-input" id="srv-iva-tasa" type="number" value="16" min="0" max="32" step="any"
+                style="width:64px; padding:0.22rem 0.4rem; font-size:0.78rem; text-align:center;" />
+              <span style="font-size:0.72rem; color:var(--text-dim);">%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-servicio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarServicio()">Guardar servicio</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════════
+   CONSTANTES
+══════════════════════════════════════════════════════════ */
+const KEY_SERVICIOS = 'stgl_servicios';
+
+const TIPO_META = {
+  hora:         { label:'Por hora',     icon:'⏱', cls:'tb-hora',         unitSat:'HUR', claveSat:'80131601' },
+  proyecto:     { label:'Por proyecto', icon:'📁', cls:'tb-proyecto',     unitSat:'E48', claveSat:'80131601' },
+  retainer:     { label:'Retainer',     icon:'🔄', cls:'tb-retainer',     unitSat:'MES', claveSat:'80131601' },
+  licencia:     { label:'Licencia',     icon:'🔑', cls:'tb-licencia',     unitSat:'E48', claveSat:'81112200' },
+  capacitacion: { label:'Capacitación', icon:'📚', cls:'tb-capacitacion', unitSat:'E48', claveSat:'86111100' },
+  otro:         { label:'Otro',         icon:'◾', cls:'tb-otro',         unitSat:'E48', claveSat:'' },
+};
+
+const SAT_DESC = {
+  '80131601': 'Consultoría de gestión de negocios',
+  '80131500': 'Servicios de consultoría (general)',
+  '80141600': 'Servicios de marketing y publicidad',
+  '81111500': 'Servicios de tecnologías de la información',
+  '81112200': 'Mantenimiento y soporte de software',
+  '84111505': 'Servicios de asesoría fiscal y contable',
+  '84111506': 'Servicios de auditoría',
+  '86111100': 'Servicios de capacitación y educación',
+  '84121800': 'Servicios de RR.HH. y administración de nómina',
+  '81101500': 'Desarrollo de software a la medida',
+};
+
+const UNIDAD_LABEL = {
+  hora:    '/ hora',    mes:     '/ mes',   proyecto: 'por proyecto',
+  dia:     '/ día',     sesion:  '/ sesión', usuario: '/ usuario/mes',
+  otro:    '',
+};
+
+let filtroTipo = '';
+let vistaActual = 'cards';
+
+/* ══════════════════════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════════════════════ */
+function loadServicios() {
+  try { return JSON.parse(localStorage.getItem(KEY_SERVICIOS) || '[]'); } catch { return []; }
+}
+function saveServicios(arr) { localStorage.setItem(KEY_SERVICIOS, JSON.stringify(arr)); }
+
+/* Exponer catálogo para otras páginas (Facturación, Proyectos) */
+window.getServiciosActivos = () => loadServicios().filter(s => s.activo);
+
+/* ══════════════════════════════════════════════════════════
+   FILTROS Y VISTA
+══════════════════════════════════════════════════════════ */
+function setTipoFilter(btn, tipo) {
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  filtroTipo = tipo;
+  renderServicios();
+}
+
+function setView(v) {
+  vistaActual = v;
+  document.getElementById('btn-view-cards').classList.toggle('active', v === 'cards');
+  document.getElementById('btn-view-table').classList.toggle('active', v === 'table');
+  document.getElementById('view-cards').style.display = v === 'cards' ? '' : 'none';
+  document.getElementById('view-table').style.display = v === 'table' ? '' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════════════════ */
+function fmt(precio, moneda) {
+  if (!precio && precio !== 0) return '—';
+  return Number(precio).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' ' + (moneda || 'MXN');
+}
+
+function renderServicios() {
+  const all    = loadServicios();
+  const buscar = (document.getElementById('srv-buscar')?.value || '').toLowerCase();
+
+  let data = all.slice();
+  if (filtroTipo) data = data.filter(s => s.tipo === filtroTipo);
+  if (buscar)     data = data.filter(s =>
+    [s.nombre, s.clave, s.descripcion, s.claveSAT, s.tipo]
+    .filter(Boolean).join(' ').toLowerCase().includes(buscar)
+  );
+
+  /* KPIs */
+  document.getElementById('kpi-total').textContent    = all.length;
+  document.getElementById('kpi-activos').textContent  = all.filter(s => s.activo).length;
+  document.getElementById('kpi-retainers').textContent= all.filter(s => s.tipo === 'retainer').length;
+  document.getElementById('kpi-hora').textContent     = all.filter(s => s.tipo === 'hora').length;
+  document.getElementById('srv-meta').textContent =
+    `${all.length} en catálogo · ${all.filter(s=>s.activo).length} activos`;
+
+  /* Cards */
+  const grid   = document.getElementById('srv-grid');
+  const emptyC = document.getElementById('srv-empty-cards');
+  const emptyT = document.getElementById('srv-empty-table');
+
+  if (!data.length) {
+    grid.innerHTML = '';
+    emptyC.style.display = '';
+    emptyT.style.display = '';
+    document.getElementById('srv-tbody').innerHTML = '';
+    return;
+  }
+  emptyC.style.display = 'none';
+  emptyT.style.display = 'none';
+
+  grid.innerHTML = data.map(s => {
+    const tm  = TIPO_META[s.tipo] || TIPO_META.otro;
+    const ul  = UNIDAD_LABEL[s.unidad] || '';
+    const iva = s.iva ? ` +IVA ${s.tasaIVA||16}%` : ' s/IVA';
+    return `<div class="srv-card ${s.activo ? '' : 'inactive'}">
+      <div class="srv-card-header">
+        <div class="srv-card-icon">${tm.icon}</div>
+        <div class="srv-card-title">
+          <div class="srv-card-name">${escH(s.nombre)}</div>
+          ${s.clave ? `<div class="srv-card-clave">${escH(s.clave)}</div>` : ''}
+        </div>
+        <span class="tipo-badge ${tm.cls}">${tm.label}</span>
+      </div>
+      ${s.descripcion ? `<div class="srv-card-desc">${escH(s.descripcion)}</div>` : ''}
+      <div>
+        <span class="srv-card-price">${fmt(s.precio, s.moneda)}</span>
+        <span class="srv-card-price-sub">${escH(ul)}${iva}</span>
+      </div>
+      <div class="srv-card-footer">
+        <span class="srv-card-sat">${s.claveSAT ? `SAT: ${s.claveSAT}` : '—'}</span>
+        <div class="srv-card-actions">
+          <button class="srv-card-btn" onclick="editarServicio('${s.id}')">✏ Editar</button>
+          <button class="srv-card-btn del" onclick="eliminarServicio('${s.id}')">✕</button>
+        </div>
+      </div>
+      <div style="position:absolute;top:0.7rem;right:0.7rem;">
+        <div class="active-dot ${s.activo ? 'dot-on' : 'dot-off'}" title="${s.activo ? 'Activo' : 'Inactivo'}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  /* Table */
+  document.getElementById('srv-tbody').innerHTML = data.map((s, i) => {
+    const tm = TIPO_META[s.tipo] || TIPO_META.otro;
+    const ul = UNIDAD_LABEL[s.unidad] || '';
+    return `<tr>
+      <td style="font-family:var(--brand);font-weight:700;color:var(--text-xs);">${i+1}</td>
+      <td><code style="font-size:0.7rem;background:#f0f2f8;padding:0.1rem 0.3rem;border-radius:3px;">${escH(s.clave||'—')}</code></td>
+      <td style="font-weight:600;color:var(--navy);">${escH(s.nombre)}</td>
+      <td><span class="tipo-badge ${tm.cls}">${tm.label}</span></td>
+      <td class="num">${fmt(s.precio, '')}</td>
+      <td style="font-size:0.72rem;color:var(--text-dim);">${escH((s.moneda||'MXN') + ' ' + ul)}</td>
+      <td style="text-align:center;font-size:0.72rem;">${s.iva ? `${s.tasaIVA||16}%` : '—'}</td>
+      <td><code style="font-size:0.68rem;">${escH(s.claveSAT||'—')}</code></td>
+      <td style="text-align:center;">
+        <div class="active-dot ${s.activo ? 'dot-on' : 'dot-off'}" style="margin:0 auto;" title="${s.activo ? 'Activo':'Inactivo'}"></div>
+      </td>
+      <td style="white-space:nowrap;">
+        <button class="edit-row" onclick="editarServicio('${s.id}')">Editar</button>
+        <button class="del-row"  onclick="eliminarServicio('${s.id}')" title="Eliminar">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODAL — HELPERS
+══════════════════════════════════════════════════════════ */
+function onTipoChange() {
+  const tipo = document.getElementById('srv-tipo').value;
+  const tm   = TIPO_META[tipo] || TIPO_META.otro;
+  /* Pre-fill SAT fields with defaults for this type */
+  if (!document.getElementById('srv-clave-sat').value) {
+    document.getElementById('srv-clave-sat').value = tm.claveSat;
+    actualizarSatDesc(tm.claveSat);
+  }
+  if (!document.getElementById('srv-unidad-sat').value) {
+    document.getElementById('srv-unidad-sat').value = tm.unitSat;
+  }
+  /* Pre-set billing unit */
+  const unitMap = { hora:'hora', retainer:'mes', licencia:'usuario', capacitacion:'sesion', proyecto:'proyecto', otro:'otro' };
+  document.getElementById('srv-unidad').value = unitMap[tipo] || 'otro';
+  actualizarPrecioPreview();
+}
+
+function onClaveSatInput(val) { actualizarSatDesc(val.trim()); }
+
+function actualizarSatDesc(clave) {
+  const desc = SAT_DESC[clave] || (clave.length === 8 ? 'Clave válida (descripción no catalogada)' : 'Escribe los 8 dígitos de la clave SAT');
+  document.getElementById('srv-sat-desc').textContent = desc;
+}
+
+function onIvaChange() {
+  const on = document.getElementById('srv-iva').checked;
+  document.getElementById('srv-iva-tasa-wrap').style.display = on ? 'flex' : 'none';
+  actualizarPrecioPreview();
+}
+
+function actualizarPrecioPreview() {
+  const precio  = parseFloat(document.getElementById('srv-precio')?.value) || 0;
+  const moneda  = document.getElementById('srv-moneda')?.value || 'MXN';
+  const unidad  = document.getElementById('srv-unidad')?.value || '';
+  const iva     = document.getElementById('srv-iva')?.checked;
+  const tasa    = parseFloat(document.getElementById('srv-iva-tasa')?.value) || 16;
+  const ul      = UNIDAD_LABEL[unidad] || '';
+  if (!precio) {
+    document.getElementById('srv-precio-preview').textContent = 'Introduce el precio para ver el ejemplo de facturación.';
+    return;
+  }
+  const total   = iva ? precio * (1 + tasa/100) : precio;
+  const fmtN    = n => n.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+  let txt = `Subtotal: ${fmtN(precio)} ${moneda} ${ul}`;
+  if (iva) txt += ` · IVA ${tasa}%: ${fmtN(precio * tasa/100)} · Total: ${fmtN(total)} ${moneda}`;
+  else txt += ` · Sin IVA`;
+  document.getElementById('srv-precio-preview').textContent = txt;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ABRIR / LIMPIAR MODAL
+══════════════════════════════════════════════════════════ */
+function abrirNuevoServicio() {
+  limpiarModalServicio();
+  document.getElementById('srv-modal-titulo').textContent = 'Nuevo servicio';
+  openModal('modal-servicio');
+}
+
+function limpiarModalServicio() {
+  document.getElementById('srv-id').value        = '';
+  document.getElementById('srv-nombre').value    = '';
+  document.getElementById('srv-clave').value     = '';
+  document.getElementById('srv-desc').value      = '';
+  document.getElementById('srv-tipo').value      = 'hora';
+  document.getElementById('srv-activo').value    = '1';
+  document.getElementById('srv-precio').value    = '';
+  document.getElementById('srv-moneda').value    = 'MXN';
+  document.getElementById('srv-unidad').value    = 'hora';
+  document.getElementById('srv-clave-sat').value = '80131601';
+  document.getElementById('srv-unidad-sat').value= 'HUR';
+  document.getElementById('srv-iva').checked     = true;
+  document.getElementById('srv-iva-tasa').value  = '16';
+  document.getElementById('srv-iva-tasa-wrap').style.display = 'flex';
+  actualizarSatDesc('80131601');
+  actualizarPrecioPreview();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CRUD
+══════════════════════════════════════════════════════════ */
+function editarServicio(id) {
+  const s = loadServicios().find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('srv-id').value         = s.id;
+  document.getElementById('srv-nombre').value     = s.nombre || '';
+  document.getElementById('srv-clave').value      = s.clave || '';
+  document.getElementById('srv-desc').value       = s.descripcion || '';
+  document.getElementById('srv-tipo').value       = s.tipo || 'hora';
+  document.getElementById('srv-activo').value     = s.activo ? '1' : '0';
+  document.getElementById('srv-precio').value     = s.precio || '';
+  document.getElementById('srv-moneda').value     = s.moneda || 'MXN';
+  document.getElementById('srv-unidad').value     = s.unidad || 'hora';
+  document.getElementById('srv-clave-sat').value  = s.claveSAT || '';
+  document.getElementById('srv-unidad-sat').value = s.unidadSAT || '';
+  document.getElementById('srv-iva').checked      = s.iva !== false;
+  document.getElementById('srv-iva-tasa').value   = s.tasaIVA || 16;
+  document.getElementById('srv-iva-tasa-wrap').style.display = (s.iva !== false) ? 'flex' : 'none';
+  actualizarSatDesc(s.claveSAT || '');
+  actualizarPrecioPreview();
+  document.getElementById('srv-modal-titulo').textContent = 'Editar servicio';
+  openModal('modal-servicio');
+}
+
+function guardarServicio() {
+  const id     = document.getElementById('srv-id').value;
+  const nombre = document.getElementById('srv-nombre').value.trim();
+  if (!nombre) { toast('El nombre del servicio es obligatorio', 'error'); return; }
+
+  const registro = {
+    id:          id || 'srv-' + Date.now(),
+    nombre,
+    clave:       document.getElementById('srv-clave').value.trim().toUpperCase(),
+    descripcion: document.getElementById('srv-desc').value.trim(),
+    tipo:        document.getElementById('srv-tipo').value,
+    activo:      document.getElementById('srv-activo').value === '1',
+    precio:      parseFloat(document.getElementById('srv-precio').value) || 0,
+    moneda:      document.getElementById('srv-moneda').value,
+    unidad:      document.getElementById('srv-unidad').value,
+    claveSAT:    document.getElementById('srv-clave-sat').value.trim(),
+    unidadSAT:   document.getElementById('srv-unidad-sat').value.trim().toUpperCase(),
+    iva:         document.getElementById('srv-iva').checked,
+    tasaIVA:     parseFloat(document.getElementById('srv-iva-tasa').value) || 16,
+    actualizado: new Date().toISOString(),
+  };
+
+  const servicios = loadServicios();
+  if (id) {
+    const idx = servicios.findIndex(s => s.id === id);
+    if (idx >= 0) { registro.creado = servicios[idx].creado; servicios[idx] = registro; }
+  } else {
+    registro.creado = new Date().toISOString();
+    servicios.push(registro);
+  }
+  saveServicios(servicios);
+  closeModal('modal-servicio');
+  toast(id ? 'Servicio actualizado' : 'Servicio creado', 'success');
+  renderServicios();
+}
+
+function eliminarServicio(id) {
+  const s = loadServicios().find(x => x.id === id);
+  if (!s) return;
+  if (!confirm(`¿Eliminar "${s.nombre}"?\n\nSi está en uso en proyectos o facturas, considera archivarlo (inactivo) en lugar de eliminarlo.`)) return;
+  saveServicios(loadServicios().filter(x => x.id !== id));
+  toast('Servicio eliminado', 'success');
+  renderServicios();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CSV
+══════════════════════════════════════════════════════════ */
+function descargarPlantillaSrv() {
+  const header = 'Clave Interna,Nombre,Descripción,Tipo (hora/proyecto/retainer/licencia/capacitacion/otro),Precio,Moneda (MXN/USD/EUR),Unidad (hora/mes/proyecto/dia/sesion/usuario/otro),Clave SAT,Unidad SAT,IVA (SI/NO),Tasa IVA,Activo (SI/NO)';
+  const ejemplo = '"CONS-001","Consultoría estratégica","Diagnóstico y plan de negocios","proyecto","50000","MXN","proyecto","80131601","E48","SI","16","SI"';
+  const csv  = [header, ejemplo].join('\n');
+  const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href:url, download:'servicios_plantilla.csv' });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Plantilla descargada', 'success');
+}
+
+/* Strip diacritics for robust header matching */
+function normH(s) { return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim(); }
+
+function parseCSVRow(line) {
+  const row = []; let cur = '', inQ = false;
+  for (const ch of line + ',') {
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { row.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  return row;
+}
+
+function makeGetColSrv(header) {
+  return (row, ...names) => {
+    for (const name of names) {
+      const nm  = normH(name);
+      const idx = header.findIndex(h => normH(h).includes(nm));
+      if (idx >= 0 && row[idx] !== undefined) return String(row[idx]).replace(/^"|"$/g,'').trim();
+    }
+    return '';
+  };
+}
+
+function buildServicioFromRow(row, getCol, idx) {
+  const nombre = getCol(row,'nombre','servicio');
+  if (!nombre) return null;
+  const clave      = getCol(row,'clave interna','clave').toUpperCase();
+  const activoStr  = getCol(row,'activo').toUpperCase();
+  const ivaStr     = getCol(row,'iva').toUpperCase();
+  return {
+    id:          '',
+    nombre,
+    clave,
+    descripcion: getCol(row,'descripcion','descripción','desc'),
+    tipo:        getCol(row,'tipo') || 'proyecto',
+    precio:      parseFloat(getCol(row,'precio','tarifa')) || 0,
+    moneda:      (['MXN','USD','EUR'].includes(getCol(row,'moneda').toUpperCase()) ? getCol(row,'moneda').toUpperCase() : 'MXN'),
+    unidad:      getCol(row,'unidad') || 'proyecto',
+    claveSAT:    getCol(row,'clave sat','clavesat','sat'),
+    unidadSAT:   getCol(row,'unidad sat','unidadsat').toUpperCase() || 'E48',
+    iva:         ivaStr !== 'NO' && ivaStr !== '0' && ivaStr !== 'FALSE',
+    tasaIVA:     parseFloat(getCol(row,'tasa iva','tasa')) || 16,
+    activo:      activoStr !== 'NO' && activoStr !== '0' && activoStr !== 'FALSE',
+    actualizado: new Date().toISOString(),
+  };
+}
+
+function mergeServicios(records) {
+  const servicios = loadServicios();
+  let added = 0, updated = 0, skipped = 0;
+  records.forEach((reg, i) => {
+    if (!reg) { skipped++; return; }
+    const existing = servicios.find(s => (reg.clave && s.clave && s.clave === reg.clave) || s.nombre === reg.nombre);
+    if (existing) {
+      reg.id = existing.id; reg.creado = existing.creado;
+      Object.assign(existing, reg); updated++;
+    } else {
+      reg.id = 'srv-' + Date.now() + '-' + i;
+      reg.creado = new Date().toISOString();
+      servicios.push(reg); added++;
+    }
+  });
+  saveServicios(servicios);
+  toast(`Importado: ${added} nuevo${added!==1?'s':''}, ${updated} actualizado${updated!==1?'s':''}${skipped ? `, ${skipped} omitido${skipped!==1?'s':''}` : ''}`, 'success');
+  renderServicios();
+}
+
+function importarArchivoSrv(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') { importarSrvXLSX(file); } else { importarSrvCSV(file); }
+}
+
+function importarSrvCSV(file) {
+  if (!file) return;
+  const tryParse = (text) => {
+    const clean = text.replace(/^﻿/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    const lines = clean.split('\n').filter(l => l.trim());
+    if (lines.length < 2) { toast('Archivo vacío o sin datos', 'error'); return; }
+    const headerRow = parseCSVRow(lines[0]);
+    const getCol    = makeGetColSrv(headerRow);
+    const records   = [];
+    for (let i = 1; i < lines.length; i++) records.push(buildServicioFromRow(parseCSVRow(lines[i]), getCol, i));
+    mergeServicios(records);
+  };
+  const reader = new FileReader();
+  reader.onload = e => {
+    let text = e.target.result;
+    if (text.includes('�')) { const r2 = new FileReader(); r2.onload = e2 => tryParse(e2.target.result); r2.readAsText(file,'windows-1252'); }
+    else { tryParse(text); }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importarSrvXLSX(file) {
+  const loadSheetJS = (cb) => {
+    if (window.XLSX) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = cb; s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
+    document.head.appendChild(s);
+  };
+  loadSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        if (rows.length < 2) { toast('Excel vacío', 'error'); return; }
+        const headerRow = rows[0].map(String);
+        const getCol    = makeGetColSrv(headerRow);
+        const records   = rows.slice(1).map((row, i) => buildServicioFromRow(row.map(String), getCol, i+1));
+        mergeServicios(records);
+      } catch(err) { toast('Error al leer Excel: ' + err.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+/* Listeners en vivo para el preview */
+['srv-precio','srv-moneda','srv-unidad','srv-iva-tasa'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', actualizarPrecioPreview);
+});
+
+renderServicios();
+</script>
+</body>
+</html>

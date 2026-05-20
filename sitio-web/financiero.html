@@ -1,0 +1,2776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Financiero</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- PDF.js — extracción de texto de estados de cuenta en PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand">
+          <a href="dashboard.html">
+            <img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" />
+          </a>
+        </div>
+        <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item active" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+        <div class="header-actions">
+          <button class="btn-logout" onclick="logout()">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="main">
+        <!-- ══ ARCHIVOS FINANCIEROS (barra compacta) ══ -->
+        <div style="display:flex; align-items:center; gap:0.75rem; padding:0.35rem 0.75rem; margin-bottom:0.9rem; background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); font-size:0.72rem;">
+          <span style="font-family:var(--brand); font-weight:700; color:var(--navy); letter-spacing:0.04em; white-space:nowrap;">📁 Archivos financieros</span>
+          <span id="fin-count" style="color:var(--text-xs); flex:1;"></span>
+          <select id="filtro-cat" style="padding:0.18rem 0.5rem; font-size:0.68rem; border:1px solid var(--border); border-radius:2px; color:var(--text-dim); display:none;" onchange="renderLista()">
+            <option value="todos">Todas las categorías</option>
+            <option value="Ingresos">Ingresos</option>
+            <option value="Egresos">Egresos</option>
+            <option value="General">General</option>
+          </select>
+          <label for="fin-input" style="padding:0.22rem 0.65rem; background:var(--navy); color:#fff; border-radius:2px; cursor:pointer; font-family:var(--brand); font-size:0.65rem; font-weight:700; letter-spacing:0.05em; white-space:nowrap;">+ Subir</label>
+          <input type="file" id="fin-input" accept=".xlsx,.xls,.csv,.pdf,.xlsm" style="display:none;" />
+          <button onclick="toggleFinLista()" id="fin-toggle-btn"
+            style="padding:0.22rem 0.6rem; border:1px solid var(--border); background:none; border-radius:2px; cursor:pointer; font-size:0.65rem; color:var(--text-dim); white-space:nowrap;">▶ Ver lista</button>
+        </div>
+        <div id="fin-lista-wrap" style="display:none; margin-bottom:0.9rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-white); overflow:hidden;">
+          <ul class="file-list" id="fin-lista" style="margin:0; padding:0.5rem 0.75rem; min-height:2rem;"></ul>
+        </div>
+
+        <!-- ══ SALDOS BANCARIOS ══ -->
+        <style>
+          .saldos-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:1.25rem; }
+          .saldos-kpi-item { background:var(--bg-white); padding:0.9rem 1.1rem; }
+          .saldos-kpi-label { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.25rem; }
+          .saldos-kpi-val { font-family:var(--brand); font-size:1.15rem; font-weight:700; color:var(--navy); }
+          .saldos-kpi-val.green { color:var(--green); }
+          .saldos-kpi-val.red   { color:var(--red); }
+          .saldos-kpi-val.gold  { color:#8a6800; }
+          .saldos-kpi-sub { font-size:0.65rem; color:var(--text-xs); margin-top:0.1rem; }
+          .sal-table { width:100%; border-collapse:collapse; font-size:0.74rem; }
+          .sal-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.28rem 0.6rem; text-align:left; white-space:nowrap; }
+          .sal-table td { padding:0.18rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+          .sal-table tbody tr:hover td { background:var(--navy-pale) !important; }
+          .sal-table .num { text-align:right; font-family:'Courier New',monospace; }
+          .sal-table tfoot td { border-top:2px solid var(--navy); background:#e8ecf8; font-weight:700; font-family:var(--brand); font-size:0.7rem; padding:0.45rem 0.7rem; color:var(--navy); }
+          .sal-edit { background:none; border:none; cursor:pointer; font-size:0.8rem; padding:0.1rem 0.25rem; border-radius:2px; color:var(--text-xs); }
+          .sal-edit:hover { color:var(--navy); background:var(--navy-pale); }
+          .sal-toggle-row:hover td { background:#ede5e5 !important; }
+          .tipo-badge { display:inline-block; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.06em; padding:0.1rem 0.4rem; border-radius:2px; text-transform:uppercase; }
+          .tipo-cuenta   { background:#e8ecf8; color:var(--navy); }
+          .tipo-tarjeta  { background:#fde8e8; color:var(--red); }
+          .tipo-ahorro   { background:#e6f7ee; color:var(--green); }
+          .tipo-puente   { background:#fef9e0; color:#8a6800; }
+          .tipo-efectivo { background:#f4f5f8; color:var(--text-dim); }
+          @media(max-width:900px) { .saldos-kpi { grid-template-columns:repeat(2,1fr); } }
+        </style>
+
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header">
+            <span class="panel-title">Saldos Bancarios</span>
+            <div class="flex gap-1" style="align-items:center;">
+              <label style="font-family:var(--brand); font-size:0.68rem; font-weight:700; color:var(--text-dim); letter-spacing:0.06em;">TC USD/MXN:</label>
+              <input type="number" id="sal-tc" value="17.50" min="1" step="0.01"
+                style="width:80px; padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:var(--radius);"
+                oninput="renderSaldos()" />
+              <button class="btn btn-ghost" onclick="importarSaldos()" style="font-size:0.72rem;">↑ Importar Excel</button>
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="saldos-kpi" id="sal-kpis">
+            <div class="saldos-kpi-item"><div class="saldos-kpi-label">Disponible MXN</div><div class="saldos-kpi-val green" id="sal-k-mxn">—</div><div class="saldos-kpi-sub">Cuentas + efectivo</div></div>
+            <div class="saldos-kpi-item"><div class="saldos-kpi-label">Disponible USD</div><div class="saldos-kpi-val" id="sal-k-usd">—</div><div class="saldos-kpi-sub" id="sal-k-usd-mxn"></div></div>
+            <div class="saldos-kpi-item"><div class="saldos-kpi-label">Tarjetas Crédito</div><div class="saldos-kpi-val red" id="sal-k-cc">—</div><div class="saldos-kpi-sub">Saldo por pagar</div></div>
+            <div class="saldos-kpi-item"><div class="saldos-kpi-label">Total Neto MXN</div><div class="saldos-kpi-val gold" id="sal-k-neto">—</div><div class="saldos-kpi-sub" id="sal-k-fecha"></div></div>
+          </div>
+
+          <!-- Table -->
+          <div style="overflow-x:auto;">
+            <table class="sal-table">
+              <thead><tr>
+                <th>#</th><th>Cuenta</th><th>Tipo</th><th>Moneda</th>
+                <th class="num">Saldo</th><th class="num">Equiv. MXN</th>
+                <th>Actualizado</th><th style="width:40px;"></th>
+              </tr></thead>
+              <tbody id="sal-tbody"></tbody>
+              <tfoot id="sal-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- ══ MOVIMIENTOS BANCARIOS ══ -->
+        <style>
+          .mov-table { width:100%; border-collapse:collapse; font-size:0.76rem; }
+          .mov-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:0.4rem 0.55rem; text-align:left; white-space:nowrap; position:sticky; top:0; }
+          .mov-table td { padding:0.32rem 0.55rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+          .mov-table tbody tr:hover td { background:var(--navy-pale) !important; }
+          .mov-table .num { text-align:right; font-family:'Courier New',monospace; white-space:nowrap; }
+          .mov-filter-row td { background:#1b2f55; padding:0.22rem 0.3rem; position:sticky; top:32px; z-index:1; }
+          .mov-filter-row input, .mov-filter-row select {
+            width:100%; padding:0.15rem 0.3rem; font-size:0.64rem; border:1px solid rgba(255,255,255,0.18);
+            border-radius:2px; background:rgba(255,255,255,0.1); color:#fff; outline:none; box-sizing:border-box; font-family:inherit;
+          }
+          .mov-filter-row input::placeholder { color:rgba(255,255,255,0.4); font-style:italic; }
+          .mov-filter-row select option { background:#1b2a4a; color:#fff; }
+          .mov-group-hdr td { background:#e8ecf8; border-top:2px solid var(--navy); border-bottom:1px solid #c5ceea; padding:0.42rem 0.7rem; cursor:pointer; user-select:none; }
+          .mov-group-hdr:hover td { background:#d8deef; }
+          .mov-group-chevron { display:inline-block; width:14px; font-size:0.75rem; transition:transform 0.18s; }
+          .mov-group-title { font-family:var(--brand); font-size:0.72rem; font-weight:800; color:var(--navy); letter-spacing:0.04em; text-transform:uppercase; }
+          .mov-group-stat { font-family:'Courier New',monospace; font-size:0.7rem; }
+          .mov-group-stat.g { color:var(--green); }
+          .mov-group-stat.r { color:var(--red); }
+          .mov-group-stat.n { font-weight:700; }
+          .mov-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border-bottom:1px solid var(--border); }
+          .mov-kpi-item { background:var(--bg-white); padding:0.65rem 1rem; }
+          .mov-kpi-label { font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.15rem; }
+          .mov-kpi-val { font-family:var(--brand); font-size:0.95rem; font-weight:700; color:var(--navy); }
+          @media(max-width:900px) { .mov-kpi { grid-template-columns:repeat(2,1fr); } }
+        </style>
+
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header">
+            <span class="panel-title">Movimientos Bancarios</span>
+            <div class="flex gap-1" style="align-items:center;">
+              <span id="mov-count-label" style="font-family:var(--brand); font-size:0.68rem; color:var(--text-dim);">Sin datos — importa el Excel</span>
+              <button class="btn btn-ghost" onclick="limpiarMovFiltros()" style="font-size:0.72rem;" title="Limpiar todos los filtros">✕ Limpiar</button>
+              <button class="btn btn-ghost" onclick="expandirTodosMov(true)"  style="font-size:0.72rem;" title="Expandir todos los meses">⊞ Todo</button>
+              <button class="btn btn-ghost" onclick="expandirTodosMov(false)" style="font-size:0.72rem;" title="Colapsar todos los meses">⊟ Colapsar</button>
+              <button class="btn btn-ghost" onclick="importarMovimientos()" style="font-size:0.72rem;">↑ Importar Excel</button>
+              <button class="btn btn-ghost" onclick="abrirImportPDF()" style="font-size:0.72rem;" title="Importar estado de cuenta en PDF">📄 PDF</button>
+              <button class="btn btn-ghost" onclick="abrirCFDIGasto()" style="font-size:0.72rem;" title="Importar CFDIs de gastos">📎 CFDI</button>
+              <button class="btn btn-primary" onclick="abrirNuevoMov()" style="font-size:0.72rem;">+ Movimiento</button>
+            </div>
+          </div>
+
+          <!-- KPIs filtrados -->
+          <div class="mov-kpi" id="mov-kpis">
+            <div class="mov-kpi-item"><div class="mov-kpi-label">Movimientos</div><div class="mov-kpi-val" id="mov-k-count">—</div></div>
+            <div class="mov-kpi-item"><div class="mov-kpi-label">Entradas</div><div class="mov-kpi-val" style="color:var(--green);" id="mov-k-entradas">—</div></div>
+            <div class="mov-kpi-item"><div class="mov-kpi-label">Salidas</div><div class="mov-kpi-val" style="color:var(--red);" id="mov-k-salidas">—</div></div>
+            <div class="mov-kpi-item"><div class="mov-kpi-label">Neto</div><div class="mov-kpi-val" id="mov-k-neto">—</div></div>
+            <div class="mov-kpi-item" id="mov-k-cont-wrap" style="cursor:pointer;border-left:2px solid var(--border);" onclick="filtrarSinContabilizar()" title="Clic para filtrar sin contabilizar">
+              <div class="mov-kpi-label" style="color:var(--gold);">📒 Sin contabilizar</div>
+              <div class="mov-kpi-val" id="mov-k-sincont" style="color:var(--gold);">—</div>
+            </div>
+          </div>
+
+          <!-- Tabla con filtros por columna en cabecera -->
+          <div id="mov-scroll" style="overflow-x:auto; max-height:560px; overflow-y:auto;">
+            <table class="mov-table">
+              <thead>
+                <tr>
+                  <th style="min-width:86px;">Fecha</th>
+                  <th style="min-width:80px;">Mov.</th>
+                  <th style="min-width:100px;">Tipo</th>
+                  <th style="min-width:180px;">Descripción</th>
+                  <th style="min-width:140px;">Concepto</th>
+                  <th style="min-width:110px;">Cuenta Bancaria</th>
+                  <th style="min-width:110px;">Cuenta Contable</th>
+                  <th style="min-width:100px;">Folio Fiscal</th>
+                  <th style="min-width:110px;">Origen</th>
+                  <th style="min-width:130px;">Destinatario</th>
+                  <th class="num" style="min-width:88px;">Entradas</th>
+                  <th class="num" style="min-width:88px;">Salidas</th>
+                  <th class="num" style="min-width:90px;">Conciliado</th>
+                  <th style="min-width:110px;">Contabilizado</th>
+                  <th style="width:28px;"></th>
+                </tr>
+                <tr class="mov-filter-row">
+                  <td><input type="text" id="mcf-fecha"      placeholder="2024-03…"  oninput="filterMovimientos()" /></td>
+                  <td><select id="mcf-mov" onchange="filterMovimientos()"><option value="">Todos</option></select></td>
+                  <td><input type="text" id="mcf-tipo"       placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-desc"       placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-concepto"   placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-cuenta"     placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-cuentaCont" placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-folio"      placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-origen"     placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-dest"       placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-entradas"   placeholder="≥ monto"   oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-salidas"    placeholder="≥ monto"   oninput="filterMovimientos()" /></td>
+                  <td>
+                    <select id="mcf-conciliado" onchange="filterMovimientos()">
+                      <option value="">Todos</option>
+                      <option value="1">✅ Sí</option>
+                      <option value="0">⬜ No</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select id="mcf-contabilizado" onchange="filterMovimientos()">
+                      <option value="">Todos</option>
+                      <option value="1">📒 Sí</option>
+                      <option value="0">⬜ Pendiente</option>
+                    </select>
+                  </td>
+                  <td></td>
+                </tr>
+              </thead>
+              <tbody id="mov-tbody">
+                <tr><td colspan="15" style="text-align:center; padding:2.5rem; color:var(--text-xs); font-size:0.82rem;">
+                  Haz clic en <strong>↑ Importar Excel</strong> para cargar el histórico de movimientos (solo necesario la primera vez).
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación -->
+          <div id="mov-pagination"></div>
+        </div>
+
+      <!-- Contadores ocultos requeridos por renderLista() -->
+      <span id="cat-ingresos" style="display:none;"></span>
+      <span id="cat-egresos"  style="display:none;"></span>
+      <span id="cat-general"  style="display:none;"></span>
+
+      </div>
+    </main>
+
+    <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+      <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+        <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+        <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal: editar saldo de cuenta -->
+  <div class="modal-backdrop hidden" id="modal-sal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <span class="modal-title" id="sal-modal-titulo">Actualizar saldo</span>
+        <button class="modal-close" onclick="closeModal('modal-sal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Saldo actual</label>
+          <input class="form-input" id="sal-modal-saldo" type="number" step="0.01" placeholder="0.00"
+            style="font-size:1rem; font-weight:700;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de actualización</label>
+          <input class="form-input" id="sal-modal-fecha" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nota (opcional)</label>
+          <input class="form-input" id="sal-modal-nota" type="text" placeholder="Ej: verificado vs estado de cuenta" />
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem; background:#fde8e8; border-radius:var(--radius); margin-top:0.5rem;">
+          <div>
+            <div style="font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--red);">Cuenta cancelada</div>
+            <div style="font-size:0.65rem; color:var(--text-dim);">Cuenta verificada en $0, ya no está activa</div>
+          </div>
+          <label style="position:relative; display:inline-block; width:42px; height:22px; cursor:pointer;">
+            <input type="checkbox" id="sal-modal-cancelada" style="opacity:0; width:0; height:0;"
+              onchange="setSwitchCancelada(this.checked)" />
+            <span id="sal-modal-cancelada-track" style="position:absolute; inset:0; background:#ccc; border-radius:22px; transition:0.2s;">
+              <span style="position:absolute; left:3px; top:3px; width:16px; height:16px; background:#fff; border-radius:50%;
+                transition:0.2s; transform:var(--sw-pos,translateX(0));"
+                id="sal-modal-cancelada-knob"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-sal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarSaldo()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal categoría -->
+  <div class="modal-backdrop hidden" id="modal-cat">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Clasificar archivo</span>
+        <button class="modal-close" onclick="closeModal('modal-cat')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:1.25rem;" id="modal-filename"></p>
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select class="form-input" id="modal-cat-sel">
+            <option>General</option>
+            <option>Ingresos</option>
+            <option>Egresos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Período (opcional)</label>
+          <input class="form-input" id="modal-periodo" type="text" placeholder="Ej: Enero 2026, Q1 2026…" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <input class="form-input" id="modal-notas" type="text" placeholder="Descripción breve…" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-cat')">Cancelar</button>
+        <button class="btn btn-primary" id="modal-guardar-btn">Registrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: confirmar modo importación Excel ══ -->
+  <div class="modal-backdrop hidden" id="modal-import-modo">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <span class="modal-title">Importar movimientos Excel</span>
+        <button class="modal-close" onclick="closeModal('modal-import-modo')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1.4rem;">
+        <p style="font-size:0.82rem; color:var(--text-dim); margin:0 0 0.5rem;">
+          Ya existen <strong id="imod-count"></strong> movimientos guardados.
+        </p>
+        <p style="font-size:0.78rem; color:var(--text-xs); margin:0 0 1.4rem;">¿Cómo deseas importar el nuevo archivo?</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <button onclick="ejecutarImport('reemplazar')"
+            style="padding:1rem 0.75rem; border:2px solid var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; text-align:left; transition:border-color 0.15s;"
+            onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.1rem; margin-bottom:0.35rem;">🔄</div>
+            <div style="font-family:var(--brand); font-size:0.75rem; font-weight:800; color:var(--navy); margin-bottom:0.25rem;">Reemplazar</div>
+            <div style="font-size:0.67rem; color:var(--text-xs); line-height:1.4;">Sustituye todos los movimientos existentes con los del nuevo archivo.</div>
+          </button>
+          <button onclick="ejecutarImport('complementar')"
+            style="padding:1rem 0.75rem; border:2px solid var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; text-align:left; transition:border-color 0.15s;"
+            onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.1rem; margin-bottom:0.35rem;">➕</div>
+            <div style="font-family:var(--brand); font-size:0.75rem; font-weight:800; color:var(--navy); margin-bottom:0.25rem;">Complementar</div>
+            <div style="font-size:0.67rem; color:var(--text-xs); line-height:1.4;">Agrega solo los movimientos que no existen aún, manteniendo los actuales.</div>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-import-modo')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: importar PDF estado de cuenta ══ -->
+  <div class="modal-backdrop hidden" id="modal-pdf-import">
+    <div class="modal" style="max-width:960px; width:96vw;">
+      <div class="modal-header">
+        <span class="modal-title">Importar estado de cuenta PDF</span>
+        <button class="modal-close" onclick="cerrarPDFImport()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1rem;">
+
+        <!-- Step 1: drop zone + options -->
+        <div id="pdf-step1">
+          <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; align-items:flex-end;">
+            <div class="form-group" style="margin:0; min-width:180px;">
+              <label class="form-label">Banco / formato</label>
+              <select class="form-input" id="pdf-banco" style="padding:0.35rem 0.6rem;">
+                <option value="bbva">BBVA México</option>
+                <option value="clara">Clara (tarjeta corporativa)</option>
+                <option value="hey">Hey Banco</option>
+                <option value="hsbc">HSBC</option>
+                <option value="santander">Santander</option>
+                <option value="banamex">Banamex / Citibanamex</option>
+                <option value="generico">Genérico (detectar automáticamente)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0; min-width:180px;">
+              <label class="form-label">Cuenta destino</label>
+              <select class="form-input" id="pdf-cuenta" style="padding:0.35rem 0.6rem;">
+                <option value="">— Seleccionar —</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Drop zone -->
+          <div id="pdf-dropzone"
+            style="border:2px dashed var(--border); border-radius:var(--radius); padding:2.5rem 1rem; text-align:center; cursor:pointer; transition:border-color 0.15s; background:#fafbff; margin-bottom:0.5rem;"
+            ondragover="event.preventDefault(); this.style.borderColor='var(--navy)'"
+            ondragleave="this.style.borderColor='var(--border)'"
+            ondrop="dropPDF(event)">
+            <input type="file" id="pdf-file-input" accept=".pdf" style="display:none;" onchange="leerPDF(this.files[0])">
+            <div style="font-size:1.6rem; margin-bottom:0.5rem;">📄</div>
+            <div style="font-family:var(--brand); font-size:0.78rem; font-weight:700; color:var(--navy);">Arrastra el PDF aquí o haz clic para seleccionar</div>
+            <div style="font-size:0.65rem; color:var(--text-xs); margin-top:0.3rem;">Estado de cuenta bancario · máx 20 páginas recomendado</div>
+            <button class="btn btn-ghost" style="margin-top:0.85rem; font-size:0.72rem;" onclick="document.getElementById('pdf-file-input').click()">Seleccionar archivo</button>
+          </div>
+          <div id="pdf-progress" style="display:none; font-size:0.72rem; color:var(--text-dim); text-align:center; padding:0.5rem;">Extrayendo texto del PDF…</div>
+        </div>
+
+        <!-- Step 2: preview table -->
+        <div id="pdf-step2" style="display:none;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
+            <div style="font-family:var(--brand); font-size:0.65rem; font-weight:700; color:var(--text-dim);">
+              <span id="pdf-preview-info"></span>
+            </div>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.6rem;" onclick="pdfSelAll(true)">Seleccionar todo</button>
+              <button class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.6rem;" onclick="pdfSelAll(false)">Deseleccionar</button>
+              <button class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.6rem;" onclick="document.getElementById('pdf-file-input').click()">← Cambiar PDF</button>
+            </div>
+          </div>
+          <div style="overflow:auto; max-height:380px; border:1px solid var(--border); border-radius:var(--radius);">
+            <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
+              <thead>
+                <tr style="background:var(--navy); color:#fff; position:sticky; top:0; z-index:1;">
+                  <th style="padding:0.28rem 0.5rem; text-align:center; width:30px;"><input type="checkbox" id="pdf-chk-all" onchange="pdfSelAll(this.checked)" /></th>
+                  <th style="padding:0.28rem 0.6rem; font-family:var(--brand); font-size:0.55rem; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Fecha</th>
+                  <th style="padding:0.28rem 0.6rem; font-family:var(--brand); font-size:0.55rem; letter-spacing:0.06em; text-transform:uppercase;">Descripción</th>
+                  <th style="padding:0.28rem 0.6rem; font-family:var(--brand); font-size:0.55rem; letter-spacing:0.06em; text-transform:uppercase; text-align:right; white-space:nowrap;">Entradas</th>
+                  <th style="padding:0.28rem 0.6rem; font-family:var(--brand); font-size:0.55rem; letter-spacing:0.06em; text-transform:uppercase; text-align:right; white-space:nowrap;">Salidas</th>
+                  <th style="padding:0.28rem 0.6rem; font-family:var(--brand); font-size:0.55rem; letter-spacing:0.06em; text-transform:uppercase; text-align:right; white-space:nowrap;">Saldo</th>
+                </tr>
+              </thead>
+              <tbody id="pdf-preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="cerrarPDFImport()">Cancelar</button>
+        <button class="btn btn-primary" id="pdf-importar-btn" style="display:none;" onclick="importarPDF()">↓ Importar seleccionados</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: resultado reconciliación PDF ══ -->
+  <div class="modal-backdrop hidden" id="modal-pdf-recon">
+    <div class="modal" style="max-width:820px; width:96vw;">
+      <div class="modal-header">
+        <span class="modal-title">Resultado de Reconciliación</span>
+        <button class="modal-close" onclick="closeModal('modal-pdf-recon')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1rem;">
+        <!-- Resumen -->
+        <div id="recon-resumen" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1rem;">
+          <div style="background:#f0faf4; padding:0.7rem 1rem;">
+            <div style="font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; color:var(--text-dim); text-transform:uppercase;">Conciliados</div>
+            <div id="recon-n-conc" style="font-family:var(--brand); font-size:1.3rem; font-weight:800; color:var(--green);">0</div>
+          </div>
+          <div style="background:#fff8f0; padding:0.7rem 1rem;">
+            <div style="font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; color:var(--text-dim); text-transform:uppercase;">Nuevos</div>
+            <div id="recon-n-new" style="font-family:var(--brand); font-size:1.3rem; font-weight:800; color:var(--red);">0</div>
+          </div>
+          <div style="background:#f8f9ff; padding:0.7rem 1rem;">
+            <div style="font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; color:var(--text-dim); text-transform:uppercase;">Total PDF</div>
+            <div id="recon-n-total" style="font-family:var(--brand); font-size:1.3rem; font-weight:800; color:var(--navy);">0</div>
+          </div>
+        </div>
+
+        <!-- Nuevos movimientos para normalizar -->
+        <div id="recon-nuevos-wrap" style="display:none;">
+          <div style="font-family:var(--brand); font-size:0.68rem; font-weight:800; color:var(--navy); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:0.5rem; padding-bottom:0.3rem; border-bottom:2px solid var(--border);">
+            ⚠️ Movimientos nuevos — complementa descripción y concepto
+          </div>
+          <div style="max-height:320px; overflow-y:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
+              <thead>
+                <tr style="background:var(--navy); color:#fff;">
+                  <th style="padding:0.35rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Fecha</th>
+                  <th style="padding:0.35rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Descripción banco</th>
+                  <th style="padding:0.35rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Entradas</th>
+                  <th style="padding:0.35rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Salidas</th>
+                  <th style="padding:0.35rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Tu descripción</th>
+                  <th style="padding:0.35rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Concepto</th>
+                </tr>
+              </thead>
+              <tbody id="recon-nuevos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Proyectados vencidos -->
+        <div id="recon-proyect-wrap" style="display:none; margin-top:1rem;">
+          <div style="font-family:var(--brand); font-size:0.68rem; font-weight:800; color:#b45309; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:0.5rem; padding-bottom:0.3rem; border-bottom:2px solid #fde68a;">
+            🕐 Proyecciones vencidas sin movimiento real
+          </div>
+          <div style="max-height:160px; overflow-y:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
+              <thead>
+                <tr style="background:#92400e; color:#fff;">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Fecha</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Descripción</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Monto esperado</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="recon-proyect-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-pdf-recon')">Cerrar sin guardar nuevos</button>
+        <button class="btn btn-primary" id="recon-guardar-btn" onclick="guardarNuevosRecon()" style="display:none;">↓ Guardar movimientos nuevos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: importar CFDI gastos ══ -->
+  <div class="modal-backdrop hidden" id="modal-cfdi-gasto">
+    <div class="modal" style="max-width:880px; width:95vw;">
+      <div class="modal-header">
+        <span class="modal-title">Importar CFDI</span>
+        <button class="modal-close" onclick="closeModal('modal-cfdi-gasto')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1rem;">
+        <!-- Drop zone -->
+        <div style="border:2px dashed var(--border); border-radius:var(--radius); padding:1.4rem; text-align:center; background:var(--bg-light,#f8f9fc); cursor:pointer; margin-bottom:1rem;"
+             ondragover="event.preventDefault(); this.style.borderColor='var(--navy)'"
+             ondragleave="this.style.borderColor='var(--border)'"
+             ondrop="dropCFDIGasto(event); this.style.borderColor='var(--border)'"
+             onclick="document.getElementById('cgz-input').click()">
+          <input type="file" id="cgz-input" accept=".xml" multiple style="display:none;" onchange="loadCFDIGastoFiles(this.files)" />
+          <div style="font-size:1.3rem; margin-bottom:0.3rem;">📄</div>
+          <div style="font-family:var(--brand); font-size:0.75rem; font-weight:700; color:var(--navy);">Arrastra CFDIs .xml aquí o haz clic para seleccionar</div>
+          <div style="font-size:0.64rem; color:var(--text-xs); margin-top:0.2rem;">Nómina (N) · Honorarios (I con retenciones) · Gastos (I/E) — La fecha de afectación fija el movimiento bancario</div>
+        </div>
+        <!-- Controles globales -->
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; padding:0.55rem 0.8rem; background:var(--navy-pale); border-radius:var(--radius); margin-bottom:0.85rem;">
+          <span style="font-family:var(--brand); font-size:0.62rem; font-weight:800; color:var(--navy); letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Aplicar a todos:</span>
+          <label style="font-size:0.7rem; color:var(--text-dim); white-space:nowrap;">Fecha afectación:</label>
+          <input type="date" id="cgz-fecha-global" style="padding:0.18rem 0.4rem; font-size:0.72rem; border:1px solid var(--border); border-radius:2px;" onchange="aplicarFechaGlobal()" />
+          <label style="font-size:0.7rem; color:var(--text-dim); white-space:nowrap;">Cuenta bancaria:</label>
+          <select id="cgz-cuenta-global" style="padding:0.18rem 0.4rem; font-size:0.72rem; border:1px solid var(--border); border-radius:2px; min-width:140px;" onchange="aplicarCuentaGlobal()">
+            <option value="">— Seleccionar —</option>
+          </select>
+          <span id="cgz-count" style="font-family:var(--brand); font-size:0.68rem; color:var(--text-dim); margin-left:auto;"></span>
+        </div>
+        <!-- Preview -->
+        <div style="overflow-x:auto; max-height:320px; overflow-y:auto; border:1px solid var(--border); border-radius:2px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.74rem; min-width:720px;">
+            <thead><tr style="background:var(--navy); color:#fff; position:sticky; top:0;">
+              <th style="padding:0.38rem 0.5rem; text-align:left; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Archivo</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Fecha CFDI</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">✎ Fecha Afectación</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Emisor</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Concepto</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Tipo</th>
+              <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Total</th>
+              <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">IVA</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">✎ Cuenta</th>
+              <th style="width:24px;"></th>
+            </tr></thead>
+            <tbody id="cgz-tbody">
+              <tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--text-xs); font-size:0.8rem;">Arrastra archivos XML para empezar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-cfdi-gasto')">Cancelar</button>
+        <button class="btn btn-primary" onclick="importarCFDIGastos()">Importar movimientos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: nuevo movimiento manual ══ -->
+  <div class="modal-backdrop hidden" id="modal-nuevo-mov">
+    <div class="modal" style="max-width:580px;">
+      <div class="modal-header">
+        <span class="modal-title">Nuevo Movimiento</span>
+        <button class="modal-close" onclick="closeModal('modal-nuevo-mov')">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Top row: always visible -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem 1.25rem; margin-bottom:0.9rem;">
+          <div class="form-group">
+            <label class="form-label">Fecha *</label>
+            <input class="form-input" id="nm-fecha" type="date" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Movimiento *</label>
+            <select class="form-input" id="nm-mov" onchange="toggleNMTipo()">
+              <option>Egresos</option>
+              <option>Ingresos</option>
+              <option>Traspaso</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Normal section: Egresos / Ingresos -->
+        <div id="nm-sect-normal" style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem 1.25rem; margin-bottom:0.9rem;">
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <input class="form-input" id="nm-tipo" type="text" placeholder="Gastos, Facturación…" list="nm-tipo-list" />
+            <datalist id="nm-tipo-list"></datalist>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="nm-label-monto">Salidas *</label>
+            <input class="form-input" id="nm-monto" type="number" min="0" step="0.01" placeholder="0.00" style="font-weight:700; color:var(--red);" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cuenta Bancaria</label>
+            <select class="form-input" id="nm-cuenta"></select>
+          </div>
+          <div class="form-group">
+            <!-- intentionally empty -->
+          </div>
+          <div class="form-group">
+            <label class="form-label">Origen</label>
+            <input class="form-input" id="nm-origen" type="text" placeholder="Quién envía / paga" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Destinatario</label>
+            <input class="form-input" id="nm-dest" type="text" placeholder="Quién recibe" />
+          </div>
+        </div>
+
+        <!-- Traspaso section: hidden unless Traspaso -->
+        <div id="nm-sect-traspaso" style="display:none; grid-template-columns:1fr 1fr; gap:0.85rem 1.25rem; margin-bottom:0.9rem;">
+          <div class="form-group">
+            <label class="form-label">Cuenta Origen *</label>
+            <select class="form-input" id="nm-tr-origen" onchange="nmTraspasoCheckCurrency()"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cuenta Destino *</label>
+            <select class="form-input" id="nm-tr-dest" onchange="nmTraspasoCheckCurrency()"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="nm-tr-label-monto">Monto *</label>
+            <input class="form-input" id="nm-tr-monto" type="number" min="0" step="0.01" placeholder="0.00" style="font-weight:700;" oninput="nmTraspasoUpdateHint()" />
+          </div>
+          <div class="form-group" id="nm-tr-tc-grp" style="display:none;">
+            <label class="form-label" id="nm-tr-tc-label">TC: 1 ? = ? ?</label>
+            <input class="form-input" id="nm-tr-tc" type="number" min="0" step="0.0001" placeholder="Tipo de cambio" oninput="nmTraspasoUpdateHint()" />
+            <small id="nm-tr-tc-hint" style="color:var(--muted); font-size:0.78rem;"></small>
+          </div>
+        </div>
+
+        <!-- Common section: always visible -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem 1.25rem;">
+
+          <!-- Descripción smart -->
+          <div class="form-group" style="grid-column:span 2;">
+            <label class="form-label">Descripción *</label>
+            <select class="form-input" id="nm-desc-sel" onchange="nmSmartSel('desc')"></select>
+            <div id="nm-desc-add" style="display:none; gap:0.4rem; margin-top:0.4rem; align-items:center;">
+              <input class="form-input" id="nm-desc-inp" type="text" placeholder="Nueva descripción…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();nmSmartConfirm('desc')}" />
+              <button onclick="nmSmartConfirm('desc')" style="padding:0.3rem 0.55rem; border-radius:var(--radius); cursor:pointer; font-size:0.85rem; background:var(--green); color:#fff; border:none;">✓</button>
+              <button onclick="nmSmartCancel('desc')" style="padding:0.3rem 0.55rem; border-radius:var(--radius); cursor:pointer; font-size:0.85rem; background:transparent; border:1px solid var(--border); color:var(--text);">✕</button>
+            </div>
+          </div>
+
+          <!-- Concepto smart -->
+          <div class="form-group" style="grid-column:span 2;">
+            <label class="form-label">Concepto</label>
+            <select class="form-input" id="nm-conc-sel" onchange="nmSmartSel('conc')"></select>
+            <div id="nm-conc-add" style="display:none; gap:0.4rem; margin-top:0.4rem; align-items:center;">
+              <input class="form-input" id="nm-conc-inp" type="text" placeholder="Nuevo concepto…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();nmSmartConfirm('conc')}" />
+              <button onclick="nmSmartConfirm('conc')" style="padding:0.3rem 0.55rem; border-radius:var(--radius); cursor:pointer; font-size:0.85rem; background:var(--green); color:#fff; border:none;">✓</button>
+              <button onclick="nmSmartCancel('conc')" style="padding:0.3rem 0.55rem; border-radius:var(--radius); cursor:pointer; font-size:0.85rem; background:transparent; border:1px solid var(--border); color:var(--text);">✕</button>
+            </div>
+          </div>
+
+          <!-- Cuenta Contable smart -->
+          <div class="form-group" style="grid-column:span 2;">
+            <label class="form-label">Cuenta Contable</label>
+            <select class="form-input" id="nm-cc-sel" onchange="nmSmartSel('cc')"></select>
+            <div id="nm-cc-add" style="display:none; gap:0.4rem; margin-top:0.4rem; align-items:center;">
+              <input class="form-input" id="nm-cc-inp" type="text" placeholder="Nueva cuenta contable…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();nmSmartConfirm('cc')}" />
+              <button onclick="nmSmartConfirm('cc')" style="padding:0.3rem 0.55rem; border-radius:var(--radius); cursor:pointer; font-size:0.85rem; background:var(--green); color:#fff; border:none;">✓</button>
+              <button onclick="nmSmartCancel('cc')" style="padding:0.3rem 0.55rem; border-radius:var(--radius); cursor:pointer; font-size:0.85rem; background:transparent; border:1px solid var(--border); color:var(--text);">✕</button>
+            </div>
+          </div>
+
+          <!-- Folio -->
+          <div class="form-group" style="grid-column:span 2;">
+            <label class="form-label">Folio Fiscal / Referencia</label>
+            <input class="form-input" id="nm-folio" type="text" placeholder="UUID, número de referencia, etc." />
+          </div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-mov')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarNuevoMov()">Guardar movimiento</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+  <script>
+    let pendingFile = null;
+
+    const EXT_ICONS = { xlsx:'📗', xls:'📗', xlsm:'📗', csv:'📊', pdf:'📕' };
+
+    function iconFor(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      return EXT_ICONS[ext] || '📄';
+    }
+
+    function renderLista() {
+      const all = loadRegistry('stgl_financiero');
+      const cat = document.getElementById('filtro-cat').value;
+      const data = cat === 'todos' ? all : all.filter(f => f.categoria === cat);
+
+      document.getElementById('fin-count').textContent = `${all.length} archivo${all.length !== 1 ? 's' : ''} registrados`;
+      document.getElementById('cat-ingresos').textContent = all.filter(f => f.categoria === 'Ingresos').length;
+      document.getElementById('cat-egresos').textContent  = all.filter(f => f.categoria === 'Egresos').length;
+      document.getElementById('cat-general').textContent  = all.filter(f => f.categoria === 'General').length;
+
+      const lista = document.getElementById('fin-lista');
+      if (data.length === 0) {
+        lista.innerHTML = `<li style="padding:2.5rem; text-align:center; color:var(--text-xs); font-size:0.82rem;">
+          No hay archivos${cat !== 'todos' ? ' en esta categoría' : ''}. Sube el primero arriba.
+        </li>`;
+        return;
+      }
+      lista.innerHTML = [...data].reverse().map(f => `
+        <li class="file-item">
+          <div class="file-icon">${iconFor(f.nombre)}</div>
+          <div class="file-info">
+            <div class="file-name">${f.nombre}</div>
+            <div class="file-meta">${f.categoria}${f.periodo ? ' · ' + f.periodo : ''} · ${fmtDateTime(f.fecha)} · ${fmtSize(f.size || 0)}</div>
+          </div>
+          <div class="file-actions">
+            ${f.notas ? `<span style="font-size:0.72rem; color:var(--text-dim);">${f.notas}</span>` : ''}
+            <button class="file-btn" onclick="eliminarFin('${f.id}')">Eliminar</button>
+          </div>
+        </li>`).join('');
+    }
+
+    function abrirModalCat(file) {
+      pendingFile = file;
+      document.getElementById('modal-filename').textContent = `Archivo: ${file.name} (${fmtSize(file.size)})`;
+      document.getElementById('modal-periodo').value = '';
+      document.getElementById('modal-notas').value = '';
+      openModal('modal-cat');
+    }
+
+    document.getElementById('modal-guardar-btn').onclick = () => {
+      if (!pendingFile) return;
+      const fin = loadRegistry('stgl_financiero');
+      fin.push({
+        id:        Date.now().toString(),
+        nombre:    pendingFile.name,
+        size:      pendingFile.size,
+        categoria: document.getElementById('modal-cat-sel').value,
+        periodo:   document.getElementById('modal-periodo').value.trim(),
+        notas:     document.getElementById('modal-notas').value.trim(),
+        fecha:     new Date().toISOString(),
+      });
+      saveRegistry('stgl_financiero', fin);
+      closeModal('modal-cat');
+      pendingFile = null;
+      toast('Archivo registrado', 'success');
+      renderLista();
+    };
+
+    function eliminarFin(id) {
+      if (!confirm('¿Eliminar este archivo del registro?')) return;
+      saveRegistry('stgl_financiero', loadRegistry('stgl_financiero').filter(f => f.id !== id));
+      toast('Archivo eliminado');
+      renderLista();
+    }
+
+    function handleFiles(files) {
+      if (!files.length) return;
+      abrirModalCat(files[0]);
+    }
+
+    function toggleFinLista() {
+      const wrap = document.getElementById('fin-lista-wrap');
+      const btn  = document.getElementById('fin-toggle-btn');
+      const sel  = document.getElementById('filtro-cat');
+      const open = wrap.style.display === 'none';
+      wrap.style.display = open ? '' : 'none';
+      sel.style.display  = open ? '' : 'none';
+      btn.textContent    = open ? '▲ Ocultar' : '▶ Ver lista';
+      if (open) renderLista();
+    }
+
+    document.getElementById('fin-input').addEventListener('change', e => handleFiles([...e.target.files]));
+
+    /* ══════════════════════════════════════
+       SALDOS BANCARIOS
+    ══════════════════════════════════════ */
+    const KEY_SAL = 'stgl_saldos';
+
+    const TIPO_CLASS = {
+      'Tarjeta Crédito': 'tipo-tarjeta',
+      'Ahorro':          'tipo-ahorro',
+      'Inversión':       'tipo-ahorro',
+      'Cuenta Puente':   'tipo-puente',
+      'Fondo Fijo':      'tipo-efectivo',
+    };
+    function tipoClass(tipo) { return TIPO_CLASS[tipo] || 'tipo-cuenta'; }
+
+    // Resuelve el tipo de una cuenta: primero del saldo, si no desde stgl_config
+    const _TIPO_MAP_CFG = { corriente:'Corriente', tarjeta_credito:'Tarjeta Crédito', inversion:'Inversión' };
+    function resolverTipo(r) {
+      if (r.tipo && r.tipo !== 'undefined') return r.tipo;
+      try {
+        const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+        const t   = cfg.cuentasConfig?.[r.cuenta]?.tipo;
+        if (t) return _TIPO_MAP_CFG[t] || t;
+      } catch(e) {}
+      return 'Corriente';
+    }
+
+    function fmtSaldo(n, moneda) {
+      const abs = Math.abs(n);
+      const str = abs.toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 });
+      const sym = moneda === 'USD' ? 'USD ' : '$';
+      return (n < 0 ? '-' : '') + sym + str;
+    }
+
+    function getTc() { return parseFloat(document.getElementById('sal-tc')?.value || 17.5) || 17.5; }
+
+    function equivMxn(saldo, moneda) {
+      return moneda === 'USD' ? saldo * getTc() : saldo;
+    }
+
+    let __salShowCancelled = false;
+
+    function toggleSalCanceladas() {
+      __salShowCancelled = !__salShowCancelled;
+      renderSaldos();
+    }
+
+    function filaCtaBancaria(r, esTarjeta) {
+      const tc    = getTc();
+      const equiv = equivMxn(r.saldo, r.moneda);
+      const color = r.saldo < 0 ? 'color:var(--red);' : r.saldo > 0 ? '' : 'color:var(--text-xs);';
+      return `<tr data-id="${r.id}">
+        <td style="font-family:var(--brand); font-weight:700; color:var(--text-xs); font-size:0.66rem;">${r.id}</td>
+        <td style="font-family:var(--brand); font-weight:700; color:var(--navy);">${r.cuenta}</td>
+        <td><span class="tipo-badge ${tipoClass(resolverTipo(r))}">${resolverTipo(r)}</span></td>
+        <td style="font-family:var(--brand); font-size:0.68rem; font-weight:700; color:var(--text-dim);">${r.moneda}</td>
+        <td class="num" style="${color} font-weight:${r.saldo!==0?'700':'400'};">${fmtSaldo(r.saldo,r.moneda)}</td>
+        <td class="num" style="${color} font-size:0.7rem;">${r.moneda==='USD'?'$'+equiv.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}):'—'}</td>
+        <td style="font-size:0.68rem; color:var(--text-xs);">${r.fechaActualizacion||'—'}${r.nota?'<br><span style="font-style:italic;">'+r.nota+'</span>':''}</td>
+        <td><button class="sal-edit" onclick="abrirEditarSaldo('${r.id}')" title="Actualizar saldo">✏️</button></td>
+      </tr>`;
+    }
+
+    function renderSaldos() {
+      const all  = loadRegistry(KEY_SAL);
+      if (!all.length) return;
+
+      const tc        = getTc();
+      const esTarjeta = r => resolverTipo(r) === 'Tarjeta Crédito';
+      const activas   = all.filter(r => !r.cancelada);
+      const canceladas = all.filter(r => r.cancelada);
+
+      /* ── KPIs (sólo cuentas activas) ── */
+      const totalMxn = activas.filter(r => !esTarjeta(r)).reduce((s,r) => s + equivMxn(r.saldo, r.moneda), 0);
+      const totalUsd = activas.filter(r => r.moneda === 'USD').reduce((s,r) => s + r.saldo, 0);
+      const totalCc  = activas.filter(r => esTarjeta(r)).reduce((s,r) => s + r.saldo, 0);
+      const neto     = totalMxn + totalCc;
+
+      document.getElementById('sal-k-mxn').textContent     = '$' + totalMxn.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+      document.getElementById('sal-k-usd').textContent     = 'USD ' + totalUsd.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+      document.getElementById('sal-k-usd-mxn').textContent = '≈ $' + (totalUsd*tc).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' MXN';
+      document.getElementById('sal-k-cc').textContent      = fmtSaldo(totalCc,'MXN');
+      document.getElementById('sal-k-neto').textContent    = '$' + neto.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+      const fechas = activas.map(r=>r.fechaActualizacion).filter(Boolean).sort();
+      if (fechas.length) document.getElementById('sal-k-fecha').textContent = 'Al ' + fechas[fechas.length-1];
+
+      /* ── Totales para tfoot (activas solamente) ── */
+      let totMxnDisp = 0, totUsdDisp = 0;
+      activas.forEach(r => {
+        if (!esTarjeta(r)) { if (r.moneda==='USD') totUsdDisp+=r.saldo; else totMxnDisp+=r.saldo; }
+      });
+
+      /* ── Filas activas ── */
+      let html = activas.map(r => filaCtaBancaria(r, esTarjeta)).join('');
+
+      /* ── Fila toggle canceladas ── */
+      if (canceladas.length > 0) {
+        const signo = __salShowCancelled ? '−' : '+';
+        const label = __salShowCancelled
+          ? `Ocultar ${canceladas.length} cuenta${canceladas.length>1?'s':''} cancelada${canceladas.length>1?'s':''}`
+          : `${canceladas.length} cuenta${canceladas.length>1?'s':''} cancelada${canceladas.length>1?'s':''}`;
+        html += `<tr onclick="toggleSalCanceladas()" style="cursor:pointer;" class="sal-toggle-row">
+          <td colspan="8" style="padding:0.22rem 0.6rem; background:#f5f0f0; border-top:1px dashed #d0c0c0; text-align:left; user-select:none;">
+            <span style="display:inline-flex; align-items:center; gap:0.4rem;">
+              <span style="display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; border:1.5px solid var(--red); color:var(--red); font-size:0.72rem; font-weight:700; line-height:1;">${signo}</span>
+              <span style="font-family:var(--brand); font-size:0.64rem; font-weight:700; color:var(--text-dim); letter-spacing:0.04em;">${label}</span>
+            </span>
+          </td>
+        </tr>`;
+
+        /* ── Filas canceladas (si están visibles) ── */
+        if (__salShowCancelled) {
+          html += canceladas.map(r => {
+            const equiv = equivMxn(r.saldo, r.moneda);
+            return `<tr data-id="${r.id}" style="opacity:0.55;">
+              <td style="font-family:var(--brand); font-weight:700; color:var(--text-xs); font-size:0.66rem;">${r.id}</td>
+              <td style="font-family:var(--brand); font-weight:600; color:var(--text-xs);">${r.cuenta}
+                <span style="font-family:var(--brand); font-size:0.52rem; font-weight:700; padding:0.05rem 0.28rem; border-radius:2px; background:#fde8e8; color:var(--red); text-transform:uppercase; vertical-align:middle; margin-left:0.3rem;">Cancelada</span>
+              </td>
+              <td><span class="tipo-badge ${tipoClass(resolverTipo(r))}">${resolverTipo(r)}</span></td>
+              <td style="font-family:var(--brand); font-size:0.68rem; font-weight:700; color:var(--text-xs);">${r.moneda}</td>
+              <td class="num" style="color:var(--text-xs);">${fmtSaldo(r.saldo,r.moneda)}</td>
+              <td class="num" style="color:var(--text-xs); font-size:0.7rem;">${r.moneda==='USD'?'$'+equiv.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}):'—'}</td>
+              <td style="font-size:0.68rem; color:var(--text-xs);">${r.fechaActualizacion||'—'}${r.nota?'<br><span style="font-style:italic;">'+r.nota+'</span>':''}</td>
+              <td><button class="sal-edit" onclick="abrirEditarSaldo('${r.id}')" title="Actualizar saldo">✏️</button></td>
+            </tr>`;
+          }).join('');
+        }
+      }
+
+      document.getElementById('sal-tbody').innerHTML = html;
+
+      document.getElementById('sal-tfoot').innerHTML = `
+        <tr>
+          <td colspan="4">TOTAL (cuentas activas)</td>
+          <td class="num">MXN $${totMxnDisp.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})} + USD ${totUsdDisp.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td class="num">$${(totMxnDisp+totUsdDisp*tc).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td colspan="2"></td>
+        </tr>`;
+    }
+
+    let currentSalId = null;
+
+    function setSwitchCancelada(checked) {
+      document.getElementById('sal-modal-cancelada').checked = checked;
+      document.getElementById('sal-modal-cancelada-track').style.background = checked ? 'var(--red)' : '#ccc';
+      document.getElementById('sal-modal-cancelada-knob').style.transform   = checked ? 'translateX(20px)' : 'translateX(0)';
+    }
+
+    function abrirEditarSaldo(id) {
+      const data = loadRegistry(KEY_SAL);
+      const rec  = data.find(r => r.id === id);
+      if (!rec) return;
+      currentSalId = id;
+      document.getElementById('sal-modal-titulo').textContent = `Actualizar — ${rec.cuenta} (${rec.moneda})`;
+      document.getElementById('sal-modal-saldo').value = rec.saldo;
+      document.getElementById('sal-modal-fecha').value = rec.fechaActualizacion || new Date().toISOString().slice(0,10);
+      document.getElementById('sal-modal-nota').value  = rec.nota || '';
+      setSwitchCancelada(rec.cancelada || false);
+      openModal('modal-sal');
+    }
+
+    function guardarSaldo() {
+      if (!currentSalId) return;
+      const data = loadRegistry(KEY_SAL);
+      const idx  = data.findIndex(r => r.id === currentSalId);
+      if (idx === -1) return;
+      const saldo = parseFloat(document.getElementById('sal-modal-saldo').value);
+      if (isNaN(saldo)) { toast('Ingresa un saldo válido','error'); return; }
+      data[idx].saldo              = saldo;
+      data[idx].fechaActualizacion = document.getElementById('sal-modal-fecha').value || new Date().toISOString().slice(0,10);
+      const nota = document.getElementById('sal-modal-nota').value.trim();
+      if (nota) data[idx].nota = nota; else delete data[idx].nota;
+      data[idx].cancelada = document.getElementById('sal-modal-cancelada').checked;
+      saveRegistry(KEY_SAL, data);
+      closeModal('modal-sal');
+      toast(`${data[idx].cuenta} ${data[idx].cancelada ? 'marcada como cancelada' : 'actualizada'}`, data[idx].cancelada ? 'info' : 'success');
+      renderSaldos();
+    }
+
+    function importarSaldos() {
+      const s = document.createElement('script');
+      s.src = 'js/cargar_saldos.js?t=' + Date.now();
+      s.onerror = () => toast('No se encontró cargar_saldos.js', 'error');
+      s.onload  = () => {
+        const data = window.__saldosData;
+        if (!data || !data.length) { toast('Sin datos en el archivo', 'error'); return; }
+        const existentes = loadRegistry(KEY_SAL);
+        if (existentes.length > 0) {
+          // Merge: preserve manual saldo updates, only add new accounts
+          const merged = data.map(nuevo => {
+            const viejo = existentes.find(e => e.id === nuevo.id);
+            // Keep existing saldo & fecha if they were manually updated after the Excel date
+            if (viejo && viejo.fechaActualizacion > nuevo.fechaActualizacion) return viejo;
+            return nuevo;
+          });
+          saveRegistry(KEY_SAL, merged);
+          toast(`${data.length} cuentas actualizadas desde Excel`, 'success');
+        } else {
+          saveRegistry(KEY_SAL, data);
+          toast(`${data.length} cuentas importadas`, 'success');
+        }
+        delete window.__saldosData;
+        renderSaldos();
+      };
+      document.head.appendChild(s);
+    }
+
+    renderSaldos();
+
+    /* ── Fuente combinada: Excel (localStorage) + manuales ──
+       Declaradas ANTES del auto-init para evitar ReferenceError
+       (let/const no se elevan como var/function). */
+    const KEY_MOV_EXCEL = 'stgl_mov_excel';
+    let __movFiltered   = [];            /* resultado del filtro activo */
+    let __movOpenGroups = new Set();     /* meses expandidos en la tabla */
+    const KEY_CONC      = 'stgl_mov_conciliado';
+    const KEY_CONT      = 'stgl_mov_contabilizado';
+    const MESES_ES      = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                           'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    function getExcelMovData() {
+      try {
+        const raw = localStorage.getItem(KEY_MOV_EXCEL);
+        return raw ? JSON.parse(raw) : (window.__movData || []);
+      } catch { return window.__movData || []; }
+    }
+
+    function getAllMovData() {
+      return [...getExcelMovData(), ...loadRegistry('stgl_mov_manual')];
+    }
+
+    /* ══════════════════════════════════════
+       AUTO-INIT MOVIMIENTOS
+       Se activa si hay histórico guardado O registros manuales
+    ══════════════════════════════════════ */
+    if (localStorage.getItem(KEY_MOV_EXCEL) || loadRegistry('stgl_mov_manual').length > 0) {
+      initMovSelect();
+      filterMovimientos();
+    }
+
+    /* ══════════════════════════════════════
+       MOVIMIENTOS BANCARIOS
+    ══════════════════════════════════════ */
+
+    /* ── Conciliados en localStorage ── */
+    function getConciliados() {
+      try { return new Set(JSON.parse(localStorage.getItem(KEY_CONC) || '[]')); }
+      catch { return new Set(); }
+    }
+    function saveConciliados(set) {
+      localStorage.setItem(KEY_CONC, JSON.stringify([...set]));
+    }
+    function toggleConciliado(id) {
+      const set = getConciliados();
+      if (set.has(id)) set.delete(id); else set.add(id);
+      saveConciliados(set);
+      renderMovPagina();
+    }
+
+    /* ── Contabilizados en localStorage (puente Compass ↔ Alegra) ── */
+    function getContabilizados() {
+      try { return new Set(JSON.parse(localStorage.getItem(KEY_CONT) || '[]')); }
+      catch { return new Set(); }
+    }
+    function saveContabilizados(set) {
+      localStorage.setItem(KEY_CONT, JSON.stringify([...set]));
+    }
+    function toggleContabilizado(id) {
+      const set = getContabilizados();
+      if (set.has(id)) set.delete(id); else set.add(id);
+      saveContabilizados(set);
+      renderMovPagina();
+      updateMovKpis();
+    }
+    function filtrarSinContabilizar() {
+      const sel = document.getElementById('mcf-contabilizado');
+      if (sel) { sel.value = sel.value === '0' ? '' : '0'; filterMovimientos(); }
+    }
+
+    /* ── Importar histórico desde Excel (se persiste en localStorage) ── */
+    function importarMovimientos() {
+      const s = document.createElement('script');
+      s.src     = 'js/cargar_movimientos.js?t=' + Date.now();
+      s.onerror = () => toast('No se encontró cargar_movimientos.js', 'error');
+      s.onload  = () => {
+        const data = window.__movData;
+        if (!data || !data.length) { toast('Sin datos en el archivo', 'error'); return; }
+
+        /* Si ya hay datos guardados, preguntar modo */
+        const existing = getExcelMovData();
+        if (existing.length > 0) {
+          document.getElementById('imod-count').textContent =
+            existing.length.toLocaleString('es-MX') + ' movimiento' + (existing.length !== 1 ? 's' : '');
+          openModal('modal-import-modo');
+        } else {
+          /* Primera importación: guardar directo sin preguntar */
+          ejecutarImport('reemplazar');
+        }
+      };
+      document.head.appendChild(s);
+    }
+
+    function ejecutarImport(modo) {
+      closeModal('modal-import-modo');
+      const newData  = window.__movData || [];
+      if (!newData.length) { toast('Sin datos en el archivo', 'error'); return; }
+
+      let finalData;
+      if (modo === 'reemplazar') {
+        finalData = newData;
+      } else {
+        /* Complementar: unir, deduplicar por id */
+        const existing  = getExcelMovData();
+        const existIds  = new Set(existing.map(r => r.id));
+        const agregados = newData.filter(r => !existIds.has(r.id));
+        finalData = [...existing, ...agregados];
+        if (!agregados.length) {
+          toast('No hay movimientos nuevos — todos ya estaban registrados', 'info');
+          return;
+        }
+        toast(`${agregados.length.toLocaleString('es-MX')} movimientos nuevos agregados`, 'success');
+      }
+
+      try {
+        localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(finalData));
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+          toast('Sin espacio en el navegador — los datos estarán solo en esta sesión', 'error');
+        }
+      }
+
+      if (modo === 'reemplazar') {
+        const n = finalData.length;
+        toast(`${n.toLocaleString('es-MX')} movimientos importados y guardados`, 'success');
+      }
+
+      __movOpenGroups = new Set();
+      initMovSelect();
+      filterMovimientos();
+    }
+
+    /* ── Poblar select de Mov. en la fila de filtros ── */
+    function initMovSelect() {
+      const data = getAllMovData();
+      const movs = [...new Set(data.map(r => r.mov).filter(Boolean))].sort();
+      const sel  = document.getElementById('mcf-mov');
+      const cur  = sel.value;
+      sel.innerHTML = '<option value="">Todos</option>' +
+        movs.map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
+      if (movs.includes(cur)) sel.value = cur;
+    }
+
+    /* ── Limpiar todos los filtros de columna ── */
+    function limpiarMovFiltros() {
+      ['mcf-fecha','mcf-mov','mcf-tipo','mcf-desc','mcf-concepto',
+       'mcf-cuenta','mcf-cuentaCont','mcf-folio','mcf-origen',
+       'mcf-dest','mcf-entradas','mcf-salidas','mcf-conciliado','mcf-contabilizado']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      filterMovimientos();
+    }
+
+    /* ── Helper: leer valor de un input/select ── */
+    function gv(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+    /* ── Filtrado principal ── */
+    function filterMovimientos() {
+      const data = getAllMovData();
+      if (!data.length) return;
+
+      const conc      = getConciliados();
+      const cont      = getContabilizados();
+      const fecha     = gv('mcf-fecha').toLowerCase();
+      const fMov      = gv('mcf-mov');
+      const tipo      = gv('mcf-tipo').toLowerCase();
+      const desc      = gv('mcf-desc').toLowerCase();
+      const concepto  = gv('mcf-concepto').toLowerCase();
+      const cuenta    = gv('mcf-cuenta').toLowerCase();
+      const cuentaCnt = gv('mcf-cuentaCont').toLowerCase();
+      const folio     = gv('mcf-folio').toLowerCase();
+      const origen    = gv('mcf-origen').toLowerCase();
+      const dest      = gv('mcf-dest').toLowerCase();
+      const minEnt    = parseFloat(gv('mcf-entradas'));
+      const minSal    = parseFloat(gv('mcf-salidas'));
+      const fConc     = gv('mcf-conciliado');      // '1' | '0' | ''
+      const fCont     = gv('mcf-contabilizado');   // '1' | '0' | ''
+
+      __movFiltered = data.filter(r => {
+        if (fecha     && !r.fecha.includes(fecha))                          return false;
+        if (fMov      && r.mov !== fMov)                                    return false;
+        if (tipo      && !r.tipo.toLowerCase().includes(tipo))              return false;
+        if (desc      && !r.desc.toLowerCase().includes(desc))              return false;
+        if (concepto  && !r.concepto.toLowerCase().includes(concepto))      return false;
+        if (cuenta    && !r.cuenta.toLowerCase().includes(cuenta))          return false;
+        if (cuentaCnt && !r.cuentaCont.toLowerCase().includes(cuentaCnt))   return false;
+        if (folio     && !r.folio.toLowerCase().includes(folio))            return false;
+        if (origen    && !r.origen.toLowerCase().includes(origen))          return false;
+        if (dest      && !r.dest.toLowerCase().includes(dest))              return false;
+        if (!isNaN(minEnt) && (r.entradas === null || r.entradas === undefined || r.entradas < minEnt)) return false;
+        if (!isNaN(minSal) && (r.salidas  === null || r.salidas  === undefined || r.salidas  < minSal)) return false;
+        if (fConc === '1' && !conc.has(r.id)) return false;
+        if (fConc === '0' &&  conc.has(r.id)) return false;
+        if (fCont === '1' && !cont.has(r.id)) return false;
+        if (fCont === '0' &&  cont.has(r.id)) return false;
+        return true;
+      });
+
+      updateMovKpis();
+      renderMovPagina(true);   /* scroll al mes más reciente */
+    }
+
+    /* ── KPIs ── */
+    function updateMovKpis() {
+      const data     = __movFiltered;
+      const entradas = data.reduce((s,r) => s + (r.entradas || 0), 0);
+      const salidas  = data.reduce((s,r) => s + (r.salidas  || 0), 0);
+      const neto     = entradas - salidas;
+      const fmtK = n => '$' + n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+      document.getElementById('mov-k-count').textContent    = data.length.toLocaleString('es-MX') + ' movs.';
+      document.getElementById('mov-k-entradas').textContent = fmtK(entradas);
+      document.getElementById('mov-k-salidas').textContent  = fmtK(salidas);
+      const kn = document.getElementById('mov-k-neto');
+      kn.textContent = (neto >= 0 ? '+' : '−') + fmtK(Math.abs(neto));
+      kn.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)';
+      // Badge sin contabilizar — sobre todos los movimientos (no solo los filtrados)
+      const allMovs   = getAllMovData();
+      const contSet   = getContabilizados();
+      const sinCont   = allMovs.filter(r => !contSet.has(r.id)).length;
+      const ksc       = document.getElementById('mov-k-sincont');
+      const kwrap     = document.getElementById('mov-k-cont-wrap');
+      if (ksc) {
+        ksc.textContent = sinCont > 0 ? sinCont + ' movs.' : '✅ Al día';
+        ksc.style.color = sinCont > 0 ? 'var(--gold)' : 'var(--green)';
+        if (kwrap) kwrap.querySelector('.mov-kpi-label').style.color = sinCont > 0 ? 'var(--gold)' : 'var(--green)';
+      }
+    }
+
+    /* ── Helpers ── */
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function fmtMov(n) {
+      if (n === null || n === undefined) return '—';
+      return '$' + Math.abs(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    /* ── Meses en español ── */
+    function mesLabel(ym) {
+      const [y, m] = ym.split('-');
+      return MESES_ES[parseInt(m, 10) - 1] + ' ' + y;
+    }
+
+    /* ── Estado de grupos abiertos/cerrados ── */
+
+    function toggleMovGroup(ym) {
+      if (__movOpenGroups.has(ym)) __movOpenGroups.delete(ym);
+      else __movOpenGroups.add(ym);
+      renderMovPagina();
+    }
+
+    function expandirTodosMov(abrir) {
+      if (abrir) {
+        const grupos = [...new Set(__movFiltered.map(r => r.fecha.slice(0,7)))];
+        __movOpenGroups = new Set(grupos);
+      } else {
+        __movOpenGroups = new Set();
+      }
+      renderMovPagina();
+    }
+
+    /* ── Render agrupado por mes ── */
+    function renderMovPagina(scrollEnd = false) {
+      const total = __movFiltered.length;
+      const conc  = getConciliados();
+      const cont  = getContabilizados();
+
+      const allData  = getAllMovData();
+      const nExcel   = getExcelMovData().length;
+      const nManual  = loadRegistry('stgl_mov_manual').length;
+      const partes   = [];
+      if (nExcel  > 0) partes.push(`${nExcel.toLocaleString('es-MX')} históricos`);
+      if (nManual > 0) partes.push(`${nManual} manuales`);
+      document.getElementById('mov-count-label').textContent =
+        `${total.toLocaleString('es-MX')} de ${allData.length.toLocaleString('es-MX')}${partes.length ? ' · ' + partes.join(' + ') : ''}`;
+
+      /* Agrupar por mes, orden descendente */
+      const grupos = {};
+      for (const r of __movFiltered) {
+        const k = r.fecha.slice(0,7);
+        if (!grupos[k]) grupos[k] = [];
+        grupos[k].push(r);
+      }
+      /* Orden cronológico ascendente: los meses más antiguos quedan arriba,
+         el más reciente al fondo — coincide con el scroll invertido */
+      const claves = Object.keys(grupos).sort();
+
+      /* Abrir sólo el mes más reciente por defecto */
+      if (__movOpenGroups.size === 0 && claves.length > 0) {
+        __movOpenGroups.add(claves[claves.length - 1]);
+      }
+
+      const movBadge = mov => {
+        const cls = mov === 'Ingresos' ? 'tipo-ahorro' : mov === 'Egresos' ? 'tipo-tarjeta' : 'tipo-cuenta';
+        return `<span class="tipo-badge ${cls}">${escHtml(mov||'—')}</span>`;
+      };
+
+      const filaReg = (r, conc, cont) => {
+        const hasE  = r.entradas !== null && r.entradas !== undefined;
+        const hasS  = r.salidas  !== null && r.salidas  !== undefined;
+        const isCon  = conc.has(r.id);
+        const isCont = cont.has(r.id);
+        return `<tr style="${isCon ? 'background:#f0faf4;' : ''}">
+          <td style="white-space:nowrap; font-size:0.7rem; color:var(--text-dim);">${escHtml(r.fecha)}</td>
+          <td>${movBadge(r.mov)}</td>
+          <td style="font-size:0.7rem; white-space:nowrap;">${escHtml(r.tipo||'—')}</td>
+          <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escHtml(r.desc)}">${escHtml(r.desc||'—')}</td>
+          <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.7rem; color:var(--text-dim);" title="${escHtml(r.concepto)}">${escHtml(r.concepto||'—')}</td>
+          <td style="font-size:0.7rem; white-space:nowrap; font-family:var(--brand); font-weight:600;">${escHtml(r.cuenta||'—')}</td>
+          <td style="font-size:0.68rem; color:var(--text-dim); white-space:nowrap;">${escHtml(r.cuentaCont||'—')}</td>
+          <td style="font-size:0.65rem; color:var(--text-xs); max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escHtml(r.folio)}">${escHtml(r.folio||'—')}</td>
+          <td style="font-size:0.7rem; white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis;" title="${escHtml(r.origen)}">${escHtml(r.origen||'—')}</td>
+          <td style="font-size:0.7rem; white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis; font-weight:600;" title="${escHtml(r.dest)}">${escHtml(r.dest||'—')}</td>
+          <td class="num" style="color:var(--green); font-weight:${hasE?'700':'400'}; font-size:0.72rem;">${hasE ? fmtMov(r.entradas) : '—'}</td>
+          <td class="num" style="color:var(--red);   font-weight:${hasS?'700':'400'}; font-size:0.72rem;">${hasS ? fmtMov(r.salidas)  : '—'}</td>
+          <td style="text-align:center;">
+            <button onclick="toggleConciliado('${escHtml(r.id)}')"
+              title="${isCon ? 'Marcar como pendiente' : 'Marcar como conciliado'}"
+              style="background:none; border:none; cursor:pointer; font-size:1rem; line-height:1; padding:0.1rem 0.25rem; border-radius:3px;"
+              onmouseover="this.style.background='var(--navy-pale)'" onmouseout="this.style.background='none'">
+              ${isCon ? '✅' : '⬜'}
+            </button>
+          </td>
+          <td style="text-align:center;">
+            <button onclick="toggleContabilizado('${escHtml(r.id)}')"
+              title="${isCont ? 'Quitar contabilización' : 'Marcar como contabilizado en Alegra'}"
+              style="background:none; border:none; cursor:pointer; font-size:1rem; line-height:1; padding:0.1rem 0.25rem; border-radius:3px;"
+              onmouseover="this.style.background='var(--navy-pale)'" onmouseout="this.style.background='none'">
+              ${isCont ? '📒' : '⬜'}
+            </button>
+          </td>
+          <td style="text-align:center; padding:0.1rem 0.2rem;">
+            <button onclick="editarMovimiento('${escHtml(r.id)}')" title="Editar movimiento"
+              style="background:none; border:none; cursor:pointer; font-size:0.8rem; line-height:1; padding:0.15rem 0.3rem; border-radius:3px; color:var(--text-xs); opacity:0.5;"
+              onmouseover="this.style.opacity='1';this.style.background='var(--navy-pale)'"
+              onmouseout="this.style.opacity='0.5';this.style.background='none'">✏️</button>
+          </td>
+        </tr>`;
+      };
+
+      const fmtK = n => '$' + n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+      let html = '';
+      for (const ym of claves) {
+        const rows   = grupos[ym];
+        const open   = __movOpenGroups.has(ym);
+        const ent    = rows.reduce((s,r) => s + (r.entradas||0), 0);
+        const sal    = rows.reduce((s,r) => s + (r.salidas||0),  0);
+        const neto   = ent - sal;
+        const conced  = rows.filter(r => conc.has(r.id)).length;
+        const contd   = rows.filter(r => cont.has(r.id)).length;
+        const sinCt   = rows.length - contd;
+        const chev    = open ? '▼' : '▶';
+        const netoColor = neto >= 0 ? 'var(--green)' : 'var(--red)';
+
+        html += `<tr class="mov-group-hdr" onclick="toggleMovGroup('${ym}')">
+          <td colspan="15">
+            <span class="mov-group-chevron">${chev}</span>
+            <span class="mov-group-title">${mesLabel(ym)}</span>
+            <span style="font-family:var(--brand); font-size:0.65rem; color:var(--text-dim); margin-left:0.8rem;">${rows.length} movimientos</span>
+            <span style="margin-left:1.2rem; font-family:var(--brand); font-size:0.62rem; color:var(--text-xs);">Entradas:</span>
+            <span class="mov-group-stat g" style="margin-left:0.3rem;">${fmtK(ent)}</span>
+            <span style="margin-left:0.8rem; font-family:var(--brand); font-size:0.62rem; color:var(--text-xs);">Salidas:</span>
+            <span class="mov-group-stat r" style="margin-left:0.3rem;">${fmtK(sal)}</span>
+            <span style="margin-left:0.8rem; font-family:var(--brand); font-size:0.62rem; color:var(--text-xs);">Neto:</span>
+            <span class="mov-group-stat n" style="margin-left:0.3rem; color:${netoColor};">${neto>=0?'+':'−'}${fmtK(Math.abs(neto))}</span>
+            ${conced > 0 ? `<span style="margin-left:1rem; font-family:var(--brand); font-size:0.6rem; color:var(--green);">✅ ${conced} conciliados</span>` : ''}
+            ${sinCt  > 0 ? `<span style="margin-left:0.6rem; font-family:var(--brand); font-size:0.6rem; color:var(--gold);">📒 ${sinCt} sin contabilizar</span>` : `<span style="margin-left:0.6rem; font-family:var(--brand); font-size:0.6rem; color:var(--green);">📒 al día</span>`}
+          </td>
+        </tr>`;
+
+        if (open) {
+          html += rows.map(r => filaReg(r, conc, cont)).join('');
+        }
+      }
+
+      if (!html) {
+        html = `<tr><td colspan="15" style="text-align:center; padding:2.5rem; color:var(--text-xs); font-size:0.82rem;">
+          Sin registros para los filtros aplicados.</td></tr>`;
+      }
+
+      document.getElementById('mov-tbody').innerHTML = html;
+      document.getElementById('mov-pagination').innerHTML = '';
+
+      /* Desplazar al fondo sólo cuando se importa o filtra */
+      if (scrollEnd) {
+        const sc = document.getElementById('mov-scroll');
+        if (sc) sc.scrollTop = sc.scrollHeight;
+      }
+    }
+    /* ══════════════════════════════════════
+       IMPORTAR CFDI — helpers
+    ══════════════════════════════════════ */
+    const CFD3    = 'http://www.sat.gob.mx/cfd/3';
+    const CFD4    = 'http://www.sat.gob.mx/cfd/4';
+    const CTFD    = 'http://www.sat.gob.mx/TimbreFiscalDigital';
+    const NS_NOM  = 'http://www.sat.gob.mx/nomina12';
+
+    function r2(n){ return Math.round((n||0)*100)/100; }
+    function normStrF(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+    function mesFiscalDeF(fecha){
+      const EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const d=new Date(((fecha||'').substring(0,10))+'T12:00:00');
+      return isNaN(d.getTime())?'':EN[d.getMonth()]+'-'+String(d.getFullYear()).slice(2);
+    }
+    const KEY_CFDI_MAP_FIN='stgl_cfdi_mapping';
+    const PERSONA_DEF_FIN={lourdes:['lourdes','uribe'],anama:['ana maria','ana ma','mendiola'],cestm:['cestm'],cestr:['cestr'],jfabela:['fabela']};
+    function getPersonaMapF(){ try{return JSON.parse(localStorage.getItem(KEY_CFDI_MAP_FIN)||'null')||{...PERSONA_DEF_FIN};}catch{return{...PERSONA_DEF_FIN};} }
+    function detectPersonaF(nombre){ const n=normStrF(nombre),map=getPersonaMapF(); for(const[col,kws]of Object.entries(map))if(kws.some(k=>n.includes(normStrF(k))))return col; return null; }
+    function xmlOneF(doc,ns,tag){ return doc.getElementsByTagNameNS(ns,tag)[0]||null; }
+    function xmlAllF(doc,ns,tag){ return [...doc.getElementsByTagNameNS(ns,tag)]; }
+    function xmlCfdiF(doc,tag){ return xmlOneF(doc,CFD4,tag)||xmlOneF(doc,CFD3,tag); }
+    function xmlCfdiAllF(doc,tag){ return [...xmlAllF(doc,CFD4,tag),...xmlAllF(doc,CFD3,tag)]; }
+    function agruparNominaF(recs){
+      const byDate={};
+      for(const r of recs){
+        if(!byDate[r.fechaPago]) byDate[r.fechaPago]={fechaPago:r.fechaPago,mesFiscal:r.mesFiscal,empleados:[],noMapeados:[]};
+        if(r.persona) byDate[r.fechaPago].empleados.push(r);
+        else          byDate[r.fechaPago].noMapeados.push(r);
+      }
+      const result=[];
+      for(const grp of Object.values(byDate)){
+        const rec={
+          fechaPago:grp.fechaPago, mesFiscal:grp.mesFiscal,
+          lourdesBruto:0,lourdesRet:0,lourdesNeto:0,
+          anaMaBruto:0,anaMaRet:0,anaMaNeto:0,
+          cestmBruto:0,cestmRet:0,cestmNeto:0,
+          cestrBruto:0,cestrRet:0,cestrNeto:0,
+          jfabelaBruto:0,jfabelaRet:0,jfabelaNeto:0,
+          subtotalBruto:0,subtotalRet:0,subtotalNeto:0,
+          _noMapeados:grp.noMapeados,
+        };
+        for(const e of grp.empleados){
+          const p=e.persona;
+          rec[p==='anama'?'anaMaBruto':`${p}Bruto`]=e.bruto;
+          rec[p==='anama'?'anaMaRet':`${p}Ret`]=e.ret;
+          rec[p==='anama'?'anaMaNeto':`${p}Neto`]=e.neto;
+        }
+        const cols=['lourdes','anama','cestm','cestr','jfabela'];
+        const gB=p=>rec[p==='anama'?'anaMaBruto':`${p}Bruto`];
+        const gR=p=>rec[p==='anama'?'anaMaRet':`${p}Ret`];
+        rec.subtotalBruto=r2(cols.reduce((s,p)=>s+gB(p),0));
+        rec.subtotalRet  =r2(cols.reduce((s,p)=>s+gR(p),0));
+        rec.subtotalNeto =r2(rec.subtotalBruto-rec.subtotalRet);
+        result.push(rec);
+      }
+      return result.sort((a,b)=>a.fechaPago.localeCompare(b.fechaPago));
+    }
+
+    /* ══════════════════════════════════════
+       IMPORTAR CFDI
+    ══════════════════════════════════════ */
+
+    let __cgzParsed = [];   /* CFDIs parseados en el modal */
+
+    function abrirCFDIGasto() {
+      __cgzParsed = [];
+      document.getElementById('cgz-input').value        = '';
+      document.getElementById('cgz-fecha-global').value = '';
+      document.getElementById('cgz-cuenta-global').value= '';
+      document.getElementById('cgz-count').textContent  = '';
+      document.getElementById('cgz-tbody').innerHTML    =
+        '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-xs);font-size:0.8rem;">Arrastra archivos XML para empezar</td></tr>';
+      /* Poblar select de cuentas */
+      const cuentas = loadRegistry(KEY_SAL).filter(s => !s.cancelada);
+      document.getElementById('cgz-cuenta-global').innerHTML =
+        '<option value="">— Seleccionar —</option>' +
+        cuentas.map(c => `<option value="${c.cuenta}">${c.cuenta} (${c.moneda})</option>`).join('');
+      openModal('modal-cfdi-gasto');
+    }
+
+    function dropCFDIGasto(ev) {
+      ev.preventDefault();
+      loadCFDIGastoFiles(ev.dataTransfer.files);
+    }
+
+    function loadCFDIGastoFiles(files) {
+      const xmls = [...files].filter(f => f.name.toLowerCase().endsWith('.xml'));
+      if (!xmls.length) { toast('Selecciona archivos .xml', 'error'); return; }
+      let pending = xmls.length;
+      xmls.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const rec = parseCFDIMov(e.target.result, file.name);
+          if (rec) __cgzParsed.push(rec);
+          if (--pending === 0) renderCGZPreview();
+        };
+        reader.readAsText(file, 'UTF-8');
+      });
+    }
+
+    function parseCFDIMov(text, filename) {
+      try {
+        const doc  = new DOMParser().parseFromString(text, 'text/xml');
+        const root = doc.documentElement;
+        if (!root || root.nodeName==='parsererror' || root.querySelector('parsererror')) return null;
+        const ga = (el,a) => el?.getAttribute(a)||'';
+        const tipo     = ga(root,'TipoDeComprobante');
+        const subtotal = parseFloat(ga(root,'SubTotal'))||0;
+        const fecha    = ga(root,'Fecha').slice(0,10);
+        const folio    = (ga(root,'Serie')+ga(root,'Folio')).trim()||'—';
+        const tfd  = doc.getElementsByTagNameNS(CTFD,'TimbreFiscalDigital')[0];
+        const uuid = ga(tfd,'UUID');
+        const newId = () => `MAN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;
+
+        /* ── Nómina (tipo N) ── */
+        if (tipo === 'N') {
+          const receptor  = xmlCfdiF(doc,'Receptor');
+          const nombre    = ga(receptor,'Nombre')||ga(receptor,'nombre')||'';
+          const nominaEl  = xmlOneF(doc,NS_NOM,'Nomina');
+          const fechaPago = ga(nominaEl,'FechaPago')||fecha;
+          const bruto     = parseFloat(ga(nominaEl,'TotalPercepciones'))||subtotal||0;
+          let ret = parseFloat(ga(nominaEl,'TotalDeducciones'))||0;
+          let isrFound=0;
+          for(const d of xmlAllF(doc,NS_NOM,'Deduccion'))
+            if(ga(d,'TipoDeduccion')==='002') isrFound+=parseFloat(ga(d,'Importe'))||0;
+          if(isrFound>0) ret=isrFound;
+          const persona=detectPersonaF(nombre), mesFiscal=mesFiscalDeF(fechaPago);
+          return { _tipo:'nomina', _id:newId(), filename, uuid, folio,
+                   nombre, persona, fechaPago, fecha, mesFiscal,
+                   bruto:r2(bruto), ret:r2(ret), neto:r2(bruto-ret),
+                   fechaCFDI:fecha, fechaAfect:fechaPago, emisorNombre:nombre,
+                   concepto:'Nómina asimilable', cuenta:'' };
+        }
+
+        /* ── Honorarios / Gasto (tipo I o E) ── */
+        if (tipo === 'I' || tipo === 'E') {
+          const emisor    = xmlCfdiF(doc,'Emisor');
+          const prestador = ga(emisor,'Nombre')||'';
+          const emisorRfc = ga(emisor,'Rfc')||'';
+          const conceptos = xmlCfdiAllF(doc,'Concepto');
+          const concepto  = conceptos.length ? ga(conceptos[0],'Descripcion') : '';
+          let iva=0, retISR=0, retIVA=0;
+          for(const t of xmlCfdiAllF(doc,'Traslado'))
+            if(ga(t,'Impuesto')==='002') iva+=parseFloat(ga(t,'Importe'))||0;
+          for(const re of xmlCfdiAllF(doc,'Retencion')){
+            const imp=ga(re,'Impuesto');
+            if(imp==='001') retISR+=parseFloat(ga(re,'Importe'))||0;
+            if(imp==='002') retIVA+=parseFloat(ga(re,'Importe'))||0;
+          }
+          const total=parseFloat(ga(root,'Total'))||0;
+          const mesFiscal=mesFiscalDeF(fecha);
+          /* Honorarios: hay retención ISR o IVA */
+          if (retISR>0||retIVA>0) {
+            return { _tipo:'honorarios', _id:newId(), filename, uuid, folio,
+                     prestador, emisorRfc, fecha, mesFiscal, concepto, cuenta:'',
+                     bruto:r2(subtotal), iva:r2(iva), retISR:r2(retISR), retIVA:r2(retIVA),
+                     pagado:r2(subtotal+iva-retISR-retIVA), totalRet:r2(retISR+retIVA),
+                     fechaCFDI:fecha, fechaAfect:fecha,
+                     emisorNombre:prestador, total:r2(total) };
+          }
+          /* Gasto general */
+          return { _tipo:'gasto', _id:newId(), filename, uuid, folio,
+                   emisorNombre:prestador, emisorRfc, concepto, cuenta:'',
+                   fechaCFDI:fecha, fechaAfect:fecha, tipoComp:tipo,
+                   total:r2(total), subtotal:r2(subtotal), iva:r2(iva) };
+        }
+
+        /* tipo P u otro — saltar */
+        return null;
+      } catch { return null; }
+    }
+
+    function renderCGZPreview() {
+      const existingM = new Set(loadRegistry('stgl_mov_manual').filter(m=>m.uuid).map(m=>m.uuid));
+      const existingA = new Set(loadRegistry('stgl_asimilables').filter(m=>m.uuid).map(m=>m.uuid));
+      const existingH = new Set(loadRegistry('stgl_honorarios').filter(m=>m.uuid).map(m=>m.uuid));
+      const cuentas = loadRegistry(KEY_SAL).filter(s=>!s.cancelada);
+      const cOpts   = cuentas.map(c=>`<option value="${c.cuenta}">${c.cuenta}</option>`).join('');
+
+      document.getElementById('cgz-count').textContent =
+        `${__cgzParsed.length} CFDI${__cgzParsed.length!==1?'s':''} listos`;
+
+      const fmtN = n => '$' + (n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+      const tipoBadge = t => {
+        if(t==='nomina')    return '<span style="background:#1e3a5f;color:#fff;padding:0.1rem 0.4rem;border-radius:2px;font-size:0.6rem;font-weight:700;white-space:nowrap;">Nómina</span>';
+        if(t==='honorarios') return '<span style="background:#5a3e91;color:#fff;padding:0.1rem 0.4rem;border-radius:2px;font-size:0.6rem;font-weight:700;white-space:nowrap;">Honorarios</span>';
+        return '<span style="background:#2e7d4f;color:#fff;padding:0.1rem 0.4rem;border-radius:2px;font-size:0.6rem;font-weight:700;white-space:nowrap;">Gasto</span>';
+      };
+
+      document.getElementById('cgz-tbody').innerHTML = __cgzParsed.length
+        ? __cgzParsed.map((r,i) => {
+            /* Detectar duplicado según tipo */
+            const dup = r._tipo==='nomina'    ? existingA.has(r.uuid) :
+                        r._tipo==='honorarios' ? existingH.has(r.uuid) :
+                                                 existingM.has(r.uuid);
+            /* Valores display según tipo */
+            const displayNombre = r._tipo==='nomina' ? (r.nombre||'') :
+                                  r._tipo==='honorarios' ? (r.prestador||'') :
+                                  (r.emisorNombre||'');
+            const displayTotal  = r._tipo==='nomina' ? r.neto :
+                                  r._tipo==='honorarios' ? r.pagado :
+                                  r.total;
+            const displayAux    = r._tipo==='nomina' ? r.ret :
+                                  r._tipo==='honorarios' ? r.totalRet :
+                                  r.iva;
+            const auxLabel      = r._tipo==='nomina' ? 'ISR' :
+                                  r._tipo==='honorarios' ? 'Ret.' : 'IVA';
+            return `<tr style="${dup?'background:#fff8e8;opacity:0.7;':''}">
+              <td style="padding:0.28rem 0.5rem;font-size:0.65rem;color:var(--text-xs);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.filename)}">${escHtml(r.filename)}</td>
+              <td style="padding:0.28rem 0.5rem;font-size:0.7rem;color:var(--text-dim);white-space:nowrap;">${r.fechaCFDI}</td>
+              <td style="padding:0.28rem 0.5rem;">
+                <input type="date" value="${r.fechaAfect}"
+                  onchange="__cgzParsed[${i}].fechaAfect=this.value"
+                  style="padding:0.15rem 0.35rem;font-size:0.7rem;border:1px solid var(--border);border-radius:2px;width:118px;" />
+              </td>
+              <td style="padding:0.28rem 0.5rem;font-size:0.72rem;font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(displayNombre)}">${escHtml(displayNombre)}</td>
+              <td style="padding:0.28rem 0.5rem;font-size:0.68rem;color:var(--text-dim);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.concepto||'')}">${escHtml(r.concepto||'')}</td>
+              <td style="padding:0.28rem 0.5rem;text-align:center;">${tipoBadge(r._tipo)}</td>
+              <td style="padding:0.28rem 0.5rem;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:var(--red);">${fmtN(displayTotal)}</td>
+              <td style="padding:0.28rem 0.5rem;text-align:right;font-family:'Courier New',monospace;font-size:0.68rem;color:var(--text-dim);" title="${auxLabel}">${fmtN(displayAux)}</td>
+              <td style="padding:0.28rem 0.5rem;">
+                ${dup ? '<span style="font-size:0.65rem;color:#c67d00;font-weight:700;">Ya importado</span>' :
+                `<select onchange="__cgzParsed[${i}].cuenta=this.value"
+                  style="padding:0.15rem 0.35rem;font-size:0.7rem;border:1px solid var(--border);border-radius:2px;width:130px;">
+                  <option value="">— Cuenta —</option>${cOpts.replace(`value="${escHtml(r.cuenta)}"`,`value="${escHtml(r.cuenta)}" selected`)}
+                </select>`}
+              </td>
+              <td style="padding:0.28rem 0.4rem;text-align:center;">
+                ${dup ? '' : `<button onclick="__cgzParsed.splice(${i},1);renderCGZPreview()"
+                  style="background:none;border:none;cursor:pointer;color:var(--text-xs);font-size:0.85rem;line-height:1;" title="Quitar">✕</button>`}
+              </td>
+            </tr>`;
+          }).join('')
+        : '<tr><td colspan="10" style="text-align:center;padding:1.5rem;color:var(--red);font-size:0.8rem;">No se encontraron CFDIs válidos</td></tr>';
+    }
+
+    function aplicarFechaGlobal() {
+      const f = document.getElementById('cgz-fecha-global').value;
+      if (!f) return;
+      __cgzParsed.forEach(r => r.fechaAfect = f);
+      renderCGZPreview();
+      document.getElementById('cgz-fecha-global').value = f;
+    }
+
+    function aplicarCuentaGlobal() {
+      const c = document.getElementById('cgz-cuenta-global').value;
+      __cgzParsed.forEach(r => r.cuenta = c);
+      renderCGZPreview();
+    }
+
+    function importarCFDIGastos() {
+      const pendientes = __cgzParsed.filter(r => r.fechaAfect);
+      if (!pendientes.length) { toast('Sin CFDIs para importar', 'error'); return; }
+
+      /* ── existentes en cada registro para dedup ── */
+      const exUuidM = new Set(loadRegistry('stgl_mov_manual').filter(m=>m.uuid).map(m=>m.uuid));
+      const exUuidA = new Set(loadRegistry('stgl_asimilables').filter(m=>m.uuid).map(m=>m.uuid));
+      const exUuidH = new Set(loadRegistry('stgl_honorarios').filter(m=>m.uuid).map(m=>m.uuid));
+
+      const nuevosNomina     = [];  /* → stgl_asimilables (agrupados) */
+      const nuevosNominaRaw  = [];  /* CFDIs nomina individuales para agrupar */
+      const nuevosHonorarios = [];  /* → stgl_honorarios */
+      const nuevosMovs       = [];  /* → stgl_mov_manual (todos generan egreso) */
+
+      for (const r of pendientes) {
+        if (r._tipo === 'nomina') {
+          if (exUuidA.has(r.uuid)) continue;
+          nuevosNominaRaw.push(r);
+          nuevosMovs.push({
+            id: r._id, fecha: r.fechaAfect, mov:'Egresos', tipo:'Nómina Asimilable',
+            desc: r.nombre||'Nómina', concepto: r.concepto||'Nómina asimilable',
+            cuenta: r.cuenta, cuentaCont:'Nómina', folio: r.folio,
+            origen: r.nombre, dest: r.nombre,
+            entradas: null, salidas: r.neto, uuid: r.uuid, origenRef:'cfdi-nomina',
+          });
+        } else if (r._tipo === 'honorarios') {
+          if (exUuidH.has(r.uuid)) continue;
+          nuevosHonorarios.push({
+            id: r._id, uuid: r.uuid, filename: r.filename,
+            fechaPago: r.fechaAfect, mesFiscal: mesFiscalDeF(r.fechaAfect),
+            prestador: r.prestador||r.emisorNombre, folio: r.folio,
+            bruto: r.bruto, iva: r.iva, retISR: r.retISR, retIVA: r.retIVA,
+            pagado: r.pagado, totalRet: r.totalRet,
+          });
+          nuevosMovs.push({
+            id: r._id, fecha: r.fechaAfect, mov:'Egresos', tipo:'Honorarios',
+            desc: r.prestador + (r.concepto ? ': ' + r.concepto : ''),
+            concepto: r.concepto, cuenta: r.cuenta, cuentaCont:'Honorarios',
+            folio: r.folio, origen: r.emisorRfc||r.prestador, dest: r.prestador,
+            entradas: null, salidas: r.pagado, uuid: r.uuid, origenRef:'cfdi-honorarios',
+          });
+        } else {
+          /* gasto general */
+          if (exUuidM.has(r.uuid)) continue;
+          nuevosMovs.push({
+            id: r._id, fecha: r.fechaAfect, mov:'Egresos', tipo:'Gastos',
+            desc: r.emisorNombre + (r.concepto ? ': ' + r.concepto : ''),
+            concepto: r.concepto, cuenta: r.cuenta, cuentaCont:'Gastos',
+            folio: r.folio, origen: r.emisorRfc||r.emisorNombre, dest: r.emisorNombre,
+            entradas: null, salidas: r.total, uuid: r.uuid, origenRef:'cfdi-gasto',
+          });
+        }
+      }
+
+      /* Agrupar nóminas y guardar en stgl_asimilables */
+      if (nuevosNominaRaw.length) {
+        const agrupados = agruparNominaF(nuevosNominaRaw);
+        const asim = loadRegistry('stgl_asimilables');
+        saveRegistry('stgl_asimilables', [...asim, ...agrupados]);
+      }
+      /* Guardar honorarios */
+      if (nuevosHonorarios.length) {
+        const hon = loadRegistry('stgl_honorarios');
+        saveRegistry('stgl_honorarios', [...hon, ...nuevosHonorarios]);
+      }
+      /* Guardar movimientos */
+      if (nuevosMovs.length) {
+        const manual = loadRegistry('stgl_mov_manual');
+        saveRegistry('stgl_mov_manual', [...manual, ...nuevosMovs]);
+      }
+
+      const totalNuevos = nuevosNominaRaw.length + nuevosHonorarios.length +
+        nuevosMovs.filter(m=>m.origenRef==='cfdi-gasto').length;
+      if (!totalNuevos && !nuevosMovs.length) {
+        toast('Todos los CFDIs ya están importados', 'info'); return;
+      }
+
+      closeModal('modal-cfdi-gasto');
+      const partes = [];
+      if (nuevosNominaRaw.length)  partes.push(`${nuevosNominaRaw.length} nómina${nuevosNominaRaw.length>1?'s':''}`);
+      if (nuevosHonorarios.length) partes.push(`${nuevosHonorarios.length} honorarios`);
+      const gCount = nuevosMovs.filter(m=>m.origenRef==='cfdi-gasto').length;
+      if (gCount) partes.push(`${gCount} gasto${gCount>1?'s':''}`);
+      toast(`Importado: ${partes.join(' · ')||nuevosMovs.length+' registros'}`, 'success');
+      filterMovimientos();
+    }
+
+    /* ══════════════════════════════════════
+       NUEVO MOVIMIENTO MANUAL
+    ══════════════════════════════════════ */
+
+    // ── Catalog system ──
+    const KEY_NM_CAT = 'stgl_nm_cat';
+    let __nmEditId = null;   /* null = nuevo movimiento; string = ID del registro en edición */
+
+    /* ── Buscar un movimiento por ID en cualquier registro ── */
+    function findMovById(id) {
+      const manual = loadRegistry('stgl_mov_manual');
+      const m = manual.find(r => r.id === id);
+      if (m) return { rec: m, source: 'manual' };
+      const excel = getExcelMovData();
+      const e = excel.find(r => r.id === id);
+      if (e) return { rec: e, source: 'excel' };
+      return null;
+    }
+
+    /* ── Guardar cambios de un movimiento editado ── */
+    function saveMovEdit(id, changes) {
+      /* Intentar en manual primero */
+      const manual = loadRegistry('stgl_mov_manual');
+      const idxM = manual.findIndex(r => r.id === id);
+      if (idxM >= 0) {
+        manual[idxM] = { ...manual[idxM], ...changes };
+        saveRegistry('stgl_mov_manual', manual);
+        return;
+      }
+      /* Si viene del Excel, moverlo a manual con los cambios */
+      const excel = getExcelMovData();
+      const idxE = excel.findIndex(r => r.id === id);
+      if (idxE >= 0) {
+        const updated = { ...excel[idxE], ...changes };
+        excel[idxE] = updated;
+        try { localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excel)); } catch {}
+      }
+    }
+
+    /* ── Abrir modal en modo edición ── */
+    function editarMovimiento(id) {
+      const found = findMovById(id);
+      if (!found) { toast('Movimiento no encontrado', 'error'); return; }
+      const r = found.rec;
+
+      /* Abrir el modal en modo nuevo para inicializar todo */
+      abrirNuevoMov();
+
+      /* Marcar modo edición */
+      __nmEditId = id;
+      document.querySelector('#modal-nuevo-mov .modal-title').textContent = 'Editar Movimiento';
+
+      /* Pre-llenar campos comunes */
+      document.getElementById('nm-fecha').value = r.fecha || '';
+      document.getElementById('nm-folio').value = r.folio || '';
+
+      /* Seleccionar tipo de movimiento */
+      const movSel = document.getElementById('nm-mov');
+      const esTrp  = r.tipo === 'Traspaso' || r.origenRef === 'traspaso';
+      movSel.value = esTrp ? 'Traspaso' : (r.mov || 'Egresos');
+      toggleNMTipo();
+
+      if (esTrp) {
+        /* Traspaso: origen y destino ya se llenaron al abrir; solo el monto */
+        document.getElementById('nm-tr-origen').value = r.origen || r.cuenta || '';
+        document.getElementById('nm-tr-dest').value   = r.dest   || '';
+        const m = r.salidas || r.entradas || 0;
+        document.getElementById('nm-tr-monto').value  = m;
+        nmTraspasoCheckCurrency();
+      } else {
+        /* Ingreso / Egreso */
+        document.getElementById('nm-tipo').value   = r.tipo    || '';
+        document.getElementById('nm-monto').value  = r.salidas || r.entradas || '';
+        document.getElementById('nm-cuenta').value = r.cuenta  || '';
+        document.getElementById('nm-origen').value = r.origen  || '';
+        document.getElementById('nm-dest').value   = r.dest    || '';
+        /* Actualizar color monto */
+        const esIng = movSel.value === 'Ingresos';
+        document.getElementById('nm-monto').style.color = esIng ? 'var(--green)' : 'var(--red)';
+      }
+
+      /* Smart fields: garantizar que el valor esté en el catálogo y seleccionarlo */
+      [['desc', r.desc], ['conc', r.concepto], ['cc', r.cuentaCont]].forEach(([f, val]) => {
+        if (!val) return;
+        const cat = nmGetCat();
+        if (!cat[f]) cat[f] = [];
+        if (!cat[f].includes(val)) { cat[f].push(val); cat[f].sort(); nmSaveCat(cat); }
+        nmPopulateSelect(f);
+        document.getElementById(`nm-${f}-sel`).value = val;
+      });
+    }
+    function nmGetCat() {
+      try { return JSON.parse(localStorage.getItem(KEY_NM_CAT) || '{}'); }
+      catch { return {}; }
+    }
+    function nmSaveCat(cat) { localStorage.setItem(KEY_NM_CAT, JSON.stringify(cat)); }
+
+    function nmSeedCat() {
+      const cat = nmGetCat();
+      if (cat.desc?.length || cat.conc?.length || cat.cc?.length) return;
+      const data = getAllMovData();
+      const uniq = key => [...new Set(data.map(r => r[key]).filter(Boolean))].sort();
+      cat.desc = uniq('desc').slice(0, 150);
+      cat.conc = uniq('concepto').slice(0, 150);
+      cat.cc   = uniq('cuentaCont').slice(0, 100);
+      nmSaveCat(cat);
+    }
+
+    // ── Smart dropdown helpers ──
+    function nmPopulateSelect(field) {
+      const cat = nmGetCat();
+      const vals = (cat[field] || []);
+      const sel = document.getElementById(`nm-${field}-sel`);
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML =
+        '<option value="">— Seleccionar —</option>' +
+        vals.map(v => `<option value="${escHtml(v)}">${escHtml(v)}</option>`).join('') +
+        '<option value="__nuevo__" style="font-weight:700; color:var(--navy);">＋ Agregar...</option>';
+      if (cur && cur !== '__nuevo__') sel.value = cur;
+    }
+
+    function nmPopulateSmarts() {
+      ['desc','conc','cc'].forEach(f => nmPopulateSelect(f));
+    }
+
+    function nmSmartSel(field) {
+      const sel = document.getElementById(`nm-${field}-sel`);
+      if (sel.value !== '__nuevo__') return;
+      sel.value = '';
+      const addDiv = document.getElementById(`nm-${field}-add`);
+      addDiv.style.display = 'flex';
+      document.getElementById(`nm-${field}-inp`).focus();
+    }
+
+    function nmSmartConfirm(field) {
+      const inp = document.getElementById(`nm-${field}-inp`);
+      const val = inp.value.trim();
+      if (!val) { inp.focus(); return; }
+      const cat = nmGetCat();
+      if (!cat[field]) cat[field] = [];
+      if (!cat[field].includes(val)) {
+        cat[field].push(val);
+        cat[field].sort();
+        nmSaveCat(cat);
+      }
+      nmPopulateSelect(field);
+      document.getElementById(`nm-${field}-sel`).value = val;
+      nmSmartCancel(field);
+    }
+
+    function nmSmartCancel(field) {
+      document.getElementById(`nm-${field}-add`).style.display = 'none';
+      document.getElementById(`nm-${field}-inp`).value = '';
+    }
+
+    function nmSmartVal(field) {
+      const sel = document.getElementById(`nm-${field}-sel`);
+      return sel ? sel.value : '';
+    }
+
+    // ── Traspaso helpers ──
+    function nmTraspasoCheckCurrency() {
+      const cuentas = loadRegistry(KEY_SAL);
+      const orId = document.getElementById('nm-tr-origen').value;
+      const dsId = document.getElementById('nm-tr-dest').value;
+      const tcGrp = document.getElementById('nm-tr-tc-grp');
+      if (!orId || !dsId) { tcGrp.style.display = 'none'; return; }
+      const cOr = cuentas.find(c => c.cuenta === orId);
+      const cDs = cuentas.find(c => c.cuenta === dsId);
+      if (!cOr || !cDs || cOr.moneda === cDs.moneda) {
+        tcGrp.style.display = 'none';
+        document.getElementById('nm-tr-label-monto').textContent = 'Monto *';
+      } else {
+        tcGrp.style.display = '';
+        document.getElementById('nm-tr-label-monto').textContent = `Monto (${cOr.moneda}) *`;
+        document.getElementById('nm-tr-tc-label').textContent = `TC: 1 ${cOr.moneda} = ? ${cDs.moneda}`;
+        nmTraspasoUpdateHint();
+      }
+    }
+
+    function nmTraspasoUpdateHint() {
+      const monto = parseFloat(document.getElementById('nm-tr-monto').value) || 0;
+      const tc    = parseFloat(document.getElementById('nm-tr-tc').value)    || 0;
+      const cuentas = loadRegistry(KEY_SAL);
+      const cOr = cuentas.find(c => c.cuenta === document.getElementById('nm-tr-origen').value);
+      const cDs = cuentas.find(c => c.cuenta === document.getElementById('nm-tr-dest').value);
+      const hint = document.getElementById('nm-tr-tc-hint');
+      if (tc > 0 && monto > 0 && cOr && cDs) {
+        const mDs = Math.round(monto * tc * 100) / 100;
+        hint.textContent = `${fmtMov(monto)} ${cOr.moneda} × ${tc} = ${fmtMov(mDs)} ${cDs.moneda}`;
+      } else { hint.textContent = ''; }
+    }
+
+    // ── Main open / toggle / save ──
+    function toggleNMTipo() {
+      const mov = document.getElementById('nm-mov').value;
+      const secN = document.getElementById('nm-sect-normal');
+      const secT = document.getElementById('nm-sect-traspaso');
+      if (mov === 'Traspaso') {
+        secN.style.display = 'none';
+        secT.style.display = 'grid';
+        nmTraspasoCheckCurrency();
+      } else {
+        secN.style.display = 'grid';
+        secT.style.display = 'none';
+        const esIngreso = mov === 'Ingresos';
+        document.getElementById('nm-label-monto').textContent = esIngreso ? 'Entradas *' : 'Salidas *';
+        document.getElementById('nm-monto').style.color = esIngreso ? 'var(--green)' : 'var(--red)';
+      }
+    }
+
+    // Alias for backward compatibility
+    function toggleNMMovDir() { toggleNMTipo(); }
+
+    function abrirNuevoMov() {
+      __nmEditId = null;
+      document.querySelector('#modal-nuevo-mov .modal-title').textContent = 'Nuevo Movimiento';
+      // Reset simple fields
+      ['nm-folio','nm-monto','nm-tipo','nm-origen','nm-dest',
+       'nm-tr-monto','nm-tr-tc'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      document.getElementById('nm-fecha').value = new Date().toISOString().slice(0,10);
+      document.getElementById('nm-mov').value   = 'Egresos';
+      document.getElementById('nm-tr-tc-grp').style.display = 'none';
+      document.getElementById('nm-tr-tc-hint').textContent  = '';
+
+      // Datalist de tipos
+      const tipos = [...new Set(getAllMovData().map(r=>r.tipo).filter(Boolean))].sort();
+      document.getElementById('nm-tipo-list').innerHTML =
+        tipos.map(t=>`<option value="${escHtml(t)}"></option>`).join('');
+
+      // Cuentas bancarias activas
+      const cuentas = loadRegistry(KEY_SAL).filter(s=>!s.cancelada);
+      const cOpts = '<option value="">— Seleccionar —</option>' +
+        cuentas.map(c=>`<option value="${c.cuenta}">${c.cuenta} (${c.moneda})</option>`).join('');
+      document.getElementById('nm-cuenta').innerHTML    = cOpts;
+      document.getElementById('nm-tr-origen').innerHTML = cOpts;
+      document.getElementById('nm-tr-dest').innerHTML   = cOpts;
+
+      // Smart dropdowns
+      nmSeedCat();
+      ['desc','conc','cc'].forEach(f => {
+        nmSmartCancel(f);
+        nmPopulateSelect(f);
+        document.getElementById(`nm-${f}-sel`).value = '';
+      });
+
+      toggleNMTipo();
+      openModal('modal-nuevo-mov');
+    }
+
+    function guardarNuevoMov() {
+      const fecha = document.getElementById('nm-fecha').value;
+      const mov   = document.getElementById('nm-mov').value;
+      if (!fecha) { toast('La fecha es obligatoria','error'); return; }
+
+      const desc       = nmSmartVal('desc');
+      const concepto   = nmSmartVal('conc');
+      const cuentaCont = nmSmartVal('cc');
+      const folio      = document.getElementById('nm-folio').value.trim();
+
+      /* ── Modo edición ── */
+      if (__nmEditId) {
+        const changes = { fecha, concepto, cuentaCont, folio, desc: desc || undefined };
+        if (mov !== 'Traspaso') {
+          const monto = parseFloat(document.getElementById('nm-monto').value);
+          if (isNaN(monto)||monto<=0) { toast('Ingresa un monto válido','error'); return; }
+          Object.assign(changes, {
+            mov,
+            tipo:     document.getElementById('nm-tipo').value.trim(),
+            cuenta:   document.getElementById('nm-cuenta').value,
+            origen:   document.getElementById('nm-origen').value.trim(),
+            dest:     document.getElementById('nm-dest').value.trim(),
+            entradas: mov === 'Ingresos' ? monto : null,
+            salidas:  mov !== 'Ingresos' ? monto : null,
+          });
+        }
+        saveMovEdit(__nmEditId, changes);
+        closeModal('modal-nuevo-mov');
+        toast('Movimiento actualizado', 'success');
+        filterMovimientos();
+        return;
+      }
+
+      if (mov === 'Traspaso') {
+        // ── Traspaso ──
+        const cuentaOr  = document.getElementById('nm-tr-origen').value;
+        const cuentaDst = document.getElementById('nm-tr-dest').value;
+        const monto     = parseFloat(document.getElementById('nm-tr-monto').value);
+        if (!cuentaOr)             { toast('Selecciona la cuenta origen','error'); return; }
+        if (!cuentaDst)            { toast('Selecciona la cuenta destino','error'); return; }
+        if (cuentaOr === cuentaDst){ toast('Las cuentas deben ser diferentes','error'); return; }
+        if (isNaN(monto)||monto<=0){ toast('Ingresa un monto válido','error'); return; }
+
+        const cuentas = loadRegistry(KEY_SAL);
+        const cOr = cuentas.find(c => c.cuenta === cuentaOr);
+        const cDs = cuentas.find(c => c.cuenta === cuentaDst);
+        const diffMoneda = cOr && cDs && cOr.moneda !== cDs.moneda;
+        let tc = 1, montoDestino = monto;
+        if (diffMoneda) {
+          tc = parseFloat(document.getElementById('nm-tr-tc').value);
+          if (isNaN(tc)||tc<=0) { toast('Ingresa el tipo de cambio','error'); return; }
+          montoDestino = Math.round(monto * tc * 100) / 100;
+        }
+
+        const traspasoId = `TRP-${Date.now()}`;
+        const base = { fecha, tipo:'Traspaso', desc: desc||'Traspaso entre cuentas',
+                       concepto, cuentaCont, folio, origenRef:'traspaso', traspasoId };
+        const uid = () => `MAN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;
+        const recEg = { ...base, id:uid(), mov:'Egresos',  cuenta:cuentaOr,
+                        origen:cuentaOr, dest:cuentaDst, entradas:null, salidas:monto };
+        const recIn = { ...base, id:uid(), mov:'Ingresos', cuenta:cuentaDst,
+                        origen:cuentaOr, dest:cuentaDst, entradas:montoDestino, salidas:null };
+
+        saveRegistry('stgl_mov_manual', [...loadRegistry('stgl_mov_manual'), recEg, recIn]);
+        closeModal('modal-nuevo-mov');
+        const info = diffMoneda
+          ? `${fmtMov(monto)} ${cOr.moneda} → ${fmtMov(montoDestino)} ${cDs.moneda}`
+          : fmtMov(monto);
+        toast(`Traspaso registrado: ${info}`, 'success');
+
+      } else {
+        // ── Ingreso / Egreso ──
+        const monto = parseFloat(document.getElementById('nm-monto').value);
+        if (!desc)              { toast('La descripción es obligatoria','error'); return; }
+        if (isNaN(monto)||monto<=0){ toast('Ingresa un monto válido','error'); return; }
+
+        const rec = {
+          id: `MAN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
+          fecha, mov,
+          tipo:     document.getElementById('nm-tipo').value.trim(),
+          desc, concepto, cuentaCont, folio,
+          cuenta:   document.getElementById('nm-cuenta').value,
+          origen:   document.getElementById('nm-origen').value.trim(),
+          dest:     document.getElementById('nm-dest').value.trim(),
+          entradas: mov === 'Ingresos' ? monto : null,
+          salidas:  mov !== 'Ingresos' ? monto : null,
+          origenRef:'manual',
+        };
+        saveRegistry('stgl_mov_manual', [...loadRegistry('stgl_mov_manual'), rec]);
+        closeModal('modal-nuevo-mov');
+        toast('Movimiento registrado', 'success');
+      }
+
+      filterMovimientos();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PDF IMPORT
+    ══════════════════════════════════════════════════════════ */
+
+    // Configure PDF.js worker
+    (function () {
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+    })();
+
+    let __pdfRows = []; // parsed rows for preview
+
+    function abrirImportPDF() {
+      // Populate account selector
+      const cuentas = loadRegistry('stgl_saldos') || [];
+      const sel = document.getElementById('pdf-cuenta');
+      sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+        cuentas.map(c => `<option value="${c.cuenta}">${c.cuenta} (${c.moneda})</option>`).join('');
+
+      // Reset to step 1
+      cerrarPDFImport(false);
+      document.getElementById('modal-pdf-import').classList.remove('hidden');
+    }
+
+    function cerrarPDFImport(hide = true) {
+      if (hide) document.getElementById('modal-pdf-import').classList.add('hidden');
+      document.getElementById('pdf-step1').style.display = '';
+      document.getElementById('pdf-step2').style.display = 'none';
+      document.getElementById('pdf-progress').style.display = 'none';
+      document.getElementById('pdf-importar-btn').style.display = 'none';
+      document.getElementById('pdf-preview-tbody').innerHTML = '';
+      document.getElementById('pdf-file-input').value = '';
+      __pdfRows = [];
+    }
+
+    function dropPDF(event) {
+      event.preventDefault();
+      document.getElementById('pdf-dropzone').style.borderColor = 'var(--border)';
+      const file = event.dataTransfer.files[0];
+      if (!file || file.type !== 'application/pdf') {
+        toast('Por favor arrastra un archivo PDF', 'error');
+        return;
+      }
+      leerPDF(file);
+    }
+
+    async function leerPDF(file) {
+      if (!file) return;
+      if (!window.pdfjsLib) {
+        toast('PDF.js no disponible — recarga la página', 'error');
+        return;
+      }
+      // Show progress
+      document.getElementById('pdf-progress').style.display = 'block';
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const allItems = [];
+
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const tc   = await page.getTextContent();
+          const vp   = page.getViewport({ scale: 1 });
+          // Normalize: store x, y (from bottom), text
+          tc.items.forEach(item => {
+            if (item.str.trim()) {
+              allItems.push({
+                x: item.transform[4],
+                y: vp.height - item.transform[5], // flip Y so top=0
+                w: item.width,
+                str: item.str.trim(),
+                page: p,
+              });
+            }
+          });
+        }
+
+        const banco = document.getElementById('pdf-banco').value;
+        const cuenta = document.getElementById('pdf-cuenta').value;
+
+        if (!cuenta) {
+          document.getElementById('pdf-progress').style.display = 'none';
+          toast('Selecciona la cuenta destino antes de leer el PDF', 'error');
+          return;
+        }
+
+        __pdfRows = _parsearLineasPDF(allItems, banco);
+        document.getElementById('pdf-progress').style.display = 'none';
+
+        if (!__pdfRows.length) {
+          toast('No se detectaron movimientos en el PDF. Prueba con formato "Genérico".', 'error');
+          return;
+        }
+
+        _renderPDFPreview(__pdfRows, cuenta);
+
+      } catch (err) {
+        document.getElementById('pdf-progress').style.display = 'none';
+        toast('Error al leer el PDF: ' + err.message, 'error');
+        console.error(err);
+      }
+    }
+
+    /* ── Line grouping: cluster text items by Y coordinate ── */
+    function _groupByLine(items, tolerance = 4) {
+      const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+      const lines = [];
+      let cur = null;
+      for (const it of sorted) {
+        if (!cur || it.y - cur.y > tolerance) {
+          cur = { y: it.y, items: [it] };
+          lines.push(cur);
+        } else {
+          cur.items.push(it);
+          cur.y = (cur.y + it.y) / 2; // average Y
+        }
+      }
+      // Sort items within each line by X
+      lines.forEach(l => l.items.sort((a, b) => a.x - b.x));
+      return lines;
+    }
+
+    /* ── Parse amount string (handles 1,234.56 and 1234.56) ── */
+    function _parseAmt(s) {
+      if (!s) return null;
+      const clean = s.replace(/[$\s]/g, '').replace(/,/g, '');
+      const n = parseFloat(clean);
+      return isNaN(n) ? null : Math.abs(n);
+    }
+
+    /* ── Date detection: DD/MM/YYYY or DD/MM/YY ── */
+    function _parseDate(s) {
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (!m) return null;
+      let [, d, mo, y] = m;
+      if (y.length === 2) y = '20' + y;
+      d  = d.padStart(2,  '0');
+      mo = mo.padStart(2, '0');
+      if (parseInt(mo) > 12 || parseInt(d) > 31) return null;
+      return `${y}-${mo}-${d}`;
+    }
+
+    /* ── BBVA-specific parser ── */
+    /* Recibe los items RAW (con propiedad .page) para agrupar por página
+       y evitar colisiones de coordenada Y entre páginas distintas.
+       Formato BBVA México: fechas DD/ABR, columnas CARGOS x≈362, ABONOS x≈423 */
+    function _parseBBVA(allItems) {
+      const MESES_MAP = {
+        'ENE':'01','FEB':'02','MAR':'03','ABR':'04','MAY':'05','JUN':'06',
+        'JUL':'07','AGO':'08','SEP':'09','OCT':'10','NOV':'11','DIC':'12'
+      };
+
+      // Detectar año del documento (busca "20XX" en cualquier ítem)
+      let year = String(new Date().getFullYear());
+      for (const it of allItems) {
+        const m = it.str.match(/\b(20\d{2})\b/);
+        if (m) { year = m[1]; break; }
+      }
+
+      function parseFechaBBVA(s) {
+        // Acepta "01/ABR" → "2026-04-01"
+        const m = String(s).match(/^(\d{1,2})\/(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)$/i);
+        if (!m) return null;
+        const d  = m[1].padStart(2, '0');
+        const mo = MESES_MAP[m[2].toUpperCase()];
+        return mo ? `${year}-${mo}-${d}` : null;
+      }
+
+      // Agrupar items por página para evitar colisiones de Y entre páginas
+      const pageMap = {};
+      for (const it of allItems) {
+        const p = it.page || 1;
+        if (!pageMap[p]) pageMap[p] = [];
+        pageMap[p].push(it);
+      }
+
+      const rows = [];
+
+      for (const p of Object.keys(pageMap).map(Number).sort((a, b) => a - b)) {
+        const lines = _groupByLine(pageMap[p], 4);
+
+        for (const line of lines) {
+          // Ordenar ítems de la línea por X (izquierda → derecha)
+          const items = [...line.items].sort((a, b) => a.x - b.x);
+          if (!items.length) continue;
+
+          // Las filas de transacción inician con la fecha OPER en x < 30
+          const first = items[0];
+          if (first.x > 30) continue;
+
+          const fecha = parseFechaBBVA(first.str.trim());
+          if (!fecha) continue;
+
+          let entradas = null, salidas = null, saldo = null;
+          const descParts = [];
+
+          for (const it of items.slice(1)) {
+            const x = it.x;
+            const s = it.str.trim();
+            if (!s) continue;
+
+            if (x >= 340 && x < 415) {
+              // Columna CARGOS (salidas)
+              const a = _parseAmt(s);
+              if (a !== null) salidas = a;
+            } else if (x >= 415 && x < 480) {
+              // Columna ABONOS (entradas)
+              const a = _parseAmt(s);
+              if (a !== null) entradas = a;
+            } else if (x >= 480) {
+              // Columnas OPERACIÓN / LIQUIDACIÓN / SALDO
+              const a = _parseAmt(s);
+              if (a !== null) saldo = a;
+            } else {
+              // Columna descripción: quitar fecha LIQ si viene pegada
+              const clean = s
+                .replace(/^\d{1,2}\/(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\s*/i, '')
+                .trim();
+              if (clean) descParts.push(clean);
+            }
+          }
+
+          if (entradas === null && salidas === null) continue;
+          rows.push({ fecha, desc: descParts.join(' ').trim(), entradas, salidas, saldo });
+        }
+      }
+      return rows;
+    }
+
+    /* ── Generic parser: heuristic column detection ── */
+    function _parseGenerico(lines) {
+      const rows = [];
+      // Try to detect column X positions from header line
+      // Find a header line containing "FECHA" or "DATE"
+      let colSaldo = null, colEntradas = null, colSalidas = null;
+      for (const line of lines) {
+        const txt = line.items.map(i => i.str.toUpperCase()).join(' ');
+        if (txt.includes('SALDO') || txt.includes('BALANCE')) {
+          // Map header columns
+          line.items.forEach(it => {
+            const s = it.str.toUpperCase();
+            if (s.includes('SALDO') || s.includes('BALANCE')) colSaldo = it.x;
+            if (s.includes('ABONO') || s.includes('DEPOSITO') || s.includes('CRÉDITO') || s.includes('ENTRADA')) colEntradas = it.x;
+            if (s.includes('CARGO') || s.includes('RETIRO') || s.includes('SALIDA')) colSalidas = it.x;
+          });
+          break;
+        }
+      }
+
+      for (const line of lines) {
+        const tokens = line.items;
+        if (!tokens.length) continue;
+        const fecha = _parseDate(tokens[0].str);
+        if (!fecha) continue;
+
+        let entradas = null, salidas = null, saldo = null;
+        const desc_parts = [];
+
+        if (colSaldo !== null) {
+          // Use column positions
+          for (const it of tokens.slice(1)) {
+            const x = it.x;
+            const a = _parseAmt(it.str);
+            if (a === null) { desc_parts.push(it.str); continue; }
+            const neg = it.str.startsWith('-');
+            if (colSaldo !== null && Math.abs(x - colSaldo) < 30) { saldo = a; }
+            else if (colEntradas !== null && Math.abs(x - colEntradas) < 30) { entradas = a; }
+            else if (colSalidas !== null && Math.abs(x - colSalidas) < 30) { salidas = a; }
+            else {
+              // Fallback: rightmost = saldo
+              desc_parts.push(it.str);
+            }
+          }
+        } else {
+          // No header detected: last numeric = saldo, second-to-last = movement
+          const amts = [], descs = [];
+          for (const it of tokens.slice(1)) {
+            const a = _parseAmt(it.str);
+            if (a !== null && /^-?[\d,]+\.?\d*$/.test(it.str.replace(/[$\s,]/g,''))) {
+              amts.push({ str: it.str, val: a, neg: it.str.startsWith('-'), x: it.x });
+            } else {
+              descs.push(it.str);
+            }
+          }
+          desc_parts.push(...descs);
+          if (amts.length >= 2) {
+            saldo = amts[amts.length - 1].val;
+            const mv = amts[amts.length - 2];
+            if (mv.neg) salidas = mv.val; else entradas = mv.val;
+          } else if (amts.length === 1) {
+            const mv = amts[0];
+            if (mv.neg) salidas = mv.val; else entradas = mv.val;
+          }
+        }
+
+        if (entradas === null && salidas === null) continue;
+        const desc = desc_parts.join(' ').trim();
+        rows.push({ fecha, desc, entradas, salidas, saldo });
+      }
+      return rows;
+    }
+
+    /* ── Clara (tarjeta corporativa) parser ──
+       Formato: fecha "09 MAR" en x≈37, monto "MXN 839.65" en x≈410-560
+       Comercio aparece en la línea ANTERIOR a la fecha. */
+    function _parseClara(allItems) {
+      const MESES_MAP = {
+        'ENE':'01','FEB':'02','MAR':'03','ABR':'04','MAY':'05','JUN':'06',
+        'JUL':'07','AGO':'08','SEP':'09','OCT':'10','NOV':'11','DIC':'12'
+      };
+
+      // Año del documento — buscar "XX" en "9 Mar 26" o 4 dígitos
+      let year = String(new Date().getFullYear());
+      for (const it of allItems) {
+        const m4 = it.str.match(/\b(20\d{2})\b/);
+        if (m4) { year = m4[1]; break; }
+        const m2 = it.str.match(/\b(\d+ \w+ (\d{2}))\b/);
+        if (m2) { year = '20' + m2[2]; break; }
+      }
+
+      function parseFechaClara(s) {
+        // "09 MAR" o "9 Mar" → "2026-03-09"
+        const m = String(s).match(/^(\d{1,2})\s+(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)$/i);
+        if (!m) return null;
+        const d  = m[1].padStart(2, '0');
+        const mo = MESES_MAP[m[2].toUpperCase()];
+        return mo ? `${year}-${mo}-${d}` : null;
+      }
+
+      function parseMXNAmt(s) {
+        // "MXN 839.65"  "MXN -21,776.53"
+        const m = String(s).match(/^MXN\s+([-\d,]+\.?\d*)$/);
+        if (!m) return null;
+        const n = parseFloat(m[1].replace(/,/g, ''));
+        return isNaN(n) ? null : n;
+      }
+
+      // Agrupar por página
+      const pageMap = {};
+      for (const it of allItems) {
+        const p = it.page || 1;
+        if (!pageMap[p]) pageMap[p] = [];
+        pageMap[p].push(it);
+      }
+
+      const rows = [];
+
+      for (const p of Object.keys(pageMap).map(Number).sort((a, b) => a - b)) {
+        const lines = _groupByLine(pageMap[p], 5);
+
+        for (let i = 0; i < lines.length; i++) {
+          const items = [...lines[i].items].sort((a, b) => a.x - b.x);
+
+          // Fila de fecha: tiene un ítem en x≈30-55 con "DD MES"
+          const dateItem = items.find(it => it.x >= 30 && it.x <= 55);
+          if (!dateItem) continue;
+          const fecha = parseFechaClara(dateItem.str.trim());
+          if (!fecha) continue;
+
+          // Monto en x≈410-560 con prefijo "MXN"
+          let entradas = null, salidas = null;
+          for (const it of items) {
+            if (it.x < 410) continue;
+            const amt = parseMXNAmt(it.str.trim());
+            if (amt === null) continue;
+            if (amt < 0) entradas = Math.abs(amt); // abono/pago → entrada
+            else         salidas  = amt;             // cargo/gasto → salida
+          }
+          if (entradas === null && salidas === null) continue;
+
+          // Comercio: buscar en la línea anterior (hasta 2 líneas atrás)
+          let desc = '';
+          for (let back = 1; back <= 2 && !desc; back++) {
+            if (i - back < 0) break;
+            const prev = [...lines[i - back].items].sort((a, b) => a.x - b.x);
+            // Comercio está en x≈31 (nombre corto); ignorar cabeceras y fechas
+            const merchant = prev.find(it => it.x <= 50 && !parseFechaClara(it.str.trim())
+              && !/^(Fecha|Tarjeta|Comercio|Cargo|Abono|Hoja|Total|MXN)/.test(it.str.trim()));
+            if (merchant) desc = merchant.str.trim();
+          }
+
+          rows.push({ fecha, desc, entradas, salidas, saldo: null });
+        }
+      }
+      return rows;
+    }
+
+    function _parsearLineasPDF(items, banco) {
+      // Parsers con agrupación por página propia
+      if (banco === 'bbva')  return _parseBBVA(items);
+      if (banco === 'clara') return _parseClara(items);
+      // Otros bancos: parser genérico
+      const lines = _groupByLine(items, 4);
+      return _parseGenerico(lines);
+    }
+
+    /* ── Render preview table ── */
+    function _renderPDFPreview(rows, cuenta) {
+      const fmt = n => n != null ? n.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '';
+
+      const tbody = document.getElementById('pdf-preview-tbody');
+      tbody.innerHTML = rows.map((r, i) => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.22rem 0.5rem; text-align:center;">
+            <input type="checkbox" class="pdf-row-chk" data-idx="${i}" checked />
+          </td>
+          <td style="padding:0.22rem 0.6rem; white-space:nowrap; font-family:'Courier New',monospace; font-size:0.68rem;">${r.fecha}</td>
+          <td style="padding:0.22rem 0.6rem; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.desc}">${r.desc || '—'}</td>
+          <td style="padding:0.22rem 0.6rem; text-align:right; color:var(--green); white-space:nowrap;">${r.entradas != null ? fmt(r.entradas) : ''}</td>
+          <td style="padding:0.22rem 0.6rem; text-align:right; color:var(--red); white-space:nowrap;">${r.salidas != null ? fmt(r.salidas) : ''}</td>
+          <td style="padding:0.22rem 0.6rem; text-align:right; color:var(--text-dim); white-space:nowrap; font-size:0.66rem;">${r.saldo != null ? fmt(r.saldo) : ''}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('pdf-preview-info').textContent =
+        `${rows.length} movimiento${rows.length !== 1 ? 's' : ''} detectado${rows.length !== 1 ? 's' : ''} · ${cuenta}`;
+
+      document.getElementById('pdf-step1').style.display = 'none';
+      document.getElementById('pdf-step2').style.display = '';
+      document.getElementById('pdf-importar-btn').style.display = '';
+      document.getElementById('pdf-chk-all').checked = true;
+    }
+
+    function pdfSelAll(checked) {
+      document.querySelectorAll('.pdf-row-chk').forEach(c => c.checked = checked);
+      const all = document.getElementById('pdf-chk-all');
+      if (all) all.checked = checked;
+    }
+
+    /* ══════════════════════════════════════
+       RECONCILIACIÓN PDF
+    ══════════════════════════════════════ */
+
+    let __reconNuevos = []; // movimientos nuevos pendientes de guardar
+
+    /* Busca un movimiento existente por fecha (±tolerancia días) + monto exacto + cuenta.
+       usedIds evita emparejar el mismo existente dos veces. */
+    function _buscarCoincidencia(pm, existentes, usedIds) {
+      const campo = pm.salidas != null ? 'salidas' : 'entradas';
+      const amt   = pm.salidas ?? pm.entradas;
+      const tsPm  = new Date(pm.fecha).getTime();
+
+      for (const tol of [0, 1, 2, 3]) {
+        const match = existentes.find(e => {
+          if (usedIds.has(e.id)) return false;
+          if (Math.abs((e[campo] || 0) - amt) > 0.01) return false;
+          const diff = Math.abs(tsPm - new Date(e.fecha).getTime()) / 86400000;
+          return diff <= tol;
+        });
+        if (match) return match;
+      }
+      return null;
+    }
+
+    /* Compara movimientos del PDF contra el histórico y devuelve
+       { conciliados:[{pdfMov, existente}], nuevos:[pdfMov] }
+       Usa fecha ± 3 días + monto exacto. No filtra por cuenta exacta porque
+       el histórico puede usar nombres cortos distintos al select del modal. */
+    function _conciliarPDF(pdfMovs, cuenta) {
+      const todos    = getAllMovData();   // busca en TODAS las cuentas del histórico
+      const usedIds  = new Set();
+      const conciliados = [];
+      const nuevos      = [];
+
+      for (const pm of pdfMovs) {
+        const match = _buscarCoincidencia(pm, todos, usedIds);
+        if (match) {
+          usedIds.add(match.id);
+          conciliados.push({ pdfMov: pm, existente: match });
+        } else {
+          nuevos.push(pm);
+        }
+      }
+      return { conciliados, nuevos };
+    }
+
+    /* Verifica proyecciones vencidas que no tienen movimiento real */
+    function _proyectadosVencidos() {
+      const hoy      = new Date().toISOString().slice(0, 10);
+      const proyect  = loadRegistry('stgl_proyectados') || [];
+      const todos    = getAllMovData();
+      const vencidos = [];
+
+      for (const p of proyect) {
+        if (!p.fecha || p.fecha > hoy) continue; // no vencido
+        if (p.realizado) continue;               // ya marcado
+        // Buscar movimiento real con monto y fecha cercana
+        const campo = (p.tipo === 'egreso') ? 'salidas' : 'entradas';
+        const amt   = Math.abs(p.monto || p.importe || 0);
+        if (!amt) continue;
+        const tsPr  = new Date(p.fecha).getTime();
+        const match = todos.find(e => {
+          if (Math.abs((e[campo] || 0) - amt) > 0.01) return false;
+          return Math.abs(new Date(e.fecha).getTime() - tsPr) / 86400000 <= 5;
+        });
+        if (!match) vencidos.push(p);
+      }
+      return vencidos;
+    }
+
+    /* Punto de entrada al hacer clic en "↓ Importar seleccionados" en el modal PDF */
+    function importarPDF() {
+      const cuenta = document.getElementById('pdf-cuenta').value;
+      if (!cuenta) { toast('Selecciona la cuenta destino', 'error'); return; }
+
+      const selected = [];
+      document.querySelectorAll('.pdf-row-chk:checked').forEach(chk => {
+        const i = parseInt(chk.dataset.idx);
+        if (!isNaN(i) && __pdfRows[i]) selected.push({ ...(__pdfRows[i]), cuenta });
+      });
+      if (!selected.length) { toast('Selecciona al menos un movimiento', 'error'); return; }
+
+      const { conciliados, nuevos } = _conciliarPDF(selected, cuenta);
+
+      // 1. Marcar conciliados en localStorage
+      const conc = getConciliados();
+      conciliados.forEach(({ existente }) => conc.add(existente.id));
+      saveConciliados(conc);
+
+      // 2. Actualizar tabla de movimientos
+      filterMovimientos();
+
+      // 3. Verificar proyectados vencidos
+      const vencidos = _proyectadosVencidos();
+
+      // 4. Cerrar modal PDF y abrir modal de resultado
+      cerrarPDFImport();
+      _mostrarResultadoRecon(conciliados.length, nuevos, cuenta, vencidos);
+    }
+
+    /* Muestra el modal de resultado de reconciliación */
+    function _mostrarResultadoRecon(nConc, nuevos, cuenta, vencidos) {
+      __reconNuevos = nuevos; // guardar para guardarNuevosRecon()
+
+      document.getElementById('recon-n-conc').textContent  = nConc;
+      document.getElementById('recon-n-new').textContent   = nuevos.length;
+      document.getElementById('recon-n-total').textContent = nConc + nuevos.length;
+
+      // Tabla de nuevos
+      const wrapN = document.getElementById('recon-nuevos-wrap');
+      const tbodyN = document.getElementById('recon-nuevos-tbody');
+      const fmt = n => n != null ? '$' + Math.abs(n).toLocaleString('es-MX', {minimumFractionDigits:2}) : '—';
+
+      if (nuevos.length > 0) {
+        wrapN.style.display = '';
+        tbodyN.innerHTML = nuevos.map((r, i) => `
+          <tr style="border-bottom:1px solid var(--border); ${i % 2 === 0 ? 'background:#fafbff;' : ''}">
+            <td style="padding:0.35rem 0.5rem; white-space:nowrap; font-family:var(--brand); font-size:0.68rem; color:var(--text-dim);">${r.fecha}</td>
+            <td style="padding:0.35rem 0.5rem; font-size:0.7rem; color:var(--text-dim); max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escHtml(r.desc || '')}">${escHtml(r.desc || '—')}</td>
+            <td style="padding:0.35rem 0.5rem; text-align:right; font-family:'Courier New',monospace; font-size:0.7rem; color:var(--green);">${r.entradas != null ? fmt(r.entradas) : '—'}</td>
+            <td style="padding:0.35rem 0.5rem; text-align:right; font-family:'Courier New',monospace; font-size:0.7rem; color:var(--red);">${r.salidas != null ? fmt(r.salidas) : '—'}</td>
+            <td style="padding:0.25rem 0.3rem;"><input type="text" data-idx="${i}" data-field="descUser"
+              style="width:100%; padding:0.2rem 0.4rem; font-size:0.7rem; border:1px solid var(--border); border-radius:2px;"
+              placeholder="Descripción amigable…" value="${escHtml(r.desc || '')}"/></td>
+            <td style="padding:0.25rem 0.3rem;"><input type="text" data-idx="${i}" data-field="concepto"
+              style="width:100%; padding:0.2rem 0.4rem; font-size:0.7rem; border:1px solid var(--border); border-radius:2px;"
+              placeholder="Concepto contable…"/></td>
+          </tr>`).join('');
+        document.getElementById('recon-guardar-btn').style.display = '';
+      } else {
+        wrapN.style.display  = 'none';
+        document.getElementById('recon-guardar-btn').style.display = 'none';
+      }
+
+      // Tabla de proyectados vencidos
+      const wrapP  = document.getElementById('recon-proyect-wrap');
+      const tbodyP = document.getElementById('recon-proyect-tbody');
+      if (vencidos.length > 0) {
+        wrapP.style.display = '';
+        tbodyP.innerHTML = vencidos.map(p => {
+          const amt = Math.abs(p.monto || p.importe || 0);
+          const fmtAmt = '$' + amt.toLocaleString('es-MX', {minimumFractionDigits:2});
+          return `<tr style="border-bottom:1px solid #fde68a;">
+            <td style="padding:0.3rem 0.5rem; white-space:nowrap; font-family:var(--brand); font-size:0.68rem; color:#92400e;">${p.fecha}</td>
+            <td style="padding:0.3rem 0.5rem; font-size:0.7rem; color:#92400e;">${escHtml(p.desc || p.descripcion || '—')}</td>
+            <td style="padding:0.3rem 0.5rem; text-align:right; font-family:'Courier New',monospace; font-size:0.7rem; color:#92400e; font-weight:700;">${fmtAmt}</td>
+            <td style="padding:0.3rem 0.5rem;">
+              <button onclick="marcarProyectadoRealizado('${escHtml(p.id||'')}', this)"
+                style="font-size:0.62rem; padding:0.15rem 0.5rem; background:var(--navy); color:#fff; border:none; border-radius:2px; cursor:pointer; font-family:var(--brand); font-weight:700;">
+                ✓ Marcar realizado
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
+      } else {
+        wrapP.style.display = 'none';
+      }
+
+      document.getElementById('modal-pdf-recon').classList.remove('hidden');
+    }
+
+    /* Guarda los movimientos nuevos con las descripciones editadas */
+    function guardarNuevosRecon() {
+      const cuenta = document.getElementById('pdf-cuenta')?.value ||
+                     (__reconNuevos[0]?.cuenta || '');
+
+      // Leer descripciones y conceptos editados por el usuario
+      const inputs = document.querySelectorAll('#recon-nuevos-tbody input');
+      inputs.forEach(inp => {
+        const idx   = parseInt(inp.dataset.idx);
+        const field = inp.dataset.field;
+        if (!isNaN(idx) && __reconNuevos[idx]) {
+          __reconNuevos[idx][field] = inp.value.trim();
+        }
+      });
+
+      const movs = __reconNuevos.map(r => ({
+        id:         'pdf-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        fecha:      r.fecha,
+        mov:        r.salidas != null ? 'Egresos' : 'Ingresos',
+        tipo:       r.salidas != null ? 'Cargo' : 'Abono',
+        desc:       r.descUser || r.desc || '',
+        concepto:   r.concepto || '',
+        cuenta:     r.cuenta || cuenta,
+        cuentaCont: '',
+        folio:      '',
+        origen:     '',
+        dest:       '',
+        entradas:   r.entradas ?? null,
+        salidas:    r.salidas ?? null,
+        origenRef:  'pdf',
+      }));
+
+      // Agregar a stgl_mov_excel sin duplicar
+      const existentes = getExcelMovData();
+      const existIds   = new Set(existentes.map(e => e.id));
+      const nuevos     = movs.filter(m => !existIds.has(m.id));
+      localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify([...existentes, ...nuevos]));
+
+      closeModal('modal-pdf-recon');
+      filterMovimientos();
+      toast(`${nuevos.length} movimiento${nuevos.length !== 1 ? 's' : ''} nuevo${nuevos.length !== 1 ? 's' : ''} guardado${nuevos.length !== 1 ? 's' : ''}`, 'success');
+      __reconNuevos = [];
+    }
+
+    /* Marca un proyectado como realizado */
+    function marcarProyectadoRealizado(id, btn) {
+      if (!id) return;
+      const proyect = loadRegistry('stgl_proyectados') || [];
+      const idx     = proyect.findIndex(p => p.id === id);
+      if (idx >= 0) {
+        proyect[idx].realizado = true;
+        saveRegistry('stgl_proyectados', proyect);
+        btn.textContent = '✅ Marcado';
+        btn.disabled    = true;
+        btn.style.background = 'var(--green)';
+      }
+    }
+
+  </script>
+</body>
+</html>

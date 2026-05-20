@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Documentos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand">
+          <a href="dashboard.html">
+            <img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" />
+          </a>
+        </div>
+        <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item active" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+        <div class="header-actions">
+          <button class="btn-logout" onclick="logout()">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="main">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Repositorio de documentos</div>
+            <h1 class="page-heading">Documentos</h1>
+            <div class="page-meta" id="doc-count"></div>
+          </div>
+          <label for="doc-input" class="btn btn-primary" style="cursor:pointer;">+ Agregar documento</label>
+          <input type="file" id="doc-input" accept=".pdf,.docx,.doc,.pptx,.txt,.xlsx" style="display:none;" multiple />
+        </div>
+
+        <!-- Upload zone -->
+        <div class="upload-zone mb-3" id="doc-zone">
+          <input type="file" id="doc-zone-input" accept=".pdf,.docx,.doc,.pptx,.txt,.xlsx" multiple />
+          <div class="upload-label">📄 Arrastra documentos aquí o haz clic para seleccionar</div>
+          <div class="upload-sub">PDF, Word, PowerPoint, Excel, TXT — Documentos del sistema de gestión</div>
+        </div>
+
+        <!-- Búsqueda y filtros -->
+        <div class="flex gap-1 mb-2" style="align-items:center; flex-wrap:wrap;">
+          <input class="form-input" id="doc-buscar" type="text" placeholder="Buscar documento…"
+            style="max-width:280px;" oninput="renderDocs()" />
+          <select class="form-input" id="doc-tipo" style="width:auto; padding:0.55rem 0.9rem;" onchange="renderDocs()">
+            <option value="todos">Todos los tipos</option>
+            <option value="pdf">PDF</option>
+            <option value="docx">Word</option>
+            <option value="pptx">PowerPoint</option>
+            <option value="xlsx">Excel</option>
+            <option value="otro">Otro</option>
+          </select>
+          <select class="form-input" id="doc-cat" style="width:auto; padding:0.55rem 0.9rem;" onchange="renderDocs()">
+            <option value="todos">Todas las categorías</option>
+            <option>Contratos</option>
+            <option>Informes</option>
+            <option>Propuestas</option>
+            <option>Manuales</option>
+            <option>Legal</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <!-- Lista -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Documentos registrados</span>
+          </div>
+          <ul class="file-list" id="doc-lista"></ul>
+        </div>
+      </div>
+    </main>
+
+    <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+      <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+        <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+        <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal nuevo doc -->
+  <div class="modal-backdrop hidden" id="modal-doc">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Registrar documento</span>
+        <button class="modal-close" onclick="closeModal('modal-doc')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:1.25rem;" id="doc-filename"></p>
+        <div class="form-group">
+          <label class="form-label">Título o nombre descriptivo</label>
+          <input class="form-input" id="doc-titulo" type="text" placeholder="Ej: Contrato de servicios — Cliente XYZ" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select class="form-input" id="doc-cat-sel">
+            <option>Contratos</option>
+            <option>Informes</option>
+            <option>Propuestas</option>
+            <option>Manuales</option>
+            <option>Legal</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proyecto relacionado (opcional)</label>
+          <input class="form-input" id="doc-proyecto" type="text" placeholder="Nombre del proyecto…" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea class="form-input" id="doc-notas" placeholder="Descripción u observaciones…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-doc')">Cancelar</button>
+        <button class="btn btn-primary" id="doc-guardar-btn">Registrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+  <script>
+    let pendingDoc = null;
+
+    const EXT_ICONS = { pdf:'📕', docx:'📘', doc:'📘', pptx:'📙', ppt:'📙', xlsx:'📗', xls:'📗', txt:'📄' };
+    const EXT_MAP   = { pdf:'pdf', docx:'docx', doc:'docx', pptx:'pptx', ppt:'pptx', xlsx:'xlsx', xls:'xlsx' };
+    const BADGES_CAT = {
+      'Contratos':'badge-navy', 'Informes':'badge-blue', 'Propuestas':'badge-gold',
+      'Manuales':'badge-green', 'Legal':'badge-red', 'Otro':'badge-gray'
+    };
+
+    function iconFor(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      return EXT_ICONS[ext] || '📄';
+    }
+    function extNorm(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      return EXT_MAP[ext] || 'otro';
+    }
+
+    function renderDocs() {
+      const all     = loadRegistry('stgl_documentos');
+      const buscar  = document.getElementById('doc-buscar').value.toLowerCase();
+      const tipo    = document.getElementById('doc-tipo').value;
+      const cat     = document.getElementById('doc-cat').value;
+
+      let data = all;
+      if (buscar) data = data.filter(d => (d.titulo || d.nombre).toLowerCase().includes(buscar));
+      if (tipo !== 'todos') data = data.filter(d => extNorm(d.nombre) === tipo);
+      if (cat !== 'todos')  data = data.filter(d => d.categoria === cat);
+
+      document.getElementById('doc-count').textContent = `${all.length} documento${all.length !== 1 ? 's' : ''} en total`;
+
+      const lista = document.getElementById('doc-lista');
+      if (data.length === 0) {
+        lista.innerHTML = `<li style="padding:2.5rem; text-align:center; color:var(--text-xs); font-size:0.82rem;">
+          No hay documentos que coincidan. Agrega el primero arriba.
+        </li>`;
+        return;
+      }
+      lista.innerHTML = [...data].reverse().map(d => `
+        <li class="file-item">
+          <div class="file-icon">${iconFor(d.nombre)}</div>
+          <div class="file-info">
+            <div class="file-name">${d.titulo || d.nombre}</div>
+            <div class="file-meta">${d.nombre} · ${fmtDateTime(d.fecha)} · ${fmtSize(d.size || 0)}${d.proyecto ? ' · Proy: ' + d.proyecto : ''}</div>
+          </div>
+          <div class="file-actions" style="align-items:center;">
+            <span class="badge ${BADGES_CAT[d.categoria] || 'badge-gray'}">${d.categoria || 'Otro'}</span>
+            <button class="file-btn" onclick="eliminarDoc('${d.id}')">Eliminar</button>
+          </div>
+        </li>`).join('');
+    }
+
+    function abrirModal(file) {
+      pendingDoc = file;
+      document.getElementById('doc-filename').textContent = `${file.name} (${fmtSize(file.size)})`;
+      document.getElementById('doc-titulo').value = '';
+      document.getElementById('doc-proyecto').value = '';
+      document.getElementById('doc-notas').value = '';
+      openModal('modal-doc');
+    }
+
+    document.getElementById('doc-guardar-btn').onclick = () => {
+      if (!pendingDoc) return;
+      const docs = loadRegistry('stgl_documentos');
+      docs.push({
+        id:        Date.now().toString(),
+        nombre:    pendingDoc.name,
+        size:      pendingDoc.size,
+        titulo:    document.getElementById('doc-titulo').value.trim() || pendingDoc.name,
+        categoria: document.getElementById('doc-cat-sel').value,
+        proyecto:  document.getElementById('doc-proyecto').value.trim(),
+        notas:     document.getElementById('doc-notas').value.trim(),
+        fecha:     new Date().toISOString(),
+      });
+      saveRegistry('stgl_documentos', docs);
+      closeModal('modal-doc');
+      pendingDoc = null;
+      toast('Documento registrado', 'success');
+      renderDocs();
+    };
+
+    function eliminarDoc(id) {
+      if (!confirm('¿Eliminar este documento del registro?')) return;
+      saveRegistry('stgl_documentos', loadRegistry('stgl_documentos').filter(d => d.id !== id));
+      toast('Documento eliminado');
+      renderDocs();
+    }
+
+    function handleFiles(files) {
+      if (!files.length) return;
+      abrirModal(files[0]);
+    }
+
+    initUploadZone('doc-zone', 'doc-zone-input', handleFiles);
+    document.getElementById('doc-input').addEventListener('change', e => handleFiles([...e.target.files]));
+
+    renderDocs();
+  </script>
+</body>
+</html>

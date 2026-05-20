@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Retenciones</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <style>
+    .table-wrap { overflow-x: auto; }
+    .fact-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 1300px; }
+    .fact-table thead { position: sticky; top: 0; z-index: 10; }
+    .fact-table th {
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--brand);
+      font-size: 0.61rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.12);
+    }
+    .fact-table th:last-child { border-right: none; }
+    .fact-table td {
+      padding: 0.42rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      vertical-align: middle;
+      white-space: nowrap;
+      color: var(--text);
+    }
+    .fact-table td:last-child { border-right: none; }
+    .fact-table tbody tr:nth-child(even) td { background: #f8f9fc; }
+    .fact-table tbody tr:hover td { background: var(--navy-pale) !important; }
+    .fact-table .num { text-align: right; font-family: 'Courier New', monospace; }
+    .fact-table .center { text-align: center; }
+    .fact-table tfoot td {
+      border-top: 2px solid var(--navy); border-bottom: none;
+      background: #e8ecf8; font-weight: 700; font-family: var(--brand);
+      font-size: 0.7rem; padding: 0.45rem 0.6rem; color: var(--navy);
+    }
+
+    /* Valor calculado vs override */
+    .val-calc { color: var(--text-dim); }
+    .val-override { color: var(--navy); font-weight: 600; }
+    .val-hint { font-size: 0.62rem; color: var(--text-xs); display: block; font-style: italic; }
+
+    /* Resumen bar */
+    .resumen-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border); border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .resumen-item { background: var(--bg-white); padding: 1rem 1.25rem; }
+    .resumen-label { font-family: var(--brand); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.3rem; }
+    .resumen-val { font-family: var(--brand); font-size: 1.25rem; font-weight: 700; color: var(--navy); }
+    .resumen-val.green { color: var(--green); }
+    .resumen-val.red   { color: var(--red); }
+    .resumen-val.gold  { color: #8a6800; }
+    .resumen-sub { font-size: 0.68rem; color: var(--text-xs); margin-top: 0.15rem; }
+
+    /* Period/Year buttons */
+    .period-btns { display:flex; gap:0; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .period-btn {
+      padding:0.28rem 0.75rem; font-size:0.72rem; font-family:var(--brand); font-weight:700;
+      border:none; border-right:1px solid var(--border); background:var(--bg-white);
+      color:var(--text-dim); cursor:pointer; transition:all 0.15s; letter-spacing:0.04em;
+    }
+    .period-btn:last-child { border-right:none; }
+    .period-btn:hover { background:#f0f2f8; color:var(--navy); }
+    .period-btn.active { background:var(--navy); color:#fff; }
+
+    /* Inline inputs */
+    .inline-input {
+      background: transparent; border: none;
+      border-bottom: 1.5px dashed transparent;
+      padding: 0.06rem 0.2rem; font-size: 0.75rem;
+      color: var(--text); width: 100%; min-width: 70px;
+      font-family: inherit; outline: none; transition: border-color 0.15s;
+    }
+    .inline-input:hover { border-bottom-color: #bbc4d8; }
+    .inline-input:focus { border-bottom-color: var(--navy); background: var(--navy-pale); }
+    .inline-input.dirty { border-bottom-color: #e67e22; color: #a84400; }
+    .fact-table tbody tr.row-dirty td { background: #fff8f0 !important; }
+    .fact-table tbody tr.row-dirty td:first-child { border-left: 3px solid #e67e22; }
+
+    /* Row actions */
+    .edit-row { background: none; border: none; cursor: pointer; font-size: 0.82rem; padding: 0.1rem 0.3rem; border-radius: 2px; color: var(--text-xs); }
+    .edit-row:hover { color: var(--navy); background: var(--navy-pale); }
+
+    /* Confirm bar */
+    .confirm-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--navy); color: #fff;
+      padding: 0.7rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+      z-index: 200; font-family: var(--brand);
+      box-shadow: 0 -3px 14px rgba(0,0,0,0.22);
+      transform: translateY(100%); transition: transform 0.22s ease;
+    }
+    .confirm-bar.visible { transform: translateY(0); }
+    .confirm-bar-msg { flex: 1; font-size: 0.82rem; font-weight: 600; }
+
+    /* Acuse sub-row */
+    .acuse-row td {
+      background: #f0f4fe !important; font-size: 0.68rem;
+      color: var(--text-dim); border-bottom: 2px solid var(--border);
+      padding: 0.2rem 0.6rem 0.25rem;
+    }
+    .acuse-row td:first-child { border-left: 3px solid var(--navy); }
+
+    /* Modal sections */
+    .modal-section { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem; margin-bottom: 0.85rem; }
+    .modal-section-title {
+      font-family: var(--brand); font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy);
+      margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .modal-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.7rem 1rem; }
+    .modal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 1rem; }
+    .hint-calc { font-size: 0.68rem; color: var(--text-xs); margin-top: 0.2rem; font-style: italic; }
+
+    /* PDF upload areas */
+    .pdf-zone {
+      border: 1.5px dashed var(--border); border-radius: var(--radius);
+      padding: 0.75rem; text-align: center; cursor: pointer;
+      transition: all 0.15s; margin-bottom: 0.5rem;
+    }
+    .pdf-zone:hover { border-color: var(--navy); background: var(--navy-pale); }
+    .pdf-zone.loaded { border-color: var(--green); background: #f0faf5; }
+    .pdf-zone-label { font-size: 0.72rem; font-family: var(--brand); font-weight: 700; color: var(--navy); margin-bottom: 0.25rem; }
+    .pdf-zone-sub { font-size: 0.65rem; color: var(--text-xs); }
+    .pdf-result { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.3rem; text-align: left; }
+
+    @media (max-width: 900px) { .resumen-bar { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── Disclaimer SAT ── */
+    .disclaimer-bar {
+      border: 1px solid #c7d2e8; border-radius: var(--radius);
+      background: #f0f3fa; margin-bottom: 1.25rem; overflow: hidden;
+      font-size: 0.72rem; color: #3a4a72;
+    }
+    .disclaimer-header {
+      display: flex; align-items: center; gap: 0.55rem;
+      padding: 0.55rem 1rem; cursor: pointer; user-select: none;
+    }
+    .disclaimer-header:hover { background: #e4e9f5; }
+    .disclaimer-icon { font-size: 0.95rem; flex-shrink: 0; }
+    .disclaimer-title { font-family: var(--brand); font-weight: 700; font-size: 0.68rem; letter-spacing: 0.05em; flex: 1; color: #2a3a6a; }
+    .disclaimer-toggle { font-size: 0.62rem; color: #5a6a9a; font-family: var(--brand); font-weight: 600; }
+    .disclaimer-body { padding: 0 1rem 0.75rem; border-top: 1px solid #d0d8f0; }
+    .disclaimer-body p { margin: 0.55rem 0 0; line-height: 1.55; }
+    .disclaimer-body strong { color: #2a3a6a; }
+    .disclaimer-note {
+      margin-top: 0.5rem; padding: 0.35rem 0.65rem;
+      background: #e4e9f5; border-radius: 4px; font-style: italic;
+      color: #4a5a82; font-size: 0.68rem;
+    }
+
+    /* ── Extra badges ── */
+    .badge-red  { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+    .badge-warn { background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; }
+
+    /* ── Anomaly panel ── */
+    .anom-panel {
+      border-radius: var(--radius); border: 1.5px solid #f59e0b;
+      background: #fffbeb; margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .anom-panel.anom-panel-ok {
+      border-color: var(--green); background: #f0faf5;
+    }
+    .anom-panel.anom-panel-error { border-color: var(--red); background: #fff5f5; }
+    .anom-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.65rem 1rem; cursor: default;
+    }
+    .anom-header-icon { font-size: 1rem; }
+    .anom-header-title { font-family: var(--brand); font-size: 0.74rem; font-weight: 700; color: #92400e; flex: 1; }
+    .anom-panel-ok .anom-header-title { color: var(--green); }
+    .anom-panel-error .anom-header-title { color: var(--red); }
+    .anom-count {
+      padding: 0.15rem 0.55rem; border-radius: 999px;
+      font-size: 0.62rem; font-family: var(--brand); font-weight: 700; letter-spacing: 0.05em;
+    }
+    .anom-count.error { background:#fee2e2; color:#991b1b; }
+    .anom-count.warn  { background:#fff7ed; color:#9a3412; }
+    .anom-toggle {
+      font-size: 0.68rem; font-family: var(--brand); font-weight: 700;
+      background: none; border: 1px solid #d97706; color: #92400e;
+      padding: 0.18rem 0.6rem; border-radius: 2px; cursor: pointer;
+    }
+    .anom-panel-ok .anom-toggle { border-color: var(--green); color: var(--green); }
+    .anom-list { border-top: 1px solid #fde68a; }
+    .anom-panel-ok .anom-list { border-color: #bbf7d0; }
+    .anom-item {
+      display: flex; align-items: flex-start; gap: 0.55rem;
+      padding: 0.45rem 1rem; border-bottom: 1px solid #fde68a; font-size: 0.74rem;
+    }
+    .anom-item:last-child { border-bottom: none; }
+    .anom-item.anom-error { background: #fff5f5; border-bottom-color: #fecaca; }
+    .anom-item.anom-warn  { background: #fffbeb; }
+    .anom-sev-icon { font-size: 0.9rem; margin-top: 0.05rem; flex-shrink: 0; }
+    .anom-detalle { font-size: 0.67rem; color: var(--text-dim); margin-top: 0.1rem; }
+    .anom-ok { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.74rem; font-family: var(--brand); color: var(--green); font-weight: 700; }
+
+    /* ── Anomaly dot on row ── */
+    .anom-dot { font-size: 0.55rem; margin-left: 3px; cursor: help; vertical-align: middle; }
+    .anom-dot-error { color: var(--red); }
+    .anom-dot-warn  { color: #d97706; }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item active" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Control de retenciones SAT</div>
+          <h1 class="page-heading">Retenciones</h1>
+          <div class="page-meta" id="ret-meta"></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-ghost" onclick="importarRetenciones()">↑ Importar histórico Excel</button>
+        </div>
+      </div>
+
+      <!-- Year selector -->
+      <div style="margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <span style="font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--text-dim); letter-spacing:0.06em; text-transform:uppercase;">Año:</span>
+        <div class="period-btns" id="year-btns">
+          <button class="period-btn" id="yr-2022" onclick="selectYear(2022)">2022</button>
+          <button class="period-btn" id="yr-2023" onclick="selectYear(2023)">2023</button>
+          <button class="period-btn" id="yr-2024" onclick="selectYear(2024)">2024</button>
+          <button class="period-btn" id="yr-2025" onclick="selectYear(2025)">2025</button>
+          <button class="period-btn active" id="yr-2026" onclick="selectYear(2026)">2026</button>
+        </div>
+        <span style="font-size:0.68rem; color:var(--text-xs); font-style:italic;">
+          ⟳ Los montos retenidos se calculan automáticamente de Nómina
+        </span>
+      </div>
+
+      <!-- Disclaimer SAT -->
+      <div class="disclaimer-bar" id="disclaimer-sat">
+        <div class="disclaimer-header" onclick="toggleDisclaimer()">
+          <span class="disclaimer-icon">⚖️</span>
+          <span class="disclaimer-title">Aviso legal — Herramienta informativa · No constituye asesoría fiscal</span>
+          <span class="disclaimer-toggle" id="disclaimer-toggle-lbl">Ver detalle ▾</span>
+        </div>
+        <div class="disclaimer-body hidden" id="disclaimer-body">
+          <p>Los cálculos, alertas y detecciones de este módulo se generan automáticamente con base en los <strong>CFDIs importados y las reglas fiscales programadas</strong>. Su precisión depende directamente de la integridad y completitud de los datos cargados al sistema.</p>
+          <p>El SAT aplica la <strong>Resolución Miscelánea Fiscal (RMF) de forma discrecional</strong>, y sus criterios de interpretación pueden variar por ejercicio, sector o contribuyente. Los montos mostrados <strong>no incluyen actualizaciones por inflación, recargos por mora ni multas</strong> derivados de pagos extemporáneos o inconsistencias determinadas en auditoría.</p>
+          <p>Santaglia Compass <strong>no asume responsabilidad</strong> por determinaciones fiscales, diferencias de criterio con la autoridad, ni por decisiones tomadas con base en la información presentada. Ante cualquier notificación del SAT, requerimiento de auditoría o discrepancia en el cálculo de retenciones, <strong>consulte a su contador o asesor fiscal calificado</strong>.</p>
+          <div class="disclaimer-note">
+            💡 Este sistema es un apoyo para la gestión interna y la comunicación con su despacho — no reemplaza el criterio profesional de un contador ni el asesoramiento jurídico-fiscal especializado.
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI bar -->
+      <div class="resumen-bar">
+        <div class="resumen-item">
+          <div class="resumen-label">Total Retenido</div>
+          <div class="resumen-val" id="kpi-retenido">$0</div>
+          <div class="resumen-sub">acumulado del año</div>
+        </div>
+        <div class="resumen-item">
+          <div class="resumen-label">Total Pagado / Acuses</div>
+          <div class="resumen-val green" id="kpi-pagado">$0</div>
+          <div class="resumen-sub" id="kpi-pagado-pct"></div>
+        </div>
+        <div class="resumen-item">
+          <div class="resumen-label">Diferencia</div>
+          <div class="resumen-val gold" id="kpi-diferencia">$0</div>
+          <div class="resumen-sub">retenido − pagado</div>
+        </div>
+        <div class="resumen-item">
+          <div class="resumen-label">Meses Pendientes</div>
+          <div class="resumen-val red" id="kpi-pendientes">0</div>
+          <div class="resumen-sub">con retención sin pagar</div>
+        </div>
+      </div>
+
+      <!-- Anomaly / compliance panel -->
+      <div class="anom-panel" id="anomalia-panel" style="display:none;"></div>
+
+      <!-- Table -->
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="fact-table" id="ret-table">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th class="num">Asim. Ret.</th>
+                <th class="num">Asim. Pag.</th>
+                <th class="num">ISR Hon. Ret.</th>
+                <th class="num">ISR Hon. Pag.</th>
+                <th class="num">IVA Hon. Ret.</th>
+                <th class="num">IVA Hon. Pag.</th>
+                <th class="num">ISR PM</th>
+                <th class="num">Total Ret.</th>
+                <th class="num">Total Pag.</th>
+                <th class="num">Diferencia</th>
+                <th>F. Pago Real</th>
+                <th class="center">Estado</th>
+                <th class="center" style="width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="ret-tbody"></tbody>
+            <tfoot id="ret-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ══ MODAL: Editar mes de retenciones ══ -->
+<div class="modal-backdrop hidden" id="modal-editar">
+  <div class="modal" style="max-width:700px; max-height:92vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title" id="edit-titulo">Editar retención — Ene-26</span>
+      <button class="modal-close" onclick="closeModal('modal-editar')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Sección: Retenido -->
+      <div class="modal-section">
+        <div class="modal-section-title">⟳ Montos retenidos del mes</div>
+        <div class="modal-grid-3">
+          <div class="form-group">
+            <label class="form-label">Asimilables — ISR Retenido</label>
+            <input class="form-input" id="edit-asimR" type="number" min="0" step="0.01" placeholder="0.00" />
+            <div class="hint-calc" id="edit-asimR-hint"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ISR Honorarios — Retenido</label>
+            <input class="form-input" id="edit-isrHonR" type="number" min="0" step="0.01" placeholder="0.00" />
+            <div class="hint-calc" id="edit-isrHonR-hint"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">IVA Honorarios — Retenido</label>
+            <input class="form-input" id="edit-ivaHonR" type="number" min="0" step="0.01" placeholder="0.00" />
+            <div class="hint-calc" id="edit-ivaHonR-hint"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ISR PM — Pago Provisional ISR Personas Morales</label>
+            <input class="form-input" id="edit-isrPm" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group" style="grid-column:span 2; display:flex; align-items:flex-end;">
+            <div style="background:var(--navy-pale); border-radius:var(--radius); padding:0.6rem 1rem; font-family:var(--brand); font-size:0.78rem; color:var(--navy); font-weight:700; width:100%;">
+              Total Retenido: <span id="edit-total-ret">$0.00</span>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:0.68rem; color:var(--text-xs); margin-top:0.5rem; font-style:italic;">
+          Los campos vacíos usan el valor calculado automáticamente de Nómina (Asimilables + Honorarios). Ingresa un valor solo si necesitas corregirlo.
+        </p>
+      </div>
+
+      <!-- Sección: Pagado / Acuses -->
+      <div class="modal-section">
+        <div class="modal-section-title">✓ Pago y acuses SAT</div>
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label">Fecha de pago real</label>
+            <input class="form-input" id="edit-fechaPago" type="date" />
+          </div>
+          <div class="form-group" style="display:flex; align-items:flex-end;">
+            <div style="background:#f0faf5; border-radius:var(--radius); padding:0.6rem 1rem; font-family:var(--brand); font-size:0.78rem; color:var(--green); font-weight:700; width:100%;">
+              Total Acuses: <span id="edit-total-acuse">$0.00</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Acuse 1 — Asim + IVA + ISR PM</label>
+            <input class="form-input" id="edit-acuseAsim" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
+            <div class="hint-calc">Importe del primer acuse SAT</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Acuse 2 — ISR Honorarios</label>
+            <input class="form-input" id="edit-acuseHon" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
+            <div class="hint-calc">Importe del segundo acuse SAT</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Acuse 3 — Arrendamiento (si aplica)</label>
+            <input class="form-input" id="edit-acuseArr" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha del acuse / línea de captura</label>
+            <input class="form-input" id="edit-acuseFecha" type="date" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Líneas de captura -->
+      <div class="modal-section">
+        <div class="modal-section-title" style="justify-content:space-between;">
+          <span>📄 Líneas de captura</span>
+          <button class="btn btn-ghost" style="font-size:0.68rem; padding:0.2rem 0.6rem;"
+            onclick="abrirPdfImport()">↑ Importar desde PDF</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <div class="form-group">
+            <label class="form-label">Línea de captura 1 (Asim + IVA + ISR PM)</label>
+            <input class="form-input" id="edit-lc1" type="text" placeholder="Número de referencia (18-25 dígitos)" style="font-family:monospace;" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Línea de captura 2 (ISR Honorarios)</label>
+            <input class="form-input" id="edit-lc2" type="text" placeholder="Número de referencia (18-25 dígitos)" style="font-family:monospace;" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Línea de captura 3 (Arrendamiento, opcional)</label>
+            <input class="form-input" id="edit-lc3" type="text" placeholder="Número de referencia (18-25 dígitos)" style="font-family:monospace;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Notas -->
+      <div class="form-group">
+        <label class="form-label">Notas / observaciones</label>
+        <textarea class="form-input" id="edit-notas" rows="2" placeholder="Cuenta bancaria utilizada, observaciones del pago…"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="flex-direction:column; align-items:stretch; gap:0.6rem;">
+      <p style="font-size:0.65rem; color:#78716c; font-style:italic; margin:0; line-height:1.5; padding:0.4rem 0.6rem; background:#f5f5f4; border-radius:4px;">
+        ⚖️ Los montos capturados son para control interno. No incluyen recargos ni actualizaciones del SAT. Consulte a su asesor fiscal ante cualquier discrepancia con la autoridad.
+      </p>
+      <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-editar')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Importar PDFs de líneas de captura ══ -->
+<div class="modal-backdrop hidden" id="modal-pdf">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <span class="modal-title">Importar líneas de captura desde PDF</span>
+      <button class="modal-close" onclick="closeModal('modal-pdf')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1rem;">
+        Sube los PDFs con las líneas de captura del SAT. El sistema extraerá automáticamente la línea de captura y el importe de cada PDF.
+      </p>
+
+      <!-- PDF 1 -->
+      <div class="pdf-zone" id="pz-1" onclick="document.getElementById('pf-1').click()">
+        <input type="file" id="pf-1" accept=".pdf" style="display:none;" onchange="procesarPdf(this.files[0],1)" />
+        <div class="pdf-zone-label">PDF 1 — Asim + IVA + ISR PM</div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el PDF aquí</div>
+        <div class="pdf-result" id="pr-1"></div>
+      </div>
+
+      <!-- PDF 2 -->
+      <div class="pdf-zone" id="pz-2" onclick="document.getElementById('pf-2').click()">
+        <input type="file" id="pf-2" accept=".pdf" style="display:none;" onchange="procesarPdf(this.files[0],2)" />
+        <div class="pdf-zone-label">PDF 2 — ISR Honorarios</div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el PDF aquí</div>
+        <div class="pdf-result" id="pr-2"></div>
+      </div>
+
+      <!-- PDF 3 -->
+      <div class="pdf-zone" id="pz-3" onclick="document.getElementById('pf-3').click()">
+        <input type="file" id="pf-3" accept=".pdf" style="display:none;" onchange="procesarPdf(this.files[0],3)" />
+        <div class="pdf-zone-label">PDF 3 — Arrendamiento (opcional)</div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el PDF aquí</div>
+        <div class="pdf-result" id="pr-3"></div>
+      </div>
+
+      <div id="pdf-resumen" style="margin-top:0.75rem; padding:0.75rem; background:var(--navy-pale); border-radius:var(--radius); font-size:0.78rem; display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pdf')">Cerrar</button>
+      <button class="btn btn-primary" id="pdf-aplicar-btn" onclick="aplicarPdfs()" style="display:none;">Aplicar datos extraídos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm bar (inline edits: ISR PM + F.Pago) -->
+<div class="confirm-bar" id="confirm-bar">
+  <div class="confirm-bar-msg" id="confirm-bar-msg">Cambios pendientes</div>
+  <button class="btn btn-ghost" style="color:#fff; border-color:rgba(255,255,255,0.35); font-size:0.78rem;"
+    onclick="descartarCambios()">✕ Descartar</button>
+  <button class="btn" style="background:#fff; color:var(--navy); font-weight:700; font-size:0.78rem;"
+    onclick="confirmarCambios()">✓ Confirmar cambios</button>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script>
+
+/* ── Disclaimer SAT toggle ── */
+function toggleDisclaimer() {
+  const body = document.getElementById('disclaimer-body');
+  const lbl  = document.getElementById('disclaimer-toggle-lbl');
+  if (!body || !lbl) return;
+  const open = body.classList.toggle('hidden');  // hidden = collapsed
+  lbl.textContent = open ? 'Ver detalle ▾' : 'Ocultar ▴';
+  // Persist preference
+  try { localStorage.setItem('stgl_disclaimer_ret', open ? '0' : '1'); } catch(e){}
+}
+
+/* ── PDF.js worker ── */
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
+
+const KEY_RET   = 'stgl_retenciones';
+const KEY_EXTRA = 'stgl_retenciones_extra';
+const KEY_ASIM  = 'stgl_asimilables';
+const KEY_HON   = 'stgl_honorarios';
+
+const MES_NOMBRES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MES_MAP     = {Ene:1,Feb:2,Mar:3,Abr:4,May:5,Jun:6,Jul:7,Ago:8,Sep:9,Oct:10,Nov:11,Dic:12};
+
+/* ── Utilidades ── */
+function fmtNum(n)  { return Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtM(n)    { return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(1)+'K'; }
+function parseNum(s){ return parseFloat((s||'0').toString().replace(/,/g,''))||0; }
+function fv(id)     { return parseFloat(document.getElementById(id)?.value||'0')||0; }
+
+/* ── Parsear mes fiscal "Mar-26" → {año, mes} ── */
+function parseMesFiscal(mf) {
+  if (!mf) return null;
+  const [m, y] = mf.split('-');
+  const mes = MES_MAP[m];
+  if (!mes || !y) return null;
+  const año = parseInt(y) < 50 ? 2000+parseInt(y) : 1900+parseInt(y);
+  return { año, mes };
+}
+
+/* ── Calcular retenciones desde datos de nómina ── */
+function calcFromNomina(year, mes) {
+  const asimData = loadRegistry(KEY_ASIM);
+  const honData  = loadRegistry(KEY_HON);
+
+  const asimRecs = asimData.filter(r => {
+    const p = parseMesFiscal(r.mesFiscal);
+    return p && p.año === year && p.mes === mes;
+  });
+  const honRecs = honData.filter(r => {
+    const p = parseMesFiscal(r.mesFiscal);
+    return p && p.año === year && p.mes === mes;
+  });
+
+  const retenidoAsim   = asimRecs.reduce((s,r) => s + parseNum(r.subtotalRet), 0);
+  const retenidoIsrHon = honRecs.reduce((s,r)  => s + parseNum(r.retIsr), 0);
+  const retenidoIvaHon = honRecs.reduce((s,r)  => s + parseNum(r.retIva), 0);
+
+  return { retenidoAsim, retenidoIsrHon, retenidoIvaHon,
+           hasNominaData: asimRecs.length > 0 || honRecs.length > 0 };
+}
+
+/* ── Estado global ── */
+let selectedYear = 2026;
+let pendingChanges = {};
+let currentEditKey = null;
+let pdfData = {};  // {1: {linea, importe, fecha}, 2: {...}, 3: {...}}
+
+/* ── Year selection ── */
+function selectYear(year) {
+  selectedYear = year;
+  [2022,2023,2024,2025,2026].forEach(y => {
+    document.getElementById('yr-'+y)?.classList.toggle('active', y===year);
+  });
+  pendingChanges = {};
+  updateConfirmBar();
+  renderTable();
+}
+
+/* ── Confirm bar (inline edits) ── */
+function updateConfirmBar() {
+  const n   = Object.keys(pendingChanges).length;
+  const bar = document.getElementById('confirm-bar');
+  const msg = document.getElementById('confirm-bar-msg');
+  if (n === 0) { bar.classList.remove('visible'); return; }
+  bar.classList.add('visible');
+  msg.textContent = `${n} mes${n!==1?'es':''} con cambios sin guardar`;
+}
+
+function confirmarCambios() {
+  const extra = loadExtraObj();
+  for (const [key, changes] of Object.entries(pendingChanges)) {
+    if (!extra[key]) extra[key] = {};
+    Object.assign(extra[key], changes);
+    if (!extra[key].isrPm && extra[key].isrPm !== 0) delete extra[key].isrPm;
+    if (!extra[key].fechaPagoReal) delete extra[key].fechaPagoReal;
+  }
+  saveExtraObj(extra);
+  pendingChanges = {};
+  updateConfirmBar();
+  toast('Cambios guardados','success');
+  renderTable();
+}
+
+function descartarCambios() {
+  pendingChanges = {};
+  updateConfirmBar();
+  renderTable();
+}
+
+function markDirty(key, field, value) {
+  if (!pendingChanges[key]) pendingChanges[key] = {};
+  pendingChanges[key][field] = value;
+  const row = document.querySelector(`tr[data-key="${key}"]`);
+  if (row) {
+    row.classList.add('row-dirty');
+    const inp = row.querySelector(`.inline-${field}`);
+    if (inp) inp.classList.add('dirty');
+  }
+  updateConfirmBar();
+}
+
+/* ── Extra storage ── */
+function loadExtraObj() {
+  try { return JSON.parse(localStorage.getItem(KEY_EXTRA)||'{}'); } catch(e) { return {}; }
+}
+function saveExtraObj(obj) {
+  localStorage.setItem(KEY_EXTRA, JSON.stringify(obj));
+}
+
+/* ══════════════════════════════
+   CUMPLIMIENTO Y DETECCIÓN DE ANOMALÍAS SAT
+══════════════════════════════ */
+
+/**
+ * Fecha límite de pago SAT: día 17 del mes siguiente al mes de la retención.
+ * Ej: retención de Enero → vence 17-Feb.
+ */
+function fechaLimitePago(year, mes) {  // mes 1-indexed
+  let limM = mes + 1, limY = year;
+  if (limM > 12) { limM = 1; limY++; }
+  return `${limY}-${String(limM).padStart(2,'0')}-17`;
+}
+
+/**
+ * Retorna {limite, diasAtraso, diasRestantes, isPast} para un mes de retención.
+ * diasAtraso > 0  → vencido X días
+ * diasAtraso <= 0 → aún faltan |diasAtraso| días
+ */
+function calcVencimiento(year, mes) {
+  const limite  = fechaLimitePago(year, mes);
+  const limDate = new Date(limite + 'T00:00:00');
+  const today   = new Date(); today.setHours(0,0,0,0);
+  const diasAtraso    = Math.round((today - limDate) / 86400000);
+  const diasRestantes = -diasAtraso; // positive = days left
+  return { limite, limDate, diasAtraso, diasRestantes, isPast: diasAtraso > 0 };
+}
+
+/**
+ * Detecta anomalías en un mes de retención.
+ * row: { m, totalRet, totalPag, diff, fechaPago, ivaHonR, isrHonR, asimR, venc }
+ * Retorna array de { tipo, severidad:'error'|'warn', mensaje, detalle }
+ */
+function detectarAnomalias(row) {
+  const { m, totalRet, totalPag, diff, fechaPago, ivaHonR, isrHonR, venc } = row;
+  const alertas = [];
+  if (totalRet === 0 && totalPag === 0) return alertas;
+
+  const mesNom = MES_NOMBRES[m-1] + '-' + String(selectedYear).slice(2);
+
+  // 1. Retención pendiente y vencida (sin pago, pasó la fecha límite)
+  if (totalRet > 0 && totalPag === 0 && !fechaPago && venc.isPast) {
+    const d = venc.diasAtraso;
+    alertas.push({
+      tipo: 'vencido', severidad: 'error',
+      mensaje: `Pago vencido — ${d} día${d!==1?'s':''} de atraso`,
+      detalle: `Fecha límite SAT: ${venc.limite}. El SAT puede generar recargos (${(d*0.00192*100).toFixed(2)}% est.) y actualización por inflación.`
+    });
+  }
+
+  // 2. Próximo a vencer (sin pago, menos de 7 días)
+  if (totalRet > 0 && totalPag === 0 && !fechaPago && !venc.isPast && venc.diasRestantes <= 7) {
+    const d = venc.diasRestantes;
+    alertas.push({
+      tipo: 'proximo', severidad: 'warn',
+      mensaje: `Vence en ${d} día${d!==1?'s':''}`,
+      detalle: `Fecha límite de pago SAT: ${venc.limite}`
+    });
+  }
+
+  // 3. Diferencia significativa entre retenido y pagado (>5%)
+  if (totalRet > 0 && totalPag > 0 && Math.abs(diff) / totalRet > 0.05) {
+    const pct = (Math.abs(diff) / totalRet * 100).toFixed(1);
+    alertas.push({
+      tipo: diff > 0 ? 'underpaid' : 'overpaid',
+      severidad: diff > 0 ? 'warn' : 'error',
+      mensaje: diff > 0
+        ? `Posible pago insuficiente (${pct}% de diferencia)`
+        : `Pago excedente detectado (${pct}% de diferencia)`,
+      detalle: `Retenido: $${fmtNum(totalRet)} · Pagado: $${fmtNum(totalPag)} · Diferencia: $${fmtNum(Math.abs(diff))} — Verifica los acuses SAT y ajusta si incluye recargos.`
+    });
+  }
+
+  // 4. IVA de honorarios faltante cuando hay ISR de honorarios
+  if (isrHonR > 0 && ivaHonR === 0) {
+    alertas.push({
+      tipo: 'iva-faltante', severidad: 'warn',
+      mensaje: 'IVA de honorarios no registrado',
+      detalle: `Hay ISR honorarios ($${fmtNum(isrHonR)}) pero no IVA retenido. Verifica CFDIs: los honorarios causarían IVA al 16% si el monto facturado lo genera.`
+    });
+  }
+
+  // 5. Pago extemporáneo (pagado, pero después de la fecha límite)
+  if (fechaPago && totalPag > 0) {
+    const payDate = new Date(fechaPago + 'T00:00:00');
+    if (payDate > venc.limDate) {
+      const d = Math.round((payDate - venc.limDate) / 86400000);
+      alertas.push({
+        tipo: 'tardio', severidad: 'warn',
+        mensaje: `Pago extemporáneo — ${d} día${d!==1?'s':''} después del límite`,
+        detalle: `Límite: ${venc.limite} · Pago: ${fechaPago}. Posibles recargos y actualización no reflejados en los acuses.`
+      });
+    }
+  }
+
+  return alertas;
+}
+
+let __anomPanelOpen = false;
+
+/** Renders the anomaly summary panel above the table */
+function renderAnomaliaPanel(allRows) {
+  const panelEl = document.getElementById('anomalia-panel');
+  if (!panelEl) return;
+
+  const todasAlertas = [];
+  allRows.forEach(row => {
+    if (!row.alertasRow) return;
+    row.alertasRow.forEach(a => todasAlertas.push({ ...a, mesLabel: row.mesLabel }));
+  });
+
+  if (!todasAlertas.length) {
+    panelEl.className = 'anom-panel anom-panel-ok';
+    panelEl.innerHTML = `<div class="anom-ok"><span>✓</span><span>Sin anomalías de cumplimiento detectadas para ${selectedYear} — todo en orden</span></div>`;
+    panelEl.style.display = '';
+    return;
+  }
+
+  const errores = todasAlertas.filter(a => a.severidad === 'error');
+  const warns   = todasAlertas.filter(a => a.severidad === 'warn');
+  panelEl.className = errores.length ? 'anom-panel anom-panel-error' : 'anom-panel';
+
+  const listOpen = __anomPanelOpen ? '' : 'hidden';
+
+  panelEl.innerHTML = `
+    <div class="anom-header">
+      <span class="anom-header-icon">${errores.length ? '🔴' : '⚠️'}</span>
+      <span class="anom-header-title">${todasAlertas.length} alerta${todasAlertas.length!==1?'s':''} de cumplimiento detectada${todasAlertas.length!==1?'s':''} en ${selectedYear}</span>
+      ${errores.length ? `<span class="anom-count error">${errores.length} crítica${errores.length!==1?'s':''}</span>` : ''}
+      ${warns.length   ? `<span class="anom-count warn">${warns.length} advertencia${warns.length!==1?'s':''}</span>` : ''}
+      <button class="anom-toggle" onclick="toggleAnomPanel()">${__anomPanelOpen?'Ocultar ▴':'Ver detalle ▾'}</button>
+    </div>
+    <div class="anom-list ${listOpen}" id="anom-list">
+      ${todasAlertas.map(a => `
+        <div class="anom-item anom-${a.severidad}">
+          <span class="anom-sev-icon">${a.severidad==='error'?'🔴':'⚠️'}</span>
+          <div>
+            <strong>${escH(a.mesLabel)}:</strong> ${escH(a.mensaje)}
+            <div class="anom-detalle">${escH(a.detalle)}</div>
+          </div>
+        </div>`).join('')}
+      <div style="padding:0.55rem 1rem; border-top:1px solid #fde68a; background:rgba(255,255,255,0.6); font-size:0.65rem; color:#78716c; font-style:italic; line-height:1.5;">
+        ⚖️ <strong style="color:#57534e;">Aviso:</strong> Estas alertas son indicadores informativos basados en los CFDIs importados. No incluyen recargos, actualizaciones ni multas del SAT. El criterio de la autoridad puede diferir — consulte a su asesor fiscal ante cualquier discrepancia.
+      </div>
+    </div>`;
+  panelEl.style.display = '';
+}
+
+function toggleAnomPanel() {
+  __anomPanelOpen = !__anomPanelOpen;
+  const list = document.getElementById('anom-list');
+  const btn  = document.querySelector('.anom-toggle');
+  if (list) list.classList.toggle('hidden', !__anomPanelOpen);
+  if (btn)  btn.textContent = __anomPanelOpen ? 'Ocultar ▴' : 'Ver detalle ▾';
+}
+
+/* ══════════════════════════════
+   RENDER TABLE
+══════════════════════════════ */
+function renderTable() {
+  const all   = loadRegistry(KEY_RET);
+  const extra = loadExtraObj();
+
+  // Build month map for selected year (from Excel import)
+  const monthMap = {};
+  all.filter(r => (r.año || Number(r.id?.split('-')[0])) === selectedYear
+                || Number(r.año) === selectedYear).forEach(r => {
+    const mes = r.mes || (r.id ? parseInt(r.id.split('-')[1]) : null);
+    if (mes) monthMap[mes] = r;
+  });
+
+  let totRetenido=0, totPagado=0, pendMeses=0;
+  let tAsimR=0, tAsimP=0, tIsrHonR=0, tIsrHonP=0, tIvaHonR=0, tIvaHonP=0, tIsrPm=0, tTotR=0, tTotP=0;
+
+  const rows = [];
+  for (let m=1; m<=12; m++) {
+    const key    = `${selectedYear}-${String(m).padStart(2,'0')}`;
+    const r      = monthMap[m] || {};
+    const ex     = extra[key] || {};
+    const pc     = pendingChanges[key] || {};
+
+    // Compute from nomina (live calculation)
+    const comp = calcFromNomina(selectedYear, m);
+
+    // Retenido: override > computed > Excel import
+    const asimR   = ex.overrideAsimR   !== undefined && ex.overrideAsimR   !== null
+                    ? parseNum(ex.overrideAsimR)
+                    : (comp.retenidoAsim   || parseNum(r.retenidoAsim   || 0));
+    const isrHonR = ex.overrideIsrHonR !== undefined && ex.overrideIsrHonR !== null
+                    ? parseNum(ex.overrideIsrHonR)
+                    : (comp.retenidoIsrHon || parseNum(r.retenidoIsrHon || 0));
+    const ivaHonR = ex.overrideIvaHonR !== undefined && ex.overrideIvaHonR !== null
+                    ? parseNum(ex.overrideIvaHonR)
+                    : (comp.retenidoIvaHon || parseNum(r.retenidoIvaHon || 0));
+
+    // ISR PM: inline pending > extra > Excel
+    const isrPmRaw = pc.isrPm !== undefined ? pc.isrPm
+                   : (ex.isrPm !== undefined ? ex.isrPm : (r.retenidoIsrPm || ''));
+    const isrPm = parseNum(isrPmRaw);
+
+    // Pagado: from extra (user-entered via modal) > Excel import
+    const asimP   = parseNum(ex.pagadoAsim   !== undefined ? ex.pagadoAsim   : (r.pagadoAsim   || 0));
+    const isrHonP = parseNum(ex.pagadoIsrHon !== undefined ? ex.pagadoIsrHon : (r.pagadoIsrHon || 0));
+    const ivaHonP = parseNum(ex.pagadoIvaHon !== undefined ? ex.pagadoIvaHon : (r.pagadoIvaHon || 0));
+
+    // Acuse total (from extra or Excel)
+    const acuseTotal = parseNum(ex.acuseTotal !== undefined ? ex.acuseTotal : (r.acuseTotal || 0));
+    const acuseFecha = ex.acuseFecha || r.acuseFechaPago || '';
+
+    // F. Pago Real: inline pending > extra > Excel
+    const fechaPago = pc.fechaPagoReal !== undefined ? pc.fechaPagoReal
+                    : (ex.fechaPagoReal || r.fechaPago || '');
+
+    const totalRet = asimR + isrHonR + ivaHonR + isrPm
+      + parseNum(r.retenidoIsrArr || 0) + parseNum(r.retenidoIvaArr || 0);
+
+    // Total pagado = acuse total if available, else sum of individual paid cols
+    const totalPag = acuseTotal > 0 ? acuseTotal
+      : asimP + isrHonP + ivaHonP
+        + parseNum(r.pagadoIsrArr || 0) + parseNum(r.pagadoIvaArr || 0);
+
+    const diff = totalRet - totalPag;
+
+    totRetenido += totalRet;
+    totPagado   += totalPag;
+    if (totalRet > 0 && !fechaPago && totalPag === 0) pendMeses++;
+
+    tAsimR += asimR; tAsimP += asimP;
+    tIsrHonR += isrHonR; tIsrHonP += isrHonP;
+    tIvaHonR += ivaHonR; tIvaHonP += ivaHonP;
+    tIsrPm += isrPm; tTotR += totalRet; tTotP += totalPag;
+
+    // Vencimiento y estado de cumplimiento
+    const venc = calcVencimiento(selectedYear, m);
+
+    // Estado (enriquecido con compliance)
+    let estadoBadge, estadoLabel, estadoTitle = `Límite SAT: ${venc.limite}`;
+    if (totalPag > 0 || fechaPago) {
+      if (fechaPago && totalRet > 0) {
+        const payDate = new Date(fechaPago + 'T00:00:00');
+        if (payDate > venc.limDate) {
+          const dLate = Math.round((payDate - venc.limDate) / 86400000);
+          estadoBadge = 'badge-warn'; estadoLabel = 'Pagado tard.';
+          estadoTitle = `Pagado ${dLate}d después del límite (${venc.limite})`;
+        } else {
+          estadoBadge = 'badge-green'; estadoLabel = 'Pagado';
+          estadoTitle = `Pagado a tiempo · Límite: ${venc.limite}`;
+        }
+      } else {
+        estadoBadge = 'badge-green'; estadoLabel = 'Pagado';
+      }
+    } else if (totalRet > 0) {
+      if (venc.diasAtraso > 0) {
+        estadoBadge = 'badge-red'; estadoLabel = `Vencido ${venc.diasAtraso}d`;
+        estadoTitle = `Vencido hace ${venc.diasAtraso} días (límite: ${venc.limite})`;
+      } else if (venc.diasRestantes <= 7) {
+        estadoBadge = 'badge-warn'; estadoLabel = `Vence ${venc.diasRestantes}d`;
+        estadoTitle = `Faltan ${venc.diasRestantes} días para el límite: ${venc.limite}`;
+      } else {
+        estadoBadge = 'badge-gold'; estadoLabel = 'Pendiente';
+      }
+    } else {
+      estadoBadge = 'badge-gray'; estadoLabel = '—';
+    }
+
+    const dirty   = !!pendingChanges[key];
+    const dirtyPm = dirty && pc.isrPm !== undefined;
+    const dirtyFp = dirty && pc.fechaPagoReal !== undefined;
+    const hasOverride = ex.overrideAsimR !== undefined || ex.overrideIsrHonR !== undefined || ex.overrideIvaHonR !== undefined;
+    const hasAcuse = acuseTotal > 0 || ex.lineaCaptura1 || ex.lineaCaptura2;
+    const mesLabel = MES_NOMBRES[m-1] + '-' + String(selectedYear).slice(2);
+    const isAutoCalc = comp.hasNominaData;
+
+    // Anomaly detection for this row
+    const alertasRow = detectarAnomalias({ m, totalRet, totalPag, diff, fechaPago, ivaHonR, isrHonR, asimR, venc });
+
+    rows.push({ key, m, mesLabel, asimR, asimP, isrHonR, isrHonP, ivaHonR, ivaHonP,
+                isrPm, isrPmRaw, totalRet, totalPag, diff, fechaPago,
+                estadoBadge, estadoLabel, estadoTitle, dirty, dirtyPm, dirtyFp,
+                hasOverride, isAutoCalc, hasAcuse, acuseTotal, acuseFecha, ex, r,
+                venc, alertasRow });
+  }
+
+  // KPIs
+  document.getElementById('kpi-retenido').textContent   = '$'+fmtNum(totRetenido);
+  document.getElementById('kpi-pagado').textContent     = '$'+fmtNum(totPagado);
+  document.getElementById('kpi-diferencia').textContent = '$'+fmtNum(totRetenido-totPagado);
+  document.getElementById('kpi-pendientes').textContent  = pendMeses;
+  document.getElementById('kpi-pagado-pct').textContent  = totRetenido>0?(totPagado/totRetenido*100).toFixed(1)+'% del total':'';
+  document.getElementById('ret-meta').textContent        = `Año ${selectedYear}`;
+
+  // Tbody
+  document.getElementById('ret-tbody').innerHTML = rows.map(row => {
+    const autoTag = row.isAutoCalc
+      ? '<span style="font-size:0.58rem; color:var(--text-xs); font-style:italic; margin-left:3px;" title="Calculado de nómina">⟳</span>'
+      : '';
+    const ovTag = row.hasOverride
+      ? '<span style="font-size:0.58rem; color:#e67e22; margin-left:3px;" title="Con override manual">✎</span>'
+      : '';
+
+    const main = `
+    <tr data-key="${row.key}" class="${row.dirty?'row-dirty':''}">
+      <td style="font-family:var(--brand); font-weight:700; color:var(--navy);">
+        ${row.mesLabel}${autoTag}${ovTag}
+      </td>
+      <td class="num">${row.asimR>0?'$'+fmtNum(row.asimR):'—'}</td>
+      <td class="num" style="color:var(--green);">${row.asimP>0?'$'+fmtNum(row.asimP):'—'}</td>
+      <td class="num">${row.isrHonR>0?'$'+fmtNum(row.isrHonR):'—'}</td>
+      <td class="num" style="color:var(--green);">${row.isrHonP>0?'$'+fmtNum(row.isrHonP):'—'}</td>
+      <td class="num">${row.ivaHonR>0?'$'+fmtNum(row.ivaHonR):'—'}</td>
+      <td class="num" style="color:var(--green);">${row.ivaHonP>0?'$'+fmtNum(row.ivaHonP):'—'}</td>
+      <td class="num">
+        <input type="number" class="inline-input inline-isrPm${row.dirtyPm?' dirty':''}"
+          value="${row.isrPmRaw}" min="0" step="any" placeholder="—"
+          oninput="markDirty('${row.key}','isrPm',this.value)" />
+      </td>
+      <td class="num" style="font-weight:700;">${row.totalRet>0?'$'+fmtNum(row.totalRet):'—'}</td>
+      <td class="num" style="color:var(--green); font-weight:600;">${row.totalPag>0?'$'+fmtNum(row.totalPag):'—'}</td>
+      <td class="num" style="color:${row.diff>0?'#a84400':row.diff<0?'var(--red)':'var(--text-dim)'};">
+        ${row.diff!==0?'$'+fmtNum(row.diff):'—'}
+      </td>
+      <td>
+        <input type="date" class="inline-input inline-fechaPagoReal${row.dirtyFp?' dirty':''}"
+          value="${row.fechaPago}" style="min-width:110px;"
+          onchange="markDirty('${row.key}','fechaPagoReal',this.value)" />
+      </td>
+      <td class="center">
+        <span class="badge ${row.estadoBadge}" title="${row.estadoTitle||''}">${row.estadoLabel}</span>${row.alertasRow.length ? `<span class="anom-dot anom-dot-${row.alertasRow[0].severidad}" title="${row.alertasRow.map(a=>a.mensaje).join(' · ')}">●</span>` : ''}
+      </td>
+      <td class="center">
+        <button class="edit-row" onclick="abrirEditar('${row.key}')" title="Editar datos del mes">✏️</button>
+      </td>
+    </tr>`;
+
+    const acuse = row.hasAcuse ? `
+    <tr class="acuse-row">
+      <td colspan="14" style="padding-left:1.5rem;">
+        <span style="font-family:var(--brand); font-weight:700; font-size:0.65rem; color:var(--navy); margin-right:0.5rem;">Acuses SAT:</span>
+        ${row.acuseTotal>0 ? 'Total: <strong>$'+fmtNum(row.acuseTotal)+'</strong>' : ''}
+        ${row.acuseFecha  ? ' · F.Pago: <strong>'+row.acuseFecha+'</strong>' : ''}
+        ${row.ex.lineaCaptura1 ? ' · LC1: <span style="font-family:monospace;">'+row.ex.lineaCaptura1+'</span>' : ''}
+        ${row.ex.lineaCaptura2 ? ' · LC2: <span style="font-family:monospace;">'+row.ex.lineaCaptura2+'</span>' : ''}
+        ${row.ex.notas ? ' · '+row.ex.notas : ''}
+      </td>
+    </tr>` : '';
+
+    return main + acuse;
+  }).join('');
+
+  // Anomaly panel
+  renderAnomaliaPanel(rows);
+
+  // Tfoot
+  const totDiff = tTotR - tTotP;
+  document.getElementById('ret-tfoot').innerHTML = `
+    <tr>
+      <td style="font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase;">TOTALES ${selectedYear}</td>
+      <td class="num">$${fmtNum(tAsimR)}</td>
+      <td class="num" style="color:var(--green);">$${fmtNum(tAsimP)}</td>
+      <td class="num">$${fmtNum(tIsrHonR)}</td>
+      <td class="num" style="color:var(--green);">$${fmtNum(tIsrHonP)}</td>
+      <td class="num">$${fmtNum(tIvaHonR)}</td>
+      <td class="num" style="color:var(--green);">$${fmtNum(tIvaHonP)}</td>
+      <td class="num">$${fmtNum(tIsrPm)}</td>
+      <td class="num" style="font-size:0.82rem;">$${fmtNum(tTotR)}</td>
+      <td class="num" style="color:var(--green); font-size:0.82rem;">$${fmtNum(tTotP)}</td>
+      <td class="num" style="color:${totDiff>0?'#a84400':'var(--text-dim)'};">$${fmtNum(totDiff)}</td>
+      <td colspan="3"></td>
+    </tr>`;
+}
+
+/* ══════════════════════════════
+   MODAL DE EDICIÓN
+══════════════════════════════ */
+function abrirEditar(key) {
+  currentEditKey = key;
+  const [yr, mo] = key.split('-');
+  const mesLabel = MES_NOMBRES[parseInt(mo)-1] + '-' + String(yr).slice(2);
+  document.getElementById('edit-titulo').textContent = `Editar retención — ${mesLabel}`;
+
+  const extra = loadExtraObj();
+  const ex    = extra[key] || {};
+  const comp  = calcFromNomina(parseInt(yr), parseInt(mo));
+
+  // Retenciones: mostrar override en el campo, hint con valor calculado
+  const fields = [
+    { id:'edit-asimR',   hintId:'edit-asimR-hint',   override:'overrideAsimR',   comp:comp.retenidoAsim,   label:'calc. nómina' },
+    { id:'edit-isrHonR', hintId:'edit-isrHonR-hint',  override:'overrideIsrHonR', comp:comp.retenidoIsrHon, label:'calc. nómina' },
+    { id:'edit-ivaHonR', hintId:'edit-ivaHonR-hint',  override:'overrideIvaHonR', comp:comp.retenidoIvaHon, label:'calc. nómina' },
+  ];
+  fields.forEach(f => {
+    const el   = document.getElementById(f.id);
+    const hint = document.getElementById(f.hintId);
+    if (ex[f.override] !== undefined && ex[f.override] !== null) {
+      el.value = ex[f.override];
+      if (hint) hint.textContent = `(${f.label}: $${fmtNum(f.comp)})`;
+    } else {
+      el.value = '';
+      if (hint) hint.textContent = f.comp > 0
+        ? `Auto (${f.label}): $${fmtNum(f.comp)} — dejar vacío para usar este valor`
+        : 'Sin datos en nómina para este mes';
+    }
+  });
+
+  // ISR PM
+  const allRet = loadRegistry(KEY_RET);
+  const r = allRet.find(x => (x.año===parseInt(yr)||Number(x.año)===parseInt(yr)) && (x.mes===parseInt(mo)||Number(x.mes)===parseInt(mo))) || {};
+  document.getElementById('edit-isrPm').value     = ex.isrPm !== undefined ? ex.isrPm : (r.retenidoIsrPm || '');
+  document.getElementById('edit-fechaPago').value = ex.fechaPagoReal || r.fechaPago || '';
+  document.getElementById('edit-acuseAsim').value = ex.acuseAsim !== undefined ? ex.acuseAsim : (r.acuseAsimIvaIsrPm || '');
+  document.getElementById('edit-acuseHon').value  = ex.acuseHon  !== undefined ? ex.acuseHon  : (r.acuseIsrHon || '');
+  document.getElementById('edit-acuseArr').value  = ex.acuseArr  !== undefined ? ex.acuseArr  : '';
+  document.getElementById('edit-acuseFecha').value= ex.acuseFecha || r.acuseFechaPago || '';
+  document.getElementById('edit-lc1').value       = ex.lineaCaptura1 || '';
+  document.getElementById('edit-lc2').value       = ex.lineaCaptura2 || '';
+  document.getElementById('edit-lc3').value       = ex.lineaCaptura3 || '';
+  document.getElementById('edit-notas').value     = ex.notas || '';
+
+  calcEditTotals();
+  pdfData = {};
+  openModal('modal-editar');
+}
+
+function calcEditTotals() {
+  const asimR   = fv('edit-asimR');
+  const isrHonR = fv('edit-isrHonR');
+  const ivaHonR = fv('edit-ivaHonR');
+  const isrPm   = fv('edit-isrPm');
+  // Use comp if fields are empty
+  const key = currentEditKey;
+  if (!key) return;
+  const [yr, mo] = key.split('-');
+  const comp = calcFromNomina(parseInt(yr), parseInt(mo));
+  const ex = (loadExtraObj())[key] || {};
+
+  const effAsim   = asimR   || (ex.overrideAsimR   ?? comp.retenidoAsim);
+  const effIsrHon = isrHonR || (ex.overrideIsrHonR ?? comp.retenidoIsrHon);
+  const effIvaHon = ivaHonR || (ex.overrideIvaHonR ?? comp.retenidoIvaHon);
+  const effIsrPm  = fv('edit-isrPm');
+
+  const totalRet = effAsim + effIsrHon + effIvaHon + effIsrPm;
+  document.getElementById('edit-total-ret').textContent = '$'+fmtNum(totalRet);
+
+  const acuseTotal = fv('edit-acuseAsim') + fv('edit-acuseHon') + fv('edit-acuseArr');
+  document.getElementById('edit-total-acuse').textContent = '$'+fmtNum(acuseTotal);
+}
+
+function guardarEdicion() {
+  if (!currentEditKey) return;
+  const extra = loadExtraObj();
+  if (!extra[currentEditKey]) extra[currentEditKey] = {};
+  const ex = extra[currentEditKey];
+
+  // Overrides: solo guardar si el usuario ingresó algo
+  const asimRVal = document.getElementById('edit-asimR').value;
+  ex.overrideAsimR   = asimRVal !== '' ? parseFloat(asimRVal) : null;
+  const isrHonRVal = document.getElementById('edit-isrHonR').value;
+  ex.overrideIsrHonR = isrHonRVal !== '' ? parseFloat(isrHonRVal) : null;
+  const ivaHonRVal = document.getElementById('edit-ivaHonR').value;
+  ex.overrideIvaHonR = ivaHonRVal !== '' ? parseFloat(ivaHonRVal) : null;
+
+  const isrPmVal = document.getElementById('edit-isrPm').value;
+  if (isrPmVal !== '') ex.isrPm = parseFloat(isrPmVal); else delete ex.isrPm;
+
+  const fp = document.getElementById('edit-fechaPago').value;
+  if (fp) ex.fechaPagoReal = fp; else delete ex.fechaPagoReal;
+
+  const a1 = document.getElementById('edit-acuseAsim').value;
+  const a2 = document.getElementById('edit-acuseHon').value;
+  const a3 = document.getElementById('edit-acuseArr').value;
+  if (a1 !== '') ex.acuseAsim = parseFloat(a1); else delete ex.acuseAsim;
+  if (a2 !== '') ex.acuseHon  = parseFloat(a2); else delete ex.acuseHon;
+  if (a3 !== '') ex.acuseArr  = parseFloat(a3); else delete ex.acuseArr;
+  ex.acuseTotal = (parseFloat(a1)||0)+(parseFloat(a2)||0)+(parseFloat(a3)||0);
+  if (ex.acuseTotal === 0) delete ex.acuseTotal;
+
+  const af = document.getElementById('edit-acuseFecha').value;
+  if (af) ex.acuseFecha = af; else delete ex.acuseFecha;
+
+  const lc1 = document.getElementById('edit-lc1').value.trim();
+  const lc2 = document.getElementById('edit-lc2').value.trim();
+  const lc3 = document.getElementById('edit-lc3').value.trim();
+  if (lc1) ex.lineaCaptura1 = lc1; else delete ex.lineaCaptura1;
+  if (lc2) ex.lineaCaptura2 = lc2; else delete ex.lineaCaptura2;
+  if (lc3) ex.lineaCaptura3 = lc3; else delete ex.lineaCaptura3;
+
+  const notas = document.getElementById('edit-notas').value.trim();
+  if (notas) ex.notas = notas; else delete ex.notas;
+
+  // Limpieza de null overrides que son innecesarios
+  if (ex.overrideAsimR === null && ex.overrideIsrHonR === null && ex.overrideIvaHonR === null) {
+    delete ex.overrideAsimR; delete ex.overrideIsrHonR; delete ex.overrideIvaHonR;
+  }
+  if (Object.keys(ex).length === 0) delete extra[currentEditKey];
+
+  saveExtraObj(extra);
+  closeModal('modal-editar');
+  // Remove from pendingChanges if it was inline-edited too
+  delete pendingChanges[currentEditKey];
+  updateConfirmBar();
+  toast('Datos del mes guardados','success');
+  renderTable();
+}
+
+/* ══════════════════════════════
+   IMPORTACIÓN DE PDF
+══════════════════════════════ */
+function abrirPdfImport() {
+  // Open PDF modal, keeping edit modal open behind
+  pdfData = {};
+  [1,2,3].forEach(n => {
+    document.getElementById('pr-'+n).textContent = '';
+    document.getElementById('pz-'+n).classList.remove('loaded');
+    const inp = document.getElementById('pf-'+n);
+    if (inp) inp.value = '';
+  });
+  document.getElementById('pdf-resumen').style.display = 'none';
+  document.getElementById('pdf-aplicar-btn').style.display = 'none';
+  openModal('modal-pdf');
+}
+
+async function procesarPdf(file, num) {
+  if (!file) return;
+  const resultEl = document.getElementById('pr-'+num);
+  const zoneEl   = document.getElementById('pz-'+num);
+  resultEl.textContent = '⏳ Extrayendo texto…';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js no cargado');
+    const buf  = await file.arrayBuffer();
+    const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
+    let   text = '';
+    for (let i=1; i<=pdf.numPages; i++) {
+      const page    = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(x=>x.str).join(' ') + ' ';
+    }
+
+    const parsed = parsearLineaCaptura(text);
+    pdfData[num] = parsed;
+
+    const lines = [];
+    if (parsed.linea)         lines.push(`LC: ${parsed.linea}`);
+    if (parsed.importe > 0)   lines.push(`Importe: $${fmtNum(parsed.importe)}`);
+    if (parsed.fecha)         lines.push(`F.límite: ${parsed.fecha}`);
+    if (parsed.concepto)      lines.push(`Concepto: ${parsed.concepto}`);
+
+    resultEl.innerHTML = lines.length
+      ? '<strong>Extraído:</strong> ' + lines.join(' · ')
+      : '⚠ No se encontraron datos estructurados — verifica el PDF';
+    zoneEl.classList.add('loaded');
+
+    const allLoaded = Object.keys(pdfData).some(k => pdfData[k].importe > 0 || pdfData[k].linea);
+    if (allLoaded) {
+      document.getElementById('pdf-aplicar-btn').style.display = '';
+      const resumen = document.getElementById('pdf-resumen');
+      resumen.style.display = '';
+      resumen.innerHTML = Object.entries(pdfData).filter(([,d])=>d.importe>0||d.linea).map(([n,d])=>
+        `<div><strong>PDF ${n}:</strong> ${d.linea?'LC '+d.linea.slice(0,8)+'…':''} ${d.importe>0?'$'+fmtNum(d.importe):''} ${d.fecha||''}</div>`
+      ).join('');
+    }
+  } catch(e) {
+    resultEl.textContent = `⚠ Error al leer el PDF: ${e.message}`;
+  }
+}
+
+function parsearLineaCaptura(text) {
+  // Línea de captura: 18–25 dígitos consecutivos
+  const lcMatch = text.match(/\b(\d{18,25})\b/);
+  const linea   = lcMatch ? lcMatch[1] : '';
+
+  // Importes: buscar "$" o "MXN" seguido de número
+  const importeMatches = [...text.matchAll(/\$\s*([\d,]+\.?\d*)/g)];
+  const importes = importeMatches.map(m => parseFloat(m[1].replace(/,/g,''))).filter(v=>v>50);
+  // Tomar el importe más grande (el total a pagar suele ser el principal)
+  const importe = importes.length ? Math.max(...importes) : 0;
+
+  // Fecha límite: DD/MM/YYYY o YYYY-MM-DD
+  const fechaMatch = text.match(/(\d{2}\/\d{2}\/\d{4})/);
+  let fecha = '';
+  if (fechaMatch) {
+    const [d,mo,y] = fechaMatch[1].split('/');
+    fecha = `${y}-${mo}-${d}`;
+  }
+
+  // Concepto: buscar texto clave
+  const conceptoMatch = text.match(/Concepto[:\s]+([^\n$]{5,60})/i);
+  const concepto = conceptoMatch ? conceptoMatch[1].trim().substring(0,60) : '';
+
+  return { linea, importe, fecha, concepto };
+}
+
+function aplicarPdfs() {
+  // Pre-fill modal fields from pdfData
+  if (pdfData[1]) {
+    if (pdfData[1].importe > 0) document.getElementById('edit-acuseAsim').value = pdfData[1].importe.toFixed(2);
+    if (pdfData[1].linea)       document.getElementById('edit-lc1').value = pdfData[1].linea;
+    if (pdfData[1].fecha && !document.getElementById('edit-acuseFecha').value)
+      document.getElementById('edit-acuseFecha').value = pdfData[1].fecha;
+  }
+  if (pdfData[2]) {
+    if (pdfData[2].importe > 0) document.getElementById('edit-acuseHon').value = pdfData[2].importe.toFixed(2);
+    if (pdfData[2].linea)       document.getElementById('edit-lc2').value = pdfData[2].linea;
+  }
+  if (pdfData[3]) {
+    if (pdfData[3].importe > 0) document.getElementById('edit-acuseArr').value = pdfData[3].importe.toFixed(2);
+    if (pdfData[3].linea)       document.getElementById('edit-lc3').value = pdfData[3].linea;
+  }
+  calcEditTotals();
+  closeModal('modal-pdf');
+  toast('Datos PDF aplicados — revisa y guarda','success');
+}
+
+/* ── Importar histórico ── */
+function importarRetenciones() {
+  const s = document.createElement('script');
+  s.src = 'js/cargar_retenciones.js?t=' + Date.now();
+  s.onerror = () => toast('No se encontró cargar_retenciones.js','error');
+  s.onload  = () => { toast('Histórico importado','success'); renderTable(); };
+  document.head.appendChild(s);
+}
+
+/* ── Init ── */
+// Add input listeners for auto-calc in modal
+['edit-isrPm','edit-asimR','edit-isrHonR','edit-ivaHonR'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', calcEditTotals);
+});
+
+/* Restaurar estado del disclaimer según preferencia guardada */
+try {
+  const pref = localStorage.getItem('stgl_disclaimer_ret');
+  if (pref === '1') {  // usuario lo dejó abierto anteriormente
+    const body = document.getElementById('disclaimer-body');
+    const lbl  = document.getElementById('disclaimer-toggle-lbl');
+    if (body) body.classList.remove('hidden');
+    if (lbl)  lbl.textContent = 'Ocultar ▴';
+  }
+} catch(e) {}
+
+renderTable();
+</script>
+</body>
+</html>

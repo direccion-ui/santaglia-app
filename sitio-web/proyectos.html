@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Proyectos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand">
+          <a href="dashboard.html">
+            <img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" />
+          </a>
+        </div>
+        <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item active" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+        <div class="header-actions">
+          <button class="btn-logout" onclick="logout()">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="main">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Gestión de proyectos</div>
+            <h1 class="page-heading">Proyectos</h1>
+            <div class="page-meta" id="proj-count"></div>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-nuevo')">+ Nuevo proyecto</button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="flex gap-1 mb-2" style="flex-wrap:wrap;">
+          <button class="btn btn-ghost filtro active" data-filtro="todos" onclick="setFiltro(this,'todos')">Todos</button>
+          <button class="btn btn-ghost filtro" data-filtro="Activo" onclick="setFiltro(this,'Activo')">Activos</button>
+          <button class="btn btn-ghost filtro" data-filtro="Pendiente" onclick="setFiltro(this,'Pendiente')">Pendientes</button>
+          <button class="btn btn-ghost filtro" data-filtro="En pausa" onclick="setFiltro(this,'En pausa')">En pausa</button>
+          <button class="btn btn-ghost filtro" data-filtro="Cerrado" onclick="setFiltro(this,'Cerrado')">Cerrados</button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Proyecto</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Responsable</th>
+                <th>Fecha inicio</th>
+                <th>Notas</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tabla-proyectos"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+      <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+        <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+        <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal nuevo proyecto -->
+  <div class="modal-backdrop hidden" id="modal-nuevo">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Nuevo proyecto</span>
+        <button class="modal-close" onclick="closeModal('modal-nuevo')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nombre del proyecto *</label>
+          <input class="form-input" id="p-nombre" type="text" placeholder="Ej: Implementación CRM" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input class="form-input" id="p-cliente" type="text" placeholder="Nombre del cliente" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsable</label>
+          <input class="form-input" id="p-responsable" type="text" placeholder="Nombre del responsable" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-input" id="p-estado">
+            <option>Activo</option>
+            <option>Pendiente</option>
+            <option>En pausa</option>
+            <option>Cerrado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de inicio</label>
+          <input class="form-input" id="p-fecha" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea class="form-input" id="p-notas" placeholder="Descripción u observaciones del proyecto…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-nuevo')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarProyecto()">Guardar proyecto</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+  <script>
+    let filtroActivo = 'todos';
+
+    const BADGES = { 'Activo':'badge-green', 'En pausa':'badge-gold', 'Cerrado':'badge-gray', 'Pendiente':'badge-blue' };
+
+    function setFiltro(btn, f) {
+      filtroActivo = f;
+      document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTabla();
+    }
+
+    function renderTabla() {
+      const all = loadRegistry('stgl_proyectos');
+      const data = filtroActivo === 'todos' ? all : all.filter(p => p.estado === filtroActivo);
+      document.getElementById('proj-count').textContent =
+        `${all.length} proyecto${all.length !== 1 ? 's' : ''} en total`;
+
+      const tbody = document.getElementById('tabla-proyectos');
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:3rem; color:var(--text-xs); font-size:0.82rem;">
+          No hay proyectos${filtroActivo !== 'todos' ? ' con este estado' : ''}
+        </td></tr>`;
+        return;
+      }
+      tbody.innerHTML = [...data].reverse().map((p, i) => `
+        <tr>
+          <td class="mono" style="color:var(--text-xs); font-size:0.72rem;">${String(data.length - i).padStart(3,'0')}</td>
+          <td style="font-weight:600; color:var(--navy);">${p.nombre}</td>
+          <td style="color:var(--text-dim);">${p.cliente || '—'}</td>
+          <td><span class="badge ${BADGES[p.estado] || 'badge-gray'}">${p.estado}</span></td>
+          <td style="color:var(--text-dim);">${p.responsable || '—'}</td>
+          <td class="mono" style="font-size:0.75rem; color:var(--text-xs);">${fmtDate(p.fecha)}</td>
+          <td style="color:var(--text-dim); font-size:0.8rem; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.notas || '—'}</td>
+          <td>
+            <button class="file-btn" onclick="eliminar('${p.id}')">Eliminar</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    function guardarProyecto() {
+      const nombre = document.getElementById('p-nombre').value.trim();
+      if (!nombre) { toast('El nombre es obligatorio', 'error'); return; }
+      const proyectos = loadRegistry('stgl_proyectos');
+      proyectos.push({
+        id: Date.now().toString(),
+        nombre,
+        cliente:     document.getElementById('p-cliente').value.trim(),
+        responsable: document.getElementById('p-responsable').value.trim(),
+        estado:      document.getElementById('p-estado').value,
+        fecha:       document.getElementById('p-fecha').value || new Date().toISOString().split('T')[0],
+        notas:       document.getElementById('p-notas').value.trim(),
+      });
+      saveRegistry('stgl_proyectos', proyectos);
+      closeModal('modal-nuevo');
+      ['p-nombre','p-cliente','p-responsable','p-notas'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('p-estado').value = 'Activo';
+      toast('Proyecto guardado', 'success');
+      renderTabla();
+    }
+
+    function eliminar(id) {
+      if (!confirm('¿Eliminar este proyecto?')) return;
+      saveRegistry('stgl_proyectos', loadRegistry('stgl_proyectos').filter(p => p.id !== id));
+      toast('Proyecto eliminado');
+      renderTabla();
+    }
+
+    // Fijar fecha de hoy por defecto
+    document.getElementById('p-fecha').value = new Date().toISOString().split('T')[0];
+    renderTabla();
+  </script>
+</body>
+</html>

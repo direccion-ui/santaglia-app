@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Proyección de Saldos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── KPI saldos proyectados ── */
+    .proy-saldos { display:flex; flex-wrap:wrap; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.25rem; }
+    .proy-sal-item { background:var(--bg-white); padding:0.8rem 1.1rem; flex:1; min-width:160px; }
+    .proy-sal-label { font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .proy-sal-val   { font-family:var(--brand); font-size:1rem; font-weight:700; color:var(--navy); }
+    .proy-sal-val.red    { color:var(--red); }
+    .proy-sal-val.green  { color:var(--green); }
+    .proy-sal-val.warn   { color:#c67000; }
+    .proy-sal-sub   { font-size:0.61rem; color:var(--text-xs); margin-top:0.1rem; }
+    .proy-sal-badge { font-family:var(--brand); font-size:0.52rem; font-weight:700; padding:0.07rem 0.35rem; border-radius:2px; letter-spacing:0.05em; text-transform:uppercase; vertical-align:middle; margin-left:0.3rem; }
+    .proy-sal-badge.mxn { background:#e8ecf8; color:var(--navy); }
+    .proy-sal-badge.usd { background:#e0f0ff; color:#1a6fbf; }
+
+    /* ── Deficit alert ── */
+    .deficit-panel { display:none; margin-bottom:1.25rem; background:#fff8e1; border:2px solid #f59f00; border-radius:var(--radius); padding:1rem 1.25rem; }
+    .deficit-panel.visible { display:block; }
+    .deficit-title { font-family:var(--brand); font-size:0.78rem; font-weight:800; color:#c67000; letter-spacing:0.04em; margin-bottom:0.4rem; }
+    .deficit-body  { font-size:0.75rem; color:#7a5000; margin-bottom:0.75rem; line-height:1.5; }
+    .deficit-actions { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+    /* ── Action bar ── */
+    .proy-action-bar { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+    .proy-action-bar .spacer { flex:1; }
+
+    /* ── Movements table ── */
+    .proy-table { width:100%; border-collapse:collapse; font-size:0.74rem; }
+    .proy-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.56rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.3rem 0.6rem; text-align:left; white-space:nowrap; border-right:1px solid rgba(255,255,255,0.1); position:sticky; top:0; z-index:2; }
+    .proy-table th:last-child { border-right:none; }
+    .proy-table th.num { text-align:right; }
+    .proy-table td { padding:0.26rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .proy-table tbody tr:hover td { background:var(--navy-pale) !important; }
+    .proy-table .num { text-align:right; font-family:'Courier New',monospace; white-space:nowrap; }
+    .proy-table tfoot td { border-top:2px solid var(--navy); background:#e8ecf8; font-weight:700; font-family:var(--brand); font-size:0.68rem; padding:0.38rem 0.6rem; color:var(--navy); }
+
+    .proy-month-hdr td { background:#e8ecf8; border-top:2px solid var(--navy); border-bottom:1px solid #c5ceea; padding:0.38rem 0.7rem; cursor:pointer; user-select:none; }
+    .proy-month-hdr:hover td { background:#d8deef; }
+    .proy-month-chevron { display:inline-block; width:14px; font-size:0.72rem; transition:transform 0.15s; }
+    .proy-month-chevron.open { transform:rotate(90deg); }
+    .proy-month-title { font-family:var(--brand); font-size:0.72rem; font-weight:800; color:var(--navy); letter-spacing:0.04em; text-transform:uppercase; }
+    .proy-month-stat  { font-family:'Courier New',monospace; font-size:0.7rem; margin-left:1rem; }
+    .proy-month-stat.g { color:var(--green); }
+    .proy-month-stat.r { color:var(--red); }
+
+    /* Type badges */
+    .tipo-badge { display:inline-block; font-family:var(--brand); font-size:0.55rem; font-weight:700; padding:0.07rem 0.38rem; border-radius:2px; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+    .tb-rec  { background:#e8ecf8; color:var(--navy); }
+    .tb-man  { background:#fef3db; color:#7a5000; }
+    .tb-trp  { background:#eaf4ff; color:#1a6fbf; }
+    .tb-vnd  { background:#e6f7ee; color:var(--green); }
+    .tb-done { background:#f0f0f0; color:#888; }
+    .proy-row-done { opacity:0.5; }
+
+    /* ── Loading spinner for KPI bar ── */
+    @keyframes kpi-spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .kpi-spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid var(--border-h);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: kpi-spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    .tb-ing  { background:#e6f7ee; color:var(--green); }
+
+    .proy-del-btn { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.78rem; padding:0.1rem 0.3rem; border-radius:2px; }
+    .proy-del-btn:hover { color:var(--red); background:#fde8e8; }
+
+    .cuenta-arrow { color:var(--text-xs); font-size:0.65rem; margin:0 0.25rem; }
+
+    /* TC strip */
+    .tc-strip { display:flex; align-items:center; gap:0.75rem; padding:0.35rem 0.85rem; margin-bottom:1.1rem; background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); font-size:0.72rem; }
+    .tc-strip label { font-family:var(--brand); font-weight:700; color:var(--navy); letter-spacing:0.04em; white-space:nowrap; font-size:0.68rem; }
+
+    .empty-proy { text-align:center; padding:3.5rem 1rem; color:var(--text-xs); }
+    .empty-proy .ep-icon { font-size:2.4rem; margin-bottom:0.5rem; }
+    .empty-proy .ep-msg  { font-size:0.82rem; margin-bottom:0.3rem; color:var(--text-dim); }
+    .empty-proy .ep-sub  { font-size:0.7rem; }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item active" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Planeación financiera</div>
+          <h1 class="page-heading">Proyección de Saldos</h1>
+          <div class="page-meta" id="proy-meta">Escenario de gastos recurrentes sobre los saldos bancarios actuales</div>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+          <a href="recurrentes.html" class="btn btn-ghost" style="font-size:0.72rem;">← Recurrentes</a>
+          <button class="btn btn-ghost" onclick="limpiarProyeccion()" style="font-size:0.72rem; color:var(--red);">🗑 Limpiar proyección</button>
+        </div>
+      </div>
+
+      <!-- TC strip -->
+      <div class="tc-strip">
+        <label>TC USD / MXN:</label>
+        <input type="number" id="proy-tc" value="17.50" min="1" step="0.01"
+          style="width:88px; padding:0.2rem 0.5rem; font-size:0.8rem; border:1px solid var(--border); border-radius:2px;"
+          oninput="onTCChange()" />
+        <span style="color:var(--text-xs); font-size:0.67rem;">Usar para convertir montos entre MXN y USD al proyectar</span>
+        <div style="width:1px; background:var(--border); align-self:stretch; margin:0 0.75rem;"></div>
+        <label style="font-family:var(--brand); font-size:0.63rem; font-weight:700; color:var(--text-dim); white-space:nowrap;">SALDOS AL</label>
+        <input type="date" id="proy-cutoff"
+          style="padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:2px; font-family:var(--font);"
+          oninput="onCutoffChange()"
+          title="Fecha en que se actualizaron los saldos iniciales. Los movimientos proyectados en o antes de esta fecha ya están reflejados en los saldos reales y no se vuelven a descontar." />
+        <button onclick="autoDetectarCorte()" title="Detectar fecha de corte automáticamente desde los movimientos bancarios reales"
+          style="padding:0.2rem 0.55rem; font-size:0.72rem; border:1px solid var(--border); border-radius:2px; background:#f4f6fb; cursor:pointer; font-family:var(--brand); font-weight:600; color:var(--navy); white-space:nowrap;">
+          🔄 Auto
+        </button>
+        <span id="cutoff-info" style="color:var(--text-xs); font-size:0.63rem;"></span>
+        <div style="width:1px; background:var(--border); align-self:stretch; margin:0 0.75rem;"></div>
+        <label style="font-family:var(--brand); font-size:0.63rem; font-weight:700; color:var(--text-dim); white-space:nowrap;" title="Mes desde el cual arranca la proyección. Los meses anteriores se ocultan y puedes eliminarlos.">ARRANQUE</label>
+        <input type="month" id="proy-arranque"
+          style="padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:2px; font-family:var(--font); min-width:140px;"
+          oninput="onArranqueChange()"
+          title="Mes de arranque de la proyección. Meses anteriores se colapsan en 'Histórico'." />
+        <button onclick="limpiarAntesDeArranque()"
+          title="Eliminar movimientos proyectados anteriores al mes de arranque"
+          style="padding:0.2rem 0.55rem; font-size:0.72rem; border:1px solid #f0bfbf; border-radius:2px; background:#fff5f5; cursor:pointer; font-family:var(--brand); font-weight:600; color:var(--red); white-space:nowrap;">
+          🗑 Limpiar hist.
+        </button>
+        <div class="spacer" style="flex:1;"></div>
+        <span id="proy-ult-fecha" style="font-size:0.67rem; color:var(--text-xs);"></span>
+      </div>
+
+      <!-- Saldos proyectados KPI -->
+      <div class="proy-saldos" id="proy-saldos-kpi">
+        <div class="proy-sal-item" style="background:#f8f9fc; flex-basis:100%; display:flex; align-items:center; gap:0.7rem;">
+          <span class="kpi-spinner"></span>
+          <span class="proy-sal-label" style="margin:0;">Calculando saldos proyectados…</span>
+        </div>
+      </div>
+
+      <!-- Deficit alert -->
+      <div class="deficit-panel" id="deficit-panel">
+        <div class="deficit-title">⚠️ Saldo insuficiente — proyección pausada</div>
+        <div class="deficit-body" id="deficit-body"></div>
+        <div class="deficit-actions">
+          <button class="btn btn-primary" onclick="abrirTraspaso(true)" style="font-size:0.72rem;">↔ Traspaso entre cuentas</button>
+          <button class="btn btn-primary" onclick="abrirVentaDivisas(true)" style="font-size:0.72rem; background:#27ae60;">💱 Venta de divisas</button>
+          <button class="btn btn-ghost" onclick="ignorarDeficit()" style="font-size:0.72rem;">Ignorar y continuar →</button>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="proy-action-bar">
+        <button class="btn btn-primary" id="btn-proyectar" onclick="proyectarSiguienteMes()" style="font-size:0.78rem; padding:0.45rem 1rem;">
+          📅 Proyectar siguiente mes
+        </button>
+        <button class="btn btn-ghost" onclick="abrirMovExtraordinario()" style="font-size:0.72rem;">+ Mov. extraordinario</button>
+        <button class="btn btn-ghost" onclick="abrirTraspaso(false)" style="font-size:0.72rem;">↔ Traspaso</button>
+        <button class="btn btn-ghost" onclick="abrirVentaDivisas(false)" style="font-size:0.72rem;">💱 Venta de divisas</button>
+        <label style="display:flex; align-items:center; gap:0.35rem; font-family:var(--brand); font-size:0.65rem; font-weight:600; color:var(--text-dim); cursor:pointer; user-select:none;" title="Al detectar déficit MXN, vende USD automáticamente para fondear la cuenta y continúa proyectando sin pausar.">
+          <input type="checkbox" id="chk-autofondeo" style="accent-color:var(--navy); width:13px; height:13px;" />
+          AUTO-FONDEO USD→MXN
+        </label>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btn-historial" onclick="toggleHistorico()" style="font-size:0.7rem; color:var(--text-dim);">📦 Mostrar histórico</button>
+        <button class="btn btn-ghost" onclick="expandirTodo(true)"  style="font-size:0.7rem;">⊞ Todo</button>
+        <button class="btn btn-ghost" onclick="expandirTodo(false)" style="font-size:0.7rem;">⊟ Colapsar</button>
+      </div>
+
+      <!-- Movements panel -->
+      <div class="panel" style="margin-bottom:1.5rem;">
+        <div class="panel-header">
+          <span class="panel-title">Movimientos Proyectados</span>
+          <span id="proy-count-label" style="font-family:var(--brand); font-size:0.68rem; color:var(--text-dim);"></span>
+        </div>
+        <div style="overflow-x:auto; max-height:640px; overflow-y:auto;">
+          <table class="proy-table">
+            <thead>
+              <tr>
+                <th style="min-width:82px;">Fecha</th>
+                <th style="min-width:80px;">Tipo</th>
+                <th style="min-width:180px;">Descripción</th>
+                <th style="min-width:130px;">Concepto</th>
+                <th style="min-width:200px;">Cuenta</th>
+                <th style="min-width:55px; text-align:center;">Mon.</th>
+                <th class="num" style="min-width:90px;">Entradas</th>
+                <th class="num" style="min-width:90px;">Salidas</th>
+                <th style="width:30px;"></th>
+              </tr>
+            </thead>
+            <tbody id="proy-tbody">
+              <tr><td colspan="9" style="padding:2rem; text-align:center;">
+                <span class="kpi-spinner" style="width:20px;height:20px;border-width:3px;"></span>
+                <span style="font-family:var(--brand); font-size:0.7rem; color:var(--text-xs); letter-spacing:0.08em; text-transform:uppercase; margin-left:0.6rem;">Cargando movimientos…</span>
+              </td></tr>
+            </tbody>
+            <tfoot id="proy-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ══ MODAL: Movimiento extraordinario ══ -->
+<div class="modal-backdrop hidden" id="modal-extrao">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title">Movimiento extraordinario</span>
+      <button class="modal-close" onclick="closeModal('modal-extrao')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem 1rem;">
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Descripción *</label>
+          <input class="form-input" id="ex-desc" type="text" placeholder="Gasto variable, ingreso extraordinario…" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de movimiento *</label>
+          <select class="form-input" id="ex-mov" onchange="exMovChange()">
+            <option value="Cargo">Cargo (egreso)</option>
+            <option value="Abono">Abono (ingreso)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input class="form-input" id="ex-fecha" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Concepto</label>
+          <input class="form-input" id="ex-concepto" type="text" placeholder="Honorarios, Servicios…" list="ex-conc-list" />
+          <datalist id="ex-conc-list"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta Contable</label>
+          <input class="form-input" id="ex-cc" type="text" placeholder="Cuenta contable…" list="ex-cc-list" />
+          <datalist id="ex-cc-list"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta bancaria *</label>
+          <select class="form-input" id="ex-cuenta"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Moneda</label>
+          <select class="form-input" id="ex-moneda">
+            <option value="MXN">MXN</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Importe *</label>
+          <input class="form-input" id="ex-importe" type="number" min="0" step="any" placeholder="0.00" />
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Notas</label>
+          <input class="form-input" id="ex-notas" type="text" placeholder="Información adicional…" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-extrao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarExtrao()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Traspaso ══ -->
+<div class="modal-backdrop hidden" id="modal-traspaso">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">Traspaso entre cuentas</span>
+      <button class="modal-close" onclick="closeModal('modal-traspaso')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem 1rem;">
+
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input class="form-input" id="tr-fecha" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Importe a transferir *</label>
+          <input class="form-input" id="tr-importe" type="number" min="0" step="any" placeholder="0.00" oninput="trCalcDestino()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta origen *</label>
+          <select class="form-input" id="tr-origen" onchange="trCuentaChange()"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta destino *</label>
+          <select class="form-input" id="tr-destino" onchange="trCuentaChange()"></select>
+        </div>
+
+        <div class="form-group" id="tr-tc-group" style="grid-column:1/-1; display:none;">
+          <label class="form-label">Tipo de cambio (TC) *</label>
+          <input class="form-input" id="tr-tc" type="number" min="1" step="0.01" placeholder="17.50" oninput="trCalcDestino()" />
+          <div style="font-size:0.68rem; color:var(--text-xs); margin-top:0.3rem;" id="tr-tc-hint"></div>
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Descripción</label>
+          <input class="form-input" id="tr-desc" type="text" value="Traspaso entre cuentas" />
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Notas</label>
+          <input class="form-input" id="tr-notas" type="text" placeholder="Opcional…" />
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-traspaso')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarTraspaso()">Agregar traspaso</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Venta de divisas ══ -->
+<div class="modal-backdrop hidden" id="modal-venta">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">Venta de divisas (USD → MXN)</span>
+      <button class="modal-close" onclick="closeModal('modal-venta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem 1rem;">
+
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input class="form-input" id="vd-fecha" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Monto en USD *</label>
+          <input class="form-input" id="vd-usd" type="number" min="0" step="any" placeholder="0.00" oninput="vdCalcMXN()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta USD (origen) *</label>
+          <select class="form-input" id="vd-cta-usd"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta MXN (destino) *</label>
+          <select class="form-input" id="vd-cta-mxn"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de cambio *</label>
+          <input class="form-input" id="vd-tc" type="number" min="1" step="0.01" placeholder="17.50" oninput="vdCalcMXN()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">MXN a recibir (calculado)</label>
+          <input class="form-input" id="vd-mxn" type="number" step="any" placeholder="0.00" style="background:#f8f9fc;" readonly />
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Notas</label>
+          <input class="form-input" id="vd-notas" type="text" placeholder="Opcional…" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarVentaDivisas()">Agregar venta</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════════════
+   CONSTANTS & STATE
+══════════════════════════════════════════════════════════════ */
+const KEY_PROY = 'stgl_mov_proyectados';
+const KEY_REC  = 'stgl_recurrentes';
+const KEY_SAL  = 'stgl_saldos';
+
+const MESES_LARGO  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_CORTO  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+let __tcProy      = 17.50;          // current exchange rate
+let __pendingProj = null;           // { year, month, fromIdx } — paused projection
+let __deficitData = null;           // { cuenta, monedaCta, faltante, rec } — current deficit
+let __proyClosed  = new Set();      // collapsed month keys
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════ */
+function fmtNum(n, decimals) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Number(n).toLocaleString('es-MX', { minimumFractionDigits: decimals??2, maximumFractionDigits: decimals??2 });
+}
+function fmtMXN(n)  { return n === 0 ? '—' : '$' + fmtNum(n); }
+function fmtUSD(n)  { return n === 0 ? '—' : 'US$' + fmtNum(n); }
+function fmtCur(n, moneda) { return (moneda==='USD' ? 'US$' : '$') + fmtNum(n); }
+function escH(s)    { return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function genId(pfx) { return (pfx||'proy') + '_' + Date.now() + '_' + Math.random().toString(36).substr(2,5); }
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+function parseFlt(v){ return parseFloat(v)||0; }
+
+/* ══════════════════════════════════════════════════════════════
+   DATA LOADING
+══════════════════════════════════════════════════════════════ */
+function loadProy()     { return loadRegistry(KEY_PROY); }
+function saveProy(data) { saveRegistry(KEY_PROY, data); }
+function loadRecs()     { return loadRegistry(KEY_REC).filter(r => r.activo).sort((a,b)=>(a.diaEstimado||1)-(b.diaEstimado||1)); }
+function loadSaldosBase() {
+  // Returns { cuenta: { saldo, moneda, tipo } }
+  const out = {};
+  loadRegistry(KEY_SAL).filter(s => !s.cancelada).forEach(s => {
+    out[s.cuenta] = { saldo: parseFlt(s.saldo), moneda: s.moneda||'MXN', tipo: s.tipo||'Cuenta' };
+  });
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROJECTED SALDO COMPUTATION
+══════════════════════════════════════════════════════════════ */
+/* ── Cutoff date: movements on or before this date are already in real balances ── */
+const KEY_CUTOFF     = 'stgl_proy_cutoff';
+const KEY_CUTOFF_CTA = 'stgl_proy_cutoff_cta'; // per-account cutoffs
+const KEY_ARRANQUE   = 'stgl_proy_arranque';    // YYYY-MM — month from which projection starts
+
+function loadCutoff()    { return localStorage.getItem(KEY_CUTOFF) || ''; }
+function saveCutoff(d)   { d ? localStorage.setItem(KEY_CUTOFF, d) : localStorage.removeItem(KEY_CUTOFF); }
+
+/* ── Arranque (start month) ── */
+function loadArranque() {
+  const v = localStorage.getItem(KEY_ARRANQUE) || '';
+  if (v) return v;
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+}
+function saveArranque(ym) {
+  ym ? localStorage.setItem(KEY_ARRANQUE, ym) : localStorage.removeItem(KEY_ARRANQUE);
+}
+function onArranqueChange() {
+  const val = document.getElementById('proy-arranque').value;
+  saveArranque(val);
+  __pendingProj = null;
+  renderAll();
+  updateBtnLabel();
+}
+
+/* ── Arranque helpers ── */
+function arranqueYM() {
+  // Returns { y, m } (month 0-indexed) for the arranque month
+  const a = loadArranque();
+  if (a) { const [y, m] = a.split('-').map(Number); return { y, m: m - 1 }; }
+  const now = new Date();
+  return { y: now.getFullYear(), m: now.getMonth() };
+}
+
+let __mostrarHistorico = false;
+function toggleHistorico() {
+  __mostrarHistorico = !__mostrarHistorico;
+  const btn = document.getElementById('btn-historial');
+  if (btn) btn.textContent = __mostrarHistorico ? '📦 Ocultar histórico' : '📦 Mostrar histórico';
+  renderTabla();
+}
+
+function limpiarRealizados() {
+  const globalCut = loadCutoff();
+  if (!globalCut) { toast('No hay fecha de corte configurada', 'info'); return; }
+  const movs    = loadProy();
+  const arranque = loadArranque();
+  // Realizados = dentro del período activo (>= arranque) pero con fecha <= corte
+  const realizados = movs.filter(m => {
+    if (!m.fecha || !arranque || m.fecha.substring(0,7) < arranque) return false;
+    const c = cutoffPara(m.cuenta) || globalCut || '';
+    return !!(c && m.fecha && m.fecha <= c);
+  });
+  if (!realizados.length) { toast('No hay movimientos realizados que limpiar', 'info'); return; }
+  if (!confirm(`¿Eliminar ${realizados.length} movimiento${realizados.length!==1?'s':''} realizados (fecha ≤ ${globalCut})?\n\nYa están reflejados en los saldos reales — esta acción solo limpia la tabla.`)) return;
+  const ids = new Set(realizados.map(m => m.id));
+  saveProy(movs.filter(m => !ids.has(m.id)));
+  __pendingProj = null;
+  __deficitData = null;
+  hideDeficit();
+  toast(`${realizados.length} movimiento${realizados.length!==1?'s':''} realizados eliminados`, 'success');
+  renderAll();
+  updateBtnLabel();
+}
+
+function limpiarAntesDeArranque() {
+  const arranque = loadArranque(); // YYYY-MM
+  const movs     = loadProy();
+  const antes    = movs.filter(m => m.fecha && m.fecha.substring(0,7) < arranque);
+  if (!antes.length) { toast('No hay movimientos proyectados anteriores al arranque (' + arranque + ')', 'info'); return; }
+  if (!confirm(`¿Eliminar ${antes.length} movimiento${antes.length!==1?'s':''} proyectado${antes.length!==1?'s':''} anteriores a ${arranque}?\n\nEsta acción no se puede deshacer.`)) return;
+  saveProy(movs.filter(m => !m.fecha || m.fecha.substring(0,7) >= arranque));
+  __pendingProj = null;
+  __deficitData = null;
+  hideDeficit();
+  toast(`${antes.length} movimiento${antes.length!==1?'s':''} histórico${antes.length!==1?'s':''} eliminado${antes.length!==1?'s':''}`, 'success');
+  renderAll();
+  updateBtnLabel();
+}
+function loadCutoffCta() {
+  try { return JSON.parse(localStorage.getItem(KEY_CUTOFF_CTA) || '{}'); }
+  catch(e) { return {}; }
+}
+
+// Returns the effective cutoff for a given account (per-account if available, else global)
+function cutoffPara(cuenta) {
+  const ctas = loadCutoffCta();
+  return ctas[cuenta] || loadCutoff() || '';
+}
+
+function onCutoffChange() {
+  const val = document.getElementById('proy-cutoff').value;
+  saveCutoff(val);
+  actualizarCutoffInfo(val, {});
+  __pendingProj = null;
+  __deficitData = null;
+  hideDeficit();
+  renderAll();
+  updateBtnLabel();
+}
+
+function actualizarCutoffInfo(globalDate, cuentaMap) {
+  const n = Object.keys(cuentaMap).length;
+  const el = document.getElementById('cutoff-info');
+  if (!el) return;
+  if (!globalDate && !n) { el.textContent = ''; return; }
+  const cuentasDistintas = [...new Set(Object.values(cuentaMap))].length;
+  el.textContent = n
+    ? `${n} cuenta${n>1?'s':''} con corte propio · global: ${globalDate||'—'}`
+    : `Movimientos reales hasta ${globalDate}`;
+}
+
+/* ── Auto-detect cutoff from real movements (global + per-account) ── */
+function autoDetectarCorte() {
+  let globalLatest = '';
+  const porCuenta  = {};   // cuenta → latest date
+
+  // Solo fuentes bancarias reales: extracto Excel + movimientos manuales del módulo bancario.
+  // Los egresos y nómina quedan excluidos porque pueden tener fechas futuras o de captura
+  // que no reflejan cuándo se actualizó el saldo real de la cuenta.
+  const procesar = (movs) => {
+    movs.forEach(m => {
+      const f   = (m.fecha || m.Fecha || '').substring(0, 10);
+      const cta = m.cuenta || m.Cuenta || '';
+      if (!f) return;
+      if (f > (globalLatest || ''))  globalLatest = f;
+      if (cta && f > (porCuenta[cta] || '')) porCuenta[cta] = f;
+    });
+  };
+
+  try {
+    const excel  = JSON.parse(localStorage.getItem('stgl_mov_excel')  || '[]');
+    const manual = loadRegistry('stgl_mov_manual');
+    // Nota: stgl_egresos excluido — sus fechas no determinan el corte del extracto bancario
+    procesar(excel);
+    procesar(manual);
+  } catch(e) {}
+
+  if (!globalLatest) {
+    toast('No se encontraron movimientos reales con fecha para detectar el corte', 'info');
+    return;
+  }
+
+  // Persist
+  saveCutoff(globalLatest);
+  localStorage.setItem(KEY_CUTOFF_CTA, JSON.stringify(porCuenta));
+
+  // Update UI
+  document.getElementById('proy-cutoff').value = globalLatest;
+  actualizarCutoffInfo(globalLatest, porCuenta);
+
+  __pendingProj = null;
+  __deficitData = null;
+  hideDeficit();
+  renderAll();
+  updateBtnLabel();
+
+  const total = Object.keys(porCuenta).length;
+  toast(`Corte auto-detectado: ${globalLatest}${total ? ` · ${total} cuenta(s) con fecha propia` : ''}`, 'success');
+}
+
+function calcSaldosProyectados() {
+  const saldos = loadSaldosBase();
+  const movs   = loadProy().sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+  // Cache cutoff data once — avoid repeated JSON.parse per movement
+  const cutoffCtaMap = loadCutoffCta();
+  const globalCutoff = loadCutoff();
+  const cutoffFast   = cta => cutoffCtaMap[cta] || globalCutoff || '';
+
+  movs.forEach(m => {
+    const f = m.fecha || '';
+    // Skip if already realized for the primary account (use per-account cutoff or global)
+    const corteCta  = cutoffFast(m.cuenta);
+    const corteDest = m.cuentaDest ? cutoffFast(m.cuentaDest) : '';
+    const yaRealizadoOrigen = corteCta  && f && f <= corteCta;
+    const yaRealizadoDest   = corteDest && f && f <= corteDest;
+
+    if (saldos[m.cuenta] && !yaRealizadoOrigen) {
+      saldos[m.cuenta].saldo -= parseFlt(m.salida);
+      saldos[m.cuenta].saldo += parseFlt(m.entrada);
+    }
+    if (m.cuentaDest && saldos[m.cuentaDest] && !yaRealizadoDest) {
+      saldos[m.cuentaDest].saldo += parseFlt(m.entradaDest);
+    }
+  });
+  return saldos;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TC
+══════════════════════════════════════════════════════════════ */
+function onTCChange() {
+  __tcProy = parseFlt(document.getElementById('proy-tc').value) || 17.50;
+  renderSaldosKPI();
+}
+function getTC() { return __tcProy; }
+
+/* ══════════════════════════════════════════════════════════════
+   CUENTAS CONFIG HELPERS
+══════════════════════════════════════════════════════════════ */
+function getCuentasConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+    return {
+      cuentas:            cfg.cuentasConfig      || {},
+      reservaNomina:      cfg.reservaNomina      || 0,
+      limiteVentaDivisas: cfg.limiteVentaDivisas || {},  // { USD: 5000, EUR: null, … }
+    };
+  } catch(e) { return { cuentas: {}, reservaNomina: 0, limiteVentaDivisas: {} }; }
+}
+
+// Returns the configured minimum balance for an account (0 if none set)
+function saldoMinPara(cuentaNombre, cuentasCfg) {
+  return (cuentasCfg[cuentaNombre] || {}).saldoMin || 0;
+}
+
+function esTarjeta(cuentaNombre, cuentasCfg) {
+  return (cuentasCfg[cuentaNombre] || {}).tipo === 'tarjeta_credito';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PERIODICIDAD HELPERS
+   (mirrors the same logic in recurrentes.html)
+══════════════════════════════════════════════════════════════ */
+
+// Returns array of YYYY-MM-DD dates a recurrente falls in a given month.
+// month is 0-indexed (Jan = 0).
+/* Siguiente día hábil (lunes si cae en finde) */
+function nextBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  if (dow === 6) d.setDate(d.getDate() + 2);
+  if (dow === 0) d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+}
+
+/* Hábil anterior (viernes si cae en finde) */
+function prevBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  if (dow === 6) d.setDate(d.getDate() - 1);
+  if (dow === 0) d.setDate(d.getDate() - 2);
+  return d.toISOString().split('T')[0];
+}
+
+function fechasPorMes(r, year, month) {
+  const per = r.periodicidad || 'Mensual';
+  const mo1 = month + 1;
+  const dia = Math.min(r.diaEstimado || 1, 28);
+  const pad = n => String(Math.min(n, 28)).padStart(2, '0');
+  const pfx = `${year}-${String(mo1).padStart(2, '0')}-`;
+  /* Ajuste a día hábil según dirección */
+  const hab = r.ajustarDiaHabil;
+  const ajustar = d =>
+    (hab === 'next' || hab === true || hab === 'true') ? nextBusinessDay(d) :
+    (hab === 'prev')                                   ? prevBusinessDay(d)  : d;
+
+  if (per === 'Semanal') {
+    if (r.diaSemana != null && r.diaSemana !== '') {
+      const target = parseInt(r.diaSemana);
+      const total  = new Date(year, month + 1, 0).getDate();
+      const dates  = [];
+      for (let d = 1; d <= total; d++)
+        if (new Date(year, month, d).getDay() === target)
+          dates.push(`${year}-${String(mo1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+      return dates;
+    }
+    // Legado: diaEstimado + cada 7 días
+    const dates = [];
+    for (let d = dia; d <= 28; d += 7) dates.push(pfx + pad(d));
+    return dates;
+  }
+  if (per === 'Quincenal') {
+    return [ ajustar(pfx + pad(dia)), ajustar(pfx + pad(Math.min(dia + 15, 28))) ];
+  }
+  if (per === 'Mensual') return [ ajustar(pfx + pad(dia)) ];
+  // Bimestral / Trimestral / Semestral / Anual — only on specified months
+  const mesesPago = r.mesesPago || [];
+  return mesesPago.includes(mo1) ? [ ajustar(pfx + pad(dia)) ] : [];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NEXT MONTH COMPUTATION
+══════════════════════════════════════════════════════════════ */
+function _mesCompleto(movs, recs, y, m, _cutoffCache) {
+  // Returns true if every active recurrente has all its future occurrences saved for year y, month m
+  const prefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+  const keys   = new Set(
+    movs
+      .filter(mv => mv.recurrenteId && (mv.fecha || '').startsWith(prefix))
+      .map(mv => mv.recurrenteId + '|' + mv.fecha)
+  );
+  // Allow caller to pass a pre-loaded cutoff cache to avoid repeated JSON.parse
+  const cutoffMap = _cutoffCache || loadCutoffCta();
+  const globalCut = loadCutoff();
+  const cutoffFast = cta => cutoffMap[cta] || globalCut || '';
+
+  return recs.every(r => {
+    const corte = cutoffFast(r.cuenta);
+    const dates = fechasPorMes(r, y, m).filter(f => !corte || f > corte);
+    return dates.length === 0 || dates.every(f => keys.has(r.id + '|' + f));
+  });
+}
+
+function getNextProjectTarget() {
+  if (__pendingProj) return __pendingProj;  // resume paused month
+
+  const movs = loadProy();
+  const recs = loadRecs();
+  const { y: arrY, m: arrM } = arranqueYM(); // minimum month to project (0-indexed month)
+
+  if (!recs.length) {
+    // No recurrentes: project arranque month
+    return { year: arrY, month: arrM, fromIdx: 0 };
+  }
+
+  // Find the latest projected month that is >= arranque
+  let maxY = null, maxM = null;
+  movs.forEach(m => {
+    if (!m.fecha) return;
+    const d  = new Date(m.fecha + 'T00:00:00');
+    if (isNaN(d.getTime())) return;
+    const y = d.getFullYear(), mo = d.getMonth();
+    // Only consider months at or after arranque
+    if (y < arrY || (y === arrY && mo < arrM)) return;
+    if (maxY === null || y > maxY || (y === maxY && mo > maxM)) { maxY = y; maxM = mo; }
+  });
+
+  if (maxY === null) {
+    // No projected movements >= arranque → start fresh from arranque
+    return { year: arrY, month: arrM, fromIdx: 0 };
+  }
+
+  // Scan from arranque to maxM, find first incomplete month
+  const _cutoffCache = loadCutoffCta();
+  let scanY = arrY, scanM = arrM;
+  for (let guard = 0; guard < 120; guard++) {
+    if (!_mesCompleto(movs, recs, scanY, scanM, _cutoffCache)) {
+      return { year: scanY, month: scanM, fromIdx: 0 };
+    }
+    if (scanY === maxY && scanM === maxM) break;
+    if (scanM === 11) { scanM = 0; scanY++; } else { scanM++; }
+  }
+
+  // All months from arranque to maxM are complete → project the next one
+  const nm = maxM === 11 ? 0 : maxM + 1;
+  const ny = maxM === 11 ? maxY + 1 : maxY;
+  return { year: ny, month: nm, fromIdx: 0 };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROJECTION ENGINE
+══════════════════════════════════════════════════════════════ */
+function proyectarSiguienteMes() {
+  const recs = loadRecs();
+  if (!recs.length) {
+    toast('No hay gastos recurrentes activos. Agrégate en Recurrentes.', 'error');
+    return;
+  }
+
+  const target   = getNextProjectTarget();
+  const { year, month } = target;
+  const fromIdx  = target.fromIdx || 0;
+  const tc       = getTC();
+  const { cuentas: cuentasCfg, reservaNomina } = getCuentasConfig();
+  const cutoff = loadCutoff();  // skip dates already in real balances
+
+  // Compute current projected saldos (including all already-saved movements)
+  const saldos = calcSaldosProyectados();
+
+  // Determine which recurrente+date combos are already saved this month.
+  // Key format: "recurrenteId|YYYY-MM-DD"
+  const movs      = loadProy();
+  const mesPrefix = `${year}-${String(month+1).padStart(2,'0')}`;
+  const yaProyKeys = new Set(
+    movs
+      .filter(m => m.fecha && m.fecha.startsWith(mesPrefix) && m.recurrenteId)
+      .map(m => m.recurrenteId + '|' + m.fecha)
+  );
+
+  const newMovs   = [];
+  let   deficit   = null;
+  let   pauseIdx  = -1;
+
+  outer:
+  for (let i = fromIdx; i < recs.length; i++) {
+    const r     = recs[i];
+    const fechas = fechasPorMes(r, year, month);
+
+    if (fechas.length === 0) continue;  // not applicable this month (e.g. bimestral wrong month)
+
+    const cta = saldos[r.cuenta];
+    if (!cta) continue;  // account removed from saldos — skip silently
+
+    const monto = parseFlt(r.importe);
+
+    for (const fecha of fechas) {
+      const compositeKey = r.id + '|' + fecha;
+      if (yaProyKeys.has(compositeKey)) continue;                    // already projected
+      const corteEfectivo = cutoffPara(r.cuenta) || cutoff || '';
+      if (corteEfectivo && fecha <= corteEfectivo) continue;       // already realized — in real balance
+
+      if (r.tipo === 'Egreso') {
+        // Convert monto to cuenta's currency if needed
+        let salida = monto;
+        if (r.moneda !== cta.moneda) {
+          if (r.moneda === 'USD' && cta.moneda === 'MXN') salida = monto * tc;
+          else if (r.moneda === 'MXN' && cta.moneda === 'USD') salida = monto / tc;
+        }
+        // Tarjetas de crédito: permiten saldo negativo — no se verifica balance
+        const esTarjetaCred = esTarjeta(r.cuenta, cuentasCfg);
+        // Check balance — try auto-fondeo first if MXN deficit and toggle is on
+        // Effective available = balance minus configured minimum reserve
+        const saldoMin  = saldoMinPara(r.cuenta, cuentasCfg);
+        const disponible = cta.saldo - saldoMin;
+        if (!esTarjetaCred && disponible < salida) {
+          const faltante   = salida - disponible;
+          const autoFondeo = document.getElementById('chk-autofondeo')?.checked;
+          if (autoFondeo) {
+            const fondeoMovs = tryAutoFondeo(saldos, faltante, fecha, cta.moneda);
+            if (fondeoMovs.length) {
+              newMovs.push(...fondeoMovs);
+              // saldos already updated inside tryAutoFondeo; re-check disponible
+              const disponible2 = cta.saldo - saldoMin;
+              if (disponible2 < salida) {
+                // Still not enough even after fondeo (e.g. limit only covers part)
+                deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante: salida - cta.saldo, rec: r };
+                pauseIdx = i;
+                break outer;
+              }
+            } else {
+              deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante, rec: r };
+              pauseIdx = i;
+              break outer;
+            }
+          } else {
+            deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante, rec: r };
+            pauseIdx = i;
+            break outer;
+          }
+        }
+        cta.saldo -= salida;
+        newMovs.push({
+          id:           genId('proy'),
+          fecha,
+          tipo:         'Recurrente',
+          descripcion:  r.descripcion,
+          concepto:     r.concepto||'',
+          cuentaCont:   r.cuentaCont||'',
+          cuenta:       r.cuenta,
+          cuentaDest:   '',
+          moneda:       cta.moneda,
+          entrada:      0,
+          salida:       salida,
+          entradaDest:  0,
+          tc:           r.moneda !== cta.moneda ? tc : null,
+          recurrenteId: r.id,
+          notas:        r.notas||'',
+        });
+      } else {  // Ingreso
+        let entrada = monto;
+        if (r.moneda !== cta.moneda) {
+          if (r.moneda === 'USD' && cta.moneda === 'MXN') entrada = monto * tc;
+          else if (r.moneda === 'MXN' && cta.moneda === 'USD') entrada = monto / tc;
+        }
+        cta.saldo += entrada;
+        newMovs.push({
+          id:           genId('proy'),
+          fecha,
+          tipo:         'Recurrente',
+          descripcion:  r.descripcion,
+          concepto:     r.concepto||'',
+          cuentaCont:   r.cuentaCont||'',
+          cuenta:       r.cuenta,
+          cuentaDest:   '',
+          moneda:       cta.moneda,
+          entrada:      entrada,
+          salida:       0,
+          entradaDest:  0,
+          tc:           r.moneda !== cta.moneda ? tc : null,
+          recurrenteId: r.id,
+          notas:        r.notas||'',
+        });
+      }
+    }
+  }
+
+  // ── Auto-pago de tarjetas de crédito ──────────────────────────
+  // Solo si no hubo déficit en recurrentes normales
+  if (!deficit) {
+    const movsHastaNow = [...movs, ...newMovs];
+    Object.entries(cuentasCfg).forEach(([cardName, cc]) => {
+      if (cc.tipo !== 'tarjeta_credito') return;
+      if (!cc.diaPago || !cc.cuentaPago) return;
+
+      const cardSaldo = saldos[cardName];
+      const cashSaldo = saldos[cc.cuentaPago];
+      if (!cardSaldo || !cashSaldo) return;
+      if (cardSaldo.saldo >= 0) return; // sin deuda — nada que pagar
+
+      // Verificar que el diaPago caiga en este mes
+      const pad2 = n => String(n).padStart(2, '0');
+      const fechaPago = `${year}-${pad2(month + 1)}-${pad2(Math.min(cc.diaPago, 28))}`;
+
+      // ¿Ya existe un pago este mes hacia esta tarjeta?
+      const yaPagada = movsHastaNow.some(m =>
+        m.cuentaDest === cardName &&
+        m.tipo === 'Traspaso' &&
+        (m.fecha || '').startsWith(`${year}-${pad2(month + 1)}`)
+      );
+      if (yaPagada) return;
+
+      const montoDeuda = Math.abs(cardSaldo.saldo);
+      const disponible = cashSaldo.saldo - reservaNomina;
+
+      if (disponible >= montoDeuda) {
+        // Hay liquidez suficiente → auto-pago
+        cashSaldo.saldo  -= montoDeuda;
+        cardSaldo.saldo   = 0;
+        newMovs.push({
+          id: genId('proy'), fecha: fechaPago,
+          tipo: 'Traspaso',
+          descripcion: `Pago ${cardName} — liquidación mensual 🤖`,
+          concepto: 'Pago tarjeta de crédito', cuentaCont: '',
+          cuenta: cc.cuentaPago, cuentaDest: cardName,
+          moneda: cashSaldo.moneda, monedaDest: cardSaldo.moneda,
+          entrada: 0, salida: montoDeuda, entradaDest: montoDeuda, tc: null,
+          recurrenteId: '', notas: `Auto-pago proyectado. Corte día ${cc.diaCorte||'?'}.`,
+          _autoPago: true,
+        });
+      } else {
+        // Fondeo USD si está habilitado
+        const autoFondeo = document.getElementById('chk-autofondeo')?.checked;
+        if (autoFondeo && disponible < montoDeuda) {
+          const gap      = montoDeuda - Math.max(0, disponible);
+          const fondeoMovs = tryAutoFondeo(saldos, gap, fechaPago, cashSaldo.moneda);
+          if (fondeoMovs.length) newMovs.push(...fondeoMovs);
+        }
+        // Re-evaluar tras fondeo
+        const disponible2 = cashSaldo.saldo - reservaNomina;
+        if (disponible2 >= montoDeuda) {
+          cashSaldo.saldo -= montoDeuda;
+          cardSaldo.saldo  = 0;
+          newMovs.push({
+            id: genId('proy'), fecha: fechaPago,
+            tipo: 'Traspaso',
+            descripcion: `Pago ${cardName} — liquidación mensual 🤖`,
+            concepto: 'Pago tarjeta de crédito', cuentaCont: '',
+            cuenta: cc.cuentaPago, cuentaDest: cardName,
+            moneda: cashSaldo.moneda, monedaDest: cardSaldo.moneda,
+            entrada: 0, salida: montoDeuda, entradaDest: montoDeuda, tc: null,
+            recurrenteId: '', notas: `Auto-pago proyectado (con fondeo de divisas). Corte día ${cc.diaCorte||'?'}.`,
+            _autoPago: true,
+          });
+        }
+        // Si aún sin fondos suficientes, se deja para resolución manual
+      }
+    });
+  }
+
+  // Save newly created movements
+  if (newMovs.length) {
+    saveProy([...movs, ...newMovs]);
+  }
+
+  if (deficit) {
+    __pendingProj = { year, month, fromIdx: pauseIdx };
+    __deficitData = deficit;
+    showDeficit(deficit, year, month);
+    if (newMovs.length) toast(`${newMovs.length} movimiento(s) guardado(s) antes del déficit`, 'info');
+  } else {
+    __pendingProj = null;
+    __deficitData = null;
+    hideDeficit();
+    toast(`${MESES_LARGO[month]} ${year} proyectado — ${newMovs.length} movimiento(s)`, 'success');
+  }
+
+  renderAll();
+  updateBtnLabel();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-FONDEO: sell USD automatically to cover MXN deficit
+══════════════════════════════════════════════════════════════ */
+// Returns 'YYYY-MM-DD' string for fecha + offsetDays
+function _addDias(fecha, offsetDays) {
+  const d = new Date(fecha + 'T00:00:00');
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+// Returns an array of 1 or 2 movement objects (when daily limit requires splitting).
+// Updates `saldos` in-memory. Returns [] if impossible.
+//
+// monedaDestino: currency of the deficit account (default 'MXN').
+// The function finds any active account in a DIFFERENT currency with sufficient balance.
+// Exchange rate between pairs is always mediated by __tcProy (USD/MXN).
+// For non-USD pairs the TC is approximated as 1.0 (same-value swap) — extend as needed.
+function tryAutoFondeo(saldos, faltante, fecha, monedaDestino) {
+  const tc                  = getTC();
+  const { limiteVentaDivisas } = getCuentasConfig();
+  const mDest               = monedaDestino || 'MXN';
+
+  // Find destination account (the one with the deficit)
+  const destCta = Object.entries(saldos).find(([, v]) => v.moneda === mDest);
+  if (!destCta) return [];
+
+  // Find best source account: different currency, enough balance when converted.
+  // Prefer USD for MXN deficits; otherwise try any other currency.
+  // We need: srcAmount * tcSrcDest >= faltante, where tcSrcDest is derived from USD/MXN TC.
+  const _tcPair = (mSrc, mDst) => {
+    if (mSrc === 'USD' && mDst === 'MXN') return tc;
+    if (mSrc === 'MXN' && mDst === 'USD') return 1 / tc;
+    return 1; // same-value approximation for other pairs (EUR→USD etc.)
+  };
+
+  // Collect candidate source accounts sorted: USD first, then others
+  const candidatos = Object.entries(saldos)
+    .filter(([, v]) => v.moneda !== mDest && v.saldo > 0)
+    .sort(([, a], [, b]) => (a.moneda === 'USD' ? -1 : b.moneda === 'USD' ? 1 : 0));
+
+  let srcCta = null;
+  let srcNecesario = 0;
+  let tcPar = 1;
+
+  for (const [nombre, v] of candidatos) {
+    tcPar        = _tcPair(v.moneda, mDest);
+    srcNecesario = faltante / tcPar;
+    if (v.saldo >= srcNecesario) { srcCta = [nombre, v]; break; }
+  }
+  if (!srcCta) return [];
+
+  const [ctaSrcNombre, ctaSrc] = srcCta;
+  const [ctaDestNombre, ctaDest] = destCta;
+
+  // Round up to 2 decimals
+  const srcTotal = Math.ceil(srcNecesario * 100) / 100;
+  const destRecibe = Math.round(srcTotal * tcPar * 100) / 100;
+
+  const limite = limiteVentaDivisas[ctaSrc.moneda] || null;
+
+  const _mkMov = (f, srcAmt, nota) => ({
+    id:          genId('proy'),
+    fecha:       f,
+    tipo:        'Venta divisas',
+    descripcion: `Auto-fondeo ${ctaSrc.moneda}→${mDest} (TC ${fmtNum(tcPar, 2)}) 🤖${nota ? ' · ' + nota : ''}`,
+    concepto:    'Venta de divisas',
+    cuentaCont:  '',
+    cuenta:      ctaSrcNombre,
+    cuentaDest:  ctaDestNombre,
+    moneda:      ctaSrc.moneda,
+    monedaDest:  mDest,
+    entrada:     0,
+    salida:      srcAmt,
+    entradaDest: Math.round(srcAmt * tcPar * 100) / 100,
+    tc:          tcPar,
+    recurrenteId:'',
+    notas:       'Generado automáticamente por auto-fondeo',
+    _auto:       true,
+  });
+
+  // No limit or total fits within limit → single movement
+  if (!limite || srcTotal <= limite) {
+    ctaSrc.saldo  -= srcTotal;
+    ctaDest.saldo += destRecibe;
+    return [_mkMov(fecha, srcTotal, '')];
+  }
+
+  // Total exceeds daily limit → split into 2 days
+  const dia1   = limite;
+  const dia2   = Math.round((srcTotal - dia1) * 100) / 100;
+  const fecha2 = _addDias(fecha, 1);
+
+  ctaSrc.saldo  -= srcTotal;
+  ctaDest.saldo += destRecibe;
+
+  return [
+    _mkMov(fecha,  dia1, 'día 1/2'),
+    _mkMov(fecha2, dia2, 'día 2/2'),
+  ];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DEFICIT HANDLING
+══════════════════════════════════════════════════════════════ */
+function showDeficit(d, year, month) {
+  const panel = document.getElementById('deficit-panel');
+  const body  = document.getElementById('deficit-body');
+  const fmtAmt = d.monedaCta === 'USD' ? fmtUSD(d.faltante) : fmtMXN(d.faltante);
+  const fmtRec = fmtCur(parseFlt(d.rec.importe), d.rec.moneda);
+  body.innerHTML = `
+    <strong>Cuenta:</strong> ${escH(d.cuenta)}
+    &nbsp;|&nbsp;<strong>Faltante:</strong> <span style="color:var(--red); font-weight:700;">${escH(fmtAmt)}</span>
+    <br>Próximo movimiento pendiente: <em>${escH(d.rec.descripcion)}</em>
+    (${escH(fmtRec)} · día ${d.rec.diaEstimado||'?'} de ${escH(MESES_LARGO[month])} ${year})
+    <br><span style="font-size:0.7rem; color:#a07000;">Agrega un traspaso o venta de divisas para fondear la cuenta, o usa "Ignorar y continuar" para saltar este movimiento.</span>`;
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+function hideDeficit() {
+  document.getElementById('deficit-panel').classList.remove('visible');
+}
+
+function ignorarDeficit() {
+  if (!__pendingProj) return;
+  // Skip the failing recurrente by advancing fromIdx
+  __pendingProj.fromIdx = (__pendingProj.fromIdx || 0) + 1;
+  __deficitData = null;
+  hideDeficit();
+  updateBtnLabel();
+  proyectarSiguienteMes();
+}
+
+function updateBtnLabel() {
+  const btn = document.getElementById('btn-proyectar');
+  if (__pendingProj) {
+    const { year, month } = __pendingProj;
+    btn.textContent = `▶ Continuar ${MESES_LARGO[month]} ${year}`;
+    btn.style.background = '#c67000';
+  } else {
+    const t = getNextProjectTarget();
+    btn.textContent = `📅 Proyectar ${MESES_LARGO[t.month]} ${t.year}`;
+    btn.style.background = '';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LIMPIAR PROYECCIÓN
+══════════════════════════════════════════════════════════════ */
+function limpiarProyeccion() {
+  if (!confirm('¿Eliminar TODOS los movimientos proyectados? Esta acción no se puede deshacer.')) return;
+  saveProy([]);
+  __pendingProj = null;
+  __deficitData = null;
+  hideDeficit();
+  toast('Proyección eliminada', 'success');
+  renderAll();
+  updateBtnLabel();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER: SALDOS KPI
+══════════════════════════════════════════════════════════════ */
+function renderSaldosKPI() {
+  const saldos = calcSaldosProyectados();
+  const tc     = getTC();
+  const cuentas = Object.entries(saldos);
+  if (!cuentas.length) {
+    document.getElementById('proy-saldos-kpi').innerHTML = `
+      <div class="proy-sal-item" style="flex-basis:100%; background:#f8f9fc;">
+        <div class="proy-sal-label">Sin saldos — importa saldos en Mov. Bancarios</div>
+      </div>`;
+    return;
+  }
+
+  let totalMXN = 0;
+  cuentas.forEach(([, v]) => {
+    totalMXN += v.moneda === 'MXN' ? v.saldo : v.saldo * tc;
+  });
+
+  const { cuentas: cuentasCfg } = getCuentasConfig();
+
+  const tiles = cuentas.map(([cuenta, v]) => {
+    const saldoMin = saldoMinPara(cuenta, cuentasCfg);
+    const neg      = v.saldo < 0;
+    const belowMin = !neg && saldoMin > 0 && v.saldo < saldoMin;
+    const warn     = !neg && !belowMin && v.saldo < 5000;
+    const cls      = neg ? 'red' : belowMin ? 'warn' : warn ? 'warn' : '';
+    const badge    = `<span class="proy-sal-badge ${v.moneda.toLowerCase()}">${v.moneda}</span>`;
+    const valStr   = v.moneda === 'USD' ? fmtUSD(v.saldo) : fmtMXN(v.saldo);
+    const minNote  = belowMin
+      ? `<div class="proy-sal-sub" style="color:var(--gold);">⚠ bajo mínimo (${v.moneda==='USD'?fmtUSD(saldoMin):fmtMXN(saldoMin)})</div>`
+      : (saldoMin > 0 ? `<div class="proy-sal-sub" style="color:var(--text-xs);">Mín: ${v.moneda==='USD'?fmtUSD(saldoMin):fmtMXN(saldoMin)}</div>` : '');
+    const equiv    = v.moneda === 'USD' ? `<div class="proy-sal-sub">≈ ${fmtMXN(v.saldo * tc)} MXN</div>` : '';
+    return `<div class="proy-sal-item">
+      <div class="proy-sal-label">${escH(cuenta)}${badge}</div>
+      <div class="proy-sal-val ${cls}">${valStr}</div>
+      ${equiv}${minNote}
+    </div>`;
+  }).join('');
+
+  const totalTile = `<div class="proy-sal-item" style="background:#f0f3ff;">
+    <div class="proy-sal-label">TOTAL PROYECTADO MXN</div>
+    <div class="proy-sal-val ${totalMXN<0?'red':''}">${fmtMXN(totalMXN)}</div>
+    <div class="proy-sal-sub">Equivalente a TC ${fmtNum(tc,2)}</div>
+  </div>`;
+
+  document.getElementById('proy-saldos-kpi').innerHTML = tiles + totalTile;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER: MOVEMENTS TABLE
+══════════════════════════════════════════════════════════════ */
+function expandirTodo(open) {
+  const movs = loadProy();
+  const meses = [...new Set(movs.map(m => (m.fecha||'').substring(0,7)))];
+  meses.forEach(k => open ? __proyClosed.delete(k) : __proyClosed.add(k));
+  renderTabla();
+}
+
+function toggleProyMes(key) {
+  if (__proyClosed.has(key)) __proyClosed.delete(key);
+  else __proyClosed.add(key);
+  renderTabla();
+}
+
+const TYPE_BADGE = {
+  'Recurrente':    ['tb-rec',  'Recurrente'],
+  'Manual':        ['tb-man',  'Manual'],
+  'Traspaso':      ['tb-trp',  'Traspaso'],
+  'Venta divisas': ['tb-vnd',  'Venta USD'],
+  'RetencionesSAT':['tb-rec',  '🏛 Ret. SAT'],
+};
+function badgeFor(m) {
+  const corte = cutoffPara(m.cuenta) || loadCutoff();
+  if (corte && m.fecha && m.fecha <= corte)      return ['tb-done', '✓ Realizado'];
+  if (m._autoPago)                               return ['tb-trp',  '🤖 Pago auto'];
+  if (m._auto && m.tipo === 'Venta divisas')     return ['tb-vnd',  '🤖 Auto-fondeo'];
+  return TYPE_BADGE[m.tipo] || ['tb-man', m.tipo||'—'];
+}
+
+function renderTabla() {
+  const movs  = loadProy().sort((a,b) => {
+    const c = (a.fecha||'').localeCompare(b.fecha||'');
+    return c !== 0 ? c : (a._ts||0) - (b._ts||0);
+  });
+  const tbody = document.getElementById('proy-tbody');
+  const tfoot = document.getElementById('proy-tfoot');
+  const lbl   = document.getElementById('proy-count-label');
+
+  lbl.textContent = movs.length
+    ? movs.length + ' movimiento' + (movs.length!==1?'s':'')
+    : '';
+
+  // Separate active movements (>= arranque) vs historical (< arranque)
+  const arranque = loadArranque(); // YYYY-MM
+
+  // All visible movements: all if mostrarHistorico, or only >= arranque
+  const movsActivos   = movs.filter(m => !m.fecha || !arranque || m.fecha.substring(0,7) >= arranque);
+  const movsHistorico = movs.filter(m => m.fecha && arranque && m.fecha.substring(0,7) < arranque);
+
+  // Within the active period, split: already-realized (date ≤ cutoff) vs. truly future
+  const _gCut   = loadCutoff();
+  const _isDone = m => { const c = cutoffPara(m.cuenta) || _gCut || ''; return !!(c && m.fecha && m.fecha <= c); };
+  const movsDone   = movsActivos.filter(m =>  _isDone(m));
+  const movsFuture = movsActivos.filter(m => !_isDone(m));
+
+  if (!movsFuture.length && !movsDone.length && !movsHistorico.length) {
+    tbody.innerHTML = `<tr><td colspan="9">
+      <div class="empty-proy">
+        <div class="ep-icon">📅</div>
+        <div class="ep-msg">No hay movimientos proyectados aún</div>
+        <div class="ep-sub">Haz clic en <strong>"Proyectar siguiente mes"</strong> para generar el escenario desde <strong>${arranque || 'el mes actual'}</strong></div>
+      </div>
+    </td></tr>`;
+    tfoot.innerHTML = '';
+    document.getElementById('proy-ult-fecha').textContent = '';
+    return;
+  }
+
+  const renderMonthRows = (mesKey, rows, isHistorico) => {
+    const [y, mo] = mesKey.split('-').map(Number);
+    const label   = MESES_LARGO[mo-1] + ' ' + y;
+    const open    = !__proyClosed.has(mesKey);
+    let totEnt = 0, totSal = 0;
+    rows.forEach(m => { totEnt += parseFlt(m.entrada); totSal += parseFlt(m.salida); });
+    const dimStyle  = isHistorico ? ' style="opacity:0.55;"' : '';
+    const histMark  = isHistorico ? '<span style="font-size:0.6rem;color:#8a9ab5;margin-left:0.35rem;font-family:var(--brand);font-weight:600;">HIST.</span>' : '';
+    const chevClass = open ? 'open' : '';
+    let rowHtml = `<tr class="proy-month-hdr" onclick="toggleProyMes('${mesKey}')">
+      <td colspan="9"${dimStyle}>
+        <span class="proy-month-chevron ${chevClass}">▶</span>
+        <span class="proy-month-title">${label}${histMark}</span>
+        <span class="proy-month-stat g">+${fmtMXN(totEnt)}</span>
+        <span class="proy-month-stat r">−${fmtMXN(totSal)}</span>
+        <span style="font-family:var(--brand); font-size:0.65rem; color:var(--text-xs); margin-left:0.75rem;">${rows.length} mov.</span>
+      </td>
+    </tr>`;
+    if (open) {
+      const _cubiertos = JSON.parse(localStorage.getItem('stgl_recurrentes_cubiertos') || '{}');
+      rows.forEach(m => {
+        const [bc, bl] = badgeFor(m);
+        const isDone   = (() => { const c = cutoffPara(m.cuenta) || loadCutoff(); return c && m.fecha && m.fecha <= c; })();
+        const cuentaCell = m.cuentaDest
+          ? `${escH(m.cuenta)}<span class="cuenta-arrow">→</span>${escH(m.cuentaDest)}`
+          : escH(m.cuenta||'—');
+        const entStr = parseFlt(m.entrada) ? `<span style="color:var(--green); font-weight:600;">${fmtMXN(parseFlt(m.entrada))}</span>` : '';
+        const salStr = parseFlt(m.salida)  ? `<span style="color:var(--red);">${fmtMXN(parseFlt(m.salida))}</span>` : '';
+        const tcNote = m.tc ? `<span style="font-size:0.6rem; color:var(--text-xs);"> TC${fmtNum(m.tc,2)}</span>` : '';
+
+        // Reconciliación: ¿está cubierto por cobro real de facturación?
+        const mesKey    = (m.fecha || '').substring(0, 7);
+        const cubKey    = m.recurrenteId ? `${m.recurrenteId}|${mesKey}` : null;
+        const cubInfo   = cubKey ? _cubiertos[cubKey] : null;
+        const cubBadge  = cubInfo
+          ? `<span title="Cobrado el ${cubInfo.fecha} · ${cubInfo.clienteRef}" onclick="event.stopPropagation();desmarcarCubierto('${m.recurrenteId}','${mesKey}')"
+               style="cursor:pointer;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:0.58rem;padding:0.1rem 0.35rem;font-family:var(--brand);font-weight:700;margin-left:0.4rem;">✓ COBRADO</span>`
+          : (m.recurrenteId && parseFlt(m.entrada) > 0
+              ? `<span title="Marcar manualmente como cobrado" onclick="event.stopPropagation();marcarCubiertoManual('${m.recurrenteId}','${mesKey}','${escH(m.descripcion)}')"
+                   style="cursor:pointer;color:var(--text-xs);font-size:0.58rem;margin-left:0.4rem;">⬜</span>`
+              : '');
+        const rowBg    = cubInfo ? ' style="background:#f0fdf4;"' : (isHistorico ? ' style="opacity:0.55;"' : '');
+        const descCell = `<span style="font-weight:500;">${escH(m.descripcion||'—')}</span>${cubBadge}`;
+
+        rowHtml += `<tr class="${isDone ? 'proy-row-done' : ''}"${rowBg}>
+          <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
+          <td><span class="tipo-badge ${bc}">${bl}</span></td>
+          <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escH(m.descripcion)}">${descCell}</td>
+          <td style="font-size:0.68rem; color:var(--text-dim);">${escH(m.concepto||'—')}</td>
+          <td style="font-size:0.68rem; white-space:nowrap;">${cuentaCell}${tcNote}</td>
+          <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${m.moneda==='USD'?'#1a6fbf':'var(--navy)'};">${m.moneda||'MXN'}</td>
+          <td class="num">${entStr}</td>
+          <td class="num">${salStr}</td>
+          <td style="text-align:center;">
+            <button class="proy-del-btn" onclick="eliminarMov('${escH(m.id)}')" title="Eliminar">✕</button>
+          </td>
+        </tr>`;
+      });
+    }
+    return { rowHtml, totEnt, totSal };
+  };
+
+  let html = '';
+  let grandEnt = 0, grandSal = 0;
+
+  // ── Historical section (pre-arranque) ─────────────────────
+  if (movsHistorico.length > 0) {
+    if (__mostrarHistorico) {
+      const byMonthHist = {};
+      movsHistorico.forEach(m => {
+        const k = (m.fecha||'').substring(0,7);
+        if (!byMonthHist[k]) byMonthHist[k] = [];
+        byMonthHist[k].push(m);
+      });
+      // Dimmed header to separate historical from active
+      html += `<tr style="background:#f5f6fa;">
+        <td colspan="9" style="padding:0.3rem 0.75rem; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8a9ab5;">
+          ── Histórico (anterior a ${arranque}) · ${movsHistorico.length} mov. ──
+          <button onclick="limpiarAntesDeArranque()" style="margin-left:0.75rem;font-size:0.58rem;padding:0.1rem 0.4rem;border:1px solid #f0bfbf;border-radius:2px;background:#fff5f5;color:var(--red);cursor:pointer;font-family:var(--brand);font-weight:700;">🗑 Limpiar histórico</button>
+        </td>
+      </tr>`;
+      Object.keys(byMonthHist).sort().forEach(mes => {
+        const { rowHtml, totEnt, totSal } = renderMonthRows(mes, byMonthHist[mes], true);
+        html += rowHtml;
+        grandEnt += totEnt; grandSal += totSal;
+      });
+      html += `<tr style="background:#f5f6fa;"><td colspan="9" style="padding:0.2rem 0.75rem; font-family:var(--brand); font-size:0.58rem; color:#8a9ab5; border-bottom:2px solid var(--border);">── Fin del histórico ──</td></tr>`;
+    } else {
+      // Show collapsed summary banner
+      const meses = [...new Set(movsHistorico.map(m => (m.fecha||'').substring(0,7)))].sort();
+      const primero = meses[0], ultimo = meses[meses.length-1];
+      html += `<tr style="background:#f5f6fa; cursor:pointer;" onclick="toggleHistorico()" title="Clic para mostrar el histórico">
+        <td colspan="9" style="padding:0.45rem 0.85rem; font-family:var(--brand); font-size:0.65rem; color:#8a9ab5; font-weight:600; border-bottom:2px dashed var(--border);">
+          📦 Histórico oculto: ${movsHistorico.length} movimiento${movsHistorico.length!==1?'s':''} · ${primero} → ${ultimo}
+          <span style="margin-left:0.5rem;font-size:0.6rem;text-decoration:underline;cursor:pointer;">(clic para ver)</span>
+          <button onclick="event.stopPropagation();limpiarAntesDeArranque()" style="margin-left:1rem;font-size:0.6rem;padding:0.1rem 0.4rem;border:1px solid #f0bfbf;border-radius:2px;background:#fff5f5;color:var(--red);cursor:pointer;font-family:var(--brand);font-weight:700;">🗑 Eliminar</button>
+        </td>
+      </tr>`;
+    }
+  }
+
+  // ── Realizados dentro del período activo (fecha ≤ corte, ya en saldo real) ──
+  if (movsDone.length > 0) {
+    let doneSal = 0, doneEnt = 0;
+    movsDone.forEach(m => { doneSal += parseFlt(m.salida); doneEnt += parseFlt(m.entrada); });
+    html += `<tr style="background:#f0fdf4;">
+      <td colspan="9" style="padding:0.38rem 0.85rem; font-family:var(--brand); font-size:0.63rem; color:#16a34a; font-weight:600; border-bottom:1px dashed #bbf7d0;">
+        ✓ ${movsDone.length} movimiento${movsDone.length!==1?'s':''} ya realizados (corte: ${_gCut||'—'})
+        · entradas <span style="color:var(--green)">${fmtMXN(doneEnt)}</span>
+        · salidas <span style="color:var(--red)">${fmtMXN(doneSal)}</span>
+        · <em>ya incluidos en el saldo real — no se descuentan dos veces</em>
+        <button onclick="limpiarRealizados()" style="margin-left:1rem;font-size:0.58rem;padding:0.1rem 0.4rem;border:1px solid #bbf7d0;border-radius:2px;background:#fff;color:#16a34a;cursor:pointer;font-family:var(--brand);font-weight:700;">🗑 Limpiar</button>
+      </td>
+    </tr>`;
+  }
+
+  // ── Movimientos futuros proyectados (fecha > corte) ──────
+  if (movsFuture.length > 0) {
+    const byMonth = {};
+    movsFuture.forEach(m => {
+      const k = (m.fecha||'').substring(0,7);
+      if (!byMonth[k]) byMonth[k] = [];
+      byMonth[k].push(m);
+    });
+    Object.keys(byMonth).sort().forEach(mes => {
+      const { rowHtml, totEnt, totSal } = renderMonthRows(mes, byMonth[mes], false);
+      html += rowHtml;
+      grandEnt += totEnt; grandSal += totSal;
+    });
+  } else if (!movsDone.length && movsHistorico.length > 0) {
+    html += `<tr><td colspan="9" style="padding:1.5rem; text-align:center; color:var(--text-xs); font-family:var(--brand); font-size:0.7rem;">
+      Sin proyección desde ${arranque} · Haz clic en <strong>"Proyectar siguiente mes"</strong>
+    </td></tr>`;
+  }
+
+  tbody.innerHTML = html;
+
+  const grandBal = grandEnt - grandSal;
+  tfoot.innerHTML = `<tr>
+    <td colspan="6" style="letter-spacing:0.05em; text-transform:uppercase;">Total proyectado (${arranque} en adelante)</td>
+    <td class="num" style="color:var(--green);">+${fmtMXN(grandEnt)}</td>
+    <td class="num" style="color:var(--red);">−${fmtMXN(grandSal)}</td>
+    <td></td>
+  </tr>`;
+
+  // Last date label (from active months)
+  const lastFecha = movsActivos.length
+    ? movsActivos.reduce((a, b) => ((b.fecha||'') > (a.fecha||'') ? b : a)).fecha
+    : (movs[movs.length-1]?.fecha || '');
+  document.getElementById('proy-ult-fecha').textContent = lastFecha
+    ? `Proyección hasta: ${lastFecha}` : '';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DELETE MOVEMENT
+══════════════════════════════════════════════════════════════ */
+/* ── Reconciliación manual ── */
+function marcarCubiertoManual(recId, mesKey, desc) {
+  const fecha = prompt(`Marcar "${desc}" como cobrado en ${mesKey}\n\nFecha real de cobro (YYYY-MM-DD):`,
+    mesKey + '-01');
+  if (!fecha) return;
+  const KEY_CUB = 'stgl_recurrentes_cubiertos';
+  const cubiertos = JSON.parse(localStorage.getItem(KEY_CUB) || '{}');
+  cubiertos[`${recId}|${mesKey}`] = { fecha, clienteRef: '(manual)', total: 0 };
+  localStorage.setItem(KEY_CUB, JSON.stringify(cubiertos));
+  toast('Marcado como cobrado ✓', 'success');
+  renderTabla();
+}
+
+function desmarcarCubierto(recId, mesKey) {
+  if (!confirm('¿Quitar la marca de cobrado?')) return;
+  const KEY_CUB = 'stgl_recurrentes_cubiertos';
+  const cubiertos = JSON.parse(localStorage.getItem(KEY_CUB) || '{}');
+  delete cubiertos[`${recId}|${mesKey}`];
+  localStorage.setItem(KEY_CUB, JSON.stringify(cubiertos));
+  toast('Marca de cobrado eliminada', 'info');
+  renderTabla();
+}
+
+function eliminarMov(id) {
+  if (!confirm('¿Eliminar este movimiento proyectado?')) return;
+  saveProy(loadProy().filter(m => m.id !== id));
+  // If we deleted something, the pending proj state may be stale — clear it
+  __pendingProj = null;
+  __deficitData = null;
+  hideDeficit();
+  toast('Movimiento eliminado', 'success');
+  renderAll();
+  updateBtnLabel();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   POPULATE ACCOUNT SELECTS
+══════════════════════════════════════════════════════════════ */
+function fillCuentaSelect(selId, onlyMoneda, excludeId) {
+  const sel    = document.getElementById(selId);
+  const base   = loadRegistry(KEY_SAL).filter(s => !s.cancelada);
+  const cuentas= onlyMoneda ? base.filter(s => s.moneda === onlyMoneda) : base;
+  sel.innerHTML = '<option value="">— Seleccionar —</option>';
+  cuentas.forEach(s => {
+    if (excludeId && s.cuenta === document.getElementById(excludeId)?.value) return;
+    const o = document.createElement('option');
+    o.value = o.textContent = s.cuenta;
+    sel.appendChild(o);
+  });
+}
+
+function populateExDataLists() {
+  const movs = (() => {
+    let d=[];
+    try { const r=localStorage.getItem('stgl_mov_excel'); if(r) d=JSON.parse(r); } catch(e){}
+    try { d=[...d,...loadRegistry('stgl_mov_manual')]; } catch(e){}
+    return d;
+  })();
+  const concs = [...new Set(movs.map(m=>m.concepto).filter(Boolean))].sort();
+  const ccs   = [...new Set(movs.map(m=>m.cuentaCont).filter(Boolean))].sort();
+  document.getElementById('ex-conc-list').innerHTML = concs.map(c=>`<option value="${escH(c)}">`).join('');
+  document.getElementById('ex-cc-list').innerHTML   = ccs.map(c=>`<option value="${escH(c)}">`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL: MOVIMIENTO EXTRAORDINARIO
+══════════════════════════════════════════════════════════════ */
+function abrirMovExtraordinario() {
+  document.getElementById('ex-fecha').value    = todayISO();
+  document.getElementById('ex-desc').value     = '';
+  document.getElementById('ex-concepto').value = '';
+  document.getElementById('ex-cc').value       = '';
+  document.getElementById('ex-importe').value  = '';
+  document.getElementById('ex-notas').value    = '';
+  document.getElementById('ex-mov').value      = 'Cargo';
+  document.getElementById('ex-moneda').value   = 'MXN';
+  fillCuentaSelect('ex-cuenta');
+  populateExDataLists();
+  openModal('modal-extrao');
+}
+
+function exMovChange() {}  // reserved for future logic
+
+function guardarExtrao() {
+  const desc   = document.getElementById('ex-desc').value.trim();
+  const fecha  = document.getElementById('ex-fecha').value;
+  const cuenta = document.getElementById('ex-cuenta').value;
+  const monto  = parseFlt(document.getElementById('ex-importe').value);
+  const mov    = document.getElementById('ex-mov').value;
+  if (!desc)  { toast('La descripción es obligatoria','error'); return; }
+  if (!fecha) { toast('La fecha es obligatoria','error'); return; }
+  if (!cuenta){ toast('Selecciona una cuenta','error'); return; }
+  if (monto<=0){ toast('El importe debe ser mayor a 0','error'); return; }
+
+  const moneda = document.getElementById('ex-moneda').value;
+  const rec = {
+    id:          genId('proy'),
+    fecha,
+    tipo:        'Manual',
+    descripcion: desc,
+    concepto:    document.getElementById('ex-concepto').value.trim(),
+    cuentaCont:  document.getElementById('ex-cc').value.trim(),
+    cuenta,
+    cuentaDest:  '',
+    moneda,
+    entrada:     mov === 'Abono' ? monto : 0,
+    salida:      mov === 'Cargo' ? monto : 0,
+    entradaDest: 0,
+    tc:          null,
+    recurrenteId:'',
+    notas:       document.getElementById('ex-notas').value.trim(),
+  };
+  saveProy([...loadProy(), rec]);
+  closeModal('modal-extrao');
+  toast('Movimiento extraordinario agregado','success');
+  renderAll();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL: TRASPASO
+══════════════════════════════════════════════════════════════ */
+let __trDesdeDeficit = false;
+
+function abrirTraspaso(desdeDeficit) {
+  __trDesdeDeficit = desdeDeficit || false;
+  document.getElementById('tr-fecha').value    = todayISO();
+  document.getElementById('tr-importe').value  = '';
+  document.getElementById('tr-desc').value     = 'Traspaso entre cuentas';
+  document.getElementById('tr-notas').value    = '';
+  document.getElementById('tr-tc').value       = fmtNum(getTC(), 2).replace(',','.');
+  fillCuentaSelect('tr-origen');
+  fillCuentaSelect('tr-destino');
+  document.getElementById('tr-tc-group').style.display = 'none';
+  document.getElementById('tr-tc-hint').textContent    = '';
+  openModal('modal-traspaso');
+}
+
+function trCuentaChange() {
+  const base  = loadRegistry(KEY_SAL).filter(s=>!s.cancelada);
+  const orig  = document.getElementById('tr-origen').value;
+  const dest  = document.getElementById('tr-destino').value;
+  const mOrig = base.find(s=>s.cuenta===orig)?.moneda;
+  const mDest = base.find(s=>s.cuenta===dest)?.moneda;
+  const cross  = mOrig && mDest && mOrig !== mDest;
+  document.getElementById('tr-tc-group').style.display = cross ? '' : 'none';
+  if (cross) {
+    document.getElementById('tr-tc-hint').textContent =
+      `1 ${mOrig} = [TC] ${mDest}`;
+  }
+  trCalcDestino();
+}
+
+function trCalcDestino() {
+  // No separate "destino amount" display needed — computed at save time
+}
+
+function guardarTraspaso() {
+  const fecha  = document.getElementById('tr-fecha').value;
+  const monto  = parseFlt(document.getElementById('tr-importe').value);
+  const origen = document.getElementById('tr-origen').value;
+  const destino= document.getElementById('tr-destino').value;
+  const desc   = document.getElementById('tr-desc').value.trim() || 'Traspaso entre cuentas';
+  if (!fecha)          { toast('La fecha es obligatoria','error'); return; }
+  if (monto <= 0)      { toast('El importe debe ser mayor a 0','error'); return; }
+  if (!origen)         { toast('Selecciona la cuenta origen','error'); return; }
+  if (!destino)        { toast('Selecciona la cuenta destino','error'); return; }
+  if (origen === destino){ toast('La cuenta origen y destino deben ser distintas','error'); return; }
+
+  const base   = loadRegistry(KEY_SAL).filter(s=>!s.cancelada);
+  const mOrig  = base.find(s=>s.cuenta===origen)?.moneda  || 'MXN';
+  const mDest  = base.find(s=>s.cuenta===destino)?.moneda || 'MXN';
+  const cross   = mOrig !== mDest;
+
+  let tc = getTC();
+  if (cross) {
+    tc = parseFlt(document.getElementById('tr-tc').value);
+    if (!tc || tc <= 0) { toast('Ingresa el tipo de cambio','error'); return; }
+  }
+
+  // Compute destination amount
+  let entradaDest = monto;
+  if (cross) {
+    if (mOrig === 'MXN' && mDest === 'USD') entradaDest = monto / tc;
+    else if (mOrig === 'USD' && mDest === 'MXN') entradaDest = monto * tc;
+  }
+
+  const rec = {
+    id:          genId('proy'),
+    fecha,
+    tipo:        'Traspaso',
+    descripcion: desc,
+    concepto:    'Traspaso',
+    cuentaCont:  '',
+    cuenta:      origen,
+    cuentaDest:  destino,
+    moneda:      mOrig,
+    monedaDest:  mDest,
+    entrada:     0,
+    salida:      monto,
+    entradaDest,
+    tc:          cross ? tc : null,
+    recurrenteId:'',
+    notas:       document.getElementById('tr-notas').value.trim(),
+  };
+
+  saveProy([...loadProy(), rec]);
+  closeModal('modal-traspaso');
+  toast('Traspaso registrado — continuando proyección…','success');
+
+  renderAll();
+  updateBtnLabel();
+
+  if (__trDesdeDeficit) {
+    __trDesdeDeficit = false;
+    setTimeout(proyectarSiguienteMes, 600);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL: VENTA DE DIVISAS
+══════════════════════════════════════════════════════════════ */
+let __vdDesdeDeficit = false;
+
+function abrirVentaDivisas(desdeDeficit) {
+  __vdDesdeDeficit = desdeDeficit || false;
+  document.getElementById('vd-fecha').value   = todayISO();
+  document.getElementById('vd-usd').value     = '';
+  document.getElementById('vd-mxn').value     = '';
+  document.getElementById('vd-tc').value      = fmtNum(getTC(), 2).replace(',','.');
+  document.getElementById('vd-notas').value   = '';
+  fillCuentaSelect('vd-cta-usd', 'USD');
+  fillCuentaSelect('vd-cta-mxn', 'MXN');
+  openModal('modal-venta');
+}
+
+function vdCalcMXN() {
+  const usd = parseFlt(document.getElementById('vd-usd').value);
+  const tc  = parseFlt(document.getElementById('vd-tc').value);
+  document.getElementById('vd-mxn').value = (usd * tc).toFixed(2);
+}
+
+function guardarVentaDivisas() {
+  const fecha   = document.getElementById('vd-fecha').value;
+  const usd     = parseFlt(document.getElementById('vd-usd').value);
+  const ctaUSD  = document.getElementById('vd-cta-usd').value;
+  const ctaMXN  = document.getElementById('vd-cta-mxn').value;
+  const tc      = parseFlt(document.getElementById('vd-tc').value);
+  if (!fecha)         { toast('La fecha es obligatoria','error'); return; }
+  if (usd <= 0)       { toast('El monto en USD debe ser mayor a 0','error'); return; }
+  if (!ctaUSD)        { toast('Selecciona la cuenta USD','error'); return; }
+  if (!ctaMXN)        { toast('Selecciona la cuenta MXN','error'); return; }
+  if (tc <= 0)        { toast('Ingresa el tipo de cambio','error'); return; }
+  if (ctaUSD===ctaMXN){ toast('Las cuentas deben ser distintas','error'); return; }
+
+  const mxn = usd * tc;
+  const rec = {
+    id:          genId('proy'),
+    fecha,
+    tipo:        'Venta divisas',
+    descripcion: `Venta USD → MXN (TC ${fmtNum(tc,2)})`,
+    concepto:    'Venta de divisas',
+    cuentaCont:  '',
+    cuenta:      ctaUSD,
+    cuentaDest:  ctaMXN,
+    moneda:      'USD',
+    monedaDest:  'MXN',
+    entrada:     0,
+    salida:      usd,
+    entradaDest: mxn,
+    tc,
+    recurrenteId:'',
+    notas:       document.getElementById('vd-notas').value.trim(),
+  };
+
+  saveProy([...loadProy(), rec]);
+  closeModal('modal-venta');
+  toast(`Venta de US$${fmtNum(usd)} agregada — recibes ${fmtMXN(mxn)}`, 'success');
+
+  renderAll();
+  updateBtnLabel();
+
+  if (__vdDesdeDeficit) {
+    __vdDesdeDeficit = false;
+    setTimeout(proyectarSiguienteMes, 600);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER ALL
+══════════════════════════════════════════════════════════════ */
+function renderAll() {
+  renderSaldosKPI();
+  renderTabla();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+__tcProy = parseFlt(document.getElementById('proy-tc').value) || 17.50;
+// Defer heavy computation so the spinner paints before JS blocks the thread
+requestAnimationFrame(() => setTimeout(() => {
+  renderAll();
+  updateBtnLabel();
+}, 0));
+
+// Restore TC from financiero if available
+try {
+  const tcStored = localStorage.getItem('stgl_tc_usd');
+  if (tcStored) {
+    const v = parseFlt(tcStored);
+    if (v > 1) {
+      document.getElementById('proy-tc').value = v.toFixed(2);
+      __tcProy = v;
+    }
+  }
+} catch(e){}
+
+// Restore cutoff date and per-account info
+try {
+  const stored = loadCutoff();
+  if (stored) document.getElementById('proy-cutoff').value = stored;
+  actualizarCutoffInfo(stored, loadCutoffCta());
+} catch(e){}
+
+// Restore arranque (start month)
+try {
+  const arrInput = document.getElementById('proy-arranque');
+  if (arrInput) arrInput.value = loadArranque();
+} catch(e){}
+</script>
+</body>
+</html>

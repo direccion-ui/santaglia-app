@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Ayuda e Instructivo</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── Layout ── */
+    .help-layout { display:grid; grid-template-columns:220px 1fr; gap:2rem; align-items:start; }
+
+    /* ── Sidebar TOC ── */
+    .help-toc { position:sticky; top:80px; background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+    .help-toc-header { padding:0.7rem 1rem; background:var(--navy); }
+    .help-toc-title { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.7); }
+    .help-toc-list { list-style:none; padding:0.4rem 0; }
+    .help-toc-section { padding:0.45rem 1rem 0.1rem; font-family:var(--brand); font-size:0.54rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-xs); margin-top:0.3rem; }
+    .help-toc-link { display:block; padding:0.32rem 1rem 0.32rem 1.4rem; font-size:0.72rem; color:var(--text-dim); border-left:2px solid transparent; transition:all 0.14s; text-decoration:none; }
+    .help-toc-link:hover { color:var(--navy); background:var(--navy-pale); border-left-color:var(--navy-pale); }
+    .help-toc-link.active { color:var(--navy); font-weight:600; border-left-color:var(--navy); background:var(--navy-pale); }
+
+    /* ── Content ── */
+    .help-content { min-width:0; }
+    .help-section { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:1.75rem; scroll-margin-top:80px; }
+    .help-section-hdr { padding:1rem 1.4rem; background:var(--navy); display:flex; align-items:center; gap:0.75rem; }
+    .help-section-icon { font-size:1.2rem; }
+    .help-section-title { font-family:var(--brand); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#fff; }
+    .help-section-sub { font-size:0.65rem; color:rgba(255,255,255,0.55); margin-top:0.1rem; }
+
+    .help-body { padding:1.4rem; }
+
+    /* ── Article / subsection ── */
+    .help-article { margin-bottom:1.6rem; }
+    .help-article:last-child { margin-bottom:0; }
+    .help-article h3 {
+      font-family:var(--brand); font-size:0.78rem; font-weight:700;
+      letter-spacing:0.06em; text-transform:uppercase; color:var(--navy);
+      margin-bottom:0.55rem; padding-bottom:0.35rem;
+      border-bottom:1px solid var(--border);
+    }
+    .help-article h4 {
+      font-family:var(--brand); font-size:0.7rem; font-weight:700;
+      color:var(--navy-l); margin:0.75rem 0 0.3rem; letter-spacing:0.04em;
+      text-transform:uppercase;
+    }
+    .help-article p { font-size:0.8rem; color:var(--text-dim); line-height:1.7; margin-bottom:0.55rem; }
+    .help-article ul, .help-article ol { padding-left:1.4rem; margin-bottom:0.55rem; }
+    .help-article li { font-size:0.79rem; color:var(--text-dim); line-height:1.65; margin-bottom:0.2rem; }
+    .help-article li strong { color:var(--text); }
+    .help-article .note {
+      background:#fef3db; border-left:3px solid #f59f00; border-radius:0 3px 3px 0;
+      padding:0.55rem 0.9rem; font-size:0.76rem; color:#7a5000; margin:0.6rem 0;
+    }
+    .help-article .tip {
+      background:#e6f7ee; border-left:3px solid var(--green); border-radius:0 3px 3px 0;
+      padding:0.55rem 0.9rem; font-size:0.76rem; color:#145a32; margin:0.6rem 0;
+    }
+    .help-article .warn {
+      background:#fde8e8; border-left:3px solid var(--red); border-radius:0 3px 3px 0;
+      padding:0.55rem 0.9rem; font-size:0.76rem; color:#922b21; margin:0.6rem 0;
+    }
+
+    /* ── Steps ── */
+    .steps { counter-reset:step; margin:0.6rem 0; }
+    .step { display:flex; gap:0.85rem; margin-bottom:0.65rem; align-items:flex-start; }
+    .step-num { counter-increment:step; content:counter(step); flex-shrink:0;
+      width:1.4rem; height:1.4rem; background:var(--navy); color:#fff;
+      border-radius:50%; font-family:var(--brand); font-size:0.62rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center; margin-top:0.05rem; }
+    .step-num::before { content:counter(step); }
+    .step-text { font-size:0.79rem; color:var(--text-dim); line-height:1.6; }
+    .step-text strong { color:var(--text); }
+
+    /* ── FAQ ── */
+    .faq-item { border-bottom:1px solid var(--border); }
+    .faq-item:last-child { border-bottom:none; }
+    .faq-q {
+      width:100%; text-align:left; padding:0.85rem 1.4rem;
+      font-family:var(--brand); font-size:0.75rem; font-weight:700;
+      color:var(--navy); letter-spacing:0.03em;
+      background:none; border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between; gap:1rem;
+      transition:background 0.14s;
+    }
+    .faq-q:hover { background:var(--navy-pale); }
+    .faq-arrow { flex-shrink:0; font-size:0.65rem; opacity:0.5; transition:transform 0.2s; }
+    .faq-item.open .faq-arrow { transform:rotate(180deg); }
+    .faq-a { display:none; padding:0 1.4rem 1rem; font-size:0.79rem; color:var(--text-dim); line-height:1.7; }
+    .faq-item.open .faq-a { display:block; }
+    .faq-a ul { padding-left:1.3rem; }
+    .faq-a li { margin-bottom:0.2rem; }
+
+    /* ── Keyboard shortcuts table ── */
+    .shortcut-table { width:100%; border-collapse:collapse; font-size:0.76rem; margin-top:0.4rem; }
+    .shortcut-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.3rem 0.8rem; text-align:left; }
+    .shortcut-table td { padding:0.35rem 0.8rem; border-bottom:1px solid var(--border); }
+    .shortcut-table tr:last-child td { border-bottom:none; }
+    .kbd { display:inline-block; padding:0.05rem 0.4rem; background:#f4f5f8; border:1px solid var(--border-h); border-radius:3px; font-family:'Courier New',monospace; font-size:0.72rem; color:var(--text); }
+
+    /* ── Module cards (intro grid) ── */
+    .module-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.85rem; margin:0.5rem 0 0.25rem; }
+    .module-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem 1rem; }
+    .module-card-icon { font-size:1.3rem; margin-bottom:0.3rem; }
+    .module-card-name { font-family:var(--brand); font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--navy); margin-bottom:0.2rem; }
+    .module-card-desc { font-size:0.7rem; color:var(--text-xs); line-height:1.5; }
+
+    /* ── Responsive ── */
+    @media(max-width:900px) {
+      .help-layout { grid-template-columns:1fr; }
+      .help-toc { position:static; }
+      .module-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    @media(max-width:520px) { .module-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link active" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Centro de soporte</div>
+          <h1 class="page-heading">Ayuda & Instructivo</h1>
+          <div class="page-meta">Guía completa del Santaglia Compass · Versión 2025</div>
+        </div>
+      </div>
+
+      <div class="help-layout">
+
+        <!-- ══ SIDEBAR TOC ══ -->
+        <aside>
+          <div class="help-toc">
+            <div class="help-toc-header">
+              <div class="help-toc-title">Contenido</div>
+            </div>
+            <ul class="help-toc-list">
+              <li class="help-toc-section">Introducción</li>
+              <li><a class="help-toc-link" href="#intro">¿Qué es este sistema?</a></li>
+              <li><a class="help-toc-link" href="#inicio">Primeros pasos</a></li>
+
+              <li class="help-toc-section">Módulos</li>
+              <li><a class="help-toc-link" href="#dashboard">Dashboard</a></li>
+              <li><a class="help-toc-link" href="#clientes">Clientes</a></li>
+              <li><a class="help-toc-link" href="#servicios">Servicios</a></li>
+              <li><a class="help-toc-link" href="#tiempo">Tiempo</a></li>
+              <li><a class="help-toc-link" href="#ventas">Ventas</a></li>
+              <li><a class="help-toc-link" href="#operaciones">Operaciones</a></li>
+              <li><a class="help-toc-link" href="#finanzas">Finanzas</a></li>
+              <li><a class="help-toc-link" href="#recurrentes">Recurrentes</a></li>
+              <li><a class="help-toc-link" href="#proyeccion">Proyección</a></li>
+              <li><a class="help-toc-link" href="#general">General</a></li>
+
+              <li class="help-toc-section">Referencia</li>
+              <li><a class="help-toc-link" href="#datos">Almacenamiento de datos</a></li>
+              <li><a class="help-toc-link" href="#faq">Preguntas frecuentes</a></li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- ══ MAIN CONTENT ══ -->
+        <div class="help-content">
+
+          <!-- ── INTRO ── -->
+          <section class="help-section" id="intro">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">🏢</span>
+              <div>
+                <div class="help-section-title">¿Qué es el Sistema Santaglia?</div>
+                <div class="help-section-sub">Visión general y propósito</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <p>El <strong>Santaglia Compass</strong> es una plataforma web privada para la administración financiera, comercial y operativa de la empresa. Toda la información se guarda <strong>localmente en el navegador</strong> — no se envía ningún dato a servidores externos.</p>
+                <p>El sistema está organizado en seis áreas accesibles desde la barra de navegación superior:</p>
+                <div class="module-grid">
+                  <div class="module-card">
+                    <div class="module-card-icon">📊</div>
+                    <div class="module-card-name">Dashboard</div>
+                    <div class="module-card-desc">Resumen ejecutivo con KPIs clave, gráficas de ingresos y egresos en tiempo real.</div>
+                  </div>
+                  <div class="module-card">
+                    <div class="module-card-icon">💼</div>
+                    <div class="module-card-name">Ventas</div>
+                    <div class="module-card-desc">Facturación emitida y seguimiento de proyectos y clientes activos.</div>
+                  </div>
+                  <div class="module-card">
+                    <div class="module-card-icon">⚙️</div>
+                    <div class="module-card-name">Operaciones</div>
+                    <div class="module-card-desc">Nómina mensual y retenciones de impuestos de trabajadores y prestadores.</div>
+                  </div>
+                  <div class="module-card">
+                    <div class="module-card-icon">🏦</div>
+                    <div class="module-card-name">Finanzas</div>
+                    <div class="module-card-desc">Movimientos bancarios, análisis de egresos, gastos recurrentes y proyección de saldos.</div>
+                  </div>
+                  <div class="module-card">
+                    <div class="module-card-icon">📁</div>
+                    <div class="module-card-name">General</div>
+                    <div class="module-card-desc">Repositorio de documentos y galería de archivos de la empresa.</div>
+                  </div>
+                  <div class="module-card">
+                    <div class="module-card-icon">❓</div>
+                    <div class="module-card-name">Ayuda</div>
+                    <div class="module-card-desc">Instructivo completo, guía de uso y preguntas frecuentes (esta página).</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── PRIMEROS PASOS ── -->
+          <section class="help-section" id="inicio">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">🚀</span>
+              <div>
+                <div class="help-section-title">Primeros pasos</div>
+                <div class="help-section-sub">Configuración inicial recomendada</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>Orden sugerido de configuración</h3>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Importar saldos bancarios</strong> — Ve a <a href="financiero.html" style="color:var(--navy);">Finanzas → Mov. Bancarios</a>, sección "Saldos Bancarios", y haz clic en <em>"↑ Importar Excel"</em> para cargar el archivo con las cuentas y sus saldos actuales. También puedes editarlos manualmente con el ícono de lápiz.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Importar movimientos bancarios</strong> — En la misma página, haz clic en <em>"↑ Importar Excel"</em> (sección Movimientos Bancarios) para cargar el histórico. Esto alimentará las gráficas del Dashboard y el análisis de Egresos.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Registrar gastos recurrentes</strong> — Ve a <a href="recurrentes.html" style="color:var(--navy);">Finanzas → Recurrentes</a> y agrega todos los gastos mensuales fijos (nómina, renta, suscripciones, etc.) con su día estimado de pago.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Importar facturación</strong> — Ve a <a href="facturacion.html" style="color:var(--navy);">Ventas → Facturación</a> e importa el XML de facturas emitidas. El sistema las clasifica automáticamente.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Registrar nómina</strong> — Ve a <a href="nomina.html" style="color:var(--navy);">Operaciones → Nómina</a> y registra los datos de cada período de nómina.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Explorar el Dashboard</strong> — Una vez que hayas cargado datos, el <a href="dashboard.html" style="color:var(--navy);">Dashboard</a> mostrará automáticamente los KPIs, gráficas y resúmenes actualizados.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text"><strong>Proyectar saldos</strong> — Ve a <a href="proyectados.html" style="color:var(--navy);">Finanzas → Proyección</a> y presiona "Proyectar siguiente mes" para simular el impacto de los gastos recurrentes sobre los saldos bancarios.</div></div>
+                </div>
+                <div class="note">⚠️ Los datos se guardan en <strong>localStorage del navegador</strong>. No uses modo incógnito ni borres los datos del navegador, ya que perderías la información. Haz respaldos periódicos exportando desde cada módulo.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── DASHBOARD ── -->
+          <section class="help-section" id="dashboard">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">📊</span>
+              <div>
+                <div class="help-section-title">Dashboard</div>
+                <div class="help-section-sub">Resumen ejecutivo del negocio</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>¿Qué muestra el Dashboard?</h3>
+                <p>El Dashboard consolida la información de todos los módulos en una sola vista. Se actualiza automáticamente cada vez que se accede a la página.</p>
+                <h4>Sección de KPIs superiores</h4>
+                <ul>
+                  <li><strong>Facturación del mes / año:</strong> Total de ingresos facturados, tomado de los XMLs importados.</li>
+                  <li><strong>Egresos del período:</strong> Total de salidas clasificadas en la hoja de movimientos bancarios.</li>
+                  <li><strong>Saldo disponible:</strong> Suma de todas las cuentas bancarias activas (convertidas a MXN con el TC configurado).</li>
+                </ul>
+                <h4>Gráficas disponibles</h4>
+                <ul>
+                  <li><strong>Facturación mensual:</strong> Barras por mes con línea de tendencia y promedio. Filtros de 3M / 6M / 12M / Todo.</li>
+                  <li><strong>Egresos por categoría:</strong> Barras apiladas que desglosan los egresos en: Asimilables, Honorarios, Renta Auto, Intereses, Servicios, Suscripciones, Impuestos y Otros.</li>
+                  <li><strong>Donuts de egresos:</strong> Dos gráficas de tipo dona — una para Gastos operativos (top 5 conceptos) y otra para Impuestos y retenciones.</li>
+                </ul>
+                <div class="tip">💡 Usa el campo "TC USD/MXN" en la página de Mov. Bancarios para actualizar el tipo de cambio. Las gráficas del Dashboard lo usan automáticamente para convertir saldos en USD.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── CLIENTES ── -->
+          <section class="help-section" id="clientes">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">🤝</span>
+              <div>
+                <div class="help-section-title">Clientes</div>
+                <div class="help-section-sub">CRM · Catálogo de clientes y prospectos</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>¿Para qué sirve?</h3>
+                <p>La hoja de <a href="clientes.html" style="color:var(--navy);">Clientes</a> es el directorio CRM de la empresa. Concentra tanto los <strong>prospectos</strong> (clientes potenciales) como los <strong>clientes activos</strong>, en pausa, inactivos y perdidos, con sus datos fiscales y comerciales completos.</p>
+                <p>Los datos de esta hoja se usan en los módulos de <strong>Facturación</strong>, <strong>Proyectos</strong> y <strong>Tiempo</strong> para vincular operaciones al cliente correspondiente.</p>
+                <div class="note">Los datos se guardan en localStorage bajo la clave <span class="kbd">stgl_clientes</span>.</div>
+              </div>
+
+              <div class="help-article">
+                <h3>Datos del cliente</h3>
+                <h4>Información fiscal y comercial</h4>
+                <ul>
+                  <li><strong>Razón social:</strong> Nombre legal registrado ante el SAT.</li>
+                  <li><strong>Nombre comercial:</strong> Nombre que se usa en comunicación diaria.</li>
+                  <li><strong>RFC:</strong> Registro Federal de Contribuyentes.</li>
+                  <li><strong>Tipo de persona:</strong> Moral o Física.</li>
+                  <li><strong>Giro:</strong> Sector o industria del cliente.</li>
+                  <li><strong>Estado:</strong> Prospecto · Activo · Pausa · Inactivo · Perdido.</li>
+                  <li><strong>Contacto principal:</strong> Nombre, cargo y datos de contacto del interlocutor principal.</li>
+                  <li><strong>Moneda:</strong> MXN o USD (moneda base para cotizar a este cliente).</li>
+                  <li><strong>Días de crédito:</strong> Plazo de pago acordado (0 = contado).</li>
+                  <li><strong>Límite de crédito:</strong> Monto máximo de crédito autorizado.</li>
+                  <li><strong>Dirección:</strong> Domicilio fiscal o de entrega.</li>
+                </ul>
+              </div>
+
+              <div class="help-article">
+                <h3>Funcionalidades</h3>
+                <h4>Barra de KPIs</h4>
+                <p>La parte superior muestra contadores en tiempo real: total de clientes, cuántos son prospectos, cuántos están activos y cuántos en pausa o inactivos.</p>
+
+                <h4>Filtros y búsqueda</h4>
+                <ul>
+                  <li><strong>Pastillas de estado:</strong> Filtra la lista mostrando solo los clientes con el estado seleccionado (Todos · Prospecto · Activo · Pausa · Inactivo · Perdido).</li>
+                  <li><strong>Buscador:</strong> Filtra en tiempo real por razón social, nombre comercial o RFC.</li>
+                </ul>
+
+                <h4>Agregar y editar clientes</h4>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Haz clic en <strong>"+ Nuevo cliente"</strong>. Se abre el modal de captura.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Completa al menos la <strong>razón social</strong> y el <strong>estado</strong>. Los demás campos son opcionales.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Guarda. El cliente aparece en la lista y está disponible de inmediato en los demás módulos.</div></div>
+                </div>
+                <p>Para editar, haz clic en el ícono de lápiz (✏️) en la fila del cliente o desde el modal de detalle.</p>
+
+                <h4>Modal de detalle</h4>
+                <p>Haz clic en cualquier fila para abrir el panel de detalle completo, que muestra todos los campos del cliente, historial de actividad y accesos directos a facturación y proyectos asociados.</p>
+
+                <h4>Importación y exportación CSV</h4>
+                <ul>
+                  <li><strong>Exportar:</strong> Descarga todos los clientes en formato CSV compatible con Excel.</li>
+                  <li><strong>Importar:</strong> Carga masiva desde un CSV con las columnas del modelo de datos. Los registros existentes (mismo RFC) se actualizan; los nuevos se agregan.</li>
+                </ul>
+                <div class="tip">💡 El campo <strong>Nombre comercial</strong> es el que aparece en encabezados de listas, filtros desplegables y reportes. Si no se captura, se usa la razón social.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── SERVICIOS ── -->
+          <section class="help-section" id="servicios">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">🛠️</span>
+              <div>
+                <div class="help-section-title">Servicios</div>
+                <div class="help-section-sub">Catálogo de servicios con claves SAT</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>¿Para qué sirve?</h3>
+                <p>La hoja de <a href="servicios.html" style="color:var(--navy);">Servicios</a> es el catálogo de todos los servicios que la empresa ofrece, con su precio, unidad, tipo de IVA y las claves fiscales del SAT necesarias para emitir facturas CFDI.</p>
+                <p>Este catálogo lo consumen otros módulos a través de <span class="kbd">window.getServiciosActivos()</span>, lo que permite seleccionar servicios al registrar tiempo, generar propuestas o crear líneas de factura sin volver a capturarlos.</p>
+                <div class="note">Los datos se guardan en localStorage bajo la clave <span class="kbd">stgl_servicios</span>.</div>
+              </div>
+
+              <div class="help-article">
+                <h3>Datos de cada servicio</h3>
+                <ul>
+                  <li><strong>Nombre:</strong> Descripción corta del servicio (ej. "Consultoría estratégica").</li>
+                  <li><strong>Clave interna:</strong> Identificador abreviado (ej. CONS-01).</li>
+                  <li><strong>Descripción:</strong> Detalle largo para incluir en propuestas o facturas.</li>
+                  <li><strong>Tipo:</strong> Hora · Proyecto · Retainer · Licencia · Capacitación · Otro.</li>
+                  <li><strong>Precio:</strong> Precio base unitario.</li>
+                  <li><strong>Moneda:</strong> MXN o USD.</li>
+                  <li><strong>Unidad:</strong> Unidad de medida (Hora, Mes, Proyecto, Licencia, etc.).</li>
+                  <li><strong>Clave SAT:</strong> Clave del producto o servicio del catálogo SAT (c_ClaveProdServ).</li>
+                  <li><strong>Unidad SAT:</strong> Clave de unidad del catálogo SAT (c_ClaveUnidad).</li>
+                  <li><strong>IVA:</strong> Indica si el servicio causa IVA.</li>
+                  <li><strong>Tasa IVA:</strong> Porcentaje de IVA aplicable (0%, 8%, 16%).</li>
+                </ul>
+              </div>
+
+              <div class="help-article">
+                <h3>Funcionalidades</h3>
+                <h4>Vista doble: tarjetas y tabla</h4>
+                <p>La hoja alterna entre una <strong>vista de tarjetas</strong> (útil para revisar el catálogo visualmente) y una <strong>vista de tabla</strong> (ideal para comparar precios y editar múltiples registros). Cambia entre vistas con los botones en la esquina superior derecha.</p>
+
+                <h4>Autocompletado de clave SAT por tipo</h4>
+                <p>Al seleccionar el <strong>Tipo</strong> de servicio en el formulario de captura, el sistema sugiere automáticamente la <strong>Clave SAT</strong> y la <strong>Unidad SAT</strong> más comunes para ese tipo. Puedes ajustarlas manualmente si necesitas una clave específica.</p>
+
+                <h4>Vista previa de precio con IVA</h4>
+                <p>El modal de captura muestra en tiempo real el precio <strong>sin IVA</strong> y el precio <strong>con IVA</strong> conforme escribes el precio base y seleccionas la tasa. Esto evita errores al cotizar.</p>
+
+                <h4>Importación y exportación CSV</h4>
+                <ul>
+                  <li><strong>Exportar:</strong> Descarga el catálogo completo en CSV.</li>
+                  <li><strong>Importar:</strong> Carga masiva desde CSV. Los servicios existentes (misma clave interna) se actualizan; los nuevos se agregan.</li>
+                </ul>
+                <div class="tip">💡 Mantén el catálogo actualizado para que los módulos de <strong>Tiempo</strong> y <strong>Facturación</strong> siempre tengan los precios y claves SAT correctos disponibles.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── TIEMPO ── -->
+          <section class="help-section" id="tiempo">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">⏱️</span>
+              <div>
+                <div class="help-section-title">Tiempo</div>
+                <div class="help-section-sub">Control de horas · Timesheet · Reporte de facturación</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>¿Para qué sirve?</h3>
+                <p>La hoja de <a href="tiempo.html" style="color:var(--navy);">Tiempo</a> es el módulo de registro de horas trabajadas (timesheet). Permite capturar el tiempo dedicado a cada cliente y servicio, marcar las horas como facturables o no facturables, y generar reportes de facturación listos para convertirse en facturas.</p>
+                <p>Las entradas de tiempo se exponen a otros módulos a través de <span class="kbd">window.getTiempoEntries()</span>.</p>
+                <div class="note">Los datos se guardan en localStorage bajo la clave <span class="kbd">stgl_tiempo</span>.</div>
+              </div>
+
+              <div class="help-article">
+                <h3>Datos de cada entrada</h3>
+                <ul>
+                  <li><strong>Fecha:</strong> Día en que se realizó el trabajo.</li>
+                  <li><strong>Cliente:</strong> Vinculado al catálogo de Clientes (<span class="kbd">clienteId</span>).</li>
+                  <li><strong>Servicio:</strong> Vinculado al catálogo de Servicios (<span class="kbd">servicioId</span>).</li>
+                  <li><strong>Categoría:</strong> Consultoría · Reunión · Desarrollo · Revisión · Administración · Otro.</li>
+                  <li><strong>Descripción:</strong> Detalle de la actividad realizada.</li>
+                  <li><strong>Horas:</strong> Cantidad de horas trabajadas (acepta decimales, ej. 1.5 = 1h 30min).</li>
+                  <li><strong>Tarifa:</strong> Precio por hora para esta entrada (puede diferir del precio base del servicio).</li>
+                  <li><strong>Moneda:</strong> MXN o USD.</li>
+                  <li><strong>Facturable:</strong> Indica si las horas se cobrarán al cliente.</li>
+                  <li><strong>Notas:</strong> Observaciones internas (no se incluyen en reportes de cliente).</li>
+                </ul>
+              </div>
+
+              <div class="help-article">
+                <h3>Funcionalidades</h3>
+                <h4>Barra de KPIs</h4>
+                <p>En la parte superior se muestran cuatro indicadores actualizados en tiempo real:</p>
+                <ul>
+                  <li><strong>Esta semana:</strong> Total de horas registradas en la semana en curso (lunes a domingo).</li>
+                  <li><strong>Este mes:</strong> Total de horas del mes calendario actual.</li>
+                  <li><strong>Facturables:</strong> Suma de horas marcadas como facturables en el período visible.</li>
+                  <li><strong>Tasa facturable:</strong> Porcentaje de horas facturables sobre el total (eficiencia de facturación).</li>
+                </ul>
+
+                <h4>Vista semanal (cuadrícula)</h4>
+                <p>La vista principal es una <strong>cuadrícula semana × cliente</strong> que muestra los días de lunes a domingo en columnas y los clientes activos en filas. Cada celda muestra el total de horas del día para ese cliente. Los totales por día y por cliente se calculan automáticamente al pie y al lado derecho.</p>
+                <p>Navega entre semanas con las flechas ← → para revisar el historial o planear la semana siguiente.</p>
+
+                <h4>Vista de bitácora (log)</h4>
+                <p>Alterna a la <strong>vista de log</strong> para ver las entradas como lista cronológica con filtros por:</p>
+                <ul>
+                  <li>Rango de fechas</li>
+                  <li>Cliente</li>
+                  <li>Categoría</li>
+                  <li>Facturable / No facturable</li>
+                </ul>
+
+                <h4>Captura rápida de horas</h4>
+                <p>El formulario de nueva entrada incluye <strong>pastillas de horas predefinidas</strong> (0:30, 1:00, 1:30, 2:00, 3:00, 4:00, 6:00, 8:00) para agilizar el registro. Haz clic en la pastilla correspondiente para rellenar automáticamente el campo de horas.</p>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Haz clic en <strong>"+ Registrar horas"</strong> o en una celda de la cuadrícula semanal.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Selecciona el <strong>cliente</strong> y el <strong>servicio</strong> de los catálogos. La tarifa se pre-rellena con el precio del servicio.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Elige la <strong>categoría</strong>, escribe la descripción y selecciona las horas (o usa las pastillas rápidas).</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Marca si las horas son <strong>facturables</strong> y guarda.</div></div>
+                </div>
+
+                <h4>Generador de reporte de facturación</h4>
+                <p>El botón <strong>"Reporte de facturación"</strong> genera un resumen de las horas facturables del período seleccionado, agrupado por cliente y servicio. El reporte se presenta en:</p>
+                <ul>
+                  <li><strong>Formato texto:</strong> Listo para pegar en un correo o propuesta.</li>
+                  <li><strong>CSV:</strong> Descargable para importar a una hoja de cálculo o usarlo como base para emitir facturas.</li>
+                </ul>
+                <div class="tip">💡 Usa el reporte de facturación al cierre de cada mes para identificar exactamente qué horas cobrar a cada cliente antes de emitir las facturas en el módulo de Facturación.</div>
+                <div class="note">Si la tarifa de un servicio cambia, las entradas de tiempo ya registradas conservan la tarifa original con la que fueron capturadas. Esto asegura que los reportes históricos sean precisos.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── VENTAS ── -->
+          <section class="help-section" id="ventas">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">💼</span>
+              <div>
+                <div class="help-section-title">Ventas</div>
+                <div class="help-section-sub">Facturación · Proyectos</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>Facturación</h3>
+                <p>La hoja de <a href="facturacion.html" style="color:var(--navy);">Facturación</a> gestiona las facturas emitidas importadas desde XMLs del SAT.</p>
+                <h4>Importar facturas</h4>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Haz clic en <strong>"+ Importar XML"</strong> o arrastra los archivos al área de carga.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">El sistema extrae automáticamente: UUID, RFC del receptor, monto, fecha de emisión y tipo de comprobante.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Las facturas aparecen en la tabla agrupadas por mes. Puedes filtrar por cliente, período y estatus.</div></div>
+                </div>
+                <p>Los totales de facturación se reflejan automáticamente en las gráficas del <strong>Dashboard</strong>.</p>
+              </div>
+
+              <div class="help-article">
+                <h3>Proyectos</h3>
+                <p>La hoja de <a href="proyectos.html" style="color:var(--navy);">Proyectos</a> permite dar seguimiento a los proyectos activos y su estatus de avance.</p>
+                <ul>
+                  <li>Registra clientes, responsables, fechas de inicio/fin estimadas y estatus.</li>
+                  <li>Vincula proyectos con facturas para un control de ingresos por proyecto.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── OPERACIONES ── -->
+          <section class="help-section" id="operaciones">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">⚙️</span>
+              <div>
+                <div class="help-section-title">Operaciones</div>
+                <div class="help-section-sub">Nómina · Retenciones</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>Nómina</h3>
+                <p>La hoja de <a href="nomina.html" style="color:var(--navy);">Nómina</a> registra los pagos mensuales al equipo bajo los siguientes esquemas:</p>
+                <ul>
+                  <li><strong>Asimilables a salarios:</strong> Régimen fiscal para socios/directivos.</li>
+                  <li><strong>Honorarios:</strong> Prestadores de servicios externos.</li>
+                  <li><strong>RH / Empleados formales:</strong> Personal con contrato de nómina tradicional.</li>
+                </ul>
+                <h4>Desglose por persona</h4>
+                <p>Haz clic en <strong>"Mostrar desglose por persona"</strong> para expandir columnas individuales (bruto, retención, neto) para cada integrante del equipo. Los totales del pie de tabla se calculan automáticamente.</p>
+                <div class="tip">💡 Los datos de nómina alimentan el módulo de Retenciones para el cálculo de ISR y otros impuestos retenidos.</div>
+              </div>
+
+              <div class="help-article">
+                <h3>Retenciones</h3>
+                <p>La hoja de <a href="retenciones.html" style="color:var(--navy);">Retenciones</a> consolida los montos retenidos a colaboradores y prestadores de servicios para su declaración ante el SAT.</p>
+                <ul>
+                  <li>Muestra retenciones de ISR e IVA por período.</li>
+                  <li>Permite exportar el resumen para su uso en la declaración mensual.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── FINANZAS ── -->
+          <section class="help-section" id="finanzas">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">🏦</span>
+              <div>
+                <div class="help-section-title">Finanzas — Movimientos Bancarios</div>
+                <div class="help-section-sub">Saldos · Movimientos · Egresos</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>Saldos Bancarios</h3>
+                <p>El panel de Saldos en <a href="financiero.html" style="color:var(--navy);">Mov. Bancarios</a> muestra todas las cuentas registradas con su saldo actual.</p>
+                <h4>Agregar / editar una cuenta</h4>
+                <ul>
+                  <li>Haz clic en el ícono de lápiz (✏️) junto a cualquier cuenta para editar su saldo.</li>
+                  <li>Usa <strong>"↑ Importar Excel"</strong> para cargar masivamente la tabla de saldos.</li>
+                  <li>El campo <strong>TC USD/MXN</strong> convierte saldos en USD para mostrar el equivalente en pesos.</li>
+                </ul>
+                <div class="note">Las cuentas definidas aquí son las mismas que se usan en los módulos de Recurrentes y Proyección. Mantén los nombres de cuenta exactamente iguales en todos los módulos.</div>
+
+                <h3>Movimientos Bancarios</h3>
+                <p>La tabla de movimientos acepta datos importados desde Excel y captura manual.</p>
+                <h4>Campos de cada movimiento</h4>
+                <ul>
+                  <li><strong>Fecha:</strong> Fecha de la operación bancaria.</li>
+                  <li><strong>Mov.:</strong> Tipo de movimiento (Cargo / Abono / Traspaso / etc.).</li>
+                  <li><strong>Tipo:</strong> Clasificación contable (Ingreso, Egreso, Traspaso).</li>
+                  <li><strong>Descripción / Concepto:</strong> Texto descriptivo de la operación.</li>
+                  <li><strong>Cuenta bancaria:</strong> Cuenta de la que proviene o a la que va el movimiento.</li>
+                  <li><strong>Cuenta Contable:</strong> Clasificación contable (Asimilables, IVA, Servicios, etc.).</li>
+                  <li><strong>Entradas / Salidas:</strong> Monto del movimiento.</li>
+                  <li><strong>Conciliado:</strong> Marca si el movimiento ha sido conciliado con estados de cuenta.</li>
+                </ul>
+                <h4>Filtros por columna</h4>
+                <p>Cada columna tiene un campo de filtro debajo del encabezado. Escribe texto para filtrar en tiempo real. Los KPIs (total movimientos, entradas, salidas, neto) se actualizan con los filtros aplicados.</p>
+              </div>
+
+              <div class="help-article">
+                <h3>Egresos</h3>
+                <p>La hoja de <a href="egresos.html" style="color:var(--navy);">Egresos</a> analiza exclusivamente las salidas de dinero, separando los gastos operativos de los impuestos.</p>
+                <h4>Secciones</h4>
+                <ul>
+                  <li><strong>Gastos operativos:</strong> Todos los egresos que no son impuestos ni traspasos internos.</li>
+                  <li><strong>Impuestos y retenciones:</strong> Movimientos clasificados como ISR, IVA, IMSS, INFONAVIT, predial, etc.</li>
+                </ul>
+                <h4>Gráficas de dona</h4>
+                <p>Cada sección tiene una gráfica de dona mostrando los 5 conceptos con mayor monto en el período seleccionado (3M / 6M / 12M / Todo).</p>
+                <div class="tip">💡 Los traspasos entre cuentas propias se excluyen automáticamente de los egresos para no distorsionar los totales.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── RECURRENTES ── -->
+          <section class="help-section" id="recurrentes">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">🔄</span>
+              <div>
+                <div class="help-section-title">Gastos Recurrentes</div>
+                <div class="help-section-sub">Catálogo de erogaciones mensuales fijas</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>¿Para qué sirve?</h3>
+                <p>La hoja de <a href="recurrentes.html" style="color:var(--navy);">Recurrentes</a> es el catálogo base que alimenta la Proyección de Saldos. Aquí se registran todos los gastos que se repiten mes a mes con su fecha estimada de pago.</p>
+                <h4>Campos de cada recurrente</h4>
+                <ul>
+                  <li><strong>Descripción:</strong> Nombre del gasto (ej. "Nómina asimilable", "Renta oficina").</li>
+                  <li><strong>Tipo:</strong> Egreso o Ingreso.</li>
+                  <li><strong>Día estimado:</strong> Día del mes en que se realiza el pago (1–28).</li>
+                  <li><strong>Concepto / Cta. Contable:</strong> Clasificación para reportes.</li>
+                  <li><strong>Cuenta bancaria:</strong> Cuenta de la que se carga el movimiento.</li>
+                  <li><strong>Moneda / Importe:</strong> Monto mensual en MXN o USD.</li>
+                  <li><strong>Estado:</strong> Activo (se proyecta) / Inactivo (se ignora en proyecciones).</li>
+                </ul>
+                <h4>Gestión del catálogo</h4>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Haz clic en <strong>"+ Agregar recurrente"</strong>.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Completa los campos. El concepto y la cuenta contable se sugieren automáticamente de los movimientos históricos.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Guarda. El recurrente aparecerá en la tabla y se incluirá en la próxima proyección.</div></div>
+                </div>
+                <p>Usa el botón <strong>⏸ / ▶</strong> en la columna de acciones para activar o desactivar temporalmente un recurrente sin eliminarlo.</p>
+                <div class="warn">⚠️ Los nombres de cuenta bancaria deben coincidir exactamente con los registrados en Saldos Bancarios. El autocompletado te ayuda a seleccionar el nombre correcto.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── PROYECCIÓN ── -->
+          <section class="help-section" id="proyeccion">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">📅</span>
+              <div>
+                <div class="help-section-title">Proyección de Saldos</div>
+                <div class="help-section-sub">Simulación de flujo de efectivo mensual</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>¿Cómo funciona?</h3>
+                <p>La <a href="proyectados.html" style="color:var(--navy);">Proyección</a> toma los saldos bancarios actuales y simula el efecto de aplicar todos los gastos recurrentes activos mes a mes. El objetivo es detectar anticipadamente si alguna cuenta quedará sin fondos.</p>
+
+                <h4>Flujo de trabajo básico</h4>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Configura el <strong>TC USD/MXN</strong> si tienes cuentas en dólares.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Presiona <strong>"📅 Proyectar [Mes] [Año]"</strong>. El sistema aplica todos los recurrentes activos ordenados por día estimado de pago.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Si hay saldo suficiente en todas las cuentas, el mes queda proyectado y el botón avanza al mes siguiente.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Si alguna cuenta <strong>no tiene saldo suficiente</strong>, la proyección se pausa y aparece la <em>alerta de déficit</em>.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Resuelve el déficit con un <strong>Traspaso</strong> o una <strong>Venta de divisas</strong>, luego presiona <strong>"▶ Continuar"</strong>.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Repite hasta proyectar todos los meses que necesites analizar.</div></div>
+                </div>
+
+                <h4>Tipos de movimiento que puedes agregar</h4>
+                <ul>
+                  <li><strong>Movimiento extraordinario:</strong> Gastos variables o ingresos no recurrentes (cargo o abono en cualquier fecha).</li>
+                  <li><strong>Traspaso entre cuentas:</strong> Mueve fondos de una cuenta a otra. Si las cuentas tienen monedas distintas (ej. MXN → USD), ingresa el tipo de cambio y el sistema calcula el monto en la moneda destino.</li>
+                  <li><strong>Venta de divisas:</strong> Vende dólares para fondear una cuenta en pesos. Ingresa el monto en USD y el TC; el MXN a recibir se calcula automáticamente.</li>
+                </ul>
+
+                <h4>Panel de saldos proyectados</h4>
+                <p>En la parte superior de la página se muestra el <strong>saldo proyectado de cada cuenta</strong> (saldo inicial + todos los movimientos proyectados). Los saldos negativos aparecen en rojo y los saldos bajos en naranja como advertencia.</p>
+
+                <h4>Limpiar la proyección</h4>
+                <p>El botón <strong>"🗑 Limpiar proyección"</strong> elimina todos los movimientos proyectados y reinicia el escenario desde cero. Los saldos reales (de Mov. Bancarios) no se modifican.</p>
+
+                <div class="tip">💡 Proyecta mes a mes para simular el flujo de efectivo a 3, 6 o 12 meses. Cuando una cuenta queda con saldo insuficiente, el sistema te muestra exactamente cuánto falta y en qué cuenta, para que puedas tomar decisiones anticipadas.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── GENERAL ── -->
+          <section class="help-section" id="general">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">📁</span>
+              <div>
+                <div class="help-section-title">General</div>
+                <div class="help-section-sub">Documentos · Galería</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>Documentos</h3>
+                <p>La hoja de <a href="documentos.html" style="color:var(--navy);">Documentos</a> es el repositorio de archivos de la empresa. Soporta PDF, Word, PowerPoint, Excel y texto plano.</p>
+                <ul>
+                  <li>Arrastra archivos al área de carga o usa el botón <strong>"+ Agregar documento"</strong>.</li>
+                  <li>Asigna categoría (Contratos, Informes, Propuestas, Manuales, Legal, Otro) y un proyecto relacionado.</li>
+                  <li>Busca por nombre o filtra por tipo y categoría.</li>
+                </ul>
+                <div class="note">Los archivos se guardan en el navegador (IndexedDB). El almacenamiento disponible depende del navegador y el equipo, normalmente entre 50–500 MB.</div>
+              </div>
+              <div class="help-article">
+                <h3>Galería</h3>
+                <p>La <a href="galeria.html" style="color:var(--navy);">Galería</a> almacena imágenes de la empresa: logotipos, fotos de obra, eventos, material gráfico, etc. Las imágenes se muestran en vista de cuadrícula con opción de visualización ampliada.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── DATOS ── -->
+          <section class="help-section" id="datos">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">💾</span>
+              <div>
+                <div class="help-section-title">Almacenamiento de datos</div>
+                <div class="help-section-sub">¿Dónde vive la información?</div>
+              </div>
+            </div>
+            <div class="help-body">
+              <div class="help-article">
+                <h3>Claves de localStorage</h3>
+                <p>Toda la información del sistema se guarda en el <strong>localStorage del navegador</strong> bajo las siguientes claves:</p>
+                <table class="shortcut-table">
+                  <thead><tr><th>Clave</th><th>Contenido</th><th>Módulo</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="kbd">stgl_clientes</span></td><td>Catálogo de clientes y prospectos</td><td>Clientes</td></tr>
+                    <tr><td><span class="kbd">stgl_servicios</span></td><td>Catálogo de servicios con claves SAT</td><td>Servicios</td></tr>
+                    <tr><td><span class="kbd">stgl_tiempo</span></td><td>Entradas de tiempo (timesheet)</td><td>Tiempo</td></tr>
+                    <tr><td><span class="kbd">stgl_saldos</span></td><td>Cuentas bancarias y saldos</td><td>Mov. Bancarios</td></tr>
+                    <tr><td><span class="kbd">stgl_mov_excel</span></td><td>Movimientos importados desde Excel</td><td>Mov. Bancarios</td></tr>
+                    <tr><td><span class="kbd">stgl_mov_manual</span></td><td>Movimientos capturados manualmente</td><td>Mov. Bancarios</td></tr>
+                    <tr><td><span class="kbd">stgl_recurrentes</span></td><td>Catálogo de gastos recurrentes</td><td>Recurrentes</td></tr>
+                    <tr><td><span class="kbd">stgl_mov_proyectados</span></td><td>Movimientos del escenario proyectado</td><td>Proyección</td></tr>
+                    <tr><td><span class="kbd">stgl_facturas</span></td><td>Facturas emitidas (XMLs)</td><td>Facturación</td></tr>
+                    <tr><td><span class="kbd">stgl_proyectos</span></td><td>Proyectos y clientes</td><td>Proyectos</td></tr>
+                    <tr><td><span class="kbd">stgl_nomina</span></td><td>Registros de nómina</td><td>Nómina</td></tr>
+                    <tr><td><span class="kbd">stgl_retenciones</span></td><td>Registros de retenciones</td><td>Retenciones</td></tr>
+                    <tr><td><span class="kbd">stgl_docs</span></td><td>Metadatos de documentos</td><td>Documentos</td></tr>
+                  </tbody>
+                </table>
+
+                <h4>Hacer un respaldo manual</h4>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Abre la consola del navegador con <span class="kbd">F12</span> → pestaña <em>Consola</em>.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Escribe: <span class="kbd">JSON.stringify(localStorage)</span> y presiona Enter.</div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Copia el texto resultante y pégalo en un archivo <code>.json</code> guardado en OneDrive.</div></div>
+                </div>
+
+                <h4>Restaurar un respaldo</h4>
+                <div class="steps">
+                  <div class="step"><span class="step-num"></span><div class="step-text">Abre la consola y pega: <span class="kbd">const d = JSON.parse('PEGAR_RESPALDO_AQUÍ')</span></div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Luego: <span class="kbd">Object.entries(d).forEach(([k,v]) => localStorage.setItem(k,v))</span></div></div>
+                  <div class="step"><span class="step-num"></span><div class="step-text">Recarga la página.</div></div>
+                </div>
+                <div class="warn">⚠️ Si borras los datos del navegador, el historial del sitio o usas modo incógnito, los datos se perderán. Mantén respaldos regulares en OneDrive.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── FAQ ── -->
+          <section class="help-section" id="faq">
+            <div class="help-section-hdr">
+              <span class="help-section-icon">❓</span>
+              <div>
+                <div class="help-section-title">Preguntas Frecuentes</div>
+                <div class="help-section-sub">Respuestas a las dudas más comunes</div>
+              </div>
+            </div>
+            <div class="help-body" style="padding:0;">
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Por qué el Dashboard no muestra datos? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">El Dashboard toma datos de los otros módulos. Asegúrate de haber importado al menos:
+                  <ul>
+                    <li>Facturas XML en <strong>Facturación</strong> (para gráficas de ingresos)</li>
+                    <li>Movimientos bancarios en <strong>Mov. Bancarios</strong> (para gráficas de egresos)</li>
+                    <li>Saldos en <strong>Mov. Bancarios</strong> (para los KPIs de cuentas)</li>
+                  </ul>
+                  Si ya importaste datos pero el Dashboard sigue vacío, recarga la página (F5).
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Los traspasos entre cuentas aparecen en Egresos? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">No. El sistema filtra automáticamente los traspasos internos de las tablas y gráficas de egresos. Un movimiento se considera traspaso si:
+                  <ul>
+                    <li>Su campo <em>Tipo</em> es "Traspaso"</li>
+                    <li>Tiene un identificador de traspaso vinculado (<code>traspasoId</code>)</li>
+                    <li>El campo <em>Concepto</em>, <em>Descripción</em> o <em>Cta. Contable</em> contiene la palabra "traspaso"</li>
+                  </ul>
+                  Si un traspaso aparece incorrectamente en Egresos, asegúrate de que el campo <em>Tipo</em> esté marcado como "Traspaso" en la hoja de Mov. Bancarios.
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Cómo clasifico un movimiento como impuesto? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">El sistema clasifica un egreso como "Impuesto" automáticamente si su descripción, concepto o cuenta contable contiene alguna de estas palabras clave:
+                  <ul>
+                    <li>isr, iva, imss, infonavit, sat, impuest, retenci, predial, tenencia, ieps, iave, contribuy, derechos fiscal, declaracion, pagos provisionales</li>
+                  </ul>
+                  Para que la clasificación sea correcta, asegúrate de que la <strong>Cuenta Contable</strong> o el <strong>Concepto</strong> del movimiento contenga alguna de estas palabras al importar o capturar el movimiento.
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">La proyección se detuvo porque una cuenta no tiene saldo. ¿Qué hago? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">Cuando la proyección se pausa por saldo insuficiente, tienes tres opciones:
+                  <ul>
+                    <li><strong>Traspaso entre cuentas:</strong> Si tienes saldo en otra cuenta, agrégalo con "↔ Traspaso". El saldo de la cuenta origen disminuye y el de la cuenta destino aumenta.</li>
+                    <li><strong>Venta de divisas:</strong> Si tienes dólares disponibles, conviértelos a pesos con "💱 Venta de divisas". Ingresa el monto en USD y el TC; los MXN se abonan automáticamente a la cuenta destino.</li>
+                    <li><strong>Ignorar y continuar:</strong> Salta ese gasto específico y continúa proyectando el resto del mes. Úsalo para gastos que podrías diferir.</li>
+                  </ul>
+                  Después de cualquiera de estas acciones, presiona <strong>"▶ Continuar"</strong> para reanudar la proyección.
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Puedo cambiar la moneda de una cuenta bancaria? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">Sí. Ve a <strong>Mov. Bancarios</strong> y haz clic en el ícono de edición (✏️) junto a la cuenta. Puedes cambiar la moneda (MXN / USD) y el saldo actual. Ten en cuenta que si cambias la moneda de una cuenta que ya tiene movimientos proyectados, los montos históricos no se recalculan automáticamente — deberías limpiar la proyección y volver a generarla.</div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Cómo agrego un gasto que no es mensual (bimestral, trimestral, anual)? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">Para gastos no mensuales tienes dos opciones:
+                  <ul>
+                    <li><strong>Movimiento extraordinario:</strong> En la hoja de Proyección, usa "+ Mov. extraordinario" para agregar el gasto en el mes exacto en que ocurrirá.</li>
+                    <li><strong>Recurrente con importe proporcional:</strong> Si es un gasto anual (ej. tenencia $12,000/año), puedes registrarlo como recurrente con importe mensual de $1,000 para distribuirlo como provisión. Cuando llegue el mes real de pago, el extraordinario absorbe el total.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿El sistema funciona sin conexión a internet? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">Parcialmente. Los datos se guardan localmente, así que la información siempre está disponible sin internet. Sin embargo, las gráficas (Chart.js) y las fuentes tipográficas se cargan desde CDN — si no hay conexión, algunas gráficas pueden no renderizarse correctamente. Para uso sin internet, las fuentes y librerías deberían instalarse localmente.</div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Puedo usar el sistema en otro equipo o navegador? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">Los datos solo existen en el navegador donde fueron cargados (localStorage es local por dominio y navegador). Para migrar:
+                  <ul>
+                    <li>Haz un respaldo manual con JSON.stringify(localStorage) desde el equipo origen.</li>
+                    <li>Abre el sistema en el equipo destino y restaura el respaldo como se describe en la sección de <strong>Almacenamiento de datos</strong>.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Cómo edito o elimino un movimiento proyectado? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">En la hoja de Proyección, cada fila de la tabla tiene un botón <strong>✕</strong> al final. Al hacer clic se elimina ese movimiento del escenario. El panel de saldos proyectados se actualiza inmediatamente. Para editar un movimiento (cambiar monto o fecha), elimínalo y agrégalo de nuevo con los datos correctos.</div>
+              </div>
+
+              <div class="faq-item">
+                <button class="faq-q" onclick="toggleFAQ(this)">¿Por qué algunos meses de la proyección ya están parcialmente proyectados cuando hago clic en "Proyectar"? <span class="faq-arrow">▾</span></button>
+                <div class="faq-a">Esto ocurre cuando la proyección de un mes fue interrumpida por un déficit y se guardaron los movimientos procesados hasta ese punto. Al presionar "Continuar", el sistema detecta qué recurrentes del mes ya fueron proyectados (usando su ID único) y solo procesa los pendientes. Esto evita duplicados.</div>
+              </div>
+
+            </div>
+          </section>
+
+        </div><!-- /.help-content -->
+      </div><!-- /.help-layout -->
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ASISTENTE DE SOPORTE GUIADO
+══════════════════════════════════════════════════ -->
+
+<!-- Botón flotante -->
+<button id="ast-fab" onclick="astOpen()" title="Asistente de soporte">
+  🤖 ¿Necesitas ayuda?
+</button>
+
+<!-- Modal del asistente -->
+<div id="ast-backdrop" onclick="astClose()"></div>
+<div id="ast-modal" role="dialog" aria-modal="true" aria-label="Asistente de soporte">
+  <div id="ast-header">
+    <div id="ast-header-left">
+      <span id="ast-icon">🤖</span>
+      <div>
+        <div id="ast-title">Asistente de soporte</div>
+        <div id="ast-breadcrumb"></div>
+      </div>
+    </div>
+    <button id="ast-close" onclick="astClose()" title="Cerrar">✕</button>
+  </div>
+  <div id="ast-body"></div>
+  <div id="ast-footer">
+    <button id="ast-back" onclick="astBack()">← Atrás</button>
+    <button id="ast-restart" onclick="astRestart()">🔄 Reiniciar</button>
+  </div>
+</div>
+
+<style>
+/* ── FAB ── */
+#ast-fab {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 900;
+  background: var(--navy); color: #fff;
+  font-family: var(--brand); font-size: 0.75rem; font-weight: 700;
+  padding: 0.65rem 1.1rem; border-radius: 2rem;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(26,45,128,0.35);
+  display: flex; align-items: center; gap: 0.4rem;
+  transition: background 150ms, transform 150ms;
+}
+#ast-fab:hover { background: var(--navy-l); transform: translateY(-2px); }
+
+/* ── Backdrop ── */
+#ast-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 910;
+  background: rgba(17,30,90,0.45); backdrop-filter: blur(3px);
+}
+
+/* ── Modal ── */
+#ast-modal {
+  display: none; position: fixed; z-index: 920;
+  bottom: 5rem; right: 1.5rem;
+  width: min(420px, calc(100vw - 2rem));
+  max-height: min(600px, calc(100vh - 7rem));
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(26,45,128,0.18);
+  display: none; flex-direction: column;
+  overflow: hidden;
+  animation: astSlideIn 220ms ease;
+}
+@keyframes astSlideIn {
+  from { opacity:0; transform:translateY(16px) scale(0.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+#ast-modal.open { display: flex; }
+
+/* ── Header ── */
+#ast-header {
+  padding: 0.9rem 1rem;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+#ast-header-left { display: flex; align-items: center; gap: 0.65rem; }
+#ast-icon { font-size: 1.3rem; }
+#ast-title { font-family: var(--brand); font-size: 0.75rem; font-weight: 700; color: #fff; letter-spacing: 0.04em; text-transform: uppercase; }
+#ast-breadcrumb { font-size: 0.62rem; color: rgba(255,255,255,0.5); margin-top: 0.1rem; font-family: var(--brand); }
+#ast-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 0.9rem; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 4px; transition: color 150ms; }
+#ast-close:hover { color: #fff; }
+
+/* ── Body ── */
+#ast-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 1.1rem 1rem;
+}
+.ast-question {
+  font-family: var(--brand); font-size: 0.82rem; font-weight: 700;
+  color: var(--navy); margin-bottom: 0.85rem; line-height: 1.45;
+}
+.ast-context {
+  font-size: 0.74rem; color: var(--text-dim); line-height: 1.6;
+  background: var(--navy-pale); border-radius: 6px;
+  padding: 0.55rem 0.75rem; margin-bottom: 0.85rem;
+}
+.ast-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.ast-opt {
+  text-align: left; padding: 0.6rem 0.85rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer;
+  font-size: 0.78rem; color: var(--text);
+  font-family: var(--font); line-height: 1.4;
+  transition: background 130ms, border-color 130ms, transform 100ms;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.ast-opt:hover { background: var(--navy-pale); border-color: var(--navy); color: var(--navy); transform: translateX(2px); }
+.ast-opt-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* ── Steps ── */
+.ast-steps { list-style: none; padding: 0; margin: 0.5rem 0; }
+.ast-steps li {
+  display: flex; gap: 0.7rem; margin-bottom: 0.65rem; align-items: flex-start;
+}
+.ast-step-num {
+  flex-shrink: 0; width: 1.4rem; height: 1.4rem;
+  background: var(--navy); color: #fff; border-radius: 50%;
+  font-family: var(--brand); font-size: 0.6rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 0.1rem;
+}
+.ast-step-text { font-size: 0.78rem; color: var(--text-dim); line-height: 1.6; }
+.ast-step-text strong { color: var(--text); }
+.ast-note-box {
+  background: #fef3db; border-left: 3px solid #f59f00;
+  border-radius: 0 6px 6px 0; padding: 0.5rem 0.75rem;
+  font-size: 0.73rem; color: #7a5000; margin: 0.65rem 0;
+}
+.ast-tip-box {
+  background: #e6f7ee; border-left: 3px solid var(--green);
+  border-radius: 0 6px 6px 0; padding: 0.5rem 0.75rem;
+  font-size: 0.73rem; color: #145a32; margin: 0.65rem 0;
+}
+
+/* ── Confirm ── */
+.ast-confirm-q {
+  font-family: var(--brand); font-size: 0.85rem; font-weight: 700;
+  color: var(--navy); text-align: center; margin: 0.5rem 0 1.1rem;
+}
+.ast-confirm-btns { display: flex; gap: 0.6rem; }
+.ast-confirm-btns button {
+  flex: 1; padding: 0.65rem; border-radius: 8px;
+  font-family: var(--brand); font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; border: none; transition: opacity 150ms;
+}
+.ast-btn-yes { background: var(--green); color: #fff; }
+.ast-btn-no  { background: #f4f5f8; color: var(--text); border: 1px solid var(--border) !important; }
+.ast-btn-yes:hover, .ast-btn-no:hover { opacity: 0.85; }
+
+/* ── Success ── */
+.ast-success {
+  text-align: center; padding: 1rem 0.5rem;
+}
+.ast-success-icon { font-size: 2.5rem; margin-bottom: 0.6rem; }
+.ast-success h4 { font-family: var(--brand); font-size: 0.9rem; font-weight: 700; color: var(--green); margin-bottom: 0.4rem; }
+.ast-success p { font-size: 0.76rem; color: var(--text-dim); line-height: 1.6; }
+
+/* ── Escalation ── */
+.ast-escalate {
+  text-align: center; padding: 0.5rem 0.25rem;
+}
+.ast-escalate-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.ast-escalate h4 { font-family: var(--brand); font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 0.35rem; }
+.ast-escalate p { font-size: 0.74rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 0.85rem; }
+.ast-log-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.65rem 0.8rem;
+  font-size: 0.68rem; color: var(--text-dim);
+  text-align: left; margin-bottom: 0.85rem; line-height: 1.7;
+  max-height: 100px; overflow-y: auto;
+}
+.ast-btn-escalate {
+  width: 100%; padding: 0.7rem;
+  background: var(--navy); color: #fff;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: var(--brand); font-size: 0.78rem; font-weight: 700;
+  transition: background 150ms;
+}
+.ast-btn-escalate:hover { background: var(--navy-l); }
+
+/* ── Footer ── */
+#ast-footer {
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 0.5rem; justify-content: space-between;
+  flex-shrink: 0; background: var(--bg);
+}
+#ast-back, #ast-restart {
+  font-size: 0.7rem; font-family: var(--brand); font-weight: 600;
+  color: var(--text-dim); background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.3rem 0.65rem; cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+#ast-back:hover, #ast-restart:hover { color: var(--navy); border-color: var(--navy); }
+</style>
+
+<script src="js/app.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════
+   ASISTENTE DE SOPORTE — Motor de flujos
+══════════════════════════════════════════════ */
+const AST_FLOWS = {
+
+  /* ── RAÍZ ── */
+  root: {
+    icon: '🤖', question: '¿Con qué módulo necesitas ayuda?',
+    options: [
+      { label: 'Movimientos Bancarios', icon: '🏦', next: 'bancario' },
+      { label: 'Proyección de Flujo',   icon: '📊', next: 'proyeccion' },
+      { label: 'Egresos',               icon: '💸', next: 'egresos' },
+      { label: 'Gastos Recurrentes',    icon: '🔁', next: 'recurrentes' },
+      { label: 'Nómina',                icon: '👥', next: 'nomina' },
+      { label: 'Conexión SAT',          icon: '🔗', next: 'sat' },
+      { label: 'Documentos',            icon: '📁', next: 'documentos' },
+      { label: 'Configuración / Acceso',icon: '⚙️', next: 'config' },
+    ]
+  },
+
+  /* ── MOVIMIENTOS BANCARIOS ── */
+  bancario: {
+    icon: '🏦', question: '¿Cuál es el problema con Movimientos Bancarios?',
+    options: [
+      { label: 'No puedo importar mi extracto',         icon: '📂', next: 'bancario_import' },
+      { label: 'El saldo no cuadra con mi banco',       icon: '⚖️', next: 'bancario_saldo' },
+      { label: 'Hay movimientos duplicados',            icon: '🔄', next: 'bancario_dup' },
+      { label: 'Un movimiento no aparece en proyección',icon: '📊', next: 'bancario_proy' },
+    ]
+  },
+  bancario_import: {
+    icon: '📂', question: '¿En qué formato está tu archivo?',
+    options: [
+      { label: 'Excel (.xlsx / .xls)', icon: '📗', next: 'bancario_import_excel' },
+      { label: 'CSV (.csv)',           icon: '📄', next: 'bancario_import_csv' },
+      { label: 'PDF / otro formato',   icon: '📕', next: 'bancario_import_pdf' },
+    ]
+  },
+  bancario_import_excel: {
+    icon: '📗', question: 'Cómo importar un extracto Excel',
+    context: 'El archivo debe tener al menos estas columnas: Fecha, Descripción, Cargo y Abono.',
+    steps: [
+      'Ve a <strong>Mov. Bancarios</strong> en el menú → <strong>Finanzas</strong>',
+      'Haz clic en <strong>Importar Excel</strong> (botón azul, esquina superior derecha)',
+      'Selecciona la <strong>cuenta bancaria</strong> antes de elegir el archivo',
+      'Verifica que la fecha esté en formato <strong>DD/MM/YYYY</strong> o <strong>YYYY-MM-DD</strong>',
+      'Revisa la <strong>vista previa</strong> antes de confirmar — ahí puedes mapear las columnas si el banco usa nombres distintos',
+      'Haz clic en <strong>Procesar</strong>',
+    ],
+    note: 'Si el archivo de tu banco tiene un formato diferente, contacta a soporte con una captura de pantalla de las primeras filas del archivo.',
+    next: 'confirm'
+  },
+  bancario_import_csv: {
+    icon: '📄', question: 'Cómo importar un extracto CSV',
+    steps: [
+      'Ve a <strong>Mov. Bancarios</strong> → <strong>Importar CSV</strong>',
+      'El archivo debe usar coma (,) o punto y coma (;) como separador',
+      'Columnas requeridas: Fecha, Descripción, Cargo, Abono',
+      'Si el CSV tiene encabezados, el sistema los detecta automáticamente',
+      'Selecciona la cuenta, elige el archivo y revisa la vista previa',
+      'Confirma con <strong>Procesar</strong>',
+    ],
+    tip: 'Si tu banco exporta en otro idioma (ej. "Date", "Debit", "Credit"), el sistema puede mapearlos — usa el selector de columnas en la vista previa.',
+    next: 'confirm'
+  },
+  bancario_import_pdf: {
+    icon: '📕', question: 'El sistema no acepta PDF',
+    context: 'Por el momento el sistema solo acepta archivos Excel (.xlsx) y CSV (.csv). Los estados de cuenta en PDF requieren conversión previa.',
+    steps: [
+      'Descarga el extracto de tu banca en línea en formato <strong>Excel o CSV</strong>',
+      'Los principales bancos mexicanos (BBVA, Santander, Banamex, Banorte, HSBC) permiten exportar en Excel desde la sección de "Movimientos" o "Historial"',
+      'Si solo tienes PDF, puedes usar un convertidor como <strong>smallpdf.com</strong> o <strong>ilovepdf.com</strong> para convertirlo a Excel antes de importar',
+    ],
+    next: 'confirm'
+  },
+  bancario_saldo: {
+    icon: '⚖️', question: 'Saldo que no cuadra — diagnóstico',
+    steps: [
+      'Verifica la <strong>fecha de corte</strong> — el saldo del sistema corresponde al último extracto importado, no necesariamente a hoy',
+      'Compara el saldo del sistema con el saldo de tu banca en línea <strong>a la misma fecha</strong>',
+      'Revisa si hay movimientos importados con <strong>fecha incorrecta</strong> (algunos bancos exportan con hora incluida)',
+      'Asegúrate de no haber importado el mismo extracto dos veces (causaría duplicados y descuadre)',
+      'Si el descuadre es exactamente igual a un movimiento específico, ese movimiento probablemente está duplicado o faltante',
+    ],
+    next: 'confirm'
+  },
+  bancario_dup: {
+    icon: '🔄', question: 'Movimientos duplicados — pasos',
+    steps: [
+      'Identifica los movimientos duplicados por <strong>fecha, importe y descripción</strong>',
+      'En la tabla de movimientos, selecciona el duplicado y usa el botón <strong>Eliminar</strong>',
+      'Verifica en qué importación se originó el duplicado — puede haber importado el mismo archivo dos veces',
+      'Para evitar futuros duplicados, el sistema detecta movimientos idénticos (misma fecha + importe + descripción) y te avisa antes de importar',
+    ],
+    note: 'Si el duplicado tiene un ID diferente, ambos son registros distintos — elimina el que no corresponda al extracto original.',
+    next: 'confirm'
+  },
+  bancario_proy: {
+    icon: '📊', question: 'Movimiento no aparece en Proyección',
+    steps: [
+      'Los movimientos de <strong>Mov. Bancarios</strong> son el registro histórico real — la Proyección muestra movimientos futuros',
+      'Para que un movimiento bancario afecte la proyección, debe estar reflejado en el <strong>saldo inicial</strong> de la cuenta',
+      'Ve a <strong>Configuración → Saldos iniciales</strong> y verifica que el saldo esté actualizado al día del corte',
+      'Si configuraste un <strong>cutoff</strong> en Proyección, los movimientos anteriores a esa fecha aparecen como "realizados" y no se proyectan dos veces',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── PROYECCIÓN DE FLUJO ── */
+  proyeccion: {
+    icon: '📊', question: '¿Cuál es el problema con la Proyección?',
+    options: [
+      { label: 'La proyección no parte de mis saldos reales', icon: '💰', next: 'proy_saldo' },
+      { label: 'Un recurrente aparece varias veces',          icon: '🔁', next: 'proy_recurrente' },
+      { label: 'Los movimientos pasados mezclan con los futuros', icon: '📅', next: 'proy_cutoff' },
+      { label: 'El corte (cutoff) no se detecta bien',        icon: '✂️', next: 'proy_cutoff_auto' },
+      { label: 'Un movimiento proyectado no coincide con el real', icon: '⚖️', next: 'proy_reconcilia' },
+    ]
+  },
+  proy_saldo: {
+    icon: '💰', question: 'Saldos iniciales en Proyección',
+    steps: [
+      'Ve a <strong>Proyección → Configuración</strong> (ícono de engranaje en la parte superior)',
+      'Verifica la sección <strong>Saldos al [fecha]</strong> — aquí se define el punto de partida',
+      'Ingresa el saldo real de cada cuenta bancaria a la fecha del último extracto importado',
+      'La fecha de los saldos debe coincidir con la fecha de corte configurada',
+      'Guarda y la proyección recalculará desde ese saldo hacia adelante',
+    ],
+    tip: 'El saldo inicial de la proyección debe ser idéntico al saldo que muestra tu banca en línea a esa fecha. Si no cuadra, revisa si hay movimientos importados con fecha posterior al corte.',
+    next: 'confirm'
+  },
+  proy_recurrente: {
+    icon: '🔁', question: 'Recurrente que aparece varias veces',
+    steps: [
+      'Ve a <strong>Gastos Recurrentes</strong> y localiza el gasto que se repite incorrectamente',
+      'Revisa la <strong>periodicidad</strong> configurada — si dice "Semanal" cuando debería ser "Mensual", genera 4 ocurrencias',
+      'Haz clic en <strong>Editar</strong> y cambia la periodicidad a la correcta',
+      'Guarda el cambio',
+      'En Proyección, usa el botón <strong>🗑 Limpiar realizados</strong> si los duplicados ya pasaron del cutoff, para eliminarlos de la tabla',
+    ],
+    note: 'Los recurrentes con periodicidad Semanal generan automáticamente entradas para cada semana del mes. Verifica que la periodicidad sea la correcta antes de guardar.',
+    next: 'confirm'
+  },
+  proy_cutoff: {
+    icon: '📅', question: 'Movimientos pasados y futuros mezclados',
+    steps: [
+      'La proyección separa automáticamente movimientos antes y después del <strong>cutoff (fecha de corte)</strong>',
+      'Los movimientos con fecha ≤ cutoff aparecen como un banner verde de "realizados" (no en la tabla principal)',
+      'Si no ves esta separación, verifica que el cutoff esté configurado: ve a <strong>Proyección → Configurar corte</strong>',
+      'Establece la fecha del último extracto bancario importado como fecha de corte',
+      'Los movimientos anteriores a esa fecha quedan en el banner — puedes limpiarlos con <strong>🗑 Limpiar realizados</strong> una vez confirmados',
+    ],
+    next: 'confirm'
+  },
+  proy_cutoff_auto: {
+    icon: '✂️', question: 'Detección automática del cutoff',
+    steps: [
+      'El sistema detecta el cutoff leyendo la fecha más reciente de tus importaciones de extracto bancario',
+      'Asegúrate de que la fuente sea <strong>Movimientos Bancarios</strong> (Excel o manual) — no egresos ni nómina',
+      'Si la fecha detectada es incorrecta, puedes sobreescribirla manualmente en <strong>Proyección → Configurar corte</strong>',
+      'Ingresa la fecha en formato <strong>YYYY-MM-DD</strong> (ej. 2026-05-14)',
+    ],
+    note: 'Si tienes egresos con fecha de hoy pero tu extracto bancario solo llega al día 14, el cutoff correcto es el 14 — configúralo manualmente.',
+    next: 'confirm'
+  },
+  proy_reconcilia: {
+    icon: '⚖️', question: 'Movimiento real vs. proyectado diferente',
+    steps: [
+      'Esto es normal — el Motor de Reconciliación detecta diferencias entre lo proyectado y lo real',
+      'Cuando el importe real difiere, el sistema te ofrecerá: <strong>Actualizar proyección</strong> con el importe real',
+      'Si el movimiento llegó antes de lo previsto, quedará marcado como <strong>early_match</strong>',
+      'Si llegó después, quedará como <strong>overdue</strong> — puedes registrar el real, diferirlo o cancelarlo',
+      'Con 3+ ocurrencias del mismo patrón, el sistema aprende y ajusta automáticamente las fechas futuras',
+    ],
+    tip: 'Esta función está en desarrollo activo. Si ves comportamiento inesperado, documenta el caso (módulo, fechas, importes) para reportarlo.',
+    next: 'confirm'
+  },
+
+  /* ── EGRESOS ── */
+  egresos: {
+    icon: '💸', question: '¿Cuál es el problema con Egresos?',
+    options: [
+      { label: 'No puedo agregar un egreso',       icon: '➕', next: 'egresos_add' },
+      { label: 'El CFDI no se reconoce o no carga',icon: '🧾', next: 'egresos_cfdi' },
+      { label: 'Un egreso aparece duplicado',       icon: '🔄', next: 'egresos_dup' },
+      { label: 'No aparece en los reportes',        icon: '📋', next: 'egresos_reporte' },
+    ]
+  },
+  egresos_add: {
+    icon: '➕', question: 'Agregar un egreso',
+    steps: [
+      'Ve a <strong>Egresos</strong> en el menú → <strong>Finanzas</strong>',
+      'Haz clic en <strong>+ Nuevo egreso</strong>',
+      'Campos obligatorios: <strong>Fecha, Proveedor, Concepto, Importe, Cuenta</strong>',
+      'Si tienes CFDI, puedes cargarlo para que el sistema llene los datos automáticamente',
+      'Si no tienes CFDI (efectivo, plataformas extranjeras como Amazon), selecciona <strong>"Sin CFDI"</strong> en el tipo de comprobante',
+      'Guarda con el botón <strong>Registrar egreso</strong>',
+    ],
+    next: 'confirm'
+  },
+  egresos_cfdi: {
+    icon: '🧾', question: 'CFDI que no se reconoce',
+    steps: [
+      'Verifica que el archivo sea un <strong>XML válido</strong> emitido por el SAT (no un PDF)',
+      'El XML debe corresponder a un CFDI versión 3.3 o 4.0',
+      'Si el CFDI fue emitido a otro RFC, el sistema lo indicará — confirma que sea de tu empresa',
+      'Si tienes Conexión SAT configurada, los CFDIs se descargan automáticamente y no necesitas subirlos manualmente',
+      'Para CFDIs de plataformas extranjeras (AWS, Google, Zoom) que no emiten CFDI mexicano, usa la opción <strong>"Gasto sin CFDI"</strong>',
+    ],
+    note: 'Nunca uses el PDF del CFDI — el sistema solo procesa el archivo XML. Solicita el XML a tu proveedor o descárgalo desde el SAT.',
+    next: 'confirm'
+  },
+  egresos_dup: {
+    icon: '🔄', question: 'Egreso duplicado',
+    steps: [
+      'Identifica los duplicados por <strong>fecha + proveedor + importe</strong>',
+      'El duplicado puede haberse originado al importar el mismo CFDI dos veces',
+      'Selecciona el registro duplicado en la tabla y haz clic en <strong>Eliminar</strong>',
+      'Para evitar futuros duplicados, el sistema alerta cuando detecta un CFDI con el mismo UUID (folio fiscal)',
+    ],
+    next: 'confirm'
+  },
+  egresos_reporte: {
+    icon: '📋', question: 'Egreso que no aparece en reportes',
+    steps: [
+      'Verifica el <strong>rango de fechas</strong> del reporte — el egreso puede estar fuera del período seleccionado',
+      'Confirma que el egreso esté guardado (busca por proveedor o importe en la lista de egresos)',
+      'Revisa la <strong>categoría</strong> del egreso — algunos reportes filtran por categoría',
+      'Si el egreso fue registrado como "Sin CFDI", puede estar en un grupo diferente del reporte',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── GASTOS RECURRENTES ── */
+  recurrentes: {
+    icon: '🔁', question: '¿Cuál es el problema con Gastos Recurrentes?',
+    options: [
+      { label: 'Quiero agregar un nuevo recurrente',    icon: '➕', next: 'rec_add' },
+      { label: 'La periodicidad está mal configurada',  icon: '📅', next: 'rec_periodo' },
+      { label: 'El importe real fue diferente al proyectado', icon: '⚖️', next: 'rec_importe' },
+    ]
+  },
+  rec_add: {
+    icon: '➕', question: 'Agregar un gasto recurrente',
+    steps: [
+      'Ve a <strong>Gastos Recurrentes</strong> en el menú → <strong>Finanzas</strong>',
+      'Haz clic en <strong>+ Nuevo recurrente</strong>',
+      'Ingresa: Nombre, Categoría, Importe estimado, Periodicidad (Mensual/Quincenal/Semanal/Anual) y Día del mes',
+      'El campo <strong>Día estimado</strong> indica en qué día del mes se genera la proyección (ej. 5 = el día 5 de cada mes)',
+      'Guarda — aparecerá automáticamente en la Proyección de Flujo a partir del siguiente período',
+    ],
+    tip: 'Para gastos como luz, agua o teléfono cuyo importe varía, registra el promedio de los últimos 3 meses. El Motor de Reconciliación ajustará cuando llegue el cargo real.',
+    next: 'confirm'
+  },
+  rec_periodo: {
+    icon: '📅', question: 'Periodicidad mal configurada',
+    steps: [
+      'Ve a <strong>Gastos Recurrentes</strong> y localiza el gasto',
+      'Haz clic en <strong>Editar</strong> (ícono de lápiz)',
+      'Cambia la <strong>Periodicidad</strong> al valor correcto: Mensual, Quincenal, Semanal o Anual',
+      'Importante: si era Semanal, cámbialo a Mensual para evitar que aparezca 4 veces al mes',
+      'Guarda los cambios',
+      'En Proyección, elimina manualmente las ocurrencias duplicadas que ya se generaron',
+    ],
+    next: 'confirm'
+  },
+  rec_importe: {
+    icon: '⚖️', question: 'Importe real diferente al proyectado',
+    steps: [
+      'Ve a <strong>Egresos</strong> y registra el gasto con el importe real',
+      'Al registrarlo, el sistema lo vinculará al recurrente correspondiente si la fecha y categoría coinciden',
+      'La proyección se ajustará automáticamente para los períodos futuros si el nuevo importe es consistente',
+      'Si el cambio es permanente (ej. subida de tarifa), edita el recurrente con el nuevo importe base',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── NÓMINA ── */
+  nomina: {
+    icon: '👥', question: '¿Cuál es el problema con Nómina?',
+    options: [
+      { label: 'Un colaborador no aparece en la lista', icon: '👤', next: 'nom_colab' },
+      { label: 'El cálculo de ISR es incorrecto',       icon: '🧮', next: 'nom_isr' },
+      { label: 'No puedo generar el recibo de pago',    icon: '📄', next: 'nom_recibo' },
+      { label: 'Quiero agregar un nuevo colaborador',   icon: '➕', next: 'nom_add' },
+    ]
+  },
+  nom_add: {
+    icon: '➕', question: 'Agregar un colaborador',
+    steps: [
+      'Ve a <strong>Nómina</strong> → <strong>Catálogo de Colaboradores</strong>',
+      'Haz clic en <strong>+ Nuevo colaborador</strong>',
+      'Completa los datos requeridos: Nombre, RFC, CURP, tipo de nómina (Asimilados o Honorarios)',
+      'Ingresa el <strong>salario o percepción mensual</strong> acordada',
+      'Para honorarios: indica si aplica retención de ISR (10% por defecto) e IVA',
+      'Guarda — el colaborador estará disponible en el módulo de nómina para generar pagos',
+    ],
+    next: 'confirm'
+  },
+  nom_colab: {
+    icon: '👤', question: 'Colaborador que no aparece',
+    steps: [
+      'Verifica que el colaborador esté dado de alta en <strong>Catálogo de Colaboradores</strong>',
+      'Revisa que su estatus sea <strong>Activo</strong> (no Inactivo o dado de baja)',
+      'Confirma que el módulo de nómina seleccionado coincida con el tipo del colaborador (Asimilados vs. Honorarios)',
+      'Usa el buscador de la lista para encontrarlo por nombre o RFC',
+    ],
+    next: 'confirm'
+  },
+  nom_isr: {
+    icon: '🧮', question: 'Cálculo de ISR incorrecto',
+    steps: [
+      'Verifica la <strong>tabla de ISR vigente</strong> configurada en el sistema (se actualiza anualmente conforme al SAT)',
+      'Confirma el <strong>período de cálculo</strong>: el ISR mensual se calcula diferente al quincenal o semanal',
+      'Para asimilados: el ISR se calcula sobre el total de la percepción mensual sin subsidio al empleo',
+      'Para honorarios: el ISR de retención es el 10% del importe bruto del recibo',
+      'Si el resultado sigue siendo diferente al esperado, documenta el caso con importe bruto, período y resultado esperado para revisión',
+    ],
+    next: 'confirm'
+  },
+  nom_recibo: {
+    icon: '📄', question: 'No se genera el recibo',
+    steps: [
+      'Verifica que el colaborador tenga <strong>RFC y CURP completos</strong> en su perfil',
+      'Confirma que se haya ingresado el <strong>importe del período</strong> antes de generar',
+      'Haz clic en <strong>Generar recibo</strong> — se abrirá la vista previa en PDF',
+      'Si el botón está deshabilitado, revisa que no haya campos obligatorios vacíos (marcados en rojo)',
+      'Para descargarlo, usa el botón <strong>Descargar PDF</strong> en la vista previa',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── CONEXIÓN SAT ── */
+  sat: {
+    icon: '🔗', question: '¿Cuál es el problema con Conexión SAT?',
+    options: [
+      { label: 'No sé qué credenciales necesito',           icon: '❓', next: 'sat_credenciales' },
+      { label: 'Error al conectar con RFC+CIEC',            icon: '🔑', next: 'sat_ciec' },
+      { label: 'Error al conectar con e.firma',             icon: '🪪', next: 'sat_efirma' },
+      { label: 'Los CFDIs no se descargan o están incompletos', icon: '📥', next: 'sat_descarga' },
+      { label: 'La CSF o Constancia de Situación no descarga', icon: '📋', next: 'sat_csf' },
+    ]
+  },
+  sat_credenciales: {
+    icon: '❓', question: '¿Qué credenciales necesito para Conexión SAT?',
+    context: 'Existen dos métodos de autenticación ante el SAT. Puedes usar cualquiera de los dos — el sistema acepta ambos.',
+    steps: [
+      '<strong>Método 1 — RFC + CIEC:</strong> Tu RFC de 12 o 13 caracteres y tu Contraseña del SAT (CIEC). La obtienes en el portal del SAT o en cualquier módulo SAT.',
+      '<strong>Método 2 — e.firma (.cer + .key + contraseña):</strong> Los archivos de tu firma electrónica avanzada. Los tienes si alguna vez tramitaste la e.firma en el SAT.',
+      'Si no recuerdas tu CIEC, puedes restablecerla en <strong>sat.gob.mx → Recuperar contraseña</strong>',
+      'Si no tienes e.firma, puedes tramitarla en cualquier módulo SAT con tu INE y correo electrónico',
+    ],
+    tip: 'Te recomendamos usar e.firma si la tienes — es más segura y tiene más permisos en el SAT que la CIEC.',
+    next: 'confirm'
+  },
+  sat_ciec: {
+    icon: '🔑', question: 'Error de conexión con RFC+CIEC',
+    steps: [
+      'Verifica que el RFC ingresado sea exactamente el mismo que registraste ante el SAT (incluyendo homoclave)',
+      'Confirma que la CIEC sea correcta — es diferente a la contraseña del SAT ID o de Mi Cuenta SAT',
+      'Si la CIEC expiró (se vence periódicamente), restablécela en <strong>sat.gob.mx → Portal de servicios al contribuyente</strong>',
+      'Verifica que el SAT no esté en mantenimiento (<strong>sat.gob.mx</strong> debe cargar correctamente)',
+      'Intenta la conexión nuevamente después de confirmar las credenciales',
+    ],
+    note: 'El SAT bloquea temporalmente el acceso después de varios intentos fallidos. Si sospechas que esto ocurrió, espera 30 minutos antes de intentar de nuevo.',
+    next: 'confirm'
+  },
+  sat_efirma: {
+    icon: '🪪', question: 'Error de conexión con e.firma',
+    steps: [
+      'Verifica que estés subiendo los archivos correctos: <strong>.cer</strong> (certificado) y <strong>.key</strong> (llave privada)',
+      'La contraseña de la e.firma es la que definiste al tramitarla — es diferente a tu CIEC',
+      'Confirma que la e.firma no esté <strong>vencida</strong> (vigencia de 4 años desde emisión)',
+      'Los archivos .cer y .key deben corresponder al mismo RFC — no mezcles archivos de diferentes trámites',
+      'Si la e.firma está vencida, debes renovarla en un módulo SAT presencialmente',
+    ],
+    next: 'confirm'
+  },
+  sat_descarga: {
+    icon: '📥', question: 'CFDIs que no descargan',
+    steps: [
+      'Verifica que la Conexión SAT esté activa en <strong>Configuración → Conexión SAT</strong>',
+      'Confirma que el período de descarga incluye las fechas de los CFDIs que buscas',
+      'El SAT Descarga Masiva tiene un límite de solicitudes por día — si se alcanzó, la siguiente descarga es automática en el siguiente ciclo',
+      'Los CFDIs del SAT pueden tardar hasta 72 horas en estar disponibles en la Descarga Masiva después de su emisión',
+      'Verifica en <strong>Egresos → Importados del SAT</strong> si los CFDIs ya están en el sistema pero no se han clasificado',
+    ],
+    note: 'El sistema sincroniza automáticamente 2–4 veces al día según tu configuración. Si necesitas una descarga inmediata, usa el botón "Sincronizar ahora" en Configuración → Conexión SAT.',
+    next: 'confirm'
+  },
+  sat_csf: {
+    icon: '📋', question: 'Constancia de Situación Fiscal no descarga',
+    steps: [
+      'Ve a <strong>Documentos → Monitor SAT</strong>',
+      'Verifica que la Conexión SAT esté activa y las credenciales sean correctas',
+      'La CSF se descarga automáticamente una vez al mes — si necesitas una inmediata, usa <strong>Descargar ahora</strong>',
+      'El SAT a veces tiene intermitencias en el servicio de generación de CSF — si falla, intenta en 30 minutos',
+      'La CSF descargada se guarda en <strong>Documentos</strong> con historial de 12 meses',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── DOCUMENTOS ── */
+  documentos: {
+    icon: '📁', question: '¿Cuál es el problema con Documentos?',
+    options: [
+      { label: 'No puedo subir un archivo',              icon: '⬆️', next: 'doc_subir' },
+      { label: 'El archivo que subí no abre',            icon: '🔓', next: 'doc_abrir' },
+      { label: 'No encuentro un documento que subí',     icon: '🔍', next: 'doc_buscar' },
+    ]
+  },
+  doc_subir: {
+    icon: '⬆️', question: 'No puedo subir un archivo',
+    steps: [
+      'Verifica que el archivo no exceda <strong>25 MB</strong> (límite por archivo)',
+      'Formatos soportados: PDF, Excel (.xlsx), Word (.docx), imágenes (JPG, PNG), XML',
+      'Confirma tu conexión a internet — la subida puede fallar si la conexión es lenta o inestable',
+      'Intenta con un archivo diferente para descartar que sea un problema del archivo específico',
+      'Si el error persiste, toma captura de pantalla del mensaje de error para escalarlo',
+    ],
+    next: 'confirm'
+  },
+  doc_abrir: {
+    icon: '🔓', question: 'Archivo que no abre',
+    steps: [
+      'El sistema muestra archivos en vista previa — algunos tipos requieren descarga para abrirse',
+      'Haz clic en <strong>Descargar</strong> y ábrelo con la aplicación correspondiente en tu computadora',
+      'Si el archivo descargado está corrupto, puede haberse dañado durante la subida — intenta subirlo de nuevo',
+      'Los archivos XML del SAT deben abrirse con un lector de XML o con el sistema interno de Egresos',
+    ],
+    next: 'confirm'
+  },
+  doc_buscar: {
+    icon: '🔍', question: 'No encuentro un documento',
+    steps: [
+      'Usa el <strong>buscador de Documentos</strong> (lupa) — busca por nombre de archivo, fecha o categoría',
+      'Verifica que el filtro de <strong>categoría</strong> no esté restringiendo los resultados',
+      'Confirma la fecha aproximada de subida y filtra por rango de fechas',
+      'Si el documento es una CSF o Constancia descargada del SAT, encuéntralo en <strong>Monitor SAT</strong> dentro de Documentos',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── CONFIGURACIÓN ── */
+  config: {
+    icon: '⚙️', question: '¿Cuál es el problema con Configuración?',
+    options: [
+      { label: 'No puedo actualizar mis datos fiscales',  icon: '🏢', next: 'conf_fiscal' },
+      { label: 'Los saldos iniciales no se guardan',      icon: '💰', next: 'conf_saldos' },
+      { label: 'Problema de acceso o contraseña',         icon: '🔐', next: 'conf_acceso' },
+    ]
+  },
+  conf_fiscal: {
+    icon: '🏢', question: 'Datos fiscales',
+    steps: [
+      'Ve a <strong>Configuración → Datos de la empresa</strong>',
+      'Modifica los campos necesarios: Razón social, RFC, domicilio fiscal, régimen',
+      'Guarda con el botón <strong>Actualizar datos</strong>',
+      'Si tienes Conexión SAT activa, algunos datos (como el domicilio) se actualizan automáticamente desde tu CSF mensual',
+    ],
+    note: 'El RFC no se puede cambiar una vez configurado — si necesitas cambiarlo, contacta a soporte ya que implica una reconfiguración del sistema.',
+    next: 'confirm'
+  },
+  conf_saldos: {
+    icon: '💰', question: 'Saldos iniciales que no se guardan',
+    steps: [
+      'Ve a <strong>Configuración → Saldos iniciales</strong>',
+      'Ingresa el saldo de cada cuenta bancaria en formato numérico (sin comas ni símbolos)',
+      'Establece la <strong>fecha de los saldos</strong> — debe coincidir con tu último extracto',
+      'Haz clic en <strong>Guardar saldos</strong>',
+      'Verifica en Proyección que el saldo inicial ahora corresponda al valor que ingresaste',
+    ],
+    next: 'confirm'
+  },
+  conf_acceso: {
+    icon: '🔐', question: 'Problema de acceso',
+    steps: [
+      'Si olvidaste tu contraseña, usa la opción <strong>"¿Olvidé mi contraseña?"</strong> en la pantalla de inicio',
+      'Se enviará un enlace de recuperación a tu correo registrado',
+      'Verifica la carpeta de spam si no ves el correo en 5 minutos',
+      'Si no tienes acceso al correo registrado, escala el caso — necesitamos verificar tu identidad manualmente',
+    ],
+    next: 'confirm'
+  },
+
+  /* ── CONFIRMAR RESOLUCIÓN ── */
+  confirm: {
+    type: 'confirm',
+    question: '¿El problema quedó resuelto?'
+  },
+
+  /* ── ÉXITO ── */
+  success: {
+    type: 'success',
+    title: '¡Problema resuelto! 🎉',
+    message: 'Nos alegra que todo esté funcionando correctamente. Si en el futuro tienes otra duda, el asistente está siempre disponible.'
+  },
+
+  /* ── ESCALACIÓN ── */
+  escalate: {
+    type: 'escalate'
+  }
+};
+
+/* ══ Estado del asistente ══ */
+const AST = {
+  history: [],      // pila de nodos visitados
+  breadcrumb: [],   // etiquetas de ruta
+  current: 'root',
+};
+
+/* ══ UI helpers ══ */
+function astOpen() {
+  document.getElementById('ast-backdrop').style.display = 'block';
+  document.getElementById('ast-modal').classList.add('open');
+  document.getElementById('ast-fab').style.display = 'none';
+  astRender(AST.current);
+}
+function astClose() {
+  document.getElementById('ast-backdrop').style.display = 'none';
+  document.getElementById('ast-modal').classList.remove('open');
+  document.getElementById('ast-fab').style.display = '';
+}
+function astRestart() {
+  AST.history = []; AST.breadcrumb = []; AST.current = 'root';
+  astRender('root');
+}
+function astBack() {
+  if (AST.history.length === 0) return;
+  AST.current = AST.history.pop();
+  AST.breadcrumb.pop();
+  astRender(AST.current);
+}
+function astGo(nodeId, label) {
+  AST.history.push(AST.current);
+  if (label) AST.breadcrumb.push(label);
+  AST.current = nodeId;
+  astRender(nodeId);
+}
+
+/* ══ Render principal ══ */
+function astRender(nodeId) {
+  const node = AST_FLOWS[nodeId];
+  if (!node) return;
+  const body = document.getElementById('ast-body');
+  const bc   = document.getElementById('ast-breadcrumb');
+  bc.textContent = AST.breadcrumb.join(' › ') || 'Inicio';
+  document.getElementById('ast-back').disabled = AST.history.length === 0;
+
+  if (node.type === 'confirm') { renderConfirm(body); return; }
+  if (node.type === 'success') { renderSuccess(body, node); return; }
+  if (node.type === 'escalate') { renderEscalate(body); return; }
+
+  /* Nodo con opciones */
+  if (node.options) {
+    let html = `<div class="ast-question">${node.question}</div>`;
+    if (node.context) html += `<div class="ast-context">${node.context}</div>`;
+    html += `<div class="ast-options">`;
+    node.options.forEach(opt => {
+      html += `<button class="ast-opt" onclick="astGo('${opt.next}','${opt.label.replace(/'/g,"\\'")}')">
+        <span class="ast-opt-icon">${opt.icon || '▶'}</span>${opt.label}
+      </button>`;
+    });
+    html += `</div>`;
+    body.innerHTML = html;
+    return;
+  }
+
+  /* Nodo con pasos */
+  if (node.steps) {
+    let html = `<div class="ast-question">${node.question}</div>`;
+    if (node.context) html += `<div class="ast-context">${node.context}</div>`;
+    html += `<ol class="ast-steps">`;
+    node.steps.forEach(s => {
+      html += `<li><span class="ast-step-num"></span><span class="ast-step-text">${s}</span></li>`;
+    });
+    html += `</ol>`;
+    if (node.note) html += `<div class="ast-note-box">⚠️ ${node.note}</div>`;
+    if (node.tip)  html += `<div class="ast-tip-box">💡 ${node.tip}</div>`;
+    if (node.next) {
+      html += `<div style="margin-top:1rem">
+        <button class="ast-opt" onclick="astGo('${node.next}','Confirmar')">
+          <span class="ast-opt-icon">✅</span>Ya seguí los pasos
+        </button>
+      </div>`;
+    }
+    body.innerHTML = html;
+    // Numerar pasos con CSS counter
+    body.querySelectorAll('.ast-step-num').forEach((el, i) => el.textContent = i + 1);
+    return;
+  }
+}
+
+function renderConfirm(body) {
+  body.innerHTML = `
+    <div class="ast-confirm-q">¿El problema quedó resuelto?</div>
+    <div class="ast-confirm-btns">
+      <button class="ast-btn-yes" onclick="astGo('success','✅ Resuelto')">✅ Sí, resuelto</button>
+      <button class="ast-btn-no"  onclick="astGo('escalate','❌ No resuelto')">❌ No, sigue el problema</button>
+    </div>`;
+}
+
+function renderSuccess(body, node) {
+  body.innerHTML = `
+    <div class="ast-success">
+      <div class="ast-success-icon">✅</div>
+      <h4>${node.title}</h4>
+      <p>${node.message}</p>
+    </div>`;
+}
+
+function renderEscalate(body) {
+  const log = AST.breadcrumb.join(' → ') || 'Sin ruta registrada';
+  const fecha = new Date().toLocaleString('es-MX');
+  const mailto = `mailto:soporte@santaglia.com?subject=${encodeURIComponent('Ticket de soporte — ' + AST.breadcrumb[0])}` +
+    `&body=${encodeURIComponent(`Fecha: ${fecha}\nRuta del problema: ${log}\n\nDescripción adicional:\n[Describe aquí el problema con más detalle]\n\n— Enviado desde el Asistente de Soporte Santaglia Compass`)}`;
+  body.innerHTML = `
+    <div class="ast-escalate">
+      <div class="ast-escalate-icon">🆘</div>
+      <h4>Escalar a soporte humano</h4>
+      <p>El asistente no pudo resolver tu problema. Hemos registrado el recorrido para que el equipo de soporte pueda ayudarte más rápido.</p>
+      <div class="ast-log-box">
+        <strong>Ruta registrada:</strong> ${log}<br>
+        <strong>Fecha:</strong> ${fecha}
+      </div>
+      <a href="${mailto}">
+        <button class="ast-btn-escalate">📧 Enviar ticket a soporte</button>
+      </a>
+    </div>`;
+}
+
+/* ── FAQ accordion ── */
+function toggleFAQ(btn) {
+  const item = btn.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  // Toggle clicked
+  if (!wasOpen) item.classList.add('open');
+}
+
+/* ── TOC active highlight on scroll ── */
+(function() {
+  const sections = document.querySelectorAll('.help-section');
+  const links    = document.querySelectorAll('.help-toc-link');
+  function onScroll() {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 100) current = s.id;
+    });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

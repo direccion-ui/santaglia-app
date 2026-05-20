@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Clientes</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── Table ── */
+    .table-wrap { overflow-x:auto; max-height:62vh; overflow-y:auto; }
+    .cli-table { width:100%; border-collapse:collapse; font-size:0.78rem; min-width:820px; }
+    .cli-table thead { position:sticky; top:0; z-index:10; }
+    .cli-table th {
+      background:var(--navy); color:#fff; font-family:var(--brand);
+      font-size:0.6rem; font-weight:700; letter-spacing:0.07em;
+      text-transform:uppercase; padding:0.5rem 0.65rem; text-align:left;
+      white-space:nowrap; border-right:1px solid rgba(255,255,255,0.12);
+    }
+    .cli-table th:last-child { border-right:none; }
+    .cli-table td {
+      padding:0.45rem 0.65rem; border-bottom:1px solid var(--border);
+      border-right:1px solid var(--border); vertical-align:middle;
+      white-space:nowrap; color:var(--text);
+    }
+    .cli-table td:last-child { border-right:none; }
+    .cli-table tbody tr:nth-child(even) td { background:#f8f9fc; }
+    .cli-table tbody tr:hover td { background:var(--navy-pale) !important; cursor:pointer; }
+    .cli-table .center { text-align:center; }
+    .cli-table .num { text-align:right; font-family:'Courier New',monospace; }
+    .cli-table tfoot td {
+      border-top:2px solid var(--navy); border-bottom:none;
+      background:#e8ecf8; font-weight:700; font-family:var(--brand);
+      font-size:0.68rem; padding:0.4rem 0.65rem; color:var(--navy);
+    }
+
+    /* ── KPI bar ── */
+    .kpi-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.25rem; }
+    .kpi-item { background:var(--bg-white); padding:0.85rem 1.1rem; }
+    .kpi-lbl  { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.25rem; }
+    .kpi-val  { font-family:var(--brand); font-size:1.3rem; font-weight:700; color:var(--navy); line-height:1; }
+    .kpi-sub  { font-size:0.65rem; color:var(--text-xs); margin-top:0.15rem; }
+    .kpi-val.green { color:var(--green); }
+    .kpi-val.blue  { color:#1a4db5; }
+    .kpi-val.gold  { color:#8a6000; }
+
+    /* ── Status badges ── */
+    .status-badge {
+      display:inline-flex; align-items:center; gap:0.32rem;
+      font-family:var(--brand); font-size:0.6rem; font-weight:700;
+      letter-spacing:0.05em; text-transform:uppercase;
+      padding:0.18rem 0.5rem; border-radius:2px;
+    }
+    .status-badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; opacity:0.75; }
+    .sb-prospecto { background:#e8f0fb; color:#1a4db5; }
+    .sb-activo    { background:#e6f7ee; color:#1a7a40; }
+    .sb-pausa     { background:#fff8e1; color:#8a6000; }
+    .sb-inactivo  { background:#f0f2f8; color:#636b80; }
+    .sb-perdido   { background:#fdecea; color:#b52020; }
+
+    /* ── Filter pills ── */
+    .filter-pills { display:flex; gap:0.3rem; flex-wrap:wrap; }
+    .filter-pill {
+      padding:0.28rem 0.7rem; font-size:0.68rem; font-family:var(--brand);
+      font-weight:700; border:1.5px solid var(--border); border-radius:99px;
+      background:var(--bg-white); color:var(--text-dim); cursor:pointer;
+      transition:all 0.14s; white-space:nowrap;
+    }
+    .filter-pill:hover { border-color:var(--navy); color:var(--navy); }
+    .filter-pill.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+    /* ── Toolbar ── */
+    .toolbar { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin-bottom:0.85rem; }
+    .toolbar input, .toolbar select {
+      padding:0.42rem 0.7rem; font-size:0.78rem;
+      border:1.5px solid var(--border); border-radius:var(--radius);
+      background:var(--bg-white); color:var(--text);
+    }
+    .toolbar input:focus, .toolbar select:focus { outline:none; border-color:var(--navy); }
+    .toolbar input[type="text"] { min-width:210px; }
+
+    /* ── Row actions ── */
+    .del-row { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.85rem; padding:0.1rem 0.25rem; border-radius:2px; }
+    .del-row:hover { color:var(--red); background:#fdecea; }
+    .edit-row { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.78rem; padding:0.15rem 0.4rem; border-radius:2px; font-family:var(--brand); font-weight:600; }
+    .edit-row:hover { color:var(--navy); background:var(--navy-pale); }
+
+    /* ── Modal sections ── */
+    .modal-section-hdr { font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs); padding-bottom:0.35rem; border-bottom:1px solid var(--border); margin-bottom:0.75rem; margin-top:1.1rem; }
+    .modal-section-hdr:first-child { margin-top:0; }
+    .modal-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.65rem 1rem; }
+    .modal-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem 1rem; }
+    .span2 { grid-column:1/-1; }
+    .span3 { grid-column:1/-1; }
+
+    /* ── Tipo persona tabs ── */
+    .tipo-tabs { display:flex; gap:0; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .tipo-tab { flex:1; padding:0.32rem; font-size:0.7rem; font-family:var(--brand); font-weight:700; border:none; background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.13s; text-align:center; }
+    .tipo-tab.active { background:var(--navy); color:#fff; }
+
+    /* ── Contact chips ── */
+    .contact-chip { display:flex; align-items:center; gap:0.5rem; background:#f5f7ff; border:1px solid #b0bcec; border-radius:var(--radius); padding:0.45rem 0.75rem; margin-bottom:0.4rem; font-size:0.72rem; }
+    .contact-chip-name { font-weight:700; color:var(--navy); font-family:var(--brand); }
+    .contact-chip-role { color:var(--text-xs); font-size:0.65rem; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align:center; padding:3.5rem 1rem; color:var(--text-xs); }
+    .empty-state-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+    .empty-state-title { font-family:var(--brand); font-size:0.9rem; font-weight:700; color:var(--text-dim); margin-bottom:0.4rem; }
+    .empty-state-desc { font-size:0.73rem; line-height:1.6; }
+
+    /* ── Detail panel ── */
+    .detail-sidebar { width:320px; flex-shrink:0; border-left:1px solid var(--border); background:#fafbff; display:none; flex-direction:column; }
+    .detail-sidebar.open { display:flex; }
+
+    @media(max-width:700px) {
+      .kpi-bar { grid-template-columns:1fr 1fr; }
+      .modal-grid-3 { grid-template-columns:1fr 1fr; }
+      .modal-grid-2 { grid-template-columns:1fr; }
+    }
+    @media(max-width:500px) {
+      .kpi-bar { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link active" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Operaciones</div>
+          <h1 class="page-heading">Clientes</h1>
+          <div class="page-meta" id="cli-meta">Catálogo de clientes y prospectos</div>
+        </div>
+        <div class="flex gap-1" id="page-header-btns">
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="descargarPlantillaClientes()">⬇ Plantilla</button>
+          <label class="btn btn-ghost" style="font-size:0.72rem; cursor:pointer; position:relative;">
+            ⬆ Importar CSV / Excel
+            <input type="file" accept=".csv,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="importarArchivoClientes(this.files[0]);this.value='';" />
+          </label>
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="exportarClientesCSV()">⬆ Exportar CSV</button>
+          <button class="btn btn-primary" onclick="abrirNuevoCliente()">+ Nuevo cliente</button>
+        </div>
+      </div>
+
+      <!-- KPI bar -->
+      <div class="kpi-bar" id="cli-kpi-bar">
+        <div class="kpi-item">
+          <div class="kpi-lbl">Total clientes</div>
+          <div class="kpi-val" id="kpi-total">0</div>
+          <div class="kpi-sub" id="kpi-total-sub">en catálogo</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Activos</div>
+          <div class="kpi-val green" id="kpi-activos">0</div>
+          <div class="kpi-sub" id="kpi-activos-sub">con relación vigente</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">Prospectos</div>
+          <div class="kpi-val blue" id="kpi-prospectos">0</div>
+          <div class="kpi-sub" id="kpi-prospectos-sub">en proceso de cierre</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-lbl">En USD</div>
+          <div class="kpi-val gold" id="kpi-usd">0</div>
+          <div class="kpi-sub" id="kpi-usd-sub">facturan en dólares</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="filter-pills" id="estado-pills">
+          <button class="filter-pill active" data-estado="" onclick="setEstadoFilter(this,'')">Todos</button>
+          <button class="filter-pill" data-estado="prospecto" onclick="setEstadoFilter(this,'prospecto')">Prospectos</button>
+          <button class="filter-pill" data-estado="activo" onclick="setEstadoFilter(this,'activo')">Activos</button>
+          <button class="filter-pill" data-estado="pausa" onclick="setEstadoFilter(this,'pausa')">En pausa</button>
+          <button class="filter-pill" data-estado="inactivo" onclick="setEstadoFilter(this,'inactivo')">Inactivos</button>
+          <button class="filter-pill" data-estado="perdido" onclick="setEstadoFilter(this,'perdido')">Perdidos</button>
+        </div>
+        <div style="flex:1;"></div>
+        <input type="text" id="cli-buscar" placeholder="Buscar nombre, RFC, contacto…" oninput="renderClientes()" style="min-width:240px;" />
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="cli-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre / Comercial</th>
+              <th>RFC</th>
+              <th>Estado</th>
+              <th>Contacto principal</th>
+              <th>Moneda · Crédito</th>
+              <th>Cliente desde</th>
+              <th>Giro</th>
+              <th style="width:70px;"></th>
+            </tr>
+          </thead>
+          <tbody id="cli-tbody"></tbody>
+          <tfoot id="cli-tfoot" style="display:none;">
+            <tr>
+              <td colspan="9" id="cli-tfoot-txt"></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div id="cli-empty" class="empty-state" style="display:none;">
+          <div class="empty-state-icon">🏢</div>
+          <div class="empty-state-title">Sin clientes aún</div>
+          <div class="empty-state-desc">Agrega tu primer cliente con el botón de arriba,<br>o importa un CSV con tu base de datos existente.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div><!-- /site-wrap -->
+
+<!-- ══ MODAL: Alta / Edición de Cliente ══ -->
+<div class="modal-backdrop hidden" id="modal-cliente">
+  <div class="modal" style="max-width:680px; max-height:94vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title" id="cli-modal-titulo">Nuevo cliente</span>
+      <button class="modal-close" onclick="closeModal('modal-cliente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cli-id" />
+
+      <!-- ── Identificación ── -->
+      <div class="modal-section-hdr">Identificación</div>
+      <div class="modal-grid-2">
+        <div class="form-group span2">
+          <label class="form-label">Razón Social *</label>
+          <input class="form-input" id="cli-razon" type="text" placeholder="SANTAGLIA S.A. DE C.V." oninput="this.value=this.value.toUpperCase()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre comercial</label>
+          <input class="form-input" id="cli-comercial" type="text" placeholder="Santaglia" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">RFC</label>
+          <input class="form-input" id="cli-rfc" type="text" placeholder="SAT900101AAA" maxlength="13" oninput="this.value=this.value.toUpperCase()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de persona</label>
+          <div class="tipo-tabs">
+            <button class="tipo-tab active" id="tipo-moral"   onclick="setTipoPersona('moral')">Moral (empresa)</button>
+            <button class="tipo-tab"         id="tipo-fisica"  onclick="setTipoPersona('fisica')">Física</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Giro / Industria</label>
+          <input class="form-input" id="cli-giro" type="text" placeholder="Servicios de consultoría" list="cli-giro-list" />
+          <datalist id="cli-giro-list">
+            <option>Consultoría de negocios</option>
+            <option>Consultoría tecnológica</option>
+            <option>Servicios contables y fiscales</option>
+            <option>Servicios legales</option>
+            <option>Manufactura</option>
+            <option>Comercio al mayoreo</option>
+            <option>Comercio al menudeo</option>
+            <option>Construcción</option>
+            <option>Salud y bienestar</option>
+            <option>Educación y capacitación</option>
+            <option>Agencia de marketing</option>
+            <option>Tecnología y software</option>
+            <option>Logística y transporte</option>
+            <option>Hospitalidad y restaurantes</option>
+          </datalist>
+        </div>
+      </div>
+
+      <!-- ── Estado y relación ── -->
+      <div class="modal-section-hdr">Estado y relación</div>
+      <div class="modal-grid-2">
+        <div class="form-group">
+          <label class="form-label">Estado *</label>
+          <select class="form-input" id="cli-estado">
+            <option value="prospecto">Prospecto</option>
+            <option value="activo">Activo</option>
+            <option value="pausa">En pausa</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="perdido">Perdido</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente desde</label>
+          <input class="form-input" id="cli-desde" type="date" />
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Notas de relación</label>
+          <textarea class="form-input" id="cli-notas" rows="2" placeholder="Cómo llegó, decisor principal, contexto de la relación…" style="resize:vertical;"></textarea>
+        </div>
+      </div>
+
+      <!-- ── Contacto principal ── -->
+      <div class="modal-section-hdr">Contacto principal</div>
+      <div class="modal-grid-2">
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input class="form-input" id="cli-contacto-nombre" type="text" placeholder="Lic. Juan García López" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Puesto</label>
+          <input class="form-input" id="cli-contacto-puesto" type="text" placeholder="Director General" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input class="form-input" id="cli-contacto-email" type="email" placeholder="jgarcia@empresa.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input class="form-input" id="cli-contacto-tel" type="tel" placeholder="55 1234 5678" />
+        </div>
+      </div>
+
+      <!-- ── Términos comerciales ── -->
+      <div class="modal-section-hdr">Términos comerciales</div>
+      <div class="modal-grid-3">
+        <div class="form-group">
+          <label class="form-label">Moneda preferida</label>
+          <select class="form-input" id="cli-moneda">
+            <option value="MXN">MXN — Peso mexicano</option>
+            <option value="USD">USD — Dólar</option>
+            <option value="EUR">EUR — Euro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Días de crédito</label>
+          <input class="form-input" id="cli-credito" type="number" min="0" max="180" placeholder="0" style="text-align:right;" />
+          <div style="font-size:0.62rem; color:var(--text-xs); margin-top:0.2rem;">0 = contado</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Límite de crédito</label>
+          <input class="form-input" id="cli-limite" type="number" min="0" step="1000" placeholder="0.00" style="text-align:right;" />
+        </div>
+      </div>
+
+      <!-- ── Ubicación ── -->
+      <div class="modal-section-hdr">Ubicación</div>
+      <div class="modal-grid-2">
+        <div class="form-group span2">
+          <label class="form-label">Dirección fiscal</label>
+          <input class="form-input" id="cli-direccion" type="text" placeholder="Av. Insurgentes Sur 1234, Piso 8, Col. Del Valle" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <input class="form-input" id="cli-ciudad" type="text" placeholder="Ciudad de México" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-input" id="cli-estado-geo">
+            <option value="">— Seleccionar —</option>
+            <option>Aguascalientes</option><option>Baja California</option><option>Baja California Sur</option>
+            <option>Campeche</option><option>Chiapas</option><option>Chihuahua</option>
+            <option>Ciudad de México</option><option>Coahuila</option><option>Colima</option>
+            <option>Durango</option><option>Guanajuato</option><option>Guerrero</option>
+            <option>Hidalgo</option><option>Jalisco</option><option>México</option>
+            <option>Michoacán</option><option>Morelos</option><option>Nayarit</option>
+            <option>Nuevo León</option><option>Oaxaca</option><option>Puebla</option>
+            <option>Querétaro</option><option>Quintana Roo</option><option>San Luis Potosí</option>
+            <option>Sinaloa</option><option>Sonora</option><option>Tabasco</option>
+            <option>Tamaulipas</option><option>Tlaxcala</option><option>Veracruz</option>
+            <option>Yucatán</option><option>Zacatecas</option>
+            <option>— Otro país —</option>
+            <option>Estados Unidos</option><option>Canadá</option><option>España</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Código postal</label>
+          <input class="form-input" id="cli-cp" type="text" placeholder="06600" maxlength="10" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">País</label>
+          <input class="form-input" id="cli-pais" type="text" placeholder="México" value="México" />
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Detalle del cliente ══ -->
+<div class="modal-backdrop hidden" id="modal-detalle">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title" id="det-titulo">—</span>
+      <button class="modal-close" onclick="closeModal('modal-detalle')">✕</button>
+    </div>
+    <div class="modal-body" id="det-body" style="font-size:0.78rem;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
+      <button class="btn btn-primary" id="det-edit-btn">Editar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════════
+   CONSTANTES Y CONFIGURACIÓN
+══════════════════════════════════════════════════════════ */
+const KEY_CLIENTES = 'stgl_clientes';
+
+const ESTADO_META = {
+  prospecto: { label:'Prospecto', cls:'sb-prospecto' },
+  activo:    { label:'Activo',    cls:'sb-activo'    },
+  pausa:     { label:'En pausa',  cls:'sb-pausa'     },
+  inactivo:  { label:'Inactivo',  cls:'sb-inactivo'  },
+  perdido:   { label:'Perdido',   cls:'sb-perdido'   },
+};
+
+/* Estado del filtro activo */
+let filtroEstado = '';
+
+/* ══════════════════════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════════════════════ */
+function loadClientes() {
+  try { return JSON.parse(localStorage.getItem(KEY_CLIENTES) || '[]'); }
+  catch { return []; }
+}
+function saveClientes(arr) { localStorage.setItem(KEY_CLIENTES, JSON.stringify(arr)); }
+
+function getClienteById(id) { return loadClientes().find(c => c.id === id) || null; }
+
+/* ══════════════════════════════════════════════════════════
+   FILTRO POR ESTADO
+══════════════════════════════════════════════════════════ */
+function setEstadoFilter(btn, estado) {
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  filtroEstado = estado;
+  renderClientes();
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════════════════ */
+function renderClientes() {
+  const all    = loadClientes();
+  const buscar = (document.getElementById('cli-buscar')?.value || '').toLowerCase();
+
+  let data = all.slice();
+  if (filtroEstado) data = data.filter(c => c.estado === filtroEstado);
+  if (buscar) {
+    data = data.filter(c => {
+      const haystack = [c.razonSocial, c.nombreComercial, c.rfc,
+                        c.contactoPrincipal?.nombre, c.contactoPrincipal?.email,
+                        c.contactoPrincipal?.telefono, c.giro, c.notas]
+                       .filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(buscar);
+    });
+  }
+
+  // KPIs (always from all)
+  const total     = all.length;
+  const activos   = all.filter(c => c.estado === 'activo').length;
+  const prosp     = all.filter(c => c.estado === 'prospecto').length;
+  const usd       = all.filter(c => c.moneda === 'USD').length;
+  document.getElementById('kpi-total').textContent     = total;
+  document.getElementById('kpi-activos').textContent   = activos;
+  document.getElementById('kpi-prospectos').textContent= prosp;
+  document.getElementById('kpi-usd').textContent       = usd;
+  document.getElementById('cli-meta').textContent =
+    `${total} en catálogo · ${activos} activos · ${prosp} prospectos`;
+
+  const tbody = document.getElementById('cli-tbody');
+  const empty = document.getElementById('cli-empty');
+  const tfoot = document.getElementById('cli-tfoot');
+
+  if (!data.length) {
+    tbody.innerHTML = '';
+    empty.style.display  = '';
+    tfoot.style.display  = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = data.map((c, i) => {
+    const em = ESTADO_META[c.estado] || { label:c.estado, cls:'' };
+    const nombre = c.nombreComercial && c.nombreComercial !== c.razonSocial
+      ? `<div style="font-weight:700;color:var(--navy);">${escH(c.nombreComercial)}</div>
+         <div style="font-size:0.67rem;color:var(--text-xs);">${escH(c.razonSocial)}</div>`
+      : `<div style="font-weight:700;color:var(--navy);">${escH(c.razonSocial || '—')}</div>`;
+    const contacto = c.contactoPrincipal?.nombre
+      ? `<div>${escH(c.contactoPrincipal.nombre)}</div>
+         <div style="font-size:0.67rem;color:var(--text-xs);">${escH(c.contactoPrincipal.telefono || c.contactoPrincipal.email || '')}</div>`
+      : `<span style="color:var(--text-xs);">—</span>`;
+    const credito = c.diasCredito > 0
+      ? `${c.moneda || 'MXN'} · ${c.diasCredito}d`
+      : `${c.moneda || 'MXN'} · Contado`;
+    const desde = c.desde ? formatDateShort(c.desde) : '—';
+    return `<tr onclick="verDetalle('${c.id}')" style="cursor:pointer;">
+      <td style="font-family:var(--brand);font-weight:700;color:var(--text-xs);">${i+1}</td>
+      <td>${nombre}</td>
+      <td><code style="font-size:0.7rem;background:#f0f2f8;padding:0.1rem 0.3rem;border-radius:3px;">${escH(c.rfc||'—')}</code></td>
+      <td><span class="status-badge ${em.cls}">${em.label}</span></td>
+      <td>${contacto}</td>
+      <td style="font-size:0.72rem;color:var(--text-dim);">${escH(credito)}</td>
+      <td style="font-size:0.72rem;color:var(--text-dim);">${desde}</td>
+      <td style="font-size:0.7rem;color:var(--text-xs);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(c.giro||'—')}</td>
+      <td style="white-space:nowrap;" onclick="event.stopPropagation()">
+        <button class="edit-row" onclick="editarCliente('${c.id}')">Editar</button>
+        <button class="del-row"  onclick="eliminarCliente('${c.id}')" title="Eliminar">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Tfoot summary
+  if (data.length !== all.length) {
+    tfoot.style.display = '';
+    document.getElementById('cli-tfoot-txt').textContent =
+      `Mostrando ${data.length} de ${all.length} clientes`;
+  } else {
+    tfoot.style.display = 'none';
+  }
+}
+
+function formatDateShort(iso) {
+  if (!iso) return '—';
+  try {
+    const [y, m, d] = iso.split('-');
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+  } catch { return iso; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   DETALLE
+══════════════════════════════════════════════════════════ */
+function verDetalle(id) {
+  const c = getClienteById(id);
+  if (!c) return;
+  const em = ESTADO_META[c.estado] || { label:c.estado, cls:'' };
+
+  document.getElementById('det-titulo').innerHTML =
+    `${escH(c.nombreComercial || c.razonSocial)}
+     <span class="status-badge ${em.cls}" style="margin-left:0.5rem;">${em.label}</span>`;
+
+  const rows = [
+    ['Razón Social',   c.razonSocial],
+    ['RFC',            c.rfc || '—'],
+    ['Tipo persona',   c.tipoPersona === 'moral' ? 'Persona Moral' : 'Persona Física'],
+    ['Giro',           c.giro || '—'],
+    ['Cliente desde',  c.desde ? formatDateShort(c.desde) : '—'],
+    ['Moneda',         c.moneda || 'MXN'],
+    ['Días de crédito', c.diasCredito ? `${c.diasCredito} días` : 'Contado'],
+    ['Límite de crédito', c.limiteCredito > 0 ? `$${Number(c.limiteCredito).toLocaleString('es-MX')}` : '—'],
+  ].filter(([,v]) => v && v !== '—');
+
+  const contactoHtml = c.contactoPrincipal?.nombre ? `
+    <div style="background:#f5f7ff;border:1px solid #b0bcec;border-radius:var(--radius);padding:0.6rem 0.85rem;margin:0.85rem 0;">
+      <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-xs);margin-bottom:0.4rem;">Contacto principal</div>
+      <div style="font-weight:700;color:var(--navy);">${escH(c.contactoPrincipal.nombre)}</div>
+      ${c.contactoPrincipal.puesto ? `<div style="font-size:0.68rem;color:var(--text-xs);">${escH(c.contactoPrincipal.puesto)}</div>` : ''}
+      <div style="margin-top:0.4rem;display:flex;gap:1rem;flex-wrap:wrap;">
+        ${c.contactoPrincipal.email   ? `<a href="mailto:${escH(c.contactoPrincipal.email)}" style="font-size:0.72rem;color:var(--navy);">✉ ${escH(c.contactoPrincipal.email)}</a>` : ''}
+        ${c.contactoPrincipal.telefono ? `<a href="tel:${escH(c.contactoPrincipal.telefono)}" style="font-size:0.72rem;color:var(--navy);">📞 ${escH(c.contactoPrincipal.telefono)}</a>` : ''}
+      </div>
+    </div>` : '';
+
+  const ubicacionHtml = (c.direccion || c.ciudad) ? `
+    <div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;">
+      📍 ${[c.direccion, c.ciudad, c.estadoGeo, c.cp, c.pais].filter(Boolean).join(', ')}
+    </div>` : '';
+
+  const notasHtml = c.notas ? `
+    <div style="margin-top:0.85rem;padding:0.6rem 0.85rem;background:#fffdf0;border:1px solid #f5c842;border-radius:var(--radius);font-size:0.73rem;line-height:1.6;">
+      <span style="font-family:var(--brand);font-size:0.57rem;font-weight:700;color:#8a6000;text-transform:uppercase;letter-spacing:0.06em;">Notas · </span>
+      ${escH(c.notas)}
+    </div>` : '';
+
+  document.getElementById('det-body').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.74rem;margin-bottom:0.5rem;">
+      ${rows.map(([k,v]) => `
+        <tr>
+          <td style="padding:0.3rem 0;color:var(--text-xs);font-family:var(--brand);font-size:0.61rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;width:40%;border-bottom:1px solid var(--border);">${escH(k)}</td>
+          <td style="padding:0.3rem 0;border-bottom:1px solid var(--border);">${escH(String(v))}</td>
+        </tr>`).join('')}
+    </table>
+    ${contactoHtml}
+    ${ubicacionHtml}
+    ${notasHtml}`;
+
+  document.getElementById('det-edit-btn').onclick = () => {
+    closeModal('modal-detalle');
+    editarCliente(id);
+  };
+  openModal('modal-detalle');
+}
+
+/* ══════════════════════════════════════════════════════════
+   TIPO PERSONA TOGGLE
+══════════════════════════════════════════════════════════ */
+let tipoPersonaActual = 'moral';
+function setTipoPersona(tipo) {
+  tipoPersonaActual = tipo;
+  document.getElementById('tipo-moral').classList.toggle('active', tipo === 'moral');
+  document.getElementById('tipo-fisica').classList.toggle('active', tipo === 'fisica');
+}
+
+/* ══════════════════════════════════════════════════════════
+   ABRIR / LIMPIAR MODAL
+══════════════════════════════════════════════════════════ */
+function abrirNuevoCliente() {
+  limpiarModalCliente();
+  document.getElementById('cli-modal-titulo').textContent = 'Nuevo cliente';
+  document.getElementById('cli-estado').value = 'prospecto';
+  document.getElementById('cli-desde').value  = new Date().toISOString().split('T')[0];
+  openModal('modal-cliente');
+}
+
+function limpiarModalCliente() {
+  ['cli-id','cli-razon','cli-comercial','cli-rfc','cli-giro',
+   'cli-notas','cli-contacto-nombre','cli-contacto-puesto',
+   'cli-contacto-email','cli-contacto-tel','cli-credito','cli-limite',
+   'cli-direccion','cli-ciudad','cli-cp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('cli-estado').value     = 'activo';
+  document.getElementById('cli-moneda').value     = 'MXN';
+  document.getElementById('cli-estado-geo').value = '';
+  document.getElementById('cli-pais').value       = 'México';
+  document.getElementById('cli-desde').value      = '';
+  setTipoPersona('moral');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CRUD
+══════════════════════════════════════════════════════════ */
+function editarCliente(id) {
+  const c = getClienteById(id);
+  if (!c) return;
+  limpiarModalCliente();
+  document.getElementById('cli-id').value               = c.id;
+  document.getElementById('cli-razon').value            = c.razonSocial || '';
+  document.getElementById('cli-comercial').value        = c.nombreComercial || '';
+  document.getElementById('cli-rfc').value              = c.rfc || '';
+  document.getElementById('cli-giro').value             = c.giro || '';
+  document.getElementById('cli-estado').value           = c.estado || 'activo';
+  document.getElementById('cli-desde').value            = c.desde || '';
+  document.getElementById('cli-notas').value            = c.notas || '';
+  document.getElementById('cli-contacto-nombre').value  = c.contactoPrincipal?.nombre || '';
+  document.getElementById('cli-contacto-puesto').value  = c.contactoPrincipal?.puesto || '';
+  document.getElementById('cli-contacto-email').value   = c.contactoPrincipal?.email  || '';
+  document.getElementById('cli-contacto-tel').value     = c.contactoPrincipal?.telefono || '';
+  document.getElementById('cli-moneda').value           = c.moneda || 'MXN';
+  document.getElementById('cli-credito').value          = c.diasCredito || 0;
+  document.getElementById('cli-limite').value           = c.limiteCredito || '';
+  document.getElementById('cli-direccion').value        = c.direccion || '';
+  document.getElementById('cli-ciudad').value           = c.ciudad || '';
+  document.getElementById('cli-estado-geo').value       = c.estadoGeo || '';
+  document.getElementById('cli-cp').value               = c.cp || '';
+  document.getElementById('cli-pais').value             = c.pais || 'México';
+  setTipoPersona(c.tipoPersona || 'moral');
+  document.getElementById('cli-modal-titulo').textContent = 'Editar cliente';
+  openModal('modal-cliente');
+}
+
+function guardarCliente() {
+  const id          = document.getElementById('cli-id').value;
+  const razonSocial = document.getElementById('cli-razon').value.trim().toUpperCase();
+  const rfc         = document.getElementById('cli-rfc').value.trim().toUpperCase();
+
+  if (!razonSocial) { toast('La razón social es obligatoria', 'error'); return; }
+  if (rfc && !/^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/.test(rfc)) {
+    if (!confirm(`El RFC "${rfc}" no tiene el formato estándar. ¿Continuar de todas formas?`)) return;
+  }
+
+  const registro = {
+    id:              id || 'cli-' + Date.now(),
+    razonSocial,
+    nombreComercial: document.getElementById('cli-comercial').value.trim() || razonSocial,
+    rfc,
+    tipoPersona:     tipoPersonaActual,
+    giro:            document.getElementById('cli-giro').value.trim(),
+    estado:          document.getElementById('cli-estado').value,
+    desde:           document.getElementById('cli-desde').value || '',
+    notas:           document.getElementById('cli-notas').value.trim(),
+    contactoPrincipal: {
+      nombre:   document.getElementById('cli-contacto-nombre').value.trim(),
+      puesto:   document.getElementById('cli-contacto-puesto').value.trim(),
+      email:    document.getElementById('cli-contacto-email').value.trim(),
+      telefono: document.getElementById('cli-contacto-tel').value.trim(),
+    },
+    moneda:       document.getElementById('cli-moneda').value,
+    diasCredito:  parseInt(document.getElementById('cli-credito').value) || 0,
+    limiteCredito:parseFloat(document.getElementById('cli-limite').value) || 0,
+    direccion:    document.getElementById('cli-direccion').value.trim(),
+    ciudad:       document.getElementById('cli-ciudad').value.trim(),
+    estadoGeo:    document.getElementById('cli-estado-geo').value,
+    cp:           document.getElementById('cli-cp').value.trim(),
+    pais:         document.getElementById('cli-pais').value.trim() || 'México',
+    actualizado:  new Date().toISOString(),
+  };
+
+  const clientes = loadClientes();
+  if (id) {
+    const idx = clientes.findIndex(c => c.id === id);
+    if (idx >= 0) {
+      registro.creado = clientes[idx].creado;
+      clientes[idx] = registro;
+    }
+  } else {
+    registro.creado = new Date().toISOString();
+    clientes.push(registro);
+  }
+  saveClientes(clientes);
+  closeModal('modal-cliente');
+  toast(id ? 'Cliente actualizado' : 'Cliente agregado', 'success');
+  renderClientes();
+}
+
+function eliminarCliente(id) {
+  const c = getClienteById(id);
+  if (!c) return;
+  if (!confirm(`¿Eliminar a "${c.nombreComercial || c.razonSocial}"? Esta acción no se puede deshacer.`)) return;
+  saveClientes(loadClientes().filter(x => x.id !== id));
+  toast('Cliente eliminado', 'success');
+  renderClientes();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CSV — EXPORTAR
+══════════════════════════════════════════════════════════ */
+function exportarClientesCSV() {
+  const clientes = loadClientes();
+  if (!clientes.length) { toast('No hay clientes para exportar', 'error'); return; }
+  const header = 'RFC,Razón Social,Nombre Comercial,Tipo Persona,Giro,Estado,Desde,Moneda,Días Crédito,Límite Crédito,Contacto Nombre,Contacto Puesto,Contacto Email,Contacto Tel,Dirección,Ciudad,Estado Geográfico,CP,País,Notas';
+  const rows = clientes.map(c => [
+    c.rfc||'', c.razonSocial||'', c.nombreComercial||'', c.tipoPersona||'moral',
+    c.giro||'', c.estado||'activo', c.desde||'', c.moneda||'MXN',
+    c.diasCredito||0, c.limiteCredito||0,
+    c.contactoPrincipal?.nombre||'', c.contactoPrincipal?.puesto||'',
+    c.contactoPrincipal?.email||'', c.contactoPrincipal?.telefono||'',
+    c.direccion||'', c.ciudad||'', c.estadoGeo||'', c.cp||'', c.pais||'México',
+    c.notas||''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv  = [header, ...rows].join('\n');
+  const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href:url, download:`clientes_${new Date().toISOString().slice(0,10)}.csv` });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`${clientes.length} clientes exportados`, 'success');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CSV — PLANTILLA
+══════════════════════════════════════════════════════════ */
+function descargarPlantillaClientes() {
+  const header = 'RFC,Razón Social,Nombre Comercial,Tipo Persona (moral/fisica),Giro,Estado (prospecto/activo/pausa/inactivo/perdido),Desde (YYYY-MM-DD),Moneda (MXN/USD/EUR),Días Crédito,Contacto Nombre,Contacto Puesto,Contacto Email,Contacto Tel,Ciudad,Estado Geográfico,CP,Notas';
+  const ejemplo = '"HSG2204266U6","HERRAMIENTAS Y SOLUCIONES DE GESTION","Santaglia","moral","Consultoría de negocios","activo","2024-01-15","MXN","30","Lic. Juan García","Director General","jgarcia@empresa.com","55 1234 5678","Ciudad de México","Ciudad de México","06600","Cliente referido por contacto en LinkedIn"';
+  const csv  = [header, ejemplo].join('\n');
+  const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href:url, download:'clientes_plantilla.csv' });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Plantilla descargada', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════
+   IMPORTAR — dispatcher CSV / Excel
+══════════════════════════════════════════════════════════ */
+
+/* Strip diacritics for robust header matching */
+function normH(s) {
+  return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+}
+
+/* Parse a single CSV line respecting quoted fields */
+function parseCSVRow(line) {
+  const row = []; let cur = '', inQ = false;
+  for (const ch of line + ',') {
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { row.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  return row;
+}
+
+/* Get a column value matching any of the given normalized name fragments */
+function makeGetCol(header) {
+  return (row, ...names) => {
+    for (const name of names) {
+      const nm  = normH(name);
+      const idx = header.findIndex(h => normH(h).includes(nm));
+      if (idx >= 0 && row[idx] !== undefined) return String(row[idx]).replace(/^"|"$/g,'').trim();
+    }
+    return '';
+  };
+}
+
+/* Build a client record from a row + getCol helper */
+function buildClienteFromRow(row, getCol, idx) {
+  const rfc         = getCol(row, 'rfc').toUpperCase().replace(/\s/g,'');
+  const razonSocial = (getCol(row, 'razon social', 'razón social', 'razon', 'empresa') || '').toUpperCase().trim();
+  if (!razonSocial && !rfc) return null;
+
+  const estadoRaw = getCol(row, 'estado').toLowerCase().trim();
+  const estadosValidos = ['prospecto','activo','pausa','inactivo','perdido'];
+  const estado = estadosValidos.includes(estadoRaw) ? estadoRaw : 'activo';
+
+  return {
+    id: '',
+    razonSocial,
+    nombreComercial: getCol(row, 'nombre comercial', 'comercial') || razonSocial,
+    rfc,
+    tipoPersona:    getCol(row, 'tipo persona', 'tipo').toLowerCase().includes('fis') ? 'fisica' : 'moral',
+    giro:           getCol(row, 'giro'),
+    estado,
+    desde:          getCol(row, 'desde', 'fecha inicio', 'inicio'),
+    moneda:         (['MXN','USD','EUR'].includes(getCol(row,'moneda').toUpperCase())
+                      ? getCol(row,'moneda').toUpperCase() : 'MXN'),
+    diasCredito:    parseInt(getCol(row,'dias credito','días crédito','credito')) || 0,
+    limiteCredito:  parseFloat(getCol(row,'limite credito','límite crédito','limite')) || 0,
+    contactoPrincipal: {
+      nombre:   getCol(row,'contacto nombre','contacto principal','nombre contacto'),
+      puesto:   getCol(row,'puesto','cargo'),
+      email:    getCol(row,'email','correo'),
+      telefono: getCol(row,'telefono','tel'),
+    },
+    ciudad:    getCol(row,'ciudad'),
+    estadoGeo: getCol(row,'estado geografico','estado geográfico','estado geo','entidad'),
+    cp:        getCol(row,'cp','codigo postal','código postal','postal'),
+    pais:      getCol(row,'pais','país') || 'México',
+    notas:     getCol(row,'notas','comentarios','observaciones'),
+    actualizado: new Date().toISOString(),
+  };
+}
+
+/* Merge imported records into existing store */
+function mergeClientes(records) {
+  const clientes = loadClientes();
+  let added = 0, updated = 0, skipped = 0;
+  records.forEach((reg, i) => {
+    if (!reg) { skipped++; return; }
+    const existing = clientes.find(c =>
+      (reg.rfc && c.rfc && c.rfc === reg.rfc) || c.razonSocial === reg.razonSocial
+    );
+    if (existing) {
+      reg.id     = existing.id;
+      reg.creado = existing.creado;
+      Object.assign(existing, reg);
+      updated++;
+    } else {
+      reg.id     = 'cli-' + Date.now() + '-' + i;
+      reg.creado = new Date().toISOString();
+      clientes.push(reg);
+      added++;
+    }
+  });
+  saveClientes(clientes);
+  toast(`Importado: ${added} nuevo${added!==1?'s':''}, ${updated} actualizado${updated!==1?'s':''}${skipped ? `, ${skipped} omitido${skipped!==1?'s':''}` : ''}`, 'success');
+  renderClientes();
+}
+
+function importarArchivoClientes(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    importarClientesXLSX(file);
+  } else {
+    importarClientesCSV(file);
+  }
+}
+
+function importarClientesCSV(file) {
+  if (!file) return;
+  const tryParse = (text) => {
+    const clean = text.replace(/^﻿/, '').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    const lines = clean.split('\n').filter(l => l.trim());
+    if (lines.length < 2) { toast('Archivo vacío o sin datos', 'error'); return; }
+    const headerRow = parseCSVRow(lines[0]);
+    const getCol    = makeGetCol(headerRow);
+    const records   = [];
+    for (let i = 1; i < lines.length; i++) {
+      records.push(buildClienteFromRow(parseCSVRow(lines[i]), getCol, i));
+    }
+    mergeClientes(records);
+  };
+  const reader = new FileReader();
+  // Try UTF-8 first; if result has replacement chars, retry with latin-1
+  reader.onload = e => {
+    let text = e.target.result;
+    if (text.includes('�')) {
+      const r2 = new FileReader();
+      r2.onload = e2 => tryParse(e2.target.result);
+      r2.readAsText(file, 'windows-1252');
+    } else { tryParse(text); }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importarClientesXLSX(file) {
+  const loadSheetJS = (cb) => {
+    if (window.XLSX) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = cb;
+    s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
+    document.head.appendChild(s);
+  };
+  loadSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        if (rows.length < 2) { toast('Excel vacío o sin datos', 'error'); return; }
+        const headerRow = rows[0].map(String);
+        const getCol    = makeGetCol(headerRow);
+        const records   = rows.slice(1).map((row, i) =>
+          buildClienteFromRow(row.map(String), getCol, i + 1)
+        );
+        mergeClientes(records);
+      } catch(err) { toast('Error al leer el archivo Excel: ' + err.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+renderClientes();
+</script>
+</body>
+</html>

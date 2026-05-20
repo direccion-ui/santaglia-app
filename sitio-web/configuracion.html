@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Configuración</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- SheetJS: lectura de archivos Excel (.xlsx/.xls) en el navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* ── Layout ── */
+    .cfg-wrap { display:grid; grid-template-columns:210px 1fr; min-height:calc(100vh - 200px); background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:1.5rem; }
+
+    /* ── Sidebar ── */
+    .cfg-sidebar { background:#f8f9fc; border-right:1px solid var(--border); padding:0.6rem 0; }
+    .cfg-sidebar-section { font-family:var(--brand); font-size:0.52rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-xs); padding:0.85rem 1.1rem 0.2rem; margin-top:0.25rem; }
+    .cfg-tab { display:flex; align-items:center; gap:0.5rem; width:100%; text-align:left; padding:0.52rem 1.1rem; border:none; border-left:3px solid transparent; background:none; cursor:pointer; font-family:var(--brand); font-size:0.72rem; font-weight:600; color:var(--text-dim); transition:all 0.12s; }
+    .cfg-tab:hover { color:var(--navy); background:rgba(26,45,128,0.05); }
+    .cfg-tab.active { color:var(--navy); background:rgba(26,45,128,0.09); border-left-color:var(--navy); }
+    .cfg-tab-icon { font-size:0.9rem; width:16px; text-align:center; }
+
+    /* ── Panels ── */
+    .cfg-panels { padding:1.75rem 2rem; overflow-y:auto; }
+    .cfg-panel { display:none; }
+    .cfg-panel.active { display:block; }
+    .cfg-section { margin-bottom:2rem; }
+    .cfg-section-hdr { display:flex; align-items:center; justify-content:space-between; font-family:var(--brand); font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); padding-bottom:0.45rem; border-bottom:1px solid var(--border); margin-bottom:1rem; }
+
+    /* ── Form grid ── */
+    .cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem 1.25rem; }
+    .cfg-grid .span2 { grid-column:1/-1; }
+
+    /* ── Module cards ── */
+    .modules-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.65rem; }
+    .module-card { border:1px solid var(--border); border-radius:var(--radius); padding:0.8rem 0.95rem; display:flex; align-items:center; gap:0.7rem; transition:border-color 0.15s, background 0.15s; }
+    .module-card.on { border-color:#b0bcec; background:#f5f7ff; }
+    .module-card-icon { font-size:1.3rem; flex-shrink:0; }
+    .module-card-info { flex:1; min-width:0; }
+    .module-card-name { font-family:var(--brand); font-size:0.7rem; font-weight:700; color:var(--navy); }
+    .module-card-desc { font-size:0.61rem; color:var(--text-xs); margin-top:0.1rem; line-height:1.3; }
+
+    /* ── Toggle switch ── */
+    .toggle-sw { position:relative; display:inline-block; width:34px; height:18px; flex-shrink:0; }
+    .toggle-sw input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-sl { position:absolute; cursor:pointer; inset:0; background:#ccd0db; border-radius:18px; transition:background 0.2s; }
+    .toggle-sl:before { position:absolute; content:""; height:12px; width:12px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.25); }
+    .toggle-sw input:checked + .toggle-sl { background:var(--navy); }
+    .toggle-sw input:checked + .toggle-sl:before { transform:translateX(16px); }
+    .toggle-sw input:disabled + .toggle-sl { opacity:0.45; cursor:not-allowed; }
+
+    /* ── Logo upload ── */
+    .logo-drop { border:2px dashed var(--border); border-radius:var(--radius); padding:1.5rem; text-align:center; cursor:pointer; transition:border-color 0.15s; position:relative; }
+    .logo-drop:hover { border-color:var(--navy); }
+    .logo-drop input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .logo-preview-img { max-height:56px; max-width:220px; object-fit:contain; margin-bottom:0.6rem; display:block; margin-left:auto; margin-right:auto; }
+
+    /* ── Color preview bar ── */
+    .color-nav-preview { height:38px; border-radius:4px; margin-top:0.6rem; display:flex; align-items:center; padding:0 1rem; gap:0.75rem; transition:background 0.25s; }
+    .color-nav-preview .cpv-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); }
+    .color-nav-preview .cpv-text { font-family:var(--brand); font-size:0.66rem; font-weight:600; color:rgba(255,255,255,0.7); letter-spacing:0.06em; }
+    .color-nav-preview .cpv-active { color:#fff; border-bottom:2px solid rgba(255,255,255,0.8); }
+
+    /* ── Tag chips ── */
+    .tag-cloud { display:flex; flex-wrap:wrap; gap:0.35rem; min-height:2.8rem; padding:0.5rem 0.6rem; background:#f8f9fc; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:0.5rem; }
+    .cfg-chip { display:inline-flex; align-items:center; gap:0.28rem; background:#e8ecf8; color:var(--navy); font-family:var(--brand); font-size:0.63rem; font-weight:600; padding:0.2rem 0.45rem 0.2rem 0.55rem; border-radius:2px; }
+    .cfg-chip-del { background:none; border:none; cursor:pointer; color:#8a96b8; font-size:0.72rem; padding:0; line-height:1; }
+    .cfg-chip-del:hover { color:var(--red); }
+    .tag-add-row { display:flex; gap:0.4rem; align-items:center; }
+    .tag-input { padding:0.28rem 0.6rem; font-size:0.73rem; border:1px solid var(--border); border-radius:2px; width:190px; font-family:var(--font); }
+    .tag-input:focus { outline:none; border-color:var(--navy); }
+
+    /* ── Plantillas table ── */
+    .tmpl-table { width:100%; border-collapse:collapse; font-size:0.73rem; }
+    .tmpl-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.56rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.28rem 0.65rem; text-align:left; border-right:1px solid rgba(255,255,255,0.1); }
+    .tmpl-table th:last-child { border-right:none; }
+    .tmpl-table td { padding:0.3rem 0.65rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .tmpl-table tbody tr:hover td { background:var(--navy-pale); }
+    .tmpl-act-btn { background:none; border:none; cursor:pointer; font-size:0.78rem; padding:0.1rem 0.25rem; border-radius:2px; color:var(--text-xs); }
+    .tmpl-act-btn:hover { color:var(--navy); background:var(--navy-pale); }
+
+    /* ── Cuentas config table ── */
+    .ctas-table { width:100%; border-collapse:collapse; font-size:0.73rem; }
+    .ctas-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.56rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.3rem 0.7rem; text-align:left; border-right:1px solid rgba(255,255,255,0.08); }
+    .ctas-table th:last-child { border-right:none; }
+    .ctas-table td { padding:0.45rem 0.7rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .ctas-table tbody tr:hover td { background:var(--navy-pale); }
+
+    /* ── Storage bar ── */
+    .storage-bar { height:7px; background:#e8ecf8; border-radius:4px; overflow:hidden; margin:0.35rem 0 0.6rem; }
+    .storage-bar-fill { height:100%; background:var(--navy); border-radius:4px; transition:width 0.4s; }
+
+    /* ── Data stats ── */
+    .data-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.5rem; }
+    .data-stat { background:var(--bg-white); padding:0.7rem 1rem; }
+    .data-stat-val { font-family:var(--brand); font-size:1.05rem; font-weight:700; color:var(--navy); }
+    .data-stat-lbl { font-size:0.59rem; color:var(--text-xs); margin-top:0.1rem; }
+
+    /* ── Danger zone ── */
+    .danger-zone { border:1px solid #fecaca; border-radius:var(--radius); padding:1rem 1.25rem; background:#fff8f8; }
+    .danger-zone-title { font-family:var(--brand); font-size:0.63rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--red); margin-bottom:0.75rem; }
+    .danger-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; }
+
+    /* ── Cuentas maestro ── */
+    .cta-add-form { background:#f5f7ff; border:1px solid #b0bcec; border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1.25rem; }
+    .cta-add-form .form-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:0.6rem; align-items:end; }
+    .cta-add-form .form-row-2 { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:0.6rem; align-items:end; margin-top:0.6rem; }
+    .ctas-master-table { width:100%; border-collapse:collapse; font-size:0.72rem; margin-bottom:1rem; }
+    .ctas-master-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.55rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.3rem 0.7rem; text-align:left; }
+    .ctas-master-table td { padding:0.35rem 0.7rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .ctas-master-table tbody tr:hover td { background:var(--navy-pale); }
+    .cta-alias-badge { display:inline-block; background:#e8ecf8; color:var(--navy); font-family:var(--brand); font-size:0.6rem; font-weight:700; padding:0.1rem 0.4rem; border-radius:2px; letter-spacing:0.05em; }
+    .cta-del-btn { background:none; border:none; cursor:pointer; color:#ccd0db; font-size:0.9rem; padding:0.1rem 0.3rem; border-radius:2px; transition:color 0.12s; }
+    .cta-del-btn:hover { color:var(--red); }
+    /* ── Backup card ── */
+    .backup-card { border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; }
+    .backup-card-icon { font-size:2rem; flex-shrink:0; }
+    .backup-card-info { flex:1; }
+    .backup-card-title { font-family:var(--brand); font-size:0.75rem; font-weight:700; color:var(--navy); }
+    .backup-card-desc { font-size:0.65rem; color:var(--text-xs); margin-top:0.15rem; }
+
+    /* ── Module record counts ── */
+    .mod-rec-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem; }
+    .mod-rec-item { border:1px solid var(--border); border-radius:var(--radius); padding:0.5rem 0.75rem; }
+    .mod-rec-val { font-family:var(--brand); font-size:0.9rem; font-weight:700; color:var(--navy); }
+    .mod-rec-lbl { font-size:0.6rem; color:var(--text-xs); }
+
+    /* ── Tier badge ── */
+    .tier-badge { display:inline-block; font-family:var(--brand); font-size:0.53rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.1rem 0.38rem; border-radius:2px; vertical-align:middle; }
+    .tier-basico   { background:#e6f7ee; color:#1a7a40; }
+    .tier-estandar { background:#e8f0fb; color:#1a4db5; }
+    .tier-pro      { background:#fff3e6; color:#8a4500; }
+
+    /* ── Module sub-features ── */
+    .module-subfeats { margin-top:0.45rem; display:flex; flex-direction:column; gap:0.22rem; padding-top:0.35rem; border-top:1px dashed var(--border); }
+    .module-subfeat  { display:flex; align-items:center; gap:0.45rem; }
+    .module-subfeat-lbl { font-size:0.62rem; color:var(--text-dim); }
+    /* Mini toggle (22×12) for subfeatures */
+    .mini-toggle { position:relative; display:inline-block; width:26px; height:14px; flex-shrink:0; }
+    .mini-toggle input { opacity:0; width:0; height:0; position:absolute; }
+    .mini-sl { position:absolute; cursor:pointer; inset:0; background:#ccd0db; border-radius:14px; transition:background 0.2s; }
+    .mini-sl:before { position:absolute; content:""; height:9px; width:9px; left:2.5px; top:2.5px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 2px rgba(0,0,0,0.2); }
+    .mini-toggle input:checked + .mini-sl { background:var(--navy); }
+    .mini-toggle input:checked + .mini-sl:before { transform:translateX(12px); }
+
+    /* ── Collaborators table ── */
+    .colab-table { width:100%; border-collapse:collapse; font-size:0.73rem; }
+    .colab-table th { background:var(--navy); color:#fff; font-family:var(--brand); font-size:0.55rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.3rem 0.7rem; text-align:left; border-right:1px solid rgba(255,255,255,0.08); }
+    .colab-table th:last-child { border-right:none; }
+    .colab-table td { padding:0.38rem 0.7rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .colab-table tbody tr:hover td { background:var(--navy-pale); }
+    .tipo-chip { display:inline-block; font-family:var(--brand); font-size:0.57rem; font-weight:700; padding:0.1rem 0.38rem; border-radius:2px; margin:0.05rem; }
+    .tipo-asim { background:#e8f0fb; color:#1a4db5; }
+    .tipo-hon  { background:#fff3e6; color:#8a4500; }
+    .tipo-suel { background:#e6f7ee; color:#1a7a40; }
+
+    /* ── Equiv badge in template modal ── */
+    .tmpl-equiv-preview { background:#f0f3ff; border-radius:var(--radius); padding:0.5rem 0.85rem; font-size:0.73rem; color:var(--navy); margin-top:0.5rem; display:none; }
+    .tmpl-equiv-preview.visible { display:block; }
+
+    /* ── Presets panel ── */
+    .presets-panel { margin-top:0.6rem; border:1px dashed #c5ceea; border-radius:var(--radius); padding:0.7rem 0.85rem 0.55rem; background:#fafbff; }
+    .presets-panel-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.55rem; }
+    .presets-panel-title { font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-xs); }
+    .presets-cloud { display:flex; flex-wrap:wrap; gap:0.25rem; }
+    .preset-chip { display:inline-flex; align-items:center; gap:0.25rem; background:#eef0fb; color:var(--navy); border:1px solid #c5ceea; font-family:var(--brand); font-size:0.62rem; font-weight:600; padding:0.18rem 0.5rem; border-radius:2px; cursor:pointer; transition:all 0.12s; }
+    .preset-chip:hover:not(.ya-en-lista) { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .preset-chip.ya-en-lista { background:#e6f7ee; color:#1a7a40; border-color:#a8dfc0; cursor:default; }
+    .preset-chip.ya-en-lista::after { content:'✓'; font-size:0.55rem; margin-left:0.2rem; }
+
+    /* ── Import preview chips ── */
+    .import-chip { display:inline-block; background:#f0f3ff; color:var(--navy); font-size:0.63rem; padding:0.15rem 0.45rem; border-radius:2px; margin:0.1rem; font-family:var(--brand); font-weight:600; }
+    .import-mode-card { border:1px solid var(--border); border-radius:var(--radius); padding:0.65rem 0.9rem; cursor:pointer; margin-bottom:0.4rem; transition:border-color 0.15s, background 0.15s; }
+    .import-mode-card:hover { border-color:var(--navy); background:var(--navy-pale); }
+    .import-mode-card input[type=radio] { margin-right:0.5rem; accent-color:var(--navy); }
+    .import-mode-card-title { font-family:var(--brand); font-size:0.7rem; font-weight:700; color:var(--navy); }
+    .import-mode-card-desc { font-size:0.63rem; color:var(--text-xs); margin-top:0.1rem; margin-left:1.25rem; }
+
+    @media(max-width:900px) {
+      .cfg-wrap { grid-template-columns:1fr; }
+      .cfg-sidebar { display:flex; overflow-x:auto; padding:0.3rem; border-right:none; border-bottom:1px solid var(--border); }
+      .cfg-tab { white-space:nowrap; padding:0.4rem 0.8rem; border-left:none; border-bottom:3px solid transparent; }
+      .cfg-tab.active { border-left:none; border-bottom-color:var(--navy); }
+      .modules-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media(max-width:600px) {
+      .cfg-grid { grid-template-columns:1fr; }
+      .modules-grid { grid-template-columns:1fr; }
+      .data-stat-grid { grid-template-columns:1fr 1fr; }
+      .danger-grid { grid-template-columns:1fr; }
+      .mod-rec-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item active" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Sistema</div>
+          <h1 class="page-heading">Configuración</h1>
+          <div class="page-meta">Personalización, catálogos, módulos y respaldos del sistema</div>
+        </div>
+      </div>
+
+      <div class="cfg-wrap">
+
+        <!-- ════ SIDEBAR ════ -->
+        <nav class="cfg-sidebar">
+          <div class="cfg-sidebar-section">Identidad</div>
+          <button class="cfg-tab active" onclick="showTab('empresa')">
+            <span class="cfg-tab-icon">🏢</span> Empresa
+          </button>
+          <button class="cfg-tab" onclick="showTab('apariencia')">
+            <span class="cfg-tab-icon">🎨</span> Apariencia
+          </button>
+
+          <div class="cfg-sidebar-section">Sistema</div>
+          <button class="cfg-tab" onclick="showTab('modulos')">
+            <span class="cfg-tab-icon">📋</span> Módulos
+          </button>
+          <button class="cfg-tab" onclick="showTab('colaboradores')">
+            <span class="cfg-tab-icon">👥</span> Colaboradores
+          </button>
+          <button class="cfg-tab" onclick="showTab('catalogos')">
+            <span class="cfg-tab-icon">📚</span> Catálogos
+          </button>
+          <button class="cfg-tab" onclick="showTab('plantillas')">
+            <span class="cfg-tab-icon">⚡</span> Plantillas de evento
+          </button>
+          <button class="cfg-tab" onclick="showTab('cuentas')">
+            <span class="cfg-tab-icon">💳</span> Cuentas
+          </button>
+
+          <div class="cfg-sidebar-section">Datos</div>
+          <button class="cfg-tab" onclick="showTab('datos')">
+            <span class="cfg-tab-icon">💾</span> Respaldos y datos
+          </button>
+        </nav>
+
+        <!-- ════ PANELS ════ -->
+        <div class="cfg-panels">
+
+          <!-- ── Panel: Empresa ── -->
+          <div class="cfg-panel active" id="panel-empresa">
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Datos de la empresa</div>
+              <div class="cfg-grid">
+                <div class="form-group">
+                  <label class="form-label">Razón Social *</label>
+                  <input class="form-input" id="cfg-nombre" type="text" placeholder="Ej: Santaglia S.A. de C.V." />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nombre Comercial</label>
+                  <input class="form-input" id="cfg-nombre-comercial" type="text" placeholder="Ej: Santaglia" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">RFC</label>
+                  <input class="form-input" id="cfg-rfc" type="text" placeholder="Ej: SAT900101AAA" style="text-transform:uppercase;" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Régimen fiscal</label>
+                  <select class="form-input" id="cfg-regimen">
+                    <option value="">— Seleccionar —</option>
+                    <option>Régimen Simplificado de Confianza (RESICO)</option>
+                    <option>General de Ley Personas Morales</option>
+                    <option>Personas Físicas con Actividades Empresariales</option>
+                    <option>Régimen de Incorporación Fiscal</option>
+                    <option>Sin obligaciones fiscales</option>
+                    <option>Otro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Giro / industria</label>
+                  <input class="form-input" id="cfg-giro" type="text" placeholder="Ej: Servicios de consultoría" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Correo de contacto</label>
+                  <input class="form-input" id="cfg-email" type="email" placeholder="contacto@empresa.com" />
+                </div>
+                <div class="form-group span2">
+                  <label class="form-label">Dirección</label>
+                  <input class="form-input" id="cfg-direccion" type="text" placeholder="Calle, número, colonia…" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ciudad</label>
+                  <input class="form-input" id="cfg-ciudad" type="text" placeholder="Ciudad de México" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Estado</label>
+                  <input class="form-input" id="cfg-estado" type="text" placeholder="CDMX" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Teléfono</label>
+                  <input class="form-input" id="cfg-tel" type="tel" placeholder="+52 55 0000 0000" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Moneda principal</label>
+                  <select class="form-input" id="cfg-moneda">
+                    <option value="MXN">MXN — Peso mexicano</option>
+                    <option value="USD">USD — Dólar estadounidense</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Inicio del ejercicio fiscal</label>
+                  <select class="form-input" id="cfg-ejercicio">
+                    <option value="1">Enero (estándar)</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="7">Julio</option>
+                    <option value="10">Octubre</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="saveEmpresa()">Guardar datos de empresa</button>
+            </div>
+          </div>
+
+          <!-- ── Panel: Apariencia ── -->
+          <div class="cfg-panel" id="panel-apariencia">
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Logotipo</div>
+              <div class="logo-drop" id="logo-drop-zone">
+                <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/svg+xml,image/webp" />
+                <img id="logo-preview-img" class="logo-preview-img" src="" alt="" style="display:none;" />
+                <div id="logo-drop-label">
+                  <div style="font-size:1.6rem; margin-bottom:0.4rem;">🖼</div>
+                  <div style="font-family:var(--brand); font-size:0.72rem; font-weight:600; color:var(--navy);">Arrastra tu logo aquí o haz clic</div>
+                  <div style="font-size:0.64rem; color:var(--text-xs); margin-top:0.2rem;">PNG, JPG, SVG, WebP — recomendado fondo transparente</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:0.5rem; margin-top:0.6rem;">
+                <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="document.getElementById('logo-file-input').click()">Cambiar logo</button>
+                <button class="btn btn-ghost" style="font-size:0.72rem; color:var(--red);" id="btn-quitar-logo" onclick="quitarLogo()" style="display:none;">Quitar logo</button>
+              </div>
+            </div>
+
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Color principal</div>
+              <div class="cfg-grid" style="grid-template-columns:auto 1fr auto;">
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label">Selector</label>
+                  <input type="color" id="cfg-color-picker" value="#1a2d80"
+                    style="width:52px; height:36px; padding:2px; border:1px solid var(--border); border-radius:4px; cursor:pointer;"
+                    oninput="onColorChange(this.value)" />
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label">Valor hexadecimal</label>
+                  <input class="form-input" id="cfg-color-hex" type="text" value="#1a2d80" maxlength="7" placeholder="#1a2d80"
+                    oninput="onColorHexInput(this.value)" style="font-family:monospace; text-transform:uppercase;" />
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label">Presets</label>
+                  <div style="display:flex; gap:0.3rem;">
+                    <button onclick="applyColorPreset('#1a2d80')" style="width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:#1a2d80;cursor:pointer;" title="Azul marino (default)"></button>
+                    <button onclick="applyColorPreset('#1a472a')" style="width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:#1a472a;cursor:pointer;" title="Verde bosque"></button>
+                    <button onclick="applyColorPreset('#7b2d8b')" style="width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:#7b2d8b;cursor:pointer;" title="Morado"></button>
+                    <button onclick="applyColorPreset('#8b1a1a')" style="width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:#8b1a1a;cursor:pointer;" title="Rojo oscuro"></button>
+                    <button onclick="applyColorPreset('#2c3e50')" style="width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:#2c3e50;cursor:pointer;" title="Gris pizarra"></button>
+                  </div>
+                </div>
+              </div>
+              <!-- Live preview -->
+              <div style="margin-top:0.85rem;">
+                <div style="font-size:0.63rem; color:var(--text-xs); margin-bottom:0.3rem; font-family:var(--brand); font-weight:600; letter-spacing:0.06em; text-transform:uppercase;">Vista previa de la barra de navegación</div>
+                <div class="color-nav-preview" id="color-nav-preview" style="background:#1a2d80;">
+                  <img src="assets/logo-color.png" id="color-preview-logo" style="height:18px; opacity:0.85; filter:brightness(10);" />
+                  <span class="cpv-text">Dashboard</span>
+                  <span class="cpv-text cpv-active">Finanzas ▾</span>
+                  <span class="cpv-text">General ▾</span>
+                  <span class="cpv-text">Ayuda</span>
+                  <div style="flex:1;"></div>
+                  <span class="cpv-text" style="font-size:0.6rem; opacity:0.6;">Salir</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Nombre visible en el sistema</div>
+              <div style="max-width:360px;">
+                <div class="form-group">
+                  <label class="form-label">Nombre que aparece en encabezados y pie de página</label>
+                  <input class="form-input" id="cfg-nombre-sistema" type="text" placeholder="Se usa el nombre de la empresa si no se especifica" />
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="saveApariencia()">Guardar apariencia</button>
+            </div>
+          </div>
+
+          <!-- ── Panel: Módulos ── -->
+          <div class="cfg-panel" id="panel-modulos">
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">
+                Módulos activos
+                <span style="font-size:0.62rem; font-weight:400; color:var(--text-xs); text-transform:none; letter-spacing:0;">Los módulos desactivados se ocultan del menú de navegación</span>
+              </div>
+              <div class="modules-grid" id="modules-grid"></div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.5rem;">
+              <button class="btn btn-ghost" onclick="activarTodosModulos()" style="font-size:0.72rem;">Activar todos</button>
+              <button class="btn btn-primary" onclick="saveModulos()">Guardar módulos</button>
+            </div>
+          </div>
+
+          <!-- ── Panel: Catálogos ── -->
+          <div class="cfg-panel" id="panel-catalogos">
+
+            <div style="font-size:0.72rem; color:var(--text-dim); background:#f8f9fc; border:1px solid var(--border); border-radius:var(--radius); padding:0.65rem 1rem; margin-bottom:1.25rem; line-height:1.6;">
+              💡 <strong>Auto-captura activa:</strong> Cada vez que guardes un movimiento, egreso, recurrente o nómina con un concepto o cuenta contable nuevos, se agregarán automáticamente a este catálogo.
+            </div>
+
+            <!-- Conceptos frecuentes -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">
+                Conceptos frecuentes
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                  <button class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem;"
+                    onclick="togglePresets('conceptos')">★ Genéricos</button>
+                  <label class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem; cursor:pointer; position:relative;">
+                    ⬇ Excel
+                    <input type="file" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;"
+                      onchange="iniciarImportExcel(this,'conceptos')" />
+                  </label>
+                </div>
+              </div>
+              <div class="tag-cloud" id="tags-conceptos"></div>
+              <div class="tag-add-row" style="margin-top:0.4rem;">
+                <input class="tag-input" id="tag-concepto-input" type="text" placeholder="Nuevo concepto…"
+                  onkeydown="if(event.key==='Enter'){addTag('conceptos',this.value);this.value='';}" />
+                <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="addTagFromInput('conceptos','tag-concepto-input')">+ Agregar</button>
+              </div>
+              <!-- Panel de genéricos predeterminados -->
+              <div class="presets-panel" id="presets-panel-conceptos" style="display:none;">
+                <div class="presets-panel-hdr">
+                  <span class="presets-panel-title">Genéricos predeterminados — clic para agregar</span>
+                  <div style="display:flex; gap:0.35rem;">
+                    <button class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;"
+                      onclick="cargarTodosPresets('conceptos')">Agregar todos</button>
+                    <button class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;"
+                      onclick="togglePresets('conceptos')">Cerrar</button>
+                  </div>
+                </div>
+                <div class="presets-cloud" id="presets-cloud-conceptos"></div>
+              </div>
+              <div style="font-size:0.61rem; color:var(--text-xs); margin-top:0.4rem;">Los valores usados en movimientos existentes también aparecen en el autocompletado aunque no estén aquí.</div>
+            </div>
+
+            <!-- Cuentas contables -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">
+                Cuentas contables
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                  <button class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem;"
+                    onclick="togglePresets('cuentasContables')">★ Genéricos</button>
+                  <label class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem; cursor:pointer; position:relative;">
+                    ⬇ Excel
+                    <input type="file" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;"
+                      onchange="iniciarImportExcel(this,'cuentasContables')" />
+                  </label>
+                </div>
+              </div>
+              <div class="tag-cloud" id="tags-cuentasContables"></div>
+              <div class="tag-add-row" style="margin-top:0.4rem;">
+                <input class="tag-input" id="tag-cc-input" type="text" placeholder="Nueva cuenta contable…"
+                  onkeydown="if(event.key==='Enter'){addTag('cuentasContables',this.value);this.value='';}" />
+                <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="addTagFromInput('cuentasContables','tag-cc-input')">+ Agregar</button>
+              </div>
+              <div class="presets-panel" id="presets-panel-cuentasContables" style="display:none;">
+                <div class="presets-panel-hdr">
+                  <span class="presets-panel-title">Genéricos predeterminados — clic para agregar</span>
+                  <div style="display:flex; gap:0.35rem;">
+                    <button class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;"
+                      onclick="cargarTodosPresets('cuentasContables')">Agregar todos</button>
+                    <button class="btn btn-ghost" style="font-size:0.63rem; padding:0.18rem 0.55rem;"
+                      onclick="togglePresets('cuentasContables')">Cerrar</button>
+                  </div>
+                </div>
+                <div class="presets-cloud" id="presets-cloud-cuentasContables"></div>
+              </div>
+            </div>
+
+            <!-- Categorías de documentos (sin genéricos ni Excel, ya que es un catálogo corto) -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">
+                Categorías de documentos
+                <span style="font-size:0.62rem; font-weight:400; color:var(--text-xs); text-transform:none; letter-spacing:0;">Opciones del filtro en el módulo de Documentos</span>
+              </div>
+              <div class="tag-cloud" id="tags-categoriasDocumentos"></div>
+              <div class="tag-add-row" style="margin-top:0.4rem;">
+                <input class="tag-input" id="tag-cat-input" type="text" placeholder="Nueva categoría…"
+                  onkeydown="if(event.key==='Enter'){addTag('categoriasDocumentos',this.value);this.value='';}" />
+                <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="addTagFromInput('categoriasDocumentos','tag-cat-input')">+ Agregar</button>
+              </div>
+            </div>
+
+            <!-- Save bar -->
+            <div style="display:flex; align-items:center; gap:1rem; padding-top:1rem; border-top:1px solid var(--border); margin-top:0.5rem;">
+              <button class="btn btn-primary" style="font-size:0.73rem;" onclick="guardarCatalogos()">
+                💾 Guardar catálogos
+              </button>
+              <span id="cat-save-status" style="font-family:var(--brand); font-size:0.65rem; color:var(--green); font-weight:600; opacity:0; transition:opacity 0.4s;">✓ Guardado</span>
+            </div>
+          </div>
+
+          <!-- ── Panel: Plantillas de evento ── -->
+          <div class="cfg-panel" id="panel-plantillas">
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">
+                Plantillas de evento
+                <button class="btn btn-primary" style="font-size:0.7rem; padding:0.25rem 0.75rem;" onclick="abrirModalTmpl()">+ Nueva plantilla</button>
+              </div>
+              <div style="font-size:0.72rem; color:var(--text-dim); margin-bottom:1rem; line-height:1.6; background:#f8f9fc; border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem 1rem;">
+                Las plantillas de evento son gastos que ocurren de forma irregular pero con una fórmula conocida —
+                como una comisión bancaria por cobro de facturas USD o una propina sobre el monto de una comida.
+                Desde <strong>Egresos</strong> podrás aplicar una plantilla con un clic para pre-llenar el formulario con el monto calculado.
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="tmpl-table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Cuenta</th>
+                      <th>Moneda</th>
+                      <th>Base</th>
+                      <th style="text-align:center;">IVA</th>
+                      <th style="text-align:center;">×N</th>
+                      <th>Concepto</th>
+                      <th style="width:60px; text-align:center;">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tmpl-tbody"></tbody>
+                </table>
+              </div>
+              <div id="tmpl-empty" style="display:none; text-align:center; padding:2.5rem; color:var(--text-xs); font-size:0.8rem;">
+                Aún no hay plantillas — crea la primera con el botón de arriba
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Panel: Colaboradores ── -->
+          <div class="cfg-panel" id="panel-colaboradores">
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">
+                Catálogo de colaboradores
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                  <button class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem;" onclick="descargarPlantillaColab()">⬇ Plantilla CSV</button>
+                  <label class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem; cursor:pointer; position:relative;">
+                    ⬆ Importar CSV
+                    <input type="file" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="importarColabCSV(this.files[0]);this.value='';" />
+                  </label>
+                  <button class="btn btn-primary" style="font-size:0.67rem; padding:0.2rem 0.6rem;" onclick="abrirAltaColab()">+ Nuevo colaborador</button>
+                </div>
+              </div>
+              <div style="font-size:0.71rem; color:var(--text-dim); background:#f8f9fc; border:1px solid var(--border); border-radius:var(--radius); padding:0.6rem 0.9rem; margin-bottom:1rem; line-height:1.6;">
+                👥 Los colaboradores aquí registrados son la fuente de verdad para la detección automática de CFDI de nómina. El campo <strong>tipo</strong> define en qué sección de Nómina aparecen.
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="colab-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Alias</th>
+                      <th>Nombre Corto</th>
+                      <th>Nombre Completo</th>
+                      <th>RFC</th>
+                      <th>Tipo</th>
+                      <th>Teléfono</th>
+                      <th style="text-align:center;">Activo</th>
+                      <th style="width:80px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="colab-cfg-tbody"></tbody>
+                </table>
+              </div>
+              <div id="colab-cfg-empty" style="display:none; text-align:center; padding:2.5rem; color:var(--text-xs); font-size:0.8rem;">
+                Sin colaboradores — agrega el primero con el botón de arriba
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Panel: Cuentas ── -->
+          <div class="cfg-panel" id="panel-cuentas">
+
+            <!-- ── Alta de cuenta ── -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr" style="justify-content:space-between;">
+                Cuentas bancarias
+                <button class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.7rem;" onclick="toggleAddCuentaForm()">+ Nueva cuenta</button>
+              </div>
+
+              <!-- Formulario de alta (oculto por defecto) -->
+              <div id="cta-add-form" class="cta-add-form" style="display:none;">
+                <div style="font-family:var(--brand); font-size:0.65rem; font-weight:700; color:var(--navy); margin-bottom:0.75rem; letter-spacing:0.05em;">AGREGAR CUENTA BANCARIA</div>
+                <div class="cta-add-form form-row">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Nombre completo *</label>
+                    <input class="form-input" id="nca-nombre" placeholder="BBVA Empresarial" />
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Alias / nombre corto *</label>
+                    <input class="form-input" id="nca-alias" placeholder="BBVA" maxlength="20" />
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Banco</label>
+                    <input class="form-input" id="nca-banco" placeholder="BBVA Bancomer" />
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Moneda</label>
+                    <select class="form-input" id="nca-moneda">
+                      <option value="MXN">MXN</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="CAD">CAD</option>
+                      <option value="GBP">GBP</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-input" id="nca-tipo" onchange="onNcaTipoChange()">
+                      <option value="corriente">Corriente</option>
+                      <option value="tarjeta_credito">T. Crédito</option>
+                      <option value="inversion">Inversión</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="cta-add-form form-row-2" style="margin-top:0.6rem;">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Saldo inicial</label>
+                    <input class="form-input" id="nca-saldo" type="number" min="0" step="0.01" placeholder="0.00" style="text-align:right;" />
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Fecha del saldo</label>
+                    <input class="form-input" id="nca-fecha" type="date" />
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Saldo mínimo</label>
+                    <input class="form-input" id="nca-salmin" type="number" min="0" step="100" placeholder="0" style="text-align:right;" />
+                  </div>
+                  <div style="display:flex; gap:0.4rem; align-items:flex-end; padding-bottom:1px;">
+                    <button class="btn btn-primary" style="font-size:0.72rem; white-space:nowrap;" onclick="agregarCuenta()">Agregar cuenta</button>
+                    <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="toggleAddCuentaForm()">Cancelar</button>
+                  </div>
+                </div>
+                <!-- Campos extra para tarjeta crédito -->
+                <div id="nca-cc-extra" style="display:none; margin-top:0.6rem; padding-top:0.6rem; border-top:1px solid #b0bcec;">
+                  <div style="font-size:0.65rem; color:var(--navy); font-family:var(--brand); font-weight:600; margin-bottom:0.5rem;">Ciclo de tarjeta de crédito</div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr 2fr; gap:0.6rem; max-width:480px;">
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label">Día de corte</label>
+                      <input class="form-input" id="nca-corte" type="number" min="1" max="31" placeholder="25" style="text-align:center;" />
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label">Día de pago</label>
+                      <input class="form-input" id="nca-pago" type="number" min="1" max="31" placeholder="17" style="text-align:center;" />
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label">Cuenta desde donde se paga</label>
+                      <select class="form-input" id="nca-pagadesde"></select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tabla de cuentas existentes -->
+              <div style="overflow-x:auto;">
+                <table class="ctas-master-table">
+                  <thead>
+                    <tr>
+                      <th>Alias</th>
+                      <th>Nombre completo</th>
+                      <th>Banco</th>
+                      <th>Moneda</th>
+                      <th>Tipo</th>
+                      <th style="text-align:right;">Saldo inicial</th>
+                      <th>Fecha saldo</th>
+                      <th>Saldo mínimo</th>
+                      <th>Corte</th>
+                      <th>Pago</th>
+                      <th>Pagar desde</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="cuentas-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ── Reservas y límites ── -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Reserva de fondos y límites de divisas</div>
+              <div class="cfg-grid" style="max-width:680px; margin-bottom:1.25rem;">
+                <div class="form-group">
+                  <label class="form-label">Reserva nómina semanal (MXN)</label>
+                  <input class="form-input" id="cfg-reserva-nomina" type="number" min="0" step="100" placeholder="0" />
+                  <div style="font-size:0.62rem; color:var(--text-xs); margin-top:0.25rem;">
+                    Monto mínimo que debe quedar disponible antes de generar un pago automático de tarjeta.
+                  </div>
+                </div>
+              </div>
+              <div id="cfg-limites-divisas-wrap" style="margin-bottom:1.25rem;"></div>
+              <button class="btn btn-primary" style="font-size:0.72rem;" onclick="saveCuentasCfg()">Guardar configuración</button>
+            </div>
+
+          </div>
+
+          <!-- ── Panel: Datos ── -->
+          <div class="cfg-panel" id="panel-datos">
+            <!-- Stats -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Estado del almacenamiento</div>
+              <div class="data-stat-grid" id="datos-stat-grid"></div>
+              <div style="margin-bottom:0.25rem;">
+                <span style="font-size:0.65rem; color:var(--text-dim); font-family:var(--brand); font-weight:600;">Uso de localStorage</span>
+                <span style="float:right; font-size:0.65rem; color:var(--text-xs);" id="storage-used-label"></span>
+              </div>
+              <div class="storage-bar">
+                <div class="storage-bar-fill" id="storage-bar-fill"></div>
+              </div>
+              <div style="font-size:0.62rem; color:var(--text-xs);">El límite típico del navegador es 5–10 MB. Los archivos e imágenes importados cuentan como almacenamiento.</div>
+            </div>
+
+            <!-- Registros por módulo -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Registros por módulo</div>
+              <div class="mod-rec-grid" id="mod-rec-grid"></div>
+            </div>
+
+            <!-- Backup -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Respaldo y restauración</div>
+
+              <!-- ☁️ Sincronización Supabase -->
+              <div class="backup-card" style="background:#f0f7ff; border-color:#93c5fd; margin-bottom:0.85rem;">
+                <div class="backup-card-icon">☁️</div>
+                <div class="backup-card-info">
+                  <div class="backup-card-title" style="color:#1d4ed8;">Sincronización con la nube (Supabase)</div>
+                  <div id="supabase-sync-status" class="backup-card-desc">Verificando estado…</div>
+                </div>
+                <button class="btn btn-ghost" id="btn-migrar-supabase" onclick="migrarDatosASupabase()" style="white-space:nowrap; border-color:#93c5fd; color:#1d4ed8;">
+                  ☁️ Sincronizar ahora
+                </button>
+              </div>
+
+              <!-- Estado del último respaldo -->
+              <div id="backup-status-bar" style="display:flex; align-items:center; gap:0.65rem; padding:0.6rem 0.9rem; border-radius:var(--radius); margin-bottom:0.85rem; font-size:0.72rem; font-family:var(--brand); font-weight:600;"></div>
+
+              <!-- Carpeta de respaldo automático -->
+              <div class="backup-card" style="background:#f5f7ff; border-color:#b0bcec; margin-bottom:0.5rem;">
+                <div class="backup-card-icon">📂</div>
+                <div class="backup-card-info">
+                  <div class="backup-card-title">Carpeta de respaldo automático</div>
+                  <div id="backup-folder-desc" class="backup-card-desc">Selecciona una carpeta de OneDrive para que el respaldo se guarde ahí directo, sin pasar por Descargas.</div>
+                </div>
+                <button class="btn btn-ghost" id="btn-elegir-carpeta" onclick="elegirCarpetaBackup()" style="white-space:nowrap;">Elegir carpeta</button>
+              </div>
+
+              <div class="backup-card">
+                <div class="backup-card-icon">📥</div>
+                <div class="backup-card-info">
+                  <div class="backup-card-title">Exportar respaldo completo</div>
+                  <div class="backup-card-desc">Descarga un archivo JSON con todos los datos del sistema.</div>
+                </div>
+                <button class="btn btn-primary" onclick="exportarDatos()">Descargar JSON</button>
+              </div>
+              <div class="backup-card">
+                <div class="backup-card-icon">📤</div>
+                <div class="backup-card-info">
+                  <div class="backup-card-title">Importar respaldo</div>
+                  <div class="backup-card-desc">Restaura datos desde un archivo JSON exportado anteriormente. <strong>Esto reemplaza todos los datos actuales.</strong></div>
+                </div>
+                <label class="btn btn-ghost" style="cursor:pointer; font-size:0.78rem; position:relative;">
+                  Seleccionar archivo
+                  <input type="file" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="importarDatos(this)" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Danger zone -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr" style="color:var(--red);">Zona de peligro</div>
+              <div class="danger-zone">
+                <div class="danger-zone-title">⚠ Limpiar módulos individuales</div>
+                <div class="danger-grid" id="reset-grid"></div>
+                <div style="margin-top:0.85rem; padding-top:0.85rem; border-top:1px solid #fecaca;">
+                  <button class="btn" style="background:var(--red); color:#fff; font-size:0.73rem; width:100%;"
+                    onclick="resetTotal()">
+                    🗑 Eliminar TODOS los datos del sistema
+                  </button>
+                  <div style="font-size:0.62rem; color:var(--red); margin-top:0.35rem; text-align:center;">
+                    Esta acción borra todos los registros y no se puede deshacer. Exporta un respaldo antes.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /cfg-panels -->
+      </div><!-- /cfg-wrap -->
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ══ Modal: Importar catálogo desde Excel ══ -->
+<div class="modal-backdrop hidden" id="modal-import-excel">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <span class="modal-title">Importar desde Excel</span>
+      <button class="modal-close" onclick="cancelarImportExcel()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:1rem;">
+        <span style="font-family:var(--brand); font-size:0.63rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-xs);">Catálogo destino</span>
+        <span id="import-catalog-label" style="font-family:var(--brand); font-size:0.75rem; font-weight:700; color:var(--navy); margin-left:0.5rem;"></span>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <span style="font-family:var(--brand); font-size:0.63rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-xs);">Valores encontrados: </span>
+        <span id="import-count" style="font-weight:700; color:var(--navy);"></span>
+        <div id="import-preview-cloud" style="margin-top:0.5rem; max-height:90px; overflow:hidden; position:relative;">
+          <!-- chips -->
+          <div id="import-preview-chips"></div>
+          <div id="import-preview-fade" style="position:absolute;bottom:0;left:0;right:0;height:24px;background:linear-gradient(transparent,#fff);display:none;"></div>
+        </div>
+        <div id="import-preview-more" style="font-size:0.63rem; color:var(--text-xs); margin-top:0.2rem; display:none;"></div>
+      </div>
+      <div style="margin-bottom:0.5rem; font-family:var(--brand); font-size:0.63rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-xs);">Modo de importación</div>
+      <label class="import-mode-card" id="imc-complementar">
+        <input type="radio" name="import-mode" value="complementar" checked onchange="selImportMode(this)" />
+        <span class="import-mode-card-title">Complementar</span>
+        <div class="import-mode-card-desc">Agrega los valores importados a los existentes, sin eliminar nada. Ignora duplicados.</div>
+      </label>
+      <label class="import-mode-card" id="imc-reemplazar-genericos">
+        <input type="radio" name="import-mode" value="reemplazar-genericos" onchange="selImportMode(this)" />
+        <span class="import-mode-card-title">Reemplazar genéricos</span>
+        <div class="import-mode-card-desc">Elimina solo los valores del catálogo predeterminado y los sustituye con los del archivo. Tus propios valores se conservan.</div>
+      </label>
+      <label class="import-mode-card" id="imc-reemplazar-todo">
+        <input type="radio" name="import-mode" value="reemplazar-todo" onchange="selImportMode(this)" />
+        <span class="import-mode-card-title">Reemplazar todo</span>
+        <div class="import-mode-card-desc">Vacía el catálogo completo y lo reemplaza con los valores del archivo.</div>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cancelarImportExcel()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarImportExcel()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Plantilla de evento ══ -->
+<div class="modal-backdrop hidden" id="modal-tmpl">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-tmpl-title">Nueva plantilla de evento</span>
+      <button class="modal-close" onclick="closeModal('modal-tmpl')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem 1rem;">
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Nombre de la plantilla *</label>
+          <input class="form-input" id="tmpl-nombre" type="text" placeholder="Ej: Comisión orden de pago BBVA" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta bancaria *</label>
+          <select class="form-input" id="tmpl-cuenta">
+            <option value="">— Seleccionar —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Moneda</label>
+          <select class="form-input" id="tmpl-moneda" onchange="tmplUpdatePreview()">
+            <option value="MXN">MXN</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de monto *</label>
+          <select class="form-input" id="tmpl-tipo-base" onchange="tmplTipoBaseChange()">
+            <option value="fijo">Monto fijo por unidad</option>
+            <option value="porcentaje">Porcentaje del gasto padre</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="tmpl-monto-group">
+          <label class="form-label" id="tmpl-monto-label">Importe por unidad *</label>
+          <input class="form-input" id="tmpl-monto" type="number" min="0" step="any" placeholder="0.00" oninput="tmplUpdatePreview()" />
+        </div>
+
+        <div class="form-group" id="tmpl-pct-group" style="display:none;">
+          <label class="form-label">Porcentaje *</label>
+          <input class="form-input" id="tmpl-pct" type="number" min="0" max="100" step="any" placeholder="15" oninput="tmplUpdatePreview()" />
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-family:var(--brand); font-size:0.7rem; font-weight:600; color:var(--text-dim);">
+            <input type="checkbox" id="tmpl-multiplicable" onchange="tmplUpdatePreview()" />
+            Permitir multiplicar por cantidad (ej: # de facturas)
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-family:var(--brand); font-size:0.7rem; font-weight:600; color:var(--text-dim);">
+            <input type="checkbox" id="tmpl-iva" onchange="tmplIVAChange()" />
+            Aplica IVA
+          </label>
+          <div id="tmpl-iva-tasa-group" style="display:none; display:flex; align-items:center; gap:0.35rem;">
+            <span style="font-size:0.7rem; color:var(--text-dim);">Tasa:</span>
+            <input class="form-input" id="tmpl-iva-tasa" type="number" value="16" min="0" max="100" step="any"
+              style="width:60px; padding:0.2rem 0.4rem; font-size:0.75rem;" oninput="tmplUpdatePreview()" />
+            <span style="font-size:0.7rem; color:var(--text-dim);">%</span>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="tmpl-equiv-preview" id="tmpl-preview" style="grid-column:1/-1;">
+          <span style="font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-xs);">Ejemplo →</span>
+          <span id="tmpl-preview-val" style="font-weight:700; margin-left:0.5rem;"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Concepto</label>
+          <input class="form-input" id="tmpl-concepto" type="text" placeholder="Comisión bancaria…" list="tmpl-conc-list" />
+          <datalist id="tmpl-conc-list"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cuenta contable</label>
+          <input class="form-input" id="tmpl-cc" type="text" placeholder="Comisiones y gastos…" list="tmpl-cc-list" />
+          <datalist id="tmpl-cc-list"></datalist>
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Descripción / notas</label>
+          <input class="form-input" id="tmpl-notas" type="text" placeholder="Opcional — cuándo o cómo se aplica esta plantilla" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tmpl')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarTmpl()">Guardar plantilla</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Alta / Edición de Colaborador ══ -->
+<div class="modal-backdrop hidden" id="modal-colab-cfg">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <span class="modal-title" id="cfg-colab-modal-titulo">Nuevo colaborador</span>
+      <button class="modal-close" onclick="closeModal('modal-colab-cfg')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cfg-colab-id" />
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem 1.2rem;">
+        <div class="form-group">
+          <label class="form-label">RFC</label>
+          <input class="form-input" id="cfg-colab-rfc" type="text" placeholder="SARC690526MW7" oninput="this.value=this.value.toUpperCase()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alias (clave única) *</label>
+          <input class="form-input" id="cfg-colab-alias" type="text" placeholder="cestr" oninput="this.value=this.value.toLowerCase().replace(/\s+/g,'')" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Nombre Completo *</label>
+          <input class="form-input" id="cfg-colab-nombre" type="text" placeholder="CARLOS EDUARDO SANCHEZ DE TAGLE RUIZ" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre Corto / Display</label>
+          <input class="form-input" id="cfg-colab-nombreCorto" type="text" placeholder="Carlos T. Ruiz" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input class="form-input" id="cfg-colab-telefono" type="tel" placeholder="55 1234 5678" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Dirección</label>
+          <input class="form-input" id="cfg-colab-direccion" type="text" placeholder="Calle 123, Col. Centro, CDMX 06000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de colaborador</label>
+          <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.25rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.72rem;color:var(--text-dim);">
+              <input type="checkbox" id="cfg-colab-tipo-sueldos" />
+              <span class="tipo-chip tipo-suel">Sueldos</span> Empleado IMSS
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.72rem;color:var(--text-dim);">
+              <input type="checkbox" id="cfg-colab-tipo-asimilables" />
+              <span class="tipo-chip tipo-asim">Asimilables</span> Asimilado a salarios
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.72rem;color:var(--text-dim);">
+              <input type="checkbox" id="cfg-colab-tipo-honorarios" />
+              <span class="tipo-chip tipo-hon">Honorarios</span> Prestador de servicios
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-input" id="cfg-colab-activo">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-colab-cfg')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarColabCfg()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════════════
+   CONFIG STORE
+══════════════════════════════════════════════════════════════ */
+const CFG_KEY = 'stgl_config';
+
+const DEFAULT_CFG = {
+  empresa: {
+    nombre:'', rfc:'', regimen:'', giro:'', direccion:'',
+    ciudad:'', estado:'', pais:'México', monedaPrincipal:'MXN',
+    email:'', telefono:'', ejercicioInicio:1,
+  },
+  apariencia: {
+    logo:'', colorPrimario:'#1a2d80', nombreSistema:'',
+  },
+  modulos: {
+    facturacion:true, proyectos:true, nomina:true, retenciones:true,
+    financiero:true, egresos:true, recurrentes:true,
+    proyectados:true, documentos:true, galeria:true,
+    nomina_sueldos:true, nomina_asimilables:true, nomina_honorarios:true,
+  },
+  catalogos: {
+    conceptos: [],
+    cuentasContables: [],
+    categoriasDocumentos: ['Contratos','Informes','Propuestas','Manuales','Legal','Otro'],
+  },
+  plantillasEvento: [],
+};
+
+function loadCfg() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+    return deepMerge(DEFAULT_CFG, stored);
+  } catch(e) { return JSON.parse(JSON.stringify(DEFAULT_CFG)); }
+}
+
+function saveCfg(cfg) {
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+function deepMerge(def, over) {
+  const out = JSON.parse(JSON.stringify(def));
+  if (!over || typeof over !== 'object') return out;
+  Object.keys(over).forEach(k => {
+    if (over[k] !== null && typeof over[k] === 'object' && !Array.isArray(over[k]) && out[k] && typeof out[k] === 'object') {
+      out[k] = deepMerge(out[k], over[k]);
+    } else {
+      out[k] = over[k];
+    }
+  });
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════════════════════════ */
+function showTab(key) {
+  document.querySelectorAll('.cfg-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.cfg-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.cfg-tab[onclick="showTab('${key}')"]`)?.classList.add('active');
+  document.getElementById(`panel-${key}`)?.classList.add('active');
+  if (key === 'datos')          renderDatos();
+  if (key === 'cuentas')        renderCuentasPanel();
+  if (key === 'colaboradores')  renderColabCfg();
+  history.replaceState(null, '', `#${key}`);
+}
+
+// Navegar directamente a una pestaña vía hash (ej: configuracion.html#datos)
+(function() {
+  const hash = location.hash.replace('#','');
+  const valid = ['empresa','apariencia','modulos','colaboradores','catalogos','plantillas','cuentas','datos'];
+  if (hash && valid.includes(hash)) showTab(hash);
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: EMPRESA
+══════════════════════════════════════════════════════════════ */
+function loadEmpresa() {
+  const cfg = loadCfg();
+  const e = cfg.empresa;
+  document.getElementById('cfg-nombre').value            = e.nombre||'';
+  document.getElementById('cfg-nombre-comercial').value  = e.nombreComercial||'';
+  document.getElementById('cfg-rfc').value               = e.rfc||'';
+  document.getElementById('cfg-regimen').value   = e.regimen||'';
+  document.getElementById('cfg-giro').value      = e.giro||'';
+  document.getElementById('cfg-email').value     = e.email||'';
+  document.getElementById('cfg-direccion').value = e.direccion||'';
+  document.getElementById('cfg-ciudad').value    = e.ciudad||'';
+  document.getElementById('cfg-estado').value    = e.estado||'';
+  document.getElementById('cfg-tel').value       = e.telefono||'';
+  document.getElementById('cfg-moneda').value    = e.monedaPrincipal||'MXN';
+  document.getElementById('cfg-ejercicio').value = String(e.ejercicioInicio||1);
+}
+
+function saveEmpresa() {
+  const cfg = loadCfg();
+  cfg.empresa = {
+    nombre:           document.getElementById('cfg-nombre').value.trim(),
+    nombreComercial:  document.getElementById('cfg-nombre-comercial').value.trim(),
+    rfc:              document.getElementById('cfg-rfc').value.trim().toUpperCase(),
+    regimen:          document.getElementById('cfg-regimen').value,
+    giro:             document.getElementById('cfg-giro').value.trim(),
+    email:            document.getElementById('cfg-email').value.trim(),
+    direccion:        document.getElementById('cfg-direccion').value.trim(),
+    ciudad:           document.getElementById('cfg-ciudad').value.trim(),
+    estado:           document.getElementById('cfg-estado').value.trim(),
+    pais:             'México',
+    monedaPrincipal:  document.getElementById('cfg-moneda').value,
+    telefono:         document.getElementById('cfg-tel').value.trim(),
+    ejercicioInicio:  parseInt(document.getElementById('cfg-ejercicio').value)||1,
+  };
+  saveCfg(cfg);
+  toast('Datos de empresa guardados', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: APARIENCIA
+══════════════════════════════════════════════════════════════ */
+function loadApariencia() {
+  const cfg = loadCfg();
+  const a   = cfg.apariencia;
+
+  // Color
+  const color = a.colorPrimario || '#1a2d80';
+  document.getElementById('cfg-color-picker').value = color;
+  document.getElementById('cfg-color-hex').value    = color.toUpperCase();
+  document.getElementById('color-nav-preview').style.background = color;
+
+  // Logo
+  if (a.logo) {
+    document.getElementById('logo-preview-img').src           = a.logo;
+    document.getElementById('logo-preview-img').style.display = 'block';
+    document.getElementById('logo-drop-label').style.display  = 'none';
+    document.getElementById('btn-quitar-logo').style.display  = '';
+    document.getElementById('color-preview-logo').src         = a.logo;
+  }
+
+  // Nombre sistema
+  document.getElementById('cfg-nombre-sistema').value = a.nombreSistema||'';
+}
+
+function onColorChange(hex) {
+  document.getElementById('cfg-color-hex').value             = hex.toUpperCase();
+  document.getElementById('color-nav-preview').style.background = hex;
+}
+
+function onColorHexInput(val) {
+  const hex = val.startsWith('#') ? val : '#' + val;
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    document.getElementById('cfg-color-picker').value         = hex;
+    document.getElementById('color-nav-preview').style.background = hex;
+  }
+}
+
+function applyColorPreset(hex) {
+  document.getElementById('cfg-color-picker').value          = hex;
+  document.getElementById('cfg-color-hex').value             = hex.toUpperCase();
+  document.getElementById('color-nav-preview').style.background = hex;
+}
+
+// Logo file reader
+document.getElementById('logo-file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 500 * 1024) { toast('El logo debe pesar menos de 500 KB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64 = e.target.result;
+    document.getElementById('logo-preview-img').src           = b64;
+    document.getElementById('logo-preview-img').style.display = 'block';
+    document.getElementById('logo-drop-label').style.display  = 'none';
+    document.getElementById('btn-quitar-logo').style.display  = '';
+    document.getElementById('color-preview-logo').src         = b64;
+  };
+  reader.readAsDataURL(file);
+});
+
+function quitarLogo() {
+  document.getElementById('logo-preview-img').src           = '';
+  document.getElementById('logo-preview-img').style.display = 'none';
+  document.getElementById('logo-drop-label').style.display  = '';
+  document.getElementById('btn-quitar-logo').style.display  = 'none';
+  document.getElementById('color-preview-logo').src         = 'assets/logo-color.png';
+  document.getElementById('logo-file-input').value = '';
+}
+
+function saveApariencia() {
+  const cfg   = loadCfg();
+  const logo  = document.getElementById('logo-preview-img').src;
+  const isB64 = logo && logo.startsWith('data:');
+  cfg.apariencia = {
+    logo:           isB64 ? logo : (cfg.apariencia.logo || ''),
+    colorPrimario:  document.getElementById('cfg-color-picker').value,
+    nombreSistema:  document.getElementById('cfg-nombre-sistema').value.trim(),
+  };
+  // If user explicitly removed the logo
+  if (!isB64 && !document.getElementById('logo-preview-img').src) {
+    cfg.apariencia.logo = '';
+  }
+  saveCfg(cfg);
+  applyGlobalConfig();
+  toast('Apariencia guardada y aplicada', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: MÓDULOS
+══════════════════════════════════════════════════════════════ */
+const TIER_META = {
+  basico:   { label:'Básico',    cls:'tier-basico'   },
+  estandar: { label:'Estándar',  cls:'tier-estandar' },
+  pro:      { label:'Pro',       cls:'tier-pro'       },
+};
+
+const MODULES_DEF = [
+  { key:'financiero',  nombre:'Mov. Bancarios',  icon:'🏦', tier:'basico',   desc:'Importación y conciliación bancaria',      href:'financiero.html' },
+  { key:'egresos',     nombre:'Egresos',         icon:'💸', tier:'basico',   desc:'Registro y clasificación de gastos',       href:'egresos.html' },
+  { key:'recurrentes', nombre:'Recurrentes',     icon:'🔄', tier:'basico',   desc:'Gastos e ingresos periódicos fijos',       href:'recurrentes.html' },
+  { key:'proyectados', nombre:'Proyección',      icon:'📈', tier:'basico',   desc:'Simulación del flujo de caja futuro',      href:'proyectados.html' },
+  { key:'facturacion', nombre:'Facturación',     icon:'🧾', tier:'estandar', desc:'Facturas emitidas y seguimiento de cobros', href:'facturacion.html' },
+  { key:'proyectos',   nombre:'Proyectos',       icon:'📁', tier:'estandar', desc:'Gestión de proyectos y rentabilidad',      href:'proyectos.html' },
+  { key:'documentos',  nombre:'Documentos',      icon:'📄', tier:'estandar', desc:'Repositorio de archivos del negocio',      href:'documentos.html' },
+  { key:'galeria',     nombre:'Galería',         icon:'🖼',  tier:'estandar', desc:'Galería de imágenes y fotografías',        href:'galeria.html' },
+  { key:'nomina',      nombre:'Nómina',          icon:'👥', tier:'pro',      desc:'Pagos a empleados y asimilables',          href:'nomina.html',
+    subfeatures:[
+      { key:'nomina_sueldos',     label:'Sueldos (empleados IMSS)' },
+      { key:'nomina_asimilables', label:'Asimilables a salarios'   },
+      { key:'nomina_honorarios',  label:'Honorarios profesionales' },
+    ]
+  },
+  { key:'retenciones', nombre:'Retenciones',     icon:'📋', tier:'pro',      desc:'Retenciones fiscales ISR e IVA',           href:'retenciones.html' },
+];
+
+function renderModulos() {
+  const cfg  = loadCfg();
+  const mods = cfg.modulos;
+  document.getElementById('modules-grid').innerHTML = MODULES_DEF.map(m => {
+    const on = mods[m.key] !== false;
+    const tier = TIER_META[m.tier] || { label:'', cls:'' };
+    const subHtml = (m.subfeatures || []).map(sf => {
+      const sfOn = mods[sf.key] !== false;
+      return `<div class="module-subfeat">
+        <label class="mini-toggle">
+          <input type="checkbox" id="mod-${sf.key}" ${sfOn ? 'checked' : ''} />
+          <span class="mini-sl"></span>
+        </label>
+        <span class="module-subfeat-lbl">${sf.label}</span>
+      </div>`;
+    }).join('');
+    return `<div class="module-card ${on ? 'on' : ''}" id="mcard-${m.key}">
+      <div class="module-card-icon">${m.icon}</div>
+      <div class="module-card-info">
+        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.08rem;">
+          <span class="module-card-name">${m.nombre}</span>
+          <span class="tier-badge ${tier.cls}">${tier.label}</span>
+        </div>
+        <div class="module-card-desc">${m.desc}</div>
+        ${subHtml ? `<div class="module-subfeats">${subHtml}</div>` : ''}
+      </div>
+      <label class="toggle-sw" title="${on ? 'Activo' : 'Inactivo'}" style="align-self:flex-start;margin-top:0.15rem;">
+        <input type="checkbox" id="mod-${m.key}" ${on ? 'checked' : ''}
+          onchange="document.getElementById('mcard-${m.key}').classList.toggle('on',this.checked)" />
+        <span class="toggle-sl"></span>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function saveModulos() {
+  const cfg = loadCfg();
+  MODULES_DEF.forEach(m => {
+    cfg.modulos[m.key] = document.getElementById(`mod-${m.key}`)?.checked !== false;
+    (m.subfeatures || []).forEach(sf => {
+      cfg.modulos[sf.key] = document.getElementById(`mod-${sf.key}`)?.checked !== false;
+    });
+  });
+  saveCfg(cfg);
+  applyGlobalConfig();
+  toast('Configuración de módulos guardada', 'success');
+}
+
+function activarTodosModulos() {
+  MODULES_DEF.forEach(m => {
+    const el = document.getElementById(`mod-${m.key}`);
+    if (el) { el.checked = true; document.getElementById(`mcard-${m.key}`)?.classList.add('on'); }
+    (m.subfeatures || []).forEach(sf => {
+      const sEl = document.getElementById(`mod-${sf.key}`);
+      if (sEl) sEl.checked = true;
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: COLABORADORES
+══════════════════════════════════════════════════════════════ */
+const KEY_COLAB_CFG = 'stgl_colaboradores';
+
+const COLABORADORES_SEMILLA = [
+  { id:'col-lourdes',        rfc:'',              nombre:'LOURDES URIBE',                             nombreCorto:'Lourdes',   alias:'lourdes', tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-MEMA730801AK7',  rfc:'MEMA730801AK7', nombre:'ANA MARIA MENDIOLA MARTINEZ',              nombreCorto:'Ana Ma.',   alias:'anama',   tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-SAMC040713HI8',  rfc:'SAMC040713HI8', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE MENDIOLA', nombreCorto:'CESTM',     alias:'cestm',   tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-SARC690526MW7',  rfc:'SARC690526MW7', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE RUIZ',    nombreCorto:'CESTR',     alias:'cestr',   tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-jfabela',        rfc:'',              nombre:'J. FABELA',                                 nombreCorto:'J. Fabela', alias:'jfabela', tipoColaborador:['honorarios'],              telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+];
+
+const TIPO_LABELS = { sueldos:'Sueldos', asimilables:'Asimilables', honorarios:'Honorarios' };
+const TIPO_CLS    = { sueldos:'tipo-suel', asimilables:'tipo-asim', honorarios:'tipo-hon' };
+
+function loadColabCfg() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(KEY_COLAB_CFG) || 'null');
+    if (stored && Array.isArray(stored) && stored.length) return stored;
+    localStorage.setItem(KEY_COLAB_CFG, JSON.stringify(COLABORADORES_SEMILLA));
+    return JSON.parse(JSON.stringify(COLABORADORES_SEMILLA));
+  } catch { return JSON.parse(JSON.stringify(COLABORADORES_SEMILLA)); }
+}
+function saveColabCfg(arr) { localStorage.setItem(KEY_COLAB_CFG, JSON.stringify(arr)); }
+
+function renderColabCfg() {
+  const colabs = loadColabCfg();
+  const tbody  = document.getElementById('colab-cfg-tbody');
+  const empty  = document.getElementById('colab-cfg-empty');
+  if (!tbody) return;
+  if (!colabs.length) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = colabs.map((c, i) => {
+    const tipos = (c.tipoColaborador || []);
+    const tipoChips = tipos.length
+      ? tipos.map(t => `<span class="tipo-chip ${TIPO_CLS[t]||''}">${TIPO_LABELS[t]||t}</span>`).join('')
+      : `<span style="color:var(--text-xs);font-size:0.65rem;">—</span>`;
+    return `<tr>
+      <td style="font-family:var(--brand);font-weight:700;color:var(--navy);">${i+1}</td>
+      <td><code style="background:#f0f2f8;padding:0.12rem 0.32rem;border-radius:3px;font-size:0.7rem;">${escH(c.alias||'')}</code></td>
+      <td style="font-weight:600;">${escH(c.nombreCorto||'—')}</td>
+      <td style="color:var(--text-dim);font-size:0.7rem;">${escH(c.nombre||'—')}</td>
+      <td><code style="font-size:0.68rem;">${escH(c.rfc||'—')}</code></td>
+      <td>${tipoChips}</td>
+      <td style="color:var(--text-dim);">${escH(c.telefono||'—')}</td>
+      <td style="text-align:center;"><span style="color:${c.activo?'var(--green)':'var(--text-xs)'};">${c.activo?'✓':'—'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="tmpl-act-btn" onclick="editarColabCfg(${JSON.stringify(c.id)})">✏</button>
+        <button class="tmpl-act-btn" onclick="eliminarColabCfg(${JSON.stringify(c.id)})" title="Eliminar" style="color:#e88;">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirAltaColab(rfcPre, nombrePre) {
+  document.getElementById('cfg-colab-id').value           = '';
+  document.getElementById('cfg-colab-rfc').value          = rfcPre || '';
+  document.getElementById('cfg-colab-alias').value        = '';
+  document.getElementById('cfg-colab-nombre').value       = nombrePre || '';
+  document.getElementById('cfg-colab-nombreCorto').value  = '';
+  document.getElementById('cfg-colab-telefono').value     = '';
+  document.getElementById('cfg-colab-direccion').value    = '';
+  document.getElementById('cfg-colab-activo').value       = '1';
+  ['sueldos','asimilables','honorarios'].forEach(t =>
+    document.getElementById(`cfg-colab-tipo-${t}`).checked = false);
+  document.getElementById('cfg-colab-modal-titulo').textContent = 'Nuevo colaborador';
+  openModal('modal-colab-cfg');
+}
+
+function editarColabCfg(id) {
+  const c = loadColabCfg().find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('cfg-colab-id').value           = c.id;
+  document.getElementById('cfg-colab-rfc').value          = c.rfc || '';
+  document.getElementById('cfg-colab-alias').value        = c.alias || '';
+  document.getElementById('cfg-colab-nombre').value       = c.nombre || '';
+  document.getElementById('cfg-colab-nombreCorto').value  = c.nombreCorto || '';
+  document.getElementById('cfg-colab-telefono').value     = c.telefono || '';
+  document.getElementById('cfg-colab-direccion').value    = c.direccion || '';
+  document.getElementById('cfg-colab-activo').value       = c.activo ? '1' : '0';
+  const tipos = c.tipoColaborador || [];
+  ['sueldos','asimilables','honorarios'].forEach(t =>
+    document.getElementById(`cfg-colab-tipo-${t}`).checked = tipos.includes(t));
+  document.getElementById('cfg-colab-modal-titulo').textContent = 'Editar colaborador';
+  openModal('modal-colab-cfg');
+}
+
+function guardarColabCfg() {
+  const id          = document.getElementById('cfg-colab-id').value;
+  const rfc         = document.getElementById('cfg-colab-rfc').value.trim().toUpperCase();
+  const alias       = document.getElementById('cfg-colab-alias').value.trim().toLowerCase();
+  const nombre      = document.getElementById('cfg-colab-nombre').value.trim();
+  const nombreCorto = document.getElementById('cfg-colab-nombreCorto').value.trim() || alias;
+  const telefono    = document.getElementById('cfg-colab-telefono').value.trim();
+  const direccion   = document.getElementById('cfg-colab-direccion').value.trim();
+  const activo      = document.getElementById('cfg-colab-activo').value === '1';
+  const tipoColaborador = ['sueldos','asimilables','honorarios']
+    .filter(t => document.getElementById(`cfg-colab-tipo-${t}`).checked);
+
+  if (!alias || !nombre) { toast('Alias y nombre son obligatorios', 'error'); return; }
+
+  const colabs = loadColabCfg();
+  const dupAlias = colabs.find(c => c.alias === alias && c.id !== id);
+  if (dupAlias) { toast(`El alias "${alias}" ya existe`, 'error'); return; }
+
+  if (id) {
+    const idx = colabs.findIndex(c => c.id === id);
+    if (idx >= 0) colabs[idx] = { ...colabs[idx], rfc, alias, nombre, nombreCorto, telefono, direccion, activo, tipoColaborador };
+  } else {
+    colabs.push({
+      id: 'col-' + (rfc || alias + Date.now()),
+      rfc, alias, nombre, nombreCorto, telefono, direccion,
+      tipoColaborador, activo, creado: new Date().toISOString(),
+    });
+  }
+  saveColabCfg(colabs);
+  closeModal('modal-colab-cfg');
+  toast('Colaborador guardado', 'success');
+  renderColabCfg();
+}
+
+function eliminarColabCfg(id) {
+  if (!confirm('¿Eliminar este colaborador? Esta acción afectará la nómina.')) return;
+  saveColabCfg(loadColabCfg().filter(c => c.id !== id));
+  toast('Colaborador eliminado', 'success');
+  renderColabCfg();
+}
+
+function descargarPlantillaColab() {
+  const header = 'RFC,Alias,Nombre Completo,Nombre Corto,Tipo (sueldos/asimilables/honorarios),Teléfono,Dirección,Activo';
+  const rows = loadColabCfg().map(c =>
+    [c.rfc||'', c.alias||'', c.nombre||'', c.nombreCorto||'',
+     (c.tipoColaborador||[]).join('+'), c.telefono||'', c.direccion||'', c.activo?'SI':'NO']
+    .map(v => `"${String(v).replace(/"/g,'""')}"`)
+    .join(',')
+  );
+  const csv  = [header, ...rows].join('\n');
+  const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href:url, download:'colaboradores_plantilla.csv' });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Plantilla descargada', 'success');
+}
+
+function importarColabCSV(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text   = e.target.result.replace(/^﻿/, '');
+    const lines  = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { toast('CSV vacío o sin datos', 'error'); return; }
+    const header = lines[0].split(',').map(h => h.replace(/"/g,'').trim().toLowerCase());
+    const getCol = (row, name) => {
+      const idx = header.findIndex(h => h.includes(name));
+      return idx >= 0 ? (row[idx]||'').replace(/^"|"$/g,'').trim() : '';
+    };
+    const colabs = loadColabCfg();
+    let added = 0, updated = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const row = [];
+      let cur = '', inQ = false;
+      for (const ch of lines[i]+',') {
+        if (ch==='"') inQ=!inQ;
+        else if (ch===',' && !inQ) { row.push(cur); cur=''; }
+        else cur += ch;
+      }
+      const rfc         = getCol(row,'rfc').toUpperCase();
+      const alias       = getCol(row,'alias').toLowerCase().replace(/\s+/g,'');
+      const nombre      = getCol(row,'nombre completo') || getCol(row,'nombre');
+      const nombreCorto = getCol(row,'nombre corto') || getCol(row,'corto') || alias;
+      const tipoRaw     = getCol(row,'tipo');
+      const tipoColaborador = tipoRaw ? tipoRaw.split(/[+,|]/).map(t=>t.trim().toLowerCase()).filter(t=>['sueldos','asimilables','honorarios'].includes(t)) : [];
+      const telefono    = getCol(row,'tel');
+      const direccion   = getCol(row,'direc');
+      const activoStr   = getCol(row,'activo').toUpperCase();
+      const activo      = activoStr !== 'NO' && activoStr !== '0' && activoStr !== 'FALSE';
+      if (!alias || !nombre) continue;
+      const existing = colabs.find(c => c.alias === alias || (rfc && c.rfc === rfc));
+      if (existing) {
+        Object.assign(existing, { rfc, alias, nombre, nombreCorto, tipoColaborador, telefono, direccion, activo });
+        updated++;
+      } else {
+        colabs.push({ id:'col-'+(rfc||alias+Date.now()), rfc, alias, nombre, nombreCorto, tipoColaborador, telefono, direccion, activo, creado: new Date().toISOString() });
+        added++;
+      }
+    }
+    saveColabCfg(colabs);
+    toast(`Importados: ${added} nuevos, ${updated} actualizados`, 'success');
+    renderColabCfg();
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CATÁLOGOS — GENÉRICOS PREDETERMINADOS
+══════════════════════════════════════════════════════════════ */
+const GENERICOS = {
+  conceptos: [
+    'Nómina','Asimilables a salarios','Honorarios profesionales',
+    'Renta / Arrendamiento','Servicios contables','Servicios legales',
+    'Publicidad y marketing','Materiales y suministros','Combustible',
+    'Transporte y fletes','Alimentación / Restaurantes','Telefonía e internet',
+    'Electricidad','Agua','Seguros','Mantenimiento y reparaciones',
+    'Software y licencias','Viáticos','Comisiones bancarias',
+    'Papelería y útiles','Capacitación y cursos','Propina',
+    'Cuotas y membresías','Mensajería y paquetería','Dividendos',
+    'Proveedores','Importaciones / Exportaciones',
+  ],
+  cuentasContables: [
+    'Ingresos por servicios','Ingresos por ventas','Costo de ventas',
+    'Gastos de operación','Gastos administrativos','Gastos de venta',
+    'Sueldos y salarios','Prestaciones sociales','IMSS / INFONAVIT / SAR',
+    'Impuestos y contribuciones','Gastos financieros','Intereses pagados',
+    'Depreciación','Amortización','IVA acreditable','IVA trasladado',
+    'ISR por pagar','PTU por pagar','Cuentas por cobrar','Cuentas por pagar',
+    'Comisiones bancarias','Gastos de representación',
+  ],
+};
+
+const CATALOGO_LABELS = {
+  conceptos:           'Conceptos frecuentes',
+  cuentasContables:    'Cuentas contables',
+  categoriasDocumentos:'Categorías de documentos',
+};
+
+/* ─ Mostrar/ocultar el panel de genéricos ─ */
+function togglePresets(catalogKey) {
+  const panel = document.getElementById(`presets-panel-${catalogKey}`);
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : '';
+  if (!open) renderPresetsCloud(catalogKey);
+}
+
+/* ─ Renderizar los chips de genéricos disponibles ─ */
+function renderPresetsCloud(catalogKey) {
+  const cloud = document.getElementById(`presets-cloud-${catalogKey}`);
+  if (!cloud) return;
+  const cfg    = loadCfg();
+  const actual = new Set(cfg.catalogos[catalogKey] || []);
+  const lista  = GENERICOS[catalogKey] || [];
+  cloud.innerHTML = lista.map((v, idx) => {
+    const yaEsta = actual.has(v);
+    return `<span class="preset-chip ${yaEsta ? 'ya-en-lista' : ''}"
+              data-cat="${escH(catalogKey)}" data-idx="${idx}"
+              title="${yaEsta ? 'Ya está en tu catálogo' : 'Clic para agregar'}">${escH(v)}</span>`;
+  }).join('');
+  // Attach click handlers via closure over lista (avoids single-quote escaping bugs)
+  cloud.querySelectorAll('.preset-chip:not(.ya-en-lista)').forEach(chip => {
+    chip.onclick = () => addPresetItem(chip.dataset.cat, lista[parseInt(chip.dataset.idx)]);
+  });
+}
+
+/* ─ Agregar un solo genérico ─ */
+function addPresetItem(catalogKey, value) {
+  addTag(catalogKey, value);
+  renderPresetsCloud(catalogKey);
+}
+
+/* ─ Agregar todos los genéricos de golpe ─ */
+function cargarTodosPresets(catalogKey) {
+  const cfg   = loadCfg();
+  const lista = GENERICOS[catalogKey] || [];
+  const actual = cfg.catalogos[catalogKey] || [];
+  const actualSet = new Set(actual);
+  let added = 0;
+  lista.forEach(v => { if (!actualSet.has(v)) { actual.push(v); added++; } });
+  cfg.catalogos[catalogKey] = actual;
+  saveCfg(cfg);
+  renderAllTags();
+  renderPresetsCloud(catalogKey);
+  toast(`${added} genérico${added!==1?'s':''} agregado${added!==1?'s':''}`, 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CATÁLOGOS — IMPORTACIÓN DESDE EXCEL / CSV
+══════════════════════════════════════════════════════════════ */
+let __importPending = null; // { values: [...], catalogKey: '...' }
+
+function iniciarImportExcel(input, catalogKey) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = ''; // reset so same file can be re-selected
+
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  if (ext === 'csv') {
+    // CSV: leer como texto
+    const reader = new FileReader();
+    reader.onload = e => _procesarValoresImportados(e.target.result.split(/[\r\n,;]+/), catalogKey, file.name);
+    reader.readAsText(file);
+  } else {
+    // Excel: usar SheetJS
+    if (typeof XLSX === 'undefined') {
+      toast('La librería de Excel no cargó. Verifica tu conexión a internet.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1 });
+        const vals = rows.flat().map(v => String(v||'').trim()).filter(v => v.length >= 2);
+        _procesarValoresImportados(vals, catalogKey, file.name);
+      } catch(err) {
+        toast('Error al leer el archivo Excel: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function _procesarValoresImportados(rawVals, catalogKey, fileName) {
+  const valores = [...new Set(rawVals.map(v => String(v).trim()).filter(v => v.length >= 2))];
+  if (!valores.length) { toast('No se encontraron valores en el archivo', 'error'); return; }
+
+  __importPending = { values: valores, catalogKey };
+
+  // Populate modal
+  document.getElementById('import-catalog-label').textContent = CATALOGO_LABELS[catalogKey] || catalogKey;
+  document.getElementById('import-count').textContent = `${valores.length} valores en "${fileName}"`;
+
+  const preview   = valores.slice(0, 20);
+  const remaining = valores.length - preview.length;
+  document.getElementById('import-preview-chips').innerHTML =
+    preview.map(v => `<span class="import-chip">${escH(v)}</span>`).join('');
+  const moreEl = document.getElementById('import-preview-more');
+  if (remaining > 0) {
+    moreEl.textContent = `… y ${remaining} más`;
+    moreEl.style.display = '';
+    document.getElementById('import-preview-fade').style.display = '';
+  } else {
+    moreEl.style.display = 'none';
+    document.getElementById('import-preview-fade').style.display = 'none';
+  }
+
+  // Reset to default mode
+  document.querySelector('input[name="import-mode"][value="complementar"]').checked = true;
+  selImportMode(document.querySelector('input[name="import-mode"][value="complementar"]'));
+
+  openModal('modal-import-excel');
+}
+
+function selImportMode(radio) {
+  ['imc-complementar','imc-reemplazar-genericos','imc-reemplazar-todo'].forEach(id => {
+    document.getElementById(id)?.classList.remove('on');
+  });
+  const map = {
+    'complementar':          'imc-complementar',
+    'reemplazar-genericos':  'imc-reemplazar-genericos',
+    'reemplazar-todo':       'imc-reemplazar-todo',
+  };
+  document.getElementById(map[radio.value])?.classList.add('on');
+}
+
+function cancelarImportExcel() {
+  __importPending = null;
+  closeModal('modal-import-excel');
+}
+
+function confirmarImportExcel() {
+  if (!__importPending) return;
+  const { values, catalogKey } = __importPending;
+  const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'complementar';
+  const cfg  = loadCfg();
+  const gen  = new Set(GENERICOS[catalogKey] || []);
+
+  let lista;
+  if (mode === 'reemplazar-todo') {
+    lista = [...new Set(values)];
+  } else if (mode === 'reemplazar-genericos') {
+    // Conservar solo los que NO son genéricos, luego agregar los nuevos
+    const actuales  = cfg.catalogos[catalogKey] || [];
+    const conservar = actuales.filter(v => !gen.has(v));
+    lista = [...new Set([...conservar, ...values])];
+  } else {
+    // Complementar
+    const actuales = cfg.catalogos[catalogKey] || [];
+    lista = [...new Set([...actuales, ...values])];
+  }
+
+  cfg.catalogos[catalogKey] = lista;
+  saveCfg(cfg);
+  __importPending = null;
+  closeModal('modal-import-excel');
+  renderAllTags();
+  // Refresh presets cloud if open
+  const presetsPanel = document.getElementById(`presets-panel-${catalogKey}`);
+  if (presetsPanel && presetsPanel.style.display !== 'none') renderPresetsCloud(catalogKey);
+  toast(`${lista.length} valores en catálogo (modo: ${mode.replace('-',' ')})`, 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: CATÁLOGOS — tag management
+══════════════════════════════════════════════════════════════ */
+function renderTags(catalogKey, containerId) {
+  const cfg  = loadCfg();
+  const tags = cfg.catalogos[catalogKey] || [];
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  if (tags.length) {
+    cont.innerHTML = tags.map((t, idx) =>
+      `<span class="cfg-chip">
+        ${escH(t)}
+        <button class="cfg-chip-del" data-cat="${escH(catalogKey)}" data-idx="${idx}" title="Eliminar">✕</button>
+      </span>`
+    ).join('');
+    // Attach remove handlers via data attributes (avoids inline escaping issues)
+    cont.querySelectorAll('.cfg-chip-del').forEach(btn => {
+      btn.onclick = () => removeTag(btn.dataset.cat, tags[parseInt(btn.dataset.idx)]);
+    });
+  } else {
+    cont.innerHTML = `<span style="font-size:0.66rem; color:var(--text-xs); align-self:center;">Sin entradas — agrega la primera abajo</span>`;
+  }
+}
+
+function renderAllTags() {
+  renderTags('conceptos',              'tags-conceptos');
+  renderTags('cuentasContables',       'tags-cuentasContables');
+  renderTags('categoriasDocumentos',   'tags-categoriasDocumentos');
+}
+
+let __catSaveTimer = null;
+function _flashCatSaved() {
+  const el = document.getElementById('cat-save-status');
+  if (!el) return;
+  el.style.opacity = '1';
+  clearTimeout(__catSaveTimer);
+  __catSaveTimer = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+function addTag(catalogKey, value) {
+  const v = value.trim();
+  if (!v) return;
+  const cfg  = loadCfg();
+  const tags = cfg.catalogos[catalogKey] || [];
+  if (!tags.includes(v)) {
+    tags.push(v);
+    cfg.catalogos[catalogKey] = tags;
+    saveCfg(cfg);
+    _flashCatSaved();
+  }
+  renderAllTags();
+}
+
+function guardarCatalogos() {
+  // Catalogs are already auto-saved on every change.
+  // This button provides explicit confirmation to the user.
+  const cfg = loadCfg();
+  saveCfg(cfg);  // re-persist (no-op if nothing changed)
+  _flashCatSaved();
+  const total = Object.values(cfg.catalogos).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+  toast(`Catálogos guardados — ${total} entrada${total !== 1 ? 's' : ''} en total`, 'success');
+}
+
+function addTagFromInput(catalogKey, inputId) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  addTag(catalogKey, el.value);
+  el.value = '';
+}
+
+function removeTag(catalogKey, value) {
+  const cfg = loadCfg();
+  cfg.catalogos[catalogKey] = (cfg.catalogos[catalogKey] || []).filter(t => t !== value);
+  saveCfg(cfg);
+  _flashCatSaved();
+  renderAllTags();
+}
+
+function escH(s) {
+  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: PLANTILLAS DE EVENTO
+══════════════════════════════════════════════════════════════ */
+let __tmplEditId = null;
+
+const BASE_FMT = {
+  'fijo':       'Monto fijo',
+  'porcentaje': '% del gasto',
+};
+
+function renderPlantillas() {
+  const cfg    = loadCfg();
+  const tmpls  = cfg.plantillasEvento || [];
+  const tbody  = document.getElementById('tmpl-tbody');
+  const empty  = document.getElementById('tmpl-empty');
+
+  if (!tmpls.length) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = tmpls.map(t => {
+    const ivaStr = t.iva ? `+${t.tasaIVA||16}% IVA` : 'Sin IVA';
+    const baseStr = t.tipoBase === 'porcentaje'
+      ? `${t.porcentaje||0}%`
+      : `${t.moneda==='USD'?'US$':'$'}${parseFloat(t.montoBase||0).toLocaleString('es-MX',{minimumFractionDigits:2})}`;
+
+    return `<tr>
+      <td style="font-weight:600;">${escH(t.nombre)}</td>
+      <td style="font-size:0.69rem; color:var(--text-dim);">${escH(t.cuenta||'—')}</td>
+      <td style="font-family:var(--brand); font-size:0.67rem; font-weight:700; color:${t.moneda==='USD'?'#1a6fbf':'var(--navy)'};">${t.moneda||'MXN'}</td>
+      <td style="font-size:0.69rem;">${escH(BASE_FMT[t.tipoBase]||'—')} · ${escH(baseStr)}
+        ${t.multiplicable?'<span style="font-size:0.58rem;color:var(--text-xs);"> ×N</span>':''}</td>
+      <td style="text-align:center; font-size:0.67rem; color:${t.iva?'var(--green)':'var(--text-xs)'};">${ivaStr}</td>
+      <td style="text-align:center;">
+        <span style="font-size:0.65rem; color:var(--text-xs);">${t.multiplicable?'✓':'—'}</span>
+      </td>
+      <td style="font-size:0.69rem; color:var(--text-dim);">${escH(t.concepto||'—')}</td>
+      <td style="text-align:center; white-space:nowrap;">
+        <button class="tmpl-act-btn" onclick="editarTmpl('${escH(t.id)}')" title="Editar">✏️</button>
+        <button class="tmpl-act-btn" onclick="eliminarTmpl('${escH(t.id)}')" title="Eliminar" style="color:var(--red);">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function fillTmplCuentas(selVal) {
+  const sel = document.getElementById('tmpl-cuenta');
+  const saldos = loadRegistry('stgl_saldos').filter(s=>!s.cancelada);
+  sel.innerHTML = '<option value="">— Seleccionar —</option>';
+  saldos.forEach(s => {
+    const o = document.createElement('option');
+    o.value = o.textContent = s.cuenta;
+    if (s.cuenta === selVal) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function fillTmplDataLists() {
+  let movs = [];
+  try { const r=localStorage.getItem('stgl_mov_excel'); if(r) movs=JSON.parse(r); } catch(e){}
+  try { movs=[...movs,...loadRegistry('stgl_mov_manual')]; } catch(e){}
+  const concs = [...new Set(movs.map(m=>m.concepto).filter(Boolean))].sort();
+  const ccs   = [...new Set(movs.map(m=>m.cuentaCont).filter(Boolean))].sort();
+  document.getElementById('tmpl-conc-list').innerHTML = concs.map(c=>`<option value="${escH(c)}">`).join('');
+  document.getElementById('tmpl-cc-list').innerHTML   = ccs.map(c=>`<option value="${escH(c)}">`).join('');
+}
+
+function abrirModalTmpl() {
+  __tmplEditId = null;
+  document.getElementById('modal-tmpl-title').textContent = 'Nueva plantilla de evento';
+  ['tmpl-nombre','tmpl-concepto','tmpl-cc','tmpl-notas'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('tmpl-moneda').value    = 'MXN';
+  document.getElementById('tmpl-tipo-base').value = 'fijo';
+  document.getElementById('tmpl-monto').value     = '';
+  document.getElementById('tmpl-pct').value       = '';
+  document.getElementById('tmpl-iva-tasa').value  = '16';
+  document.getElementById('tmpl-multiplicable').checked = false;
+  document.getElementById('tmpl-iva').checked     = false;
+  document.getElementById('tmpl-preview').classList.remove('visible');
+  tmplTipoBaseChange();
+  tmplIVAChange();
+  fillTmplCuentas('');
+  fillTmplDataLists();
+  openModal('modal-tmpl');
+}
+
+function editarTmpl(id) {
+  const cfg = loadCfg();
+  const t   = (cfg.plantillasEvento||[]).find(x=>x.id===id);
+  if (!t) return;
+  __tmplEditId = id;
+  document.getElementById('modal-tmpl-title').textContent = 'Editar plantilla';
+  document.getElementById('tmpl-nombre').value    = t.nombre||'';
+  document.getElementById('tmpl-moneda').value    = t.moneda||'MXN';
+  document.getElementById('tmpl-tipo-base').value = t.tipoBase||'fijo';
+  document.getElementById('tmpl-monto').value     = t.montoBase||'';
+  document.getElementById('tmpl-pct').value       = t.porcentaje||'';
+  document.getElementById('tmpl-multiplicable').checked = !!t.multiplicable;
+  document.getElementById('tmpl-iva').checked     = !!t.iva;
+  document.getElementById('tmpl-iva-tasa').value  = t.tasaIVA||16;
+  document.getElementById('tmpl-concepto').value  = t.concepto||'';
+  document.getElementById('tmpl-cc').value        = t.cuentaCont||'';
+  document.getElementById('tmpl-notas').value     = t.notas||'';
+  tmplTipoBaseChange();
+  tmplIVAChange();
+  fillTmplCuentas(t.cuenta||'');
+  fillTmplDataLists();
+  tmplUpdatePreview();
+  openModal('modal-tmpl');
+}
+
+function tmplTipoBaseChange() {
+  const tipo = document.getElementById('tmpl-tipo-base').value;
+  document.getElementById('tmpl-monto-group').style.display = tipo === 'fijo' ? '' : 'none';
+  document.getElementById('tmpl-pct-group').style.display   = tipo === 'porcentaje' ? '' : 'none';
+  document.getElementById('tmpl-monto-label').textContent   = 'Importe por unidad *';
+  tmplUpdatePreview();
+}
+
+function tmplIVAChange() {
+  const on = document.getElementById('tmpl-iva').checked;
+  document.getElementById('tmpl-iva-tasa-group').style.display = on ? 'flex' : 'none';
+  tmplUpdatePreview();
+}
+
+function tmplUpdatePreview() {
+  const prev    = document.getElementById('tmpl-preview');
+  const prevVal = document.getElementById('tmpl-preview-val');
+  const tipo    = document.getElementById('tmpl-tipo-base').value;
+  const moneda  = document.getElementById('tmpl-moneda').value;
+  const mult    = document.getElementById('tmpl-multiplicable').checked;
+  const iva     = document.getElementById('tmpl-iva').checked;
+  const tasaIVA = parseFloat(document.getElementById('tmpl-iva-tasa').value)||16;
+  const pfx     = moneda === 'USD' ? 'US$' : '$';
+  const fmt     = n => pfx + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  if (tipo === 'fijo') {
+    const monto = parseFloat(document.getElementById('tmpl-monto').value)||0;
+    if (!monto) { prev.classList.remove('visible'); return; }
+    const ejemploN    = mult ? 2 : 1;
+    const base        = monto * ejemploN;
+    const ivaAmt      = iva ? base * tasaIVA / 100 : 0;
+    const total       = base + ivaAmt;
+    const multStr     = mult ? `${ejemploN} × ${fmt(monto)} = ${fmt(base)}` : fmt(monto);
+    const ivaStr      = iva ? ` + IVA ${tasaIVA}% (${fmt(ivaAmt)})` : '';
+    prevVal.textContent = `${multStr}${ivaStr} = ${fmt(total)}`;
+  } else {
+    const pct = parseFloat(document.getElementById('tmpl-pct').value)||0;
+    if (!pct) { prev.classList.remove('visible'); return; }
+    const ejGasto     = 1000;
+    const base        = ejGasto * pct / 100;
+    const ivaAmt      = iva ? base * tasaIVA / 100 : 0;
+    const total       = base + ivaAmt;
+    const ivaStr      = iva ? ` + IVA ${tasaIVA}% (${fmt(ivaAmt)})` : '';
+    prevVal.textContent = `Sobre ${fmt(ejGasto)}: ${pct}% = ${fmt(base)}${ivaStr} = ${fmt(total)}`;
+  }
+  prev.classList.add('visible');
+}
+
+function guardarTmpl() {
+  const nombre  = document.getElementById('tmpl-nombre').value.trim();
+  const cuenta  = document.getElementById('tmpl-cuenta').value;
+  const tipo    = document.getElementById('tmpl-tipo-base').value;
+  const monto   = parseFloat(document.getElementById('tmpl-monto').value)||0;
+  const pct     = parseFloat(document.getElementById('tmpl-pct').value)||0;
+
+  if (!nombre) { toast('El nombre es obligatorio','error'); return; }
+  if (!cuenta) { toast('Selecciona una cuenta bancaria','error'); return; }
+  if (tipo === 'fijo' && monto <= 0) { toast('El importe debe ser mayor a 0','error'); return; }
+  if (tipo === 'porcentaje' && pct <= 0) { toast('El porcentaje debe ser mayor a 0','error'); return; }
+
+  const tmpl = {
+    nombre,
+    cuenta,
+    moneda:       document.getElementById('tmpl-moneda').value,
+    tipoBase:     tipo,
+    montoBase:    tipo === 'fijo' ? monto : 0,
+    porcentaje:   tipo === 'porcentaje' ? pct : 0,
+    multiplicable:document.getElementById('tmpl-multiplicable').checked,
+    iva:          document.getElementById('tmpl-iva').checked,
+    tasaIVA:      parseFloat(document.getElementById('tmpl-iva-tasa').value)||16,
+    concepto:     document.getElementById('tmpl-concepto').value.trim(),
+    cuentaCont:   document.getElementById('tmpl-cc').value.trim(),
+    notas:        document.getElementById('tmpl-notas').value.trim(),
+  };
+
+  const cfg = loadCfg();
+  cfg.plantillasEvento = cfg.plantillasEvento || [];
+
+  if (__tmplEditId) {
+    const idx = cfg.plantillasEvento.findIndex(x=>x.id===__tmplEditId);
+    if (idx>=0) cfg.plantillasEvento[idx] = { ...cfg.plantillasEvento[idx], ...tmpl };
+  } else {
+    tmpl.id = 'tmpl_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
+    cfg.plantillasEvento.push(tmpl);
+  }
+
+  saveCfg(cfg);
+  closeModal('modal-tmpl');
+  toast(__tmplEditId ? 'Plantilla actualizada' : 'Plantilla creada', 'success');
+  renderPlantillas();
+}
+
+function eliminarTmpl(id) {
+  const cfg = loadCfg();
+  const t   = (cfg.plantillasEvento||[]).find(x=>x.id===id);
+  if (!confirm(`¿Eliminar la plantilla "${t?.nombre||id}"?`)) return;
+  cfg.plantillasEvento = (cfg.plantillasEvento||[]).filter(x=>x.id!==id);
+  saveCfg(cfg);
+  toast('Plantilla eliminada','success');
+  renderPlantillas();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: CUENTAS — tipo y ciclo de pago por cuenta
+══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   PANEL: CUENTAS — alta, edición, configuración
+══════════════════════════════════════════════════════════════ */
+
+function toggleAddCuentaForm() {
+  const form = document.getElementById('cta-add-form');
+  const show = form.style.display === 'none';
+  form.style.display = show ? '' : 'none';
+  if (show) {
+    // Fecha por defecto: hoy
+    document.getElementById('nca-fecha').value = new Date().toISOString().split('T')[0];
+    // Llenar select "pagar desde" con cuentas existentes
+    const saldos = loadRegistry('stgl_saldos').filter(s => !s.cancelada);
+    const sel = document.getElementById('nca-pagadesde');
+    sel.innerHTML = '<option value="">— Selecciona —</option>' +
+      saldos.map(s => `<option value="${escH(s.cuenta)}">${escH(s.cuenta)}</option>`).join('');
+    document.getElementById('nca-nombre').focus();
+  }
+}
+
+function onNcaTipoChange() {
+  const isCC = document.getElementById('nca-tipo').value === 'tarjeta_credito';
+  document.getElementById('nca-cc-extra').style.display = isCC ? '' : 'none';
+}
+
+function agregarCuenta() {
+  const nombre  = document.getElementById('nca-nombre').value.trim();
+  const alias   = document.getElementById('nca-alias').value.trim();
+  const banco   = document.getElementById('nca-banco').value.trim();
+  const moneda  = document.getElementById('nca-moneda').value;
+  const tipo    = document.getElementById('nca-tipo').value;
+  const saldo   = parseFloat(document.getElementById('nca-saldo').value) || 0;
+  const fecha   = document.getElementById('nca-fecha').value;
+  const salmin  = parseFloat(document.getElementById('nca-salmin').value) || 0;
+
+  if (!nombre) { toast('El nombre de la cuenta es obligatorio', 'error'); return; }
+  if (!alias)  { toast('El alias es obligatorio', 'error'); return; }
+  if (!fecha)  { toast('Indica la fecha del saldo inicial', 'error'); return; }
+
+  // Verificar que no exista ya
+  const saldos = loadRegistry('stgl_saldos');
+  if (saldos.some(s => s.cuenta === nombre)) {
+    toast(`Ya existe una cuenta llamada "${nombre}"`, 'error'); return;
+  }
+
+  // Mapear tipo interno → etiqueta que usa financiero.html
+  const tipoLabel = { corriente:'Corriente', tarjeta_credito:'Tarjeta Crédito', inversion:'Inversión' }[tipo] || 'Corriente';
+
+  // 1. Crear entrada en stgl_saldos con saldo inicial
+  const nuevaSaldo = {
+    id:      'cta-' + Date.now(),
+    cuenta:  nombre,
+    moneda,
+    tipo:    tipoLabel,
+    saldo,
+    fechaSaldoInicial: fecha,
+    cancelada: false,
+  };
+  saldos.push(nuevaSaldo);
+  localStorage.setItem('stgl_saldos', JSON.stringify(saldos));
+
+  // 2. Guardar configuración de la cuenta en stgl_config
+  const cfg = loadCfg();
+  if (!cfg.cuentasConfig) cfg.cuentasConfig = {};
+  const ccEntry = { tipo, alias, banco, saldoMin: salmin };
+  if (tipo === 'tarjeta_credito') {
+    ccEntry.diaCorte   = parseInt(document.getElementById('nca-corte').value  || 25);
+    ccEntry.diaPago    = parseInt(document.getElementById('nca-pago').value   || 12);
+    ccEntry.cuentaPago = document.getElementById('nca-pagadesde').value || '';
+  }
+  cfg.cuentasConfig[nombre] = ccEntry;
+  localStorage.setItem('stgl_config', JSON.stringify(cfg));
+
+  toast(`Cuenta "${alias}" (${nombre}) agregada`, 'success');
+
+  // Limpiar y cerrar el formulario
+  ['nca-nombre','nca-alias','nca-banco','nca-saldo','nca-salmin','nca-corte','nca-pago'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('nca-moneda').value = 'MXN';
+  document.getElementById('nca-tipo').value   = 'corriente';
+  document.getElementById('nca-cc-extra').style.display = 'none';
+  document.getElementById('cta-add-form').style.display = 'none';
+
+  renderCuentasPanel();
+}
+
+function eliminarCuenta(nombre) {
+  if (!confirm(`¿Eliminar la cuenta "${nombre}"?\n\nSe eliminará del catálogo pero los movimientos bancarios existentes no se borran.`)) return;
+  // Marcar como cancelada en stgl_saldos
+  const saldos = loadRegistry('stgl_saldos').map(s =>
+    s.cuenta === nombre ? { ...s, cancelada: true } : s
+  );
+  localStorage.setItem('stgl_saldos', JSON.stringify(saldos));
+  // Eliminar de cuentasConfig
+  const cfg = loadCfg();
+  delete (cfg.cuentasConfig || {})[nombre];
+  localStorage.setItem('stgl_config', JSON.stringify(cfg));
+  toast(`Cuenta "${nombre}" eliminada del catálogo`, 'success');
+  renderCuentasPanel();
+}
+
+function renderCuentasPanel() {
+  const saldos  = loadRegistry('stgl_saldos').filter(s => !s.cancelada);
+  const cfg     = loadCfg();
+  const ccfgAll = cfg.cuentasConfig || {};
+  const todas   = saldos.map(s => s.cuenta);
+
+  document.getElementById('cfg-reserva-nomina').value = cfg.reservaNomina ?? 0;
+
+  // ── Tabla de cuentas ──────────────────────────────────────────
+  const tbody = document.getElementById('cuentas-tbody');
+  if (!saldos.length) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text-xs);font-size:0.78rem;">
+      Sin cuentas registradas — haz clic en <strong>"+ Nueva cuenta"</strong> para agregar la primera.
+    </td></tr>`;
+    tbody.dataset.cuentas = '[]';
+  } else {
+    tbody.dataset.cuentas = JSON.stringify(todas);
+    tbody.innerHTML = saldos.map((s, i) => {
+      const cc      = ccfgAll[s.cuenta] || {};
+      const tipo    = cc.tipo    || 'corriente';
+      const alias   = cc.alias   || s.cuenta;
+      const banco   = cc.banco   || '—';
+      const isCC    = tipo === 'tarjeta_credito';
+      const others  = todas.filter(c => c !== s.cuenta);
+      const hide    = isCC ? '' : 'visibility:hidden;';
+      const saldoMin = cc.saldoMin != null ? cc.saldoMin : '';
+      const monColor = s.moneda === 'MXN' ? 'var(--navy)' : '#1a6fbf';
+      const saldoFmt = (s.saldo||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+      return `<tr>
+        <td><span class="cta-alias-badge">${escH(alias)}</span></td>
+        <td style="white-space:nowrap; font-weight:600;">${escH(s.cuenta)}</td>
+        <td style="color:var(--text-dim);">${escH(banco)}</td>
+        <td><span style="font-family:var(--brand);font-size:0.65rem;font-weight:700;color:${monColor};">${escH(s.moneda||'MXN')}</span></td>
+        <td>
+          <select class="form-input" id="cta-tipo-${i}" style="width:auto;padding:0.25rem 0.45rem;font-size:0.68rem;" onchange="onTipoCuentaChange(${i})">
+            <option value="corriente"       ${tipo==='corriente'?'selected':''}>Corriente</option>
+            <option value="tarjeta_credito" ${tipo==='tarjeta_credito'?'selected':''}>T. Crédito</option>
+            <option value="inversion"       ${tipo==='inversion'?'selected':''}>Inversión</option>
+          </select>
+        </td>
+        <td style="text-align:right; font-family:var(--brand); font-size:0.7rem; white-space:nowrap;">
+          ${s.moneda||'MXN'} ${saldoFmt}
+          ${s.fechaSaldoInicial ? `<div style="font-size:0.58rem;color:var(--text-xs);">${s.fechaSaldoInicial}</div>` : ''}
+        </td>
+        <td style="text-align:center;color:var(--text-xs);font-size:0.68rem;">${s.fechaSaldoInicial||'—'}</td>
+        <td>
+          <input type="number" class="form-input" id="cta-salmin-${i}" value="${saldoMin}" min="0" step="100" placeholder="0"
+            style="width:80px;padding:0.25rem 0.35rem;text-align:right;font-size:0.68rem;" />
+        </td>
+        <td class="cta-cc-${i}" style="${hide}">
+          <input type="number" class="form-input" id="cta-corte-${i}" value="${cc.diaCorte||25}" min="1" max="31"
+            style="width:48px;padding:0.25rem 0.3rem;text-align:center;font-size:0.68rem;" />
+        </td>
+        <td class="cta-cc-${i}" style="${hide}">
+          <input type="number" class="form-input" id="cta-diapago-${i}" value="${cc.diaPago||12}" min="1" max="31"
+            style="width:48px;padding:0.25rem 0.3rem;text-align:center;font-size:0.68rem;" />
+        </td>
+        <td class="cta-cc-${i}" style="${hide}">
+          <select class="form-input" id="cta-desde-${i}" style="width:auto;padding:0.25rem 0.4rem;font-size:0.68rem;">
+            <option value="">—</option>
+            ${others.map(c=>`<option value="${escH(c)}"${cc.cuentaPago===c?' selected':''}>${escH(c)}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <button class="cta-del-btn" onclick="eliminarCuenta('${escH(s.cuenta).replace(/'/g,"\\'")}')" title="Eliminar cuenta">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Límites diarios de venta por divisa ──────────────────────
+  const limitesCfg    = cfg.limiteVentaDivisas || {};
+  const divisasActivas = [...new Set(saldos.map(s => s.moneda).filter(m => m && m !== 'MXN'))].slice(0,5);
+  const limWrap = document.getElementById('cfg-limites-divisas-wrap');
+  if (divisasActivas.length) {
+    limWrap.innerHTML = `
+      <div style="font-family:var(--brand);font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);padding-bottom:0.45rem;border-bottom:1px solid var(--border);margin-bottom:0.9rem;">
+        Límites diarios de venta de divisas
+      </div>
+      <div style="font-size:0.62rem;color:var(--text-xs);margin-bottom:0.85rem;">
+        Máximo que el banco permite convertir en un solo día por divisa. Si supera el límite, la proyección divide la operación en 2 días. Deja vacío para sin límite.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.7rem 1.25rem;max-width:700px;">
+        ${divisasActivas.map(mon => `
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Límite diario ${escH(mon)}</label>
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <input class="form-input" id="cfg-lim-${escH(mon)}" type="number" min="0" step="100"
+                placeholder="Sin límite" value="${limitesCfg[mon]!=null?limitesCfg[mon]:''}" style="text-align:right;" />
+              <span style="font-family:var(--brand);font-size:0.65rem;font-weight:700;color:var(--navy);white-space:nowrap;">${escH(mon)}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    limWrap.dataset.divisas = JSON.stringify(divisasActivas);
+  } else {
+    limWrap.innerHTML = `<div style="font-size:0.72rem;color:var(--text-xs);padding:0.5rem 0;">Agrega cuentas en USD, EUR u otras monedas para configurar límites de venta de divisas.</div>`;
+    limWrap.dataset.divisas = '[]';
+  }
+}
+
+function onTipoCuentaChange(i) {
+  const isCC = document.getElementById(`cta-tipo-${i}`)?.value === 'tarjeta_credito';
+  document.querySelectorAll(`.cta-cc-${i}`).forEach(el => el.style.visibility = isCC ? '' : 'hidden');
+}
+
+function saveCuentasCfg() {
+  const cfg    = loadCfg();
+  if (!cfg.cuentasConfig) cfg.cuentasConfig = {};
+  const cuentas = JSON.parse(document.getElementById('cuentas-tbody')?.dataset.cuentas || '[]');
+
+  cuentas.forEach((nombre, i) => {
+    const tipo        = document.getElementById(`cta-tipo-${i}`)?.value || 'corriente';
+    const saldoMinVal = parseFloat(document.getElementById(`cta-salmin-${i}`)?.value || 0) || 0;
+    const existing    = cfg.cuentasConfig[nombre] || {};
+    // Preservar alias y banco que ya estaban
+    cfg.cuentasConfig[nombre] = {
+      ...existing,
+      tipo,
+      saldoMin: saldoMinVal,
+      ...(tipo === 'tarjeta_credito' ? {
+        diaCorte:   parseInt(document.getElementById(`cta-corte-${i}`)?.value   || 25),
+        diaPago:    parseInt(document.getElementById(`cta-diapago-${i}`)?.value || 12),
+        cuentaPago: document.getElementById(`cta-desde-${i}`)?.value || '',
+      } : {}),
+    };
+  });
+
+  cfg.reservaNomina = parseFloat(document.getElementById('cfg-reserva-nomina')?.value || 0) || 0;
+
+  const divisas = JSON.parse(document.getElementById('cfg-limites-divisas-wrap')?.dataset.divisas || '[]');
+  if (!cfg.limiteVentaDivisas) cfg.limiteVentaDivisas = {};
+  divisas.forEach(mon => {
+    const v = parseFloat(document.getElementById(`cfg-lim-${mon}`)?.value || 0);
+    cfg.limiteVentaDivisas[mon] = v > 0 ? v : null;
+  });
+
+  localStorage.setItem('stgl_config', JSON.stringify(cfg));
+  toast('Configuración de cuentas guardada', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL: DATOS — estadísticas, backup, reset
+══════════════════════════════════════════════════════════════ */
+const DATA_MODULES = [
+  { key:'stgl_mov_excel',       label:'Mov. bancarios (importados)' },
+  { key:'stgl_mov_manual',      label:'Mov. bancarios (manuales)' },
+  { key:'stgl_facturas',        label:'Facturas' },
+  { key:'stgl_proyectos',       label:'Proyectos' },
+  { key:'stgl_nomina',          label:'Nómina' },
+  { key:'stgl_retenciones',     label:'Retenciones' },
+  { key:'stgl_egresos',         label:'Egresos' },
+  { key:'stgl_recurrentes',     label:'Recurrentes' },
+  { key:'stgl_mov_proyectados', label:'Mov. proyectados' },
+  { key:'stgl_documentos',      label:'Documentos' },
+  { key:'stgl_galeria',         label:'Galería' },
+  { key:'stgl_saldos',          label:'Saldos / Cuentas' },
+];
+
+function calcStorageKB() {
+  let bytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    bytes += (localStorage.getItem(key).length + key.length) * 2;
+  }
+  return bytes / 1024;
+}
+
+function renderDatos() {
+  renderBackupStatus();
+  renderBackupFolderStatus();
+  // Total stats
+  let totalRecs = 0;
+  DATA_MODULES.forEach(m => {
+    try {
+      const v = JSON.parse(localStorage.getItem(m.key)||'[]');
+      if (Array.isArray(v)) totalRecs += v.length;
+    } catch(e){}
+  });
+  const usedKB   = calcStorageKB();
+  const limitKB  = 5 * 1024;
+  const pctUsed  = Math.min((usedKB / limitKB) * 100, 100);
+
+  document.getElementById('datos-stat-grid').innerHTML = `
+    <div class="data-stat">
+      <div class="data-stat-val">${totalRecs.toLocaleString('es-MX')}</div>
+      <div class="data-stat-lbl">Registros totales</div>
+    </div>
+    <div class="data-stat">
+      <div class="data-stat-val">${usedKB.toFixed(1)} KB</div>
+      <div class="data-stat-lbl">Almacenamiento usado</div>
+    </div>
+    <div class="data-stat">
+      <div class="data-stat-val">${(limitKB - usedKB).toFixed(0)} KB</div>
+      <div class="data-stat-lbl">Espacio disponible</div>
+    </div>
+    <div class="data-stat">
+      <div class="data-stat-val">${pctUsed.toFixed(1)}%</div>
+      <div class="data-stat-lbl">% de capacidad usado</div>
+    </div>`;
+
+  document.getElementById('storage-used-label').textContent = `${usedKB.toFixed(1)} KB / ${(limitKB/1024).toFixed(0)} MB estimados`;
+  document.getElementById('storage-bar-fill').style.width   = pctUsed + '%';
+  document.getElementById('storage-bar-fill').style.background = pctUsed > 80 ? 'var(--red)' : pctUsed > 60 ? '#c67000' : 'var(--navy)';
+
+  // Per-module record counts
+  document.getElementById('mod-rec-grid').innerHTML = DATA_MODULES.map(m => {
+    let count = '—';
+    try {
+      const v = JSON.parse(localStorage.getItem(m.key)||'[]');
+      if (Array.isArray(v)) count = v.length.toLocaleString('es-MX');
+    } catch(e){}
+    return `<div class="mod-rec-item">
+      <div class="mod-rec-val">${count}</div>
+      <div class="mod-rec-lbl">${m.label}</div>
+    </div>`;
+  }).join('');
+
+  // Reset buttons
+  document.getElementById('reset-grid').innerHTML = DATA_MODULES.map(m =>
+    `<button class="btn btn-ghost" style="font-size:0.68rem; color:var(--red); border-color:#fecaca; padding:0.28rem 0.5rem;"
+      onclick="resetModulo('${m.key}','${escH(m.label)}')">Limpiar: ${escH(m.label)}</button>`
+  ).join('');
+}
+
+/* ══════════════════════════════════════════
+   CARPETA DE RESPALDO AUTOMÁTICO
+   Usa File System Access API + IndexedDB
+══════════════════════════════════════════ */
+const BACKUP_DB_NAME  = 'stgl_backup_db';
+const BACKUP_DB_STORE = 'dir_handles';
+const BACKUP_DIR_KEY  = 'backup_dir';
+
+function _openBackupDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(BACKUP_DB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(BACKUP_DB_STORE);
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function _saveDirHandle(handle) {
+  const db = await _openBackupDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKUP_DB_STORE, 'readwrite');
+    tx.objectStore(BACKUP_DB_STORE).put(handle, BACKUP_DIR_KEY);
+    tx.oncomplete = resolve;
+    tx.onerror    = e => reject(e.target.error);
+  });
+}
+
+async function _getDirHandle() {
+  try {
+    const db = await _openBackupDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction(BACKUP_DB_STORE, 'readonly');
+      const req = tx.objectStore(BACKUP_DB_STORE).get(BACKUP_DIR_KEY);
+      req.onsuccess = e => resolve(e.target.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  } catch(e) { return null; }
+}
+
+async function _verifyDirPermission(handle) {
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') return true;
+    const req  = await handle.requestPermission({ mode: 'readwrite' });
+    return req === 'granted';
+  } catch(e) { return false; }
+}
+
+async function elegirCarpetaBackup() {
+  if (!('showDirectoryPicker' in window)) {
+    toast('La selección de carpeta requiere Chrome o Edge. En Safari usa "Exportar respaldo completo" para descargar el archivo manualmente.', 'info');
+    return;
+  }
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
+    await _saveDirHandle(handle);
+    localStorage.setItem('stgl_backup_dir_name', handle.name);
+    renderBackupFolderStatus();
+    toast(`Carpeta "${handle.name}" configurada — los respaldos se guardarán ahí automáticamente.`, 'success');
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('No se pudo acceder a la carpeta: ' + e.message, 'error');
+  }
+}
+
+async function renderBackupFolderStatus() {
+  const btn  = document.getElementById('btn-elegir-carpeta');
+  const desc = document.getElementById('backup-folder-desc');
+  if (!desc) return;
+
+  // Safari / Firefox: showDirectoryPicker no disponible — adaptar la tarjeta
+  if (!('showDirectoryPicker' in window)) {
+    desc.innerHTML = `<span style="color:var(--text-xs);">⚠️ Tu navegador (Safari / Firefox) no permite seleccionar una carpeta de destino. Usa <strong>Exportar respaldo completo</strong> para descargar el respaldo manualmente y guardarlo donde quieras.</span>`;
+    if (btn) {
+      btn.disabled = true;
+      btn.title    = 'No disponible en Safari — usa Chrome o Edge para esta función';
+      btn.style.opacity = '0.4';
+      btn.style.cursor  = 'not-allowed';
+    }
+    return;
+  }
+
+  const nombre = localStorage.getItem('stgl_backup_dir_name');
+  if (!nombre) return;
+  const handle = await _getDirHandle();
+  if (!handle) return;
+  desc.innerHTML = `<span style="color:var(--navy); font-weight:700;">📁 ${nombre}</span> — los respaldos automáticos se guardan aquí.`;
+  if (btn) btn.textContent = 'Cambiar carpeta';
+}
+
+// Escribe el respaldo directo a la carpeta configurada
+// Devuelve true si lo logró, false si hay que usar descarga normal
+async function _writeToBackupDir(content, filename) {
+  const handle = await _getDirHandle();
+  if (!handle) return false;
+  const ok = await _verifyDirPermission(handle);
+  if (!ok) return false;
+  try {
+    const fileHandle = await handle.getFileHandle(filename, { create: true });
+    const writable   = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+    return true;
+  } catch(e) {
+    console.warn('No se pudo escribir en la carpeta:', e);
+    return false;
+  }
+}
+
+/* ── Export ── */
+function _buildBackupPayload() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('stgl_')) {
+      try { data[key] = JSON.parse(localStorage.getItem(key)); }
+      catch(e) { data[key] = localStorage.getItem(key); }
+    }
+  }
+  return data;
+}
+
+function _backupFilename(prefix) {
+  const now   = new Date();
+  const fecha = now.toISOString().split('T')[0];
+  const hora  = now.toTimeString().slice(0,5).replace(':','-');
+  const nombre = (loadCfg().empresa?.nombre || 'santaglia').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  return { filename: `${nombre}-${prefix}-${fecha}_${hora}.json`, now };
+}
+
+async function exportarDatos() {
+  const data   = _buildBackupPayload();
+  const { filename, now } = _backupFilename('backup');
+  const json   = JSON.stringify(data, null, 2);
+
+  // Intentar escribir en la carpeta configurada
+  const dirNombre = localStorage.getItem('stgl_backup_dir_name');
+  const savedToDir = await _writeToBackupDir(json, filename);
+
+  if (savedToDir) {
+    toast(`✓ Respaldo guardado en "${dirNombre}" — ${filename}`, 'success');
+  } else {
+    // Fallback: descarga normal al navegador
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    toast('Respaldo descargado en tu carpeta de Descargas.', 'success');
+  }
+
+  localStorage.setItem('stgl_last_backup', now.toISOString());
+  renderBackupStatus();
+}
+
+function _diasDesdeBackup() {
+  const raw = localStorage.getItem('stgl_last_backup');
+  if (!raw) return null;
+  const diff = Date.now() - new Date(raw).getTime();
+  return Math.floor(diff / 86400000);
+}
+
+function renderBackupStatus() {
+  const bar = document.getElementById('backup-status-bar');
+  if (!bar) return;
+  const dias = _diasDesdeBackup();
+  if (dias === null) {
+    bar.style.background = '#fff3cd';
+    bar.style.color = '#856404';
+    bar.style.border = '1px solid #ffc107';
+    bar.innerHTML = '⚠ Nunca has exportado un respaldo. Descarga uno ahora y guárdalo en OneDrive.';
+  } else if (dias === 0) {
+    bar.style.background = '#d1fae5';
+    bar.style.color = '#065f46';
+    bar.style.border = '1px solid #6ee7b7';
+    bar.innerHTML = '✓ Respaldo al día — exportado hoy.';
+  } else if (dias <= 7) {
+    bar.style.background = '#d1fae5';
+    bar.style.color = '#065f46';
+    bar.style.border = '1px solid #6ee7b7';
+    bar.innerHTML = `✓ Último respaldo: hace ${dias} día${dias!==1?'s':''}.`;
+  } else if (dias <= 30) {
+    bar.style.background = '#fff3cd';
+    bar.style.color = '#856404';
+    bar.style.border = '1px solid #ffc107';
+    bar.innerHTML = `⚠ Último respaldo: hace ${dias} días. Te recomendamos exportar uno nuevo.`;
+  } else {
+    bar.style.background = '#fee2e2';
+    bar.style.color = '#991b1b';
+    bar.style.border = '1px solid #f87171';
+    bar.innerHTML = `🚨 Último respaldo: hace ${dias} días. ¡Exporta un respaldo ahora!`;
+  }
+}
+
+/* ── Import ── */
+function importarDatos(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!confirm('¿Importar este respaldo? Esto REEMPLAZARÁ todos los datos actuales del sistema.')) {
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      let count = 0;
+      Object.entries(data).forEach(([key, val]) => {
+        if (key.startsWith('stgl_')) {
+          localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+          count++;
+        }
+      });
+      toast(`Importados ${count} registros — recargando…`, 'success');
+      setTimeout(() => location.reload(), 1800);
+    } catch(err) {
+      toast('Error al importar: el archivo no es un respaldo válido', 'error');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+/* ── Reset individual module ── */
+function resetModulo(key, nombre) {
+  if (!confirm(`¿Limpiar todos los datos de "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  localStorage.removeItem(key);
+  toast(`"${nombre}" limpiado`, 'success');
+  renderDatos();
+}
+
+/* ── Reset total ── */
+function resetTotal() {
+  const confirm1 = confirm('¿Eliminar TODOS los datos del sistema? Esta acción es IRREVERSIBLE.\n\nHaz clic en Cancelar para exportar un respaldo antes.');
+  if (!confirm1) return;
+  const confirm2 = prompt('Escribe CONFIRMAR (en mayúsculas) para continuar:');
+  if (confirm2 !== 'CONFIRMAR') { toast('Operación cancelada','info'); return; }
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key.startsWith('stgl_')) localStorage.removeItem(key);
+  }
+  toast('Todos los datos eliminados — recargando…', 'success');
+  setTimeout(() => location.reload(), 1800);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   APPLY GLOBAL CONFIG (branding for this page)
+══════════════════════════════════════════════════════════════ */
+function applyGlobalConfig() {
+  try {
+    const cfg = loadCfg();
+    const a   = cfg.apariencia;
+
+    if (a.colorPrimario) {
+      document.documentElement.style.setProperty('--navy', a.colorPrimario);
+      const rgb = hexToRgbStr(a.colorPrimario);
+      if (rgb) document.documentElement.style.setProperty('--navy-pale', `rgba(${rgb},0.07)`);
+    }
+
+    if (a.logo) {
+      document.querySelectorAll('img.brand-logo').forEach(el => el.src = a.logo);
+      document.querySelectorAll('footer img[alt]').forEach(el => el.src = a.logo);
+    }
+
+    const nombre = a.nombreSistema || cfg.empresa?.nombre;
+    if (nombre) document.title = document.title.replace('Santaglia', nombre);
+
+    // Module nav visibility
+    if (cfg.modulos) {
+      const navMap = {
+        facturacion: 'facturacion.html', proyectos: 'proyectos.html',
+        nomina: 'nomina.html', retenciones: 'retenciones.html',
+        financiero: 'financiero.html', egresos: 'egresos.html',
+        recurrentes: 'recurrentes.html', proyectados: 'proyectados.html',
+        documentos: 'documentos.html', galeria: 'galeria.html',
+      };
+      Object.entries(navMap).forEach(([mod, href]) => {
+        document.querySelectorAll(`.nav-menu-item[href="${href}"]`).forEach(el => {
+          el.style.display = cfg.modulos[mod] === false ? 'none' : '';
+        });
+      });
+    }
+  } catch(e) {}
+}
+
+function hexToRgbStr(hex) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : null;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+loadEmpresa();
+loadApariencia();
+renderModulos();
+renderAllTags();
+renderPlantillas();
+applyGlobalConfig();
+// Seed collaborators if not yet initialized
+loadColabCfg();
+</script>
+</body>
+</html>

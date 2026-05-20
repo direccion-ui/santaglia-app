@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Nómina</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .table-wrap { overflow-x: auto; max-height: 68vh; overflow-y: auto; }
+    .fact-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 900px; }
+    .fact-table thead { position: sticky; top: 0; z-index: 10; }
+    .fact-table th {
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--brand);
+      font-size: 0.61rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.12);
+    }
+    .fact-table th:last-child { border-right: none; }
+    .fact-table td {
+      padding: 0.42rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      vertical-align: middle;
+      white-space: nowrap;
+      color: var(--text);
+    }
+    .fact-table td:last-child { border-right: none; }
+    .fact-table tbody tr:nth-child(even) td { background: #f8f9fc; }
+    .fact-table tbody tr:hover td { background: var(--navy-pale) !important; }
+    .fact-table .num { text-align: right; font-family: 'Courier New', monospace; }
+    .fact-table .center { text-align: center; }
+    .fact-table tfoot td {
+      border-top: 2px solid var(--navy);
+      border-bottom: none;
+      background: #e8ecf8;
+      font-weight: 700;
+      font-family: var(--brand);
+      font-size: 0.7rem;
+      padding: 0.45rem 0.6rem;
+      color: var(--navy);
+    }
+
+    /* Resumen bar */
+    .resumen-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border); border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .resumen-item { background: var(--bg-white); padding: 1rem 1.25rem; }
+    .resumen-label { font-family: var(--brand); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.3rem; }
+    .resumen-val { font-family: var(--brand); font-size: 1.25rem; font-weight: 700; color: var(--navy); }
+    .resumen-val.green { color: var(--green); }
+    .resumen-val.red   { color: var(--red); }
+    .resumen-val.gold  { color: #8a6800; }
+    .resumen-sub { font-size: 0.68rem; color: var(--text-xs); margin-top: 0.15rem; }
+
+    /* Period/Tab buttons */
+    .period-btns { display:flex; gap:0; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .period-btn {
+      padding:0.28rem 0.75rem; font-size:0.72rem; font-family:var(--brand); font-weight:700;
+      border:none; border-right:1px solid var(--border); background:var(--bg-white);
+      color:var(--text-dim); cursor:pointer; transition:all 0.15s; letter-spacing:0.04em;
+    }
+    .period-btn:last-child { border-right:none; }
+    .period-btn:hover { background:#f0f2f8; color:var(--navy); }
+    .period-btn.active { background:var(--navy); color:#fff; }
+
+    /* Toolbar */
+    .toolbar { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.85rem; }
+    .toolbar input, .toolbar select {
+      padding: 0.42rem 0.7rem; font-size: 0.78rem;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      background: var(--bg-white); color: var(--text);
+    }
+    .toolbar input:focus, .toolbar select:focus { outline: none; border-color: var(--navy); }
+    .toolbar input[type="text"] { min-width: 200px; }
+
+    /* Row actions */
+    .del-row { background: none; border: none; cursor: pointer; color: var(--text-xs); font-size: 0.85rem; padding: 0.1rem 0.25rem; border-radius: 2px; }
+    .del-row:hover { color: var(--red); background: #fdecea; }
+
+    /* Toggle persona columns button */
+    .btn-toggle-persona { font-size: 0.72rem; padding: 0.3rem 0.75rem; white-space: nowrap; }
+
+    /* Hidden persona columns */
+    .col-persona     { display: none; }
+    .col-persona.visible { display: table-cell; }
+    .col-persona-hon { display: none; }
+    .col-persona-hon.visible { display: table-cell; }
+
+    /* Filter row */
+    .fact-table .filter-row th {
+      background: #1e3595;
+      padding: 0.28rem 0.4rem;
+    }
+    .col-filter {
+      width: 100%;
+      padding: 0.18rem 0.35rem;
+      font-size: 0.67rem;
+      font-family: var(--font);
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 2px;
+      color: #fff;
+      outline: none;
+      font-weight: 400;
+    }
+    .col-filter::placeholder { color: rgba(255,255,255,0.4); font-style: italic; }
+    .col-filter:focus { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.5); }
+
+    /* Modal grid */
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; }
+    .modal-grid .span2 { grid-column: span 2; }
+    .persona-section { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; }
+    .persona-section-title { font-family: var(--brand); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin-bottom: 0.6rem; }
+    .persona-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+    .subtotals-row { background: var(--navy-pale); border-radius: var(--radius); padding: 0.5rem 0.75rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; font-family: var(--brand); font-size: 0.72rem; font-weight: 700; color: var(--navy); }
+
+    @media (max-width: 900px) { .resumen-bar { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item active" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Control de nómina</div>
+          <h1 class="page-heading">Nómina</h1>
+          <div class="page-meta" id="nom-meta"></div>
+        </div>
+        <div class="flex gap-1" id="page-header-btns">
+          <!-- dynamic buttons injected per tab -->
+        </div>
+      </div>
+
+      <!-- Tab switcher -->
+      <div style="margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <div class="period-btns" style="display:inline-flex;">
+          <button class="period-btn active" id="tab-asim" onclick="switchTab('asim')">Asimilables</button>
+          <button class="period-btn" id="tab-hon" onclick="switchTab('hon')">Honorarios</button>
+        </div>
+        <a href="configuracion.html#colaboradores" style="font-size:0.68rem; color:var(--text-xs); font-family:var(--brand); font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; opacity:0.7;" title="Gestionar catálogo de colaboradores">
+          👥 Gestionar colaboradores ↗
+        </a>
+      </div>
+
+      <!-- ══════════════════════════════
+           SECTION: ASIMILABLES
+      ══════════════════════════════ -->
+      <div id="section-asim">
+
+        <!-- KPI bar -->
+        <div class="resumen-bar" id="asim-kpi-bar">
+          <div class="resumen-item">
+            <div class="resumen-label">Total Bruto</div>
+            <div class="resumen-val" id="asim-kpi-bruto">$0</div>
+          </div>
+          <div class="resumen-item">
+            <div class="resumen-label">Total Retención</div>
+            <div class="resumen-val red" id="asim-kpi-ret">$0</div>
+          </div>
+          <div class="resumen-item">
+            <div class="resumen-label">Total Neto</div>
+            <div class="resumen-val green" id="asim-kpi-neto">$0</div>
+          </div>
+          <div class="resumen-item">
+            <div class="resumen-label">N° Registros</div>
+            <div class="resumen-val" id="asim-kpi-count">0</div>
+          </div>
+        </div>
+
+        <!-- Year selector (asim) -->
+        <div id="asim-year-selector"></div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <input type="text" id="asim-buscar" placeholder="Buscar en todos los años…" oninput="renderAsim()" />
+          <input type="month" id="asim-desde" onchange="renderAsim()" title="Desde" />
+          <span style="font-size:0.75rem; color:var(--text-dim);">→</span>
+          <input type="month" id="asim-hasta" onchange="renderAsim()" title="Hasta" />
+          <button class="btn btn-ghost btn-toggle-persona" id="btn-toggle-persona" onclick="togglePersona()">Mostrar desglose por persona</button>
+        </div>
+
+        <!-- Table -->
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="fact-table" id="asim-table">
+              <thead id="asim-thead"></thead>
+              <tbody id="asim-tbody"></tbody>
+              <tfoot id="asim-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /section-asim -->
+
+      <!-- ══════════════════════════════
+           SECTION: HONORARIOS
+      ══════════════════════════════ -->
+      <div id="section-hon" class="hidden">
+
+        <!-- KPI bar -->
+        <div class="resumen-bar">
+          <div class="resumen-item">
+            <div class="resumen-label">Total Bruto</div>
+            <div class="resumen-val" id="hon-kpi-bruto">$0</div>
+          </div>
+          <div class="resumen-item">
+            <div class="resumen-label">Total IVA</div>
+            <div class="resumen-val" id="hon-kpi-iva">$0</div>
+          </div>
+          <div class="resumen-item">
+            <div class="resumen-label">Total Ret.</div>
+            <div class="resumen-val red" id="hon-kpi-ret">$0</div>
+          </div>
+          <div class="resumen-item">
+            <div class="resumen-label">Neto Pagado</div>
+            <div class="resumen-val green" id="hon-kpi-neto">$0</div>
+          </div>
+        </div>
+
+        <!-- Year selector (hon) -->
+        <div id="hon-year-selector"></div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <input type="text" id="hon-buscar" placeholder="Buscar en todos los años…" oninput="renderHon()" />
+          <input type="month" id="hon-desde" onchange="renderHon()" title="Desde" />
+          <span style="font-size:0.75rem; color:var(--text-dim);">→</span>
+          <input type="month" id="hon-hasta" onchange="renderHon()" title="Hasta" />
+          <button class="btn btn-ghost btn-toggle-persona" id="btn-toggle-prestador" onclick="togglePersonaHon()">Mostrar desglose por prestador</button>
+        </div>
+
+        <!-- Table -->
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="fact-table" id="hon-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Fecha Pago</th>
+                  <th>Mes Fiscal</th>
+                  <th class="col-persona-hon">Prestador</th>
+                  <th class="num">Bruto</th>
+                  <th class="num">IVA</th>
+                  <th class="num">Ret. ISR</th>
+                  <th class="num">Ret. IVA</th>
+                  <th class="num">Neto Pagado</th>
+                  <th class="num">Total Ret.</th>
+                  <th></th>
+                </tr>
+                <!-- Fila de filtros por columna -->
+                <tr class="filter-row">
+                  <th></th>
+                  <th><input class="col-filter" id="hcf-fecha"     placeholder="Fecha…"     oninput="renderHon()" /></th>
+                  <th><input class="col-filter" id="hcf-mes"       placeholder="Mes…"       oninput="renderHon()" /></th>
+                  <th class="col-persona-hon"><input class="col-filter" id="hcf-prestador" placeholder="Prestador…" oninput="renderHon()" /></th>
+                  <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+                </tr>
+              </thead>
+              <tbody id="hon-tbody"></tbody>
+              <tfoot id="hon-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /section-hon -->
+
+      <!-- Colaboradores se gestionan en Configuración → Colaboradores -->
+      <div id="section-colab" class="hidden" style="display:none!important;"></div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ══ MODAL: Nueva entrada Asimilables ══ -->
+<div class="modal-backdrop hidden" id="modal-asim">
+  <div class="modal" style="max-width:780px; max-height:92vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo registro — Asimilables</span>
+      <button class="modal-close" onclick="closeModal('modal-asim')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Fecha de Pago *</label>
+          <input class="form-input" id="a-fecha" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mes Fiscal *</label>
+          <input class="form-input" id="a-mes" type="text" placeholder="Ej: Sep-22" />
+        </div>
+      </div>
+
+      <!-- Personas (generado dinámicamente por abrirAsim) -->
+      <div id="asim-personas-form" style="display:flex; flex-direction:column; gap:0.6rem;">
+        <!-- Se inyecta dinámicamente con los colaboradores activos -->
+      </div>
+
+      <!-- Subtotales -->
+      <div class="subtotals-row" style="margin-top:1rem;" id="asim-subtotales">
+        <div>Subtotal Bruto: <span id="asim-st-bruto">$0.00</span></div>
+        <div>Subtotal Ret.: <span id="asim-st-ret">$0.00</span></div>
+        <div>Subtotal Neto: <span id="asim-st-neto">$0.00</span></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-asim')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarAsim()">Guardar registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Editar registro Honorarios ══ -->
+<div class="modal-backdrop hidden" id="modal-hon-edit">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <span class="modal-title" id="hon-edit-titulo">Editar registro — Honorarios</span>
+      <button class="modal-close" onclick="closeModal('modal-hon-edit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="form-group">
+          <label class="form-label">Fecha de Pago</label>
+          <input class="form-input" id="he-fecha" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mes Fiscal</label>
+          <input class="form-input" id="he-mes" type="text" placeholder="Ej: Mar-26" />
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Prestador / Receptor</label>
+          <input class="form-input" id="he-prestador" type="text" placeholder="Nombre del prestador de servicios" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bruto</label>
+          <input class="form-input" id="he-bruto" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonEdit()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">IVA (16% auto, editable)</label>
+          <input class="form-input" id="he-iva" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonEditNeto()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ret. ISR (10% auto, editable)</label>
+          <input class="form-input" id="he-ret-isr" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonEditNeto()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ret. IVA (10.6667% auto, editable)</label>
+          <input class="form-input" id="he-ret-iva" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonEditNeto()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Neto Pagado (auto)</label>
+          <input class="form-input" id="he-pagado" type="text" readonly style="background:#e8ecf8; color:var(--navy); font-weight:700;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total Retenciones (auto)</label>
+          <input class="form-input" id="he-total-ret" type="text" readonly style="background:#f4f5f8; color:var(--text-dim);" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-hon-edit')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEditarHon()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Nueva entrada Honorarios ══ -->
+<div class="modal-backdrop hidden" id="modal-hon">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo registro — Honorarios</span>
+      <button class="modal-close" onclick="closeModal('modal-hon')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="form-group">
+          <label class="form-label">Fecha de Pago *</label>
+          <input class="form-input" id="h-fecha" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mes Fiscal *</label>
+          <input class="form-input" id="h-mes" type="text" placeholder="Ej: Sep-22" />
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Prestador / Receptor</label>
+          <input class="form-input" id="h-prestador" type="text" placeholder="Nombre del prestador de servicios" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bruto *</label>
+          <input class="form-input" id="h-bruto" type="number" min="0" step="any" placeholder="0.00" oninput="calcHon()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">IVA (16% auto, editable)</label>
+          <input class="form-input" id="h-iva" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonNeto()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ret. ISR (10% auto, editable)</label>
+          <input class="form-input" id="h-ret-isr" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonNeto()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ret. IVA (10.6667% auto, editable)</label>
+          <input class="form-input" id="h-ret-iva" type="number" min="0" step="any" placeholder="0.00" oninput="calcHonNeto()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Neto Pagado (auto)</label>
+          <input class="form-input" id="h-pagado" type="text" readonly style="background:#e8ecf8; color:var(--navy); font-weight:700;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total Retenciones (auto)</label>
+          <input class="form-input" id="h-total-ret" type="text" readonly style="background:#f4f5f8; color:var(--text-dim);" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-hon')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarHon()">Guardar registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Importar CFDI XML ══ -->
+<div class="modal-backdrop hidden" id="modal-cfdi">
+  <div class="modal" style="max-width:820px; max-height:92vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title">Importar CFDI XML — Nómina y Honorarios</span>
+      <button class="modal-close" onclick="closeModal('modal-cfdi')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Drop zone -->
+      <div id="cfdi-dropzone"
+        style="border:2px dashed var(--border); border-radius:var(--radius); padding:2rem; text-align:center;
+               cursor:pointer; transition:all 0.15s; margin-bottom:1rem;"
+        onclick="document.getElementById('cfdi-file-input').click()"
+        ondragover="event.preventDefault(); this.style.borderColor='var(--navy)'; this.style.background='var(--navy-pale)';"
+        ondragleave="this.style.borderColor=''; this.style.background='';"
+        ondrop="event.preventDefault(); this.style.borderColor=''; this.style.background=''; handleCFDIDrop(event.dataTransfer.files);">
+        <input type="file" id="cfdi-file-input" accept=".xml" multiple style="display:none;"
+          onchange="handleCFDIDrop(this.files)" />
+        <div style="font-family:var(--brand); font-size:0.78rem; font-weight:700; color:var(--navy); margin-bottom:0.3rem;">
+          📎 Arrastra los archivos XML aquí o haz clic para seleccionar
+        </div>
+        <div style="font-size:0.68rem; color:var(--text-xs);">
+          Acepta CFDI de nómina (TipoDeComprobante=N) y de honorarios (TipoDeComprobante=I con retenciones ISR+IVA)
+        </div>
+      </div>
+
+      <!-- File list + parse status -->
+      <div id="cfdi-file-list" style="margin-bottom:0.75rem;"></div>
+
+      <!-- Mapping config (shown when auto-detect fails) -->
+      <div id="cfdi-mapping-panel" style="display:none; border:1px solid #f5c842; border-radius:var(--radius);
+           background:#fffdf0; padding:0.75rem; margin-bottom:0.75rem; font-size:0.78rem;">
+        <div style="font-family:var(--brand); font-weight:700; font-size:0.68rem; letter-spacing:0.08em;
+             text-transform:uppercase; color:#8a6800; margin-bottom:0.5rem;">
+          ⚠ Empleados sin mapear — asigna cada nombre a su columna
+        </div>
+        <div id="cfdi-mapping-rows"></div>
+      </div>
+
+      <!-- Asimilables preview -->
+      <div id="cfdi-asim-preview" style="display:none; margin-bottom:1rem;">
+        <div style="font-family:var(--brand); font-size:0.68rem; font-weight:700; letter-spacing:0.08em;
+             text-transform:uppercase; color:var(--navy); margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+          <span>Nómina (Asimilables)</span>
+          <span id="cfdi-asim-count" class="badge badge-navy" style="font-size:0.6rem;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="fact-table" style="min-width:600px; font-size:0.72rem;">
+            <thead><tr>
+              <th>Fecha Pago</th><th>Mes Fiscal</th>
+              <th class="num">Bruto</th><th class="num">Ret.</th><th class="num">Neto</th>
+              <th>Empleados detectados</th><th class="center">¿Duplicado?</th>
+            </tr></thead>
+            <tbody id="cfdi-asim-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Honorarios preview -->
+      <div id="cfdi-hon-preview" style="display:none; margin-bottom:1rem;">
+        <div style="font-family:var(--brand); font-size:0.68rem; font-weight:700; letter-spacing:0.08em;
+             text-transform:uppercase; color:var(--navy); margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+          <span>Honorarios</span>
+          <span id="cfdi-hon-count" class="badge badge-navy" style="font-size:0.6rem;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="fact-table" style="min-width:700px; font-size:0.72rem;">
+            <thead><tr>
+              <th>Fecha</th><th>Mes Fiscal</th><th>Prestador</th>
+              <th class="num">Bruto</th><th class="num">IVA</th>
+              <th class="num">Ret.ISR</th><th class="num">Ret.IVA</th>
+              <th class="num">Pagado</th><th class="center">¿Duplicado?</th>
+            </tr></thead>
+            <tbody id="cfdi-hon-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Errores -->
+      <div id="cfdi-errores" style="display:none; font-size:0.72rem; color:var(--red);"></div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cfdi')">Cancelar</button>
+      <button class="btn btn-primary" id="cfdi-import-btn" style="display:none;" onclick="importarCFDIs()">
+        ✓ Guardar registros
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: RFC No Registrado ══ -->
+<div class="modal-backdrop hidden" id="modal-rfc-desconocido">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">RFC no registrado — Alta de Colaborador</span>
+      <button class="modal-close" onclick="cerrarRfcDesconocido()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fff8f0; border:1px solid #f5c842; border-radius:var(--radius); padding:0.75rem; margin-bottom:1rem; font-size:0.78rem;">
+        &#x26A0; El RFC <strong id="rfc-desc-rfc"></strong> del CFDI (<span id="rfc-desc-nombre" style="color:var(--navy);"></span>) no está en el catálogo de colaboradores. Completa los datos para darlo de alta.
+      </div>
+      <input type="hidden" id="rfc-desc-rfc-hidden" />
+      <div class="modal-grid">
+        <div class="form-group">
+          <label class="form-label">RFC</label>
+          <input class="form-input" id="rfc-new-rfc" type="text" readonly style="background:#f4f5f8;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alias (clave única) *</label>
+          <input class="form-input" id="rfc-new-alias" type="text" placeholder="cestr" oninput="this.value=this.value.toLowerCase().replace(/\s+/g,'')" />
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Nombre Completo</label>
+          <input class="form-input" id="rfc-new-nombre" type="text" readonly style="background:#f4f5f8;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre Corto / Display</label>
+          <input class="form-input" id="rfc-new-nombreCorto" type="text" placeholder="Carlos T. Ruiz" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input class="form-input" id="rfc-new-telefono" type="tel" placeholder="55 1234 5678" />
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Dirección</label>
+          <input class="form-input" id="rfc-new-direccion" type="text" placeholder="Calle 123, Col. Centro, CDMX 06000" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarRfcDesconocido()">Cancelar — omitir este CFDI</button>
+      <button class="btn btn-primary" onclick="guardarRfcDesconocido()">Dar de alta y continuar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script>
+
+const KEY_ASIM  = 'stgl_asimilables';
+const KEY_HON   = 'stgl_honorarios';
+const KEY_COLAB = 'stgl_colaboradores';
+
+/* Colaboradores semilla (se usan si no hay datos en localStorage) */
+const COLABORADORES_SEMILLA = [
+  { id:'col-lourdes',        rfc:'',              nombre:'LOURDES URIBE',                                   nombreCorto:'Lourdes',   alias:'lourdes', telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-MEMA730801AK7',  rfc:'MEMA730801AK7', nombre:'ANA MARIA MENDIOLA MARTINEZ',                    nombreCorto:'Ana Ma.',   alias:'anama',   telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-SAMC040713HI8',  rfc:'SAMC040713HI8', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE MENDIOLA',       nombreCorto:'CESTM',     alias:'cestm',   telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-SARC690526MW7',  rfc:'SARC690526MW7', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE RUIZ',           nombreCorto:'CESTR',     alias:'cestr',   telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-jfabela',        rfc:'',              nombre:'J. FABELA',                                       nombreCorto:'J. Fabela', alias:'jfabela', telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+];
+
+function loadColaboradores() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(KEY_COLAB) || 'null');
+    if (stored && stored.length) return stored;
+    saveColaboradores(COLABORADORES_SEMILLA);
+    return JSON.parse(JSON.stringify(COLABORADORES_SEMILLA));
+  } catch { return JSON.parse(JSON.stringify(COLABORADORES_SEMILLA)); }
+}
+function saveColaboradores(arr) { localStorage.setItem(KEY_COLAB, JSON.stringify(arr)); }
+function getColaboradorByRfc(rfc) {
+  if (!rfc) return null;
+  return loadColaboradores().find(c => c.rfc && c.rfc.toUpperCase() === rfc.toUpperCase()) || null;
+}
+function getColaboradorByAlias(alias) {
+  return loadColaboradores().find(c => c.alias === alias) || null;
+}
+function getActiveColaboradores() {
+  return loadColaboradores().filter(c => c.activo);
+}
+
+/* ── Utilidades ── */
+function fmtNum(n) { return Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtM(n)   { return n>=1000000 ? '$'+(n/1000000).toFixed(2)+'M' : '$'+(n/1000).toFixed(1)+'K'; }
+function parseNum(s) { return parseFloat((s||'0').toString().replace(/,/g,''))||0; }
+function fv(id) { return parseFloat(document.getElementById(id)?.value||'0')||0; }
+
+/* ── Tab switch ── */
+let currentTab = 'asim';
+let personaVisible = false;
+
+/* ── Año seleccionado por sección ── */
+let selectedAsimYear = new Date().getFullYear();
+let selectedHonYear  = new Date().getFullYear();
+
+/**
+ * Renderiza los botones de año en el contenedor dado.
+ * dataYears: string[] de años encontrados en los datos (ej. ['2022','2023'])
+ * selected: number|null  (null = Todos)
+ * sectionPrefix: 'asim' | 'hon'
+ */
+function renderNominaYearBtns(containerId, dataYears, selected, sectionPrefix) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const cur = new Date().getFullYear();
+  const years = [...new Set([...dataYears.map(Number), cur])].sort((a,b)=>a-b);
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+      <span style="font-family:var(--brand); font-size:0.7rem; font-weight:700; color:var(--text-dim); letter-spacing:0.06em; text-transform:uppercase;">Año:</span>
+      <div class="period-btns">
+        ${years.map(y => `<button class="period-btn${y===selected?' active':''}" onclick="select${sectionPrefix==='asim'?'Asim':'Hon'}Year(${y})">${y}</button>`).join('')}
+        <button class="period-btn${selected===null?' active':''}" onclick="select${sectionPrefix==='asim'?'Asim':'Hon'}Year(null)">Todos</button>
+      </div>
+      <span id="${containerId}-note" style="font-size:0.67rem; color:var(--navy); font-style:italic; font-family:var(--brand); display:none;">🔍 Buscando en todos los años</span>
+    </div>`;
+}
+
+function selectAsimYear(y) { selectedAsimYear = y; renderAsim(); }
+function selectHonYear(y)  { selectedHonYear  = y; renderHon(); }
+
+/* Read sub-feature flags from stgl_config so nomina respects the module toggles */
+function getNominaSubfeatures() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+    const m = cfg.modulos || {};
+    return {
+      sueldos:     m.nomina_sueldos     !== false,
+      asimilables: m.nomina_asimilables !== false,
+      honorarios:  m.nomina_honorarios  !== false,
+    };
+  } catch { return { sueldos:true, asimilables:true, honorarios:true }; }
+}
+
+function applyNominaSubfeatures() {
+  const sf = getNominaSubfeatures();
+  const tabAsim = document.getElementById('tab-asim');
+  const tabHon  = document.getElementById('tab-hon');
+  if (tabAsim) tabAsim.style.display = sf.asimilables ? '' : 'none';
+  if (tabHon)  tabHon.style.display  = sf.honorarios  ? '' : 'none';
+  // If current tab was hidden by config, switch to first visible (no recursion: just set currentTab)
+  if (currentTab === 'asim' && !sf.asimilables && sf.honorarios) switchTab('hon');
+  else if (currentTab === 'hon' && !sf.honorarios && sf.asimilables) switchTab('asim');
+}
+
+function switchTab(tab) {
+  ['asim','hon'].forEach(t => {
+    document.getElementById(`tab-${t}`)?.classList.toggle('active', t === tab);
+    document.getElementById(`section-${t}`)?.classList.toggle('hidden', t !== tab);
+  });
+  currentTab = tab;
+  renderHeaderBtns();
+  if (tab === 'asim')     renderAsim();
+  else if (tab === 'hon') renderHon();
+}
+
+function renderHeaderBtns() {
+  const c = document.getElementById('page-header-btns');
+  if (currentTab === 'asim') {
+    const satCuenta = localStorage.getItem(KEY_SAT_CUENTA) || '';
+    const satLabel  = satCuenta
+      ? `⚙ SAT: ${satCuenta}`
+      : `⚙ Configurar cuenta SAT`;
+    const satStyle  = satCuenta ? '' : 'color:var(--red);border-color:var(--red);';
+    c.innerHTML = `
+      <button class="btn btn-ghost" style="font-size:0.7rem;${satStyle}" title="Cuenta desde la que se pagan retenciones al SAT" onclick="configurarCuentaSAT()">${satLabel}</button>
+      <button class="btn btn-ghost" onclick="importarAsim()">&#x2191; Importar histórico</button>
+      <button class="btn btn-ghost" onclick="abrirCFDI()">&#x1F4CE; CFDI XML</button>
+      <button class="btn btn-primary" onclick="abrirAsim()">+ Nuevo registro</button>`;
+  } else if (currentTab === 'hon') {
+    c.innerHTML = `
+      <button class="btn btn-ghost" onclick="importarHon()">&#x2191; Importar histórico</button>
+      <button class="btn btn-ghost" onclick="abrirCFDI()">&#x1F4CE; CFDI XML</button>
+      <button class="btn btn-primary" onclick="openModal('modal-hon')">+ Nuevo registro</button>`;
+  } else {
+    c.innerHTML = '';
+  }
+}
+
+/* ── Toggle persona columns ── */
+function togglePersona() {
+  personaVisible = !personaVisible;
+  document.querySelectorAll('.col-persona').forEach(el => el.classList.toggle('visible', personaVisible));
+  document.getElementById('btn-toggle-persona').textContent =
+    personaVisible ? 'Ocultar desglose por persona' : 'Mostrar desglose por persona';
+  document.getElementById('btn-toggle-persona').classList.toggle('btn-primary', personaVisible);
+}
+
+let personaVisibleHon = false;
+function togglePersonaHon() {
+  personaVisibleHon = !personaVisibleHon;
+  document.querySelectorAll('.col-persona-hon').forEach(el => el.classList.toggle('visible', personaVisibleHon));
+  document.getElementById('btn-toggle-prestador').textContent =
+    personaVisibleHon ? 'Ocultar desglose por prestador' : 'Mostrar desglose por prestador';
+  document.getElementById('btn-toggle-prestador').classList.toggle('btn-primary', personaVisibleHon);
+}
+
+/* ═══════════════════════════════
+   ASIMILABLES
+═══════════════════════════════ */
+
+/* Migración: convierte registros del formato plano antiguo al nuevo formato perPersona */
+function migrateAsimRecord(rec) {
+  if (rec.perPersona) return rec; // ya está migrado
+  const OLD_MAP = {
+    lourdes: { bKey:'lourdesBruto', rKey:'lourdesRet', nKey:'lourdesNeto' },
+    anama:   { bKey:'anaMaBruto',   rKey:'anaMaRet',   nKey:'anaMaNeto'   },
+    cestm:   { bKey:'cestmBruto',   rKey:'cestmRet',   nKey:'cestmNeto'   },
+    cestr:   { bKey:'cestrBruto',   rKey:'cestrRet',   nKey:'cestrNeto'   },
+    jfabela: { bKey:'jfabelaBruto', rKey:'jfabelaRet', nKey:'jfabelaNeto' },
+  };
+  const perPersona = {};
+  const colabs = loadColaboradores();
+  for (const [alias, keys] of Object.entries(OLD_MAP)) {
+    const bruto = parseNum(rec[keys.bKey]);
+    const ret   = parseNum(rec[keys.rKey]);
+    if (!bruto && !ret) continue;
+    const col = colabs.find(c => c.alias === alias);
+    const key = col?.rfc || alias;
+    perPersona[key] = {
+      alias,
+      nombre:      col?.nombre      || alias,
+      nombreCorto: col?.nombreCorto || alias,
+      rfc:         col?.rfc         || '',
+      bruto, ret, neto: parseNum(rec[keys.nKey]),
+    };
+  }
+  return { ...rec, perPersona };
+}
+
+function renderAsim() {
+  const colabs  = getActiveColaboradores();
+  const rawAll  = loadRegistry(KEY_ASIM);
+  const all     = rawAll.map(migrateAsimRecord)
+                        .filter(r => parseNum(r.subtotalBruto) > 0 || parseNum(r.subtotalRet) > 0);
+  const buscar  = (document.getElementById('asim-buscar')?.value||'').toLowerCase().trim();
+  const desde   = document.getElementById('asim-desde')?.value||'';
+  const hasta   = document.getElementById('asim-hasta')?.value||'';
+  const cfFecha = (document.getElementById('acf-fecha')?.value||'').trim();
+  const cfMes   = (document.getElementById('acf-mes')?.value||'').toLowerCase().trim();
+
+  /* ── Año selector ── */
+  const asimYears = [...new Set(all.map(r => (r.fechaPago||'').substring(0,4)).filter(Boolean))];
+  renderNominaYearBtns('asim-year-selector', asimYears, selectedAsimYear, 'asim');
+
+  /* Si hay búsqueda activa → ignorar el filtro de año y buscar en todo el histórico */
+  const searchActive = !!(buscar || cfFecha || cfMes);
+  const noteEl = document.getElementById('asim-year-selector-note');
+  if (noteEl) noteEl.style.display = (searchActive && selectedAsimYear !== null) ? '' : 'none';
+
+  /* Datos base: filtro de año (omitido cuando hay búsqueda) */
+  let data = [...all];
+  if (!searchActive && selectedAsimYear !== null) {
+    data = data.filter(r => (r.fechaPago||'').startsWith(String(selectedAsimYear)));
+  }
+  /* Resto de filtros */
+  if (buscar)  data = data.filter(r => JSON.stringify(r).toLowerCase().includes(buscar));
+  if (desde)   data = data.filter(r => (r.fechaPago||'') >= desde);
+  if (hasta)   data = data.filter(r => (r.fechaPago||'') <= hasta+'-31');
+  if (cfFecha) data = data.filter(r => (r.fechaPago||'').includes(cfFecha));
+  if (cfMes)   data = data.filter(r => (r.mesFiscal||'').toLowerCase().includes(cfMes));
+
+  /* KPIs — reflejan el año seleccionado (o todo el histórico si Todos) */
+  const kpiData = (selectedAsimYear !== null)
+    ? all.filter(r => (r.fechaPago||'').startsWith(String(selectedAsimYear)))
+    : all;
+  const totB = kpiData.reduce((s,r)=>s+parseNum(r.subtotalBruto),0);
+  const totR = kpiData.reduce((s,r)=>s+parseNum(r.subtotalRet),0);
+  const totN = kpiData.reduce((s,r)=>s+parseNum(r.subtotalNeto),0);
+  document.getElementById('asim-kpi-bruto').textContent = '$'+fmtNum(totB);
+  document.getElementById('asim-kpi-ret').textContent   = '$'+fmtNum(totR);
+  document.getElementById('asim-kpi-neto').textContent  = '$'+fmtNum(totN);
+  document.getElementById('asim-kpi-count').textContent = kpiData.length;
+  const yearLabel = selectedAsimYear ? `${selectedAsimYear}` : 'histórico completo';
+  document.getElementById('nom-meta').textContent =
+    searchActive
+      ? `🔍 ${data.length} resultado${data.length!==1?'s':''} en todo el histórico`
+      : `${data.length} de ${kpiData.length} registros · ${yearLabel}`;
+
+  /* ---- Generar thead dinámicamente ---- */
+  const v = personaVisible ? ' visible' : '';
+  const personaHeaders = colabs.map(c =>
+    `<th class="col-persona num">${c.nombreCorto} B</th>
+     <th class="col-persona num">Ret</th>
+     <th class="col-persona num">${c.nombreCorto} N</th>`
+  ).join('');
+  const personaFilterHeaders = colabs.map(c =>
+    `<th class="col-persona"><input class="col-filter" id="acf-${c.alias}" placeholder="≥ monto"
+       oninput="renderAsim()" /></th>
+     <th class="col-persona"></th><th class="col-persona"></th>`
+  ).join('');
+
+  document.getElementById('asim-thead').innerHTML = `
+    <tr>
+      <th>#</th><th>Fecha Pago</th><th>Mes Fiscal</th>
+      <th class="num">Bruto</th><th class="num" style="color:#f8c6c6;">Ret.</th>
+      <th class="num" style="color:#c6f0d8;">Neto</th>
+      ${personaHeaders}
+      <th></th>
+    </tr>
+    <tr class="filter-row">
+      <th></th>
+      <th><input class="col-filter" id="acf-fecha" placeholder="Fecha…" oninput="renderAsim()" /></th>
+      <th><input class="col-filter" id="acf-mes" placeholder="Mes…" oninput="renderAsim()" /></th>
+      <th></th><th></th><th></th>
+      ${personaFilterHeaders}
+      <th></th>
+    </tr>`;
+
+  if (!data.length) {
+    const emptyMsg = searchActive
+      ? `Sin resultados para "${buscar || cfFecha || cfMes}" en el histórico completo`
+      : (selectedAsimYear !== null && all.length > 0)
+        ? `Sin registros para ${selectedAsimYear} — cambia de año o haz una búsqueda`
+        : 'Sin registros — importa el histórico o agrega uno nuevo';
+    document.getElementById('asim-tbody').innerHTML = `<tr><td colspan="${6 + colabs.length * 3 + 1}"
+      style="text-align:center;padding:3rem;color:var(--text-xs);">${emptyMsg}</td></tr>`;
+    document.getElementById('asim-tfoot').innerHTML = '';
+    return;
+  }
+
+  /* ---- Helper para obtener datos de un colaborador en un registro ---- */
+  function getPP(rec, col) {
+    const pp = rec.perPersona || {};
+    return pp[col.rfc] || pp[col.alias] || { bruto:0, ret:0, neto:0 };
+  }
+
+  /* Filtros por colaborador */
+  for (const col of colabs) {
+    const cf = parseFloat(document.getElementById(`acf-${col.alias}`)?.value || '');
+    if (!isNaN(cf) && cf > 0) {
+      data = data.filter(r => parseNum(getPP(r, col).bruto) >= cf);
+    }
+  }
+
+  document.getElementById('asim-tbody').innerHTML = data.map((r,i) => {
+    const personaCells = colabs.map(col => {
+      const pp = getPP(r, col);
+      return `
+        <td class="col-persona num${v}">${pp.bruto ? '$'+fmtNum(pp.bruto) : '—'}</td>
+        <td class="col-persona num${v}" style="color:var(--red);">${pp.ret ? '$'+fmtNum(pp.ret) : '—'}</td>
+        <td class="col-persona num${v}">${pp.neto ? '$'+fmtNum(pp.neto) : '—'}</td>`;
+    }).join('');
+    return `<tr data-id="${r.id}">
+      <td style="font-family:var(--brand);font-weight:700;color:var(--navy);">${i+1}</td>
+      <td>${r.fechaPago||'—'}</td>
+      <td><span class="badge badge-navy" style="font-size:0.65rem;">${r.mesFiscal||'—'}</span></td>
+      <td class="num" style="font-weight:700;">$${fmtNum(r.subtotalBruto)}</td>
+      <td class="num" style="color:var(--red);">$${fmtNum(r.subtotalRet)}</td>
+      <td class="num" style="color:var(--green);font-weight:600;">$${fmtNum(r.subtotalNeto)}</td>
+      ${personaCells}
+      <td><button class="del-row" onclick="eliminarAsim('${r.id}')" title="Eliminar">&#x2715;</button></td>
+    </tr>`;
+  }).join('');
+
+  /* Tfoot */
+  const sB = data.reduce((s,r)=>s+parseNum(r.subtotalBruto),0);
+  const sR = data.reduce((s,r)=>s+parseNum(r.subtotalRet),0);
+  const sN = data.reduce((s,r)=>s+parseNum(r.subtotalNeto),0);
+  const pfootCols = colabs.map(col => {
+    const totBc = data.reduce((s,r) => s + parseNum(getPP(r,col).bruto), 0);
+    const totRc = data.reduce((s,r) => s + parseNum(getPP(r,col).ret), 0);
+    const totNc = data.reduce((s,r) => s + parseNum(getPP(r,col).neto), 0);
+    return `<td class="col-persona num${v}">$${fmtNum(totBc)}</td>
+            <td class="col-persona num${v}" style="color:var(--red);">$${fmtNum(totRc)}</td>
+            <td class="col-persona num${v}">$${fmtNum(totNc)}</td>`;
+  }).join('');
+
+  document.getElementById('asim-tfoot').innerHTML = `<tr>
+    <td colspan="3" style="font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;">TOTALES (${data.length})</td>
+    <td class="num">$${fmtNum(sB)}</td>
+    <td class="num" style="color:var(--red);">$${fmtNum(sR)}</td>
+    <td class="num" style="color:var(--green);">$${fmtNum(sN)}</td>
+    ${pfootCols}
+    <td></td>
+  </tr>`;
+}
+
+function eliminarAsim(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  saveRegistry(KEY_ASIM, loadRegistry(KEY_ASIM).filter(r=>r.id!==id));
+  toast('Registro eliminado','success');
+  renderAsim();
+}
+
+/* ── Abrir modal asim dinámicamente ── */
+function abrirAsim() {
+  const colabs = getActiveColaboradores();
+  const container = document.getElementById('asim-personas-form');
+  container.innerHTML = colabs.map(col => `
+    <div class="persona-section">
+      <div class="persona-section-title">${col.nombreCorto || col.alias}</div>
+      <div class="persona-row">
+        <div class="form-group">
+          <label class="form-label">Bruto</label>
+          <input class="form-input" id="a-${col.alias}-b" type="number" min="0" step="any" placeholder="0.00"
+            oninput="autoRetDyn('${col.alias}')" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Retención (ISR 20%)</label>
+          <input class="form-input" id="a-${col.alias}-r" type="number" min="0" step="any" placeholder="0.00"
+            oninput="calcAsimSubtotales()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Neto</label>
+          <input class="form-input" id="a-${col.alias}-n" type="text" readonly
+            style="background:#f4f5f8;color:var(--text-dim);" />
+        </div>
+      </div>
+    </div>`).join('');
+  /* Reset fecha/mes */
+  document.getElementById('a-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('a-mes').value   = '';
+  document.getElementById('asim-st-bruto').textContent = '$0.00';
+  document.getElementById('asim-st-ret').textContent   = '$0.00';
+  document.getElementById('asim-st-neto').textContent  = '$0.00';
+  openModal('modal-asim');
+}
+
+/* ── Auto-calc retención dinámica ── */
+function autoRetDyn(alias) {
+  const b = parseFloat(document.getElementById(`a-${alias}-b`)?.value || 0) || 0;
+  const r = Math.round(b * 0.20 * 100) / 100;
+  const rEl = document.getElementById(`a-${alias}-r`);
+  if (rEl) rEl.value = r > 0 ? r.toFixed(2) : '';
+  calcAsimSubtotales();
+}
+
+function calcAsimSubtotales() {
+  const colabs = getActiveColaboradores();
+  let stB=0, stR=0, stN=0;
+  for (const col of colabs) {
+    const b = parseFloat(document.getElementById(`a-${col.alias}-b`)?.value||0)||0;
+    const r = parseFloat(document.getElementById(`a-${col.alias}-r`)?.value||0)||0;
+    const n = round2(b - r);
+    const nEl = document.getElementById(`a-${col.alias}-n`);
+    if (nEl) nEl.value = (b > 0 || r > 0) ? '$'+fmtNum(n) : '';
+    stB += b; stR += r; stN += n;
+  }
+  const stBEl = document.getElementById('asim-st-bruto');
+  const stREl = document.getElementById('asim-st-ret');
+  const stNEl = document.getElementById('asim-st-neto');
+  if (stBEl) stBEl.textContent = '$'+fmtNum(stB);
+  if (stREl) stREl.textContent = '$'+fmtNum(stR);
+  if (stNEl) stNEl.textContent = '$'+fmtNum(stN);
+}
+
+function guardarAsim() {
+  const fecha = document.getElementById('a-fecha').value;
+  const mes   = document.getElementById('a-mes').value.trim();
+  if (!fecha || !mes) { toast('Fecha y mes fiscal son obligatorios','error'); return; }
+
+  const colabs = getActiveColaboradores();
+  const perPersona = {};
+  let stB = 0, stR = 0, stN = 0;
+
+  for (const col of colabs) {
+    const bruto = parseFloat(document.getElementById(`a-${col.alias}-b`)?.value || 0) || 0;
+    const ret   = parseFloat(document.getElementById(`a-${col.alias}-r`)?.value || 0) || 0;
+    const neto  = round2(bruto - ret);
+    if (!bruto && !ret) continue;
+    const key = col.rfc || col.alias;
+    perPersona[key] = { alias: col.alias, nombre: col.nombre, nombreCorto: col.nombreCorto, rfc: col.rfc, bruto, ret, neto };
+    stB += bruto; stR += ret; stN += neto;
+  }
+
+  const rec = {
+    id: Date.now().toString(),
+    fechaPago: fecha,
+    mesFiscal: mes,
+    perPersona,
+    subtotalBruto: round2(stB),
+    subtotalRet:   round2(stR),
+    subtotalNeto:  round2(stN),
+  };
+
+  const all = loadRegistry(KEY_ASIM);
+  const existIdx = all.findIndex(e => e.fechaPago === fecha);
+  if (existIdx >= 0) {
+    if (!confirm(`Ya existe un registro para ${fecha}. ¿Reemplazar?`)) return;
+    all[existIdx] = { ...all[existIdx], ...rec };
+  } else {
+    all.push(rec);
+  }
+  all.sort((a,b)=>(a.fechaPago||'').localeCompare(b.fechaPago||''));
+  saveRegistry(KEY_ASIM, all);
+  closeModal('modal-asim');
+  toast('Registro guardado','success');
+  renderAsim();
+  syncRetencionesAProyeccion();
+}
+
+/* ── Importar histórico asimilables ── */
+function importarAsim() {
+  const s = document.createElement('script');
+  s.src = 'js/cargar_asimilables.js?t=' + Date.now();
+  s.onerror = () => toast('No se encontró cargar_asimilables.js','error');
+  s.onload = () => { toast('Histórico importado','success'); renderAsim(); };
+  document.head.appendChild(s);
+}
+
+/* ═══════════════════════════════
+   HONORARIOS
+═══════════════════════════════ */
+
+function renderHon() {
+  const rawAll = loadRegistry(KEY_HON);
+  const all    = rawAll.filter(r => parseNum(r.bruto) > 0 || parseNum(r.pagado) > 0);
+  const buscar = (document.getElementById('hon-buscar')?.value||'').toLowerCase().trim();
+  const desde  = document.getElementById('hon-desde')?.value||'';
+  const hasta  = document.getElementById('hon-hasta')?.value||'';
+
+  /* Filtros de columna */
+  const hcfFecha     = (document.getElementById('hcf-fecha')?.value    ||'').trim();
+  const hcfMes       = (document.getElementById('hcf-mes')?.value      ||'').toLowerCase().trim();
+  const hcfPrestador = (document.getElementById('hcf-prestador')?.value||'').toLowerCase().trim();
+
+  /* ── Año selector ── */
+  const honYears = [...new Set(all.map(r => (r.fechaPago||'').substring(0,4)).filter(Boolean))];
+  renderNominaYearBtns('hon-year-selector', honYears, selectedHonYear, 'hon');
+
+  /* Si hay búsqueda activa → ignorar filtro de año */
+  const searchActive = !!(buscar || hcfFecha || hcfMes || hcfPrestador);
+  const noteEl = document.getElementById('hon-year-selector-note');
+  if (noteEl) noteEl.style.display = (searchActive && selectedHonYear !== null) ? '' : 'none';
+
+  /* Datos base: filtro de año (omitido cuando hay búsqueda) */
+  let data = [...all];
+  if (!searchActive && selectedHonYear !== null) {
+    data = data.filter(r => (r.fechaPago||'').startsWith(String(selectedHonYear)));
+  }
+  /* Resto de filtros */
+  if (buscar)       data = data.filter(r => Object.values(r).join(' ').toLowerCase().includes(buscar));
+  if (desde)        data = data.filter(r => (r.fechaPago||'') >= desde);
+  if (hasta)        data = data.filter(r => (r.fechaPago||'') <= hasta+'-31');
+  if (hcfFecha)     data = data.filter(r => (r.fechaPago||'').includes(hcfFecha));
+  if (hcfMes)       data = data.filter(r => (r.mesFiscal||'').toLowerCase().includes(hcfMes));
+  if (hcfPrestador) data = data.filter(r => (r.prestador||'').toLowerCase().includes(hcfPrestador));
+
+  /* KPIs — reflejan el año seleccionado (o todo si Todos) */
+  const kpiData = (selectedHonYear !== null)
+    ? all.filter(r => (r.fechaPago||'').startsWith(String(selectedHonYear)))
+    : all;
+  document.getElementById('hon-kpi-bruto').textContent = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.bruto),0));
+  document.getElementById('hon-kpi-iva').textContent   = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.iva),0));
+  document.getElementById('hon-kpi-ret').textContent   = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.totalRetenciones),0));
+  document.getElementById('hon-kpi-neto').textContent  = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.pagado),0));
+  const yearLabel = selectedHonYear ? `${selectedHonYear}` : 'histórico completo';
+  document.getElementById('nom-meta').textContent =
+    searchActive
+      ? `🔍 ${data.length} resultado${data.length!==1?'s':''} en todo el histórico`
+      : `${data.length} de ${kpiData.length} registros · ${yearLabel}`;
+
+  if (!data.length) {
+    const emptyMsg = searchActive
+      ? `Sin resultados en el histórico completo`
+      : (selectedHonYear !== null && all.length > 0)
+        ? `Sin registros para ${selectedHonYear} — cambia de año o haz una búsqueda`
+        : 'Sin registros — importa el histórico o agrega uno nuevo';
+    document.getElementById('hon-tbody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:3rem;color:var(--text-xs);">${emptyMsg}</td></tr>`;
+    document.getElementById('hon-tfoot').innerHTML = '';
+    return;
+  }
+
+  const pv = personaVisibleHon;
+  document.getElementById('hon-tbody').innerHTML = data.map((r,i)=>`
+    <tr data-id="${r.id}">
+      <td style="font-family:var(--brand); font-weight:700; color:var(--navy);">${i+1}</td>
+      <td>${r.fechaPago||'—'}</td>
+      <td><span class="badge badge-navy" style="font-size:0.65rem;">${r.mesFiscal||'—'}</span></td>
+      <td class="col-persona-hon${pv?' visible':''}" style="font-size:0.75rem; max-width:160px; overflow:hidden; text-overflow:ellipsis;" title="${r.prestador||''}">${r.prestador||'—'}</td>
+      <td class="num" style="font-weight:700;">$${fmtNum(r.bruto)}</td>
+      <td class="num">$${fmtNum(r.iva)}</td>
+      <td class="num" style="color:var(--red);">$${fmtNum(r.retIsr)}</td>
+      <td class="num" style="color:var(--red);">$${fmtNum(r.retIva)}</td>
+      <td class="num" style="color:var(--green); font-weight:600;">$${fmtNum(r.pagado)}</td>
+      <td class="num">$${fmtNum(r.totalRetenciones)}</td>
+      <td style="white-space:nowrap;">
+        <button class="del-row" style="color:var(--text-xs); margin-right:2px;" onclick="abrirEditarHon('${r.id}')" title="Editar">✏️</button>
+        <button class="del-row" onclick="eliminarHon('${r.id}')" title="Eliminar">✕</button>
+      </td>
+    </tr>`).join('');
+
+  /* Tfoot */
+  const prestadores = [...new Set(data.map(r=>r.prestador).filter(Boolean))];
+  const prestSub = prestadores.length === 1
+    ? `<span style="font-weight:400; font-size:0.65rem; color:var(--text-dim); margin-left:0.4rem;">${prestadores[0]}</span>` : '';
+  document.getElementById('hon-tfoot').innerHTML = `
+    <tr>
+      <td colspan="3" style="font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase;">TOTALES (${data.length})${prestSub}</td>
+      <td class="col-persona-hon${pv?' visible':''}"></td>
+      <td class="num">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.bruto),0))}</td>
+      <td class="num">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.iva),0))}</td>
+      <td class="num" style="color:var(--red);">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.retIsr),0))}</td>
+      <td class="num" style="color:var(--red);">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.retIva),0))}</td>
+      <td class="num" style="color:var(--green);">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.pagado),0))}</td>
+      <td class="num">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.totalRetenciones),0))}</td>
+      <td></td>
+    </tr>`;
+}
+
+function eliminarHon(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  saveRegistry(KEY_HON, loadRegistry(KEY_HON).filter(r=>r.id!==id));
+  toast('Registro eliminado','success');
+  renderHon();
+}
+
+/* ── Auto-calc honorarios modal ── */
+function calcHon() {
+  const bruto = fv('h-bruto');
+  document.getElementById('h-iva').value     = (bruto * 0.16).toFixed(2);
+  document.getElementById('h-ret-isr').value = (bruto * 0.10).toFixed(2);
+  document.getElementById('h-ret-iva').value = (bruto * 0.106667).toFixed(2);
+  calcHonNeto();
+}
+
+function calcHonNeto() {
+  const bruto   = fv('h-bruto');
+  const iva     = fv('h-iva');
+  const retIsr  = fv('h-ret-isr');
+  const retIva  = fv('h-ret-iva');
+  const pagado  = bruto + iva - retIsr - retIva;
+  const totRet  = retIsr + retIva;
+  document.getElementById('h-pagado').value    = fmtNum(pagado);
+  document.getElementById('h-total-ret').value = fmtNum(totRet);
+}
+
+function guardarHon() {
+  const fecha = document.getElementById('h-fecha').value;
+  const mes   = document.getElementById('h-mes').value.trim();
+  if (!fecha || !mes) { toast('Fecha y mes fiscal son obligatorios','error'); return; }
+  const bruto  = fv('h-bruto');
+  if (!bruto)  { toast('El bruto es obligatorio','error'); return; }
+  const iva    = fv('h-iva');
+  const retIsr = fv('h-ret-isr');
+  const retIva = fv('h-ret-iva');
+  const pagado = bruto + iva - retIsr - retIva;
+  const totRet = retIsr + retIva;
+  const prestador = document.getElementById('h-prestador').value.trim();
+  const rec = {
+    id: Date.now().toString(),
+    fechaPago: fecha, mesFiscal: mes,
+    prestador,
+    bruto, iva, neto: pagado,
+    retIsr, retIva, pagado,
+    subtotalRet: totRet, totalRetenciones: totRet,
+  };
+  const data = loadRegistry(KEY_HON);
+  data.push(rec);
+  saveRegistry(KEY_HON, data);
+  toast('Registro guardado','success');
+  closeModal('modal-hon');
+  resetHonModal();
+  renderHon();
+}
+
+function resetHonModal() {
+  ['h-fecha','h-mes','h-prestador','h-bruto','h-iva','h-ret-isr','h-ret-iva','h-pagado','h-total-ret']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+}
+
+/* ── Editar registro de honorarios ── */
+let currentEditHonId = null;
+
+function abrirEditarHon(id) {
+  const all = loadRegistry(KEY_HON);
+  const rec = all.find(r => r.id === id);
+  if (!rec) return;
+  currentEditHonId = id;
+
+  const mesLabel = rec.mesFiscal || '';
+  document.getElementById('hon-edit-titulo').textContent = `Editar registro — ${mesLabel}`;
+  document.getElementById('he-fecha').value      = rec.fechaPago || '';
+  document.getElementById('he-mes').value        = rec.mesFiscal || '';
+  document.getElementById('he-prestador').value  = rec.prestador || '';
+  document.getElementById('he-bruto').value      = rec.bruto || '';
+  document.getElementById('he-iva').value        = rec.iva || '';
+  document.getElementById('he-ret-isr').value    = rec.retIsr || '';
+  document.getElementById('he-ret-iva').value    = rec.retIva || '';
+  document.getElementById('he-pagado').value     = fmtNum(rec.pagado || 0);
+  document.getElementById('he-total-ret').value  = fmtNum(rec.totalRetenciones || 0);
+
+  openModal('modal-hon-edit');
+}
+
+function calcHonEdit() {
+  const bruto = parseFloat(document.getElementById('he-bruto').value) || 0;
+  document.getElementById('he-iva').value     = (bruto * 0.16).toFixed(2);
+  document.getElementById('he-ret-isr').value = (bruto * 0.10).toFixed(2);
+  document.getElementById('he-ret-iva').value = (bruto * 0.106667).toFixed(2);
+  calcHonEditNeto();
+}
+
+function calcHonEditNeto() {
+  const bruto  = parseFloat(document.getElementById('he-bruto').value) || 0;
+  const iva    = parseFloat(document.getElementById('he-iva').value) || 0;
+  const retIsr = parseFloat(document.getElementById('he-ret-isr').value) || 0;
+  const retIva = parseFloat(document.getElementById('he-ret-iva').value) || 0;
+  document.getElementById('he-pagado').value    = fmtNum(bruto + iva - retIsr - retIva);
+  document.getElementById('he-total-ret').value = fmtNum(retIsr + retIva);
+}
+
+function guardarEditarHon() {
+  if (!currentEditHonId) return;
+  const fecha = document.getElementById('he-fecha').value;
+  const mes   = document.getElementById('he-mes').value.trim();
+  if (!fecha || !mes) { toast('Fecha y mes fiscal son obligatorios','error'); return; }
+
+  const bruto  = parseFloat(document.getElementById('he-bruto').value) || 0;
+  const iva    = parseFloat(document.getElementById('he-iva').value) || 0;
+  const retIsr = parseFloat(document.getElementById('he-ret-isr').value) || 0;
+  const retIva = parseFloat(document.getElementById('he-ret-iva').value) || 0;
+  const pagado = bruto + iva - retIsr - retIva;
+  const totRet = retIsr + retIva;
+  const prestador = document.getElementById('he-prestador').value.trim();
+
+  const all = loadRegistry(KEY_HON);
+  const idx = all.findIndex(r => r.id === currentEditHonId);
+  if (idx === -1) { toast('Registro no encontrado','error'); return; }
+
+  all[idx] = { ...all[idx],
+    fechaPago: fecha, mesFiscal: mes, prestador,
+    bruto, iva, neto: pagado, retIsr, retIva, pagado,
+    subtotalRet: totRet, totalRetenciones: totRet,
+  };
+
+  saveRegistry(KEY_HON, all);
+  toast('Registro actualizado','success');
+  closeModal('modal-hon-edit');
+  renderHon();
+}
+
+/* ── Importar histórico honorarios ── */
+function importarHon() {
+  const s = document.createElement('script');
+  s.src = 'js/cargar_honorarios.js?t=' + Date.now();
+  s.onerror = () => toast('No se encontró cargar_honorarios.js','error');
+  s.onload = () => { toast('Histórico importado','success'); renderHon(); };
+  document.head.appendChild(s);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CFDI XML PARSER
+═══════════════════════════════════════════════════════════ */
+
+const NS_CFDI3 = 'http://www.sat.gob.mx/cfd/3';
+const NS_CFDI4 = 'http://www.sat.gob.mx/cfd/4';
+const NS_NOM   = 'http://www.sat.gob.mx/nomina12';
+const NS_TFD   = 'http://www.sat.gob.mx/TimbreFiscalDigital';
+const KEY_CFDI_MAP       = 'stgl_cfdi_mapping';       // legacy (ignorado en lectura)
+const KEY_CFDI_MAP_EXTRA = 'stgl_cfdi_map_extra';     // solo keywords añadidas por el usuario
+
+/* Mapeo nombre empleado → columna asimilables. */
+const PERSONA_DEFAULTS = {
+  lourdes: ['lourdes', 'uribe'],
+  anama:   ['ana maria', 'ana ma', 'mendiola martinez', 'mema730801'],
+  cestm:   ['cestm', 'tagle mendiola', 'samc040713'],
+  cestr:   ['cestr', 'tagle ruiz', 'sarc690526'],
+  jfabela: ['fabela']
+};
+
+function getPersonaMap() {
+  /* Siempre parte de los defaults actuales; agrega solo las extras del usuario */
+  try {
+    const map   = JSON.parse(JSON.stringify(PERSONA_DEFAULTS));
+    const extra = JSON.parse(localStorage.getItem(KEY_CFDI_MAP_EXTRA) || 'null');
+    if (extra) {
+      for (const [col, kws] of Object.entries(extra)) {
+        if (!map[col]) map[col] = [];
+        for (const kw of kws) {
+          if (!map[col].includes(kw)) map[col].push(kw);
+        }
+      }
+    }
+    return map;
+  } catch { return JSON.parse(JSON.stringify(PERSONA_DEFAULTS)); }
+}
+function savePersonaMap(m) {
+  /* Guardar solo las keywords que el usuario añadió (diff contra defaults) */
+  const extra = {};
+  for (const [col, kws] of Object.entries(m)) {
+    const defKws = PERSONA_DEFAULTS[col] || [];
+    const added  = kws.filter(k => !defKws.includes(k));
+    if (added.length) extra[col] = added;
+  }
+  localStorage.setItem(KEY_CFDI_MAP_EXTRA, JSON.stringify(extra));
+}
+
+function normalStr(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function detectPersona(nombre, rfc) {
+  /* 1. Buscar por RFC en catálogo (fuente de verdad) */
+  if (rfc) {
+    const col = getColaboradorByRfc(rfc);
+    if (col) return col.alias;
+  }
+  /* 2. Fallback: búsqueda por keywords en nombre (compatibilidad histórica) */
+  const n = normalStr(nombre || '');
+  const map = getPersonaMap();
+  for (const [col, kws] of Object.entries(map)) {
+    if (kws.some(k => n.includes(normalStr(k)))) return col;
+  }
+  return null;
+}
+
+function xmlOne(doc, ns, tag) {
+  return doc.getElementsByTagNameNS(ns, tag)[0] || null;
+}
+function xmlAll(doc, ns, tag) {
+  return [...doc.getElementsByTagNameNS(ns, tag)];
+}
+function xmlCfdi(doc, tag) {
+  return xmlOne(doc, NS_CFDI3, tag) || xmlOne(doc, NS_CFDI4, tag);
+}
+function xmlCfdiAll(doc, tag) {
+  return [...xmlAll(doc, NS_CFDI3, tag), ...xmlAll(doc, NS_CFDI4, tag)];
+}
+
+function mesFiscalDeFecha(fecha) {
+  const EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d = new Date((fecha || '').substring(0,10) + 'T12:00:00');
+  return isNaN(d) ? '' : EN[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
+}
+
+function parseCFDIXml(text, filename) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const root = doc.documentElement;
+  if (!root || root.nodeName === 'parsererror' || root.querySelector('parsererror')) {
+    return { error: 'XML inválido', filename };
+  }
+
+  const tipo     = root.getAttribute('TipoDeComprobante') || '';
+  const subtotal = parseFloat(root.getAttribute('SubTotal') || 0);
+  const fecha    = (root.getAttribute('Fecha') || '').substring(0, 10);
+  const folio    = (root.getAttribute('Serie') || '') + (root.getAttribute('Folio') || '');
+
+  const tfdEl = doc.getElementsByTagNameNS(NS_TFD, 'TimbreFiscalDigital')[0];
+  const uuid  = tfdEl ? (tfdEl.getAttribute('UUID') || '') : '';
+
+  /* ── Nómina (TipoDeComprobante = N) ── */
+  if (tipo === 'N') {
+    const receptor = xmlCfdi(doc, 'Receptor');
+    const nombre   = receptor?.getAttribute('Nombre') || receptor?.getAttribute('nombre') || '';
+    const rfc      = receptor?.getAttribute('Rfc')    || receptor?.getAttribute('rfc')    || '';
+
+    const nomina    = xmlOne(doc, NS_NOM, 'Nomina');
+    const fechaPago = nomina?.getAttribute('FechaPago') || fecha;
+    const bruto     = parseFloat(nomina?.getAttribute('TotalPercepciones') || subtotal || 0);
+
+    /* ISR = TipoDeduccion 002; si no existe usamos TotalDeducciones */
+    let ret = parseFloat(nomina?.getAttribute('TotalDeducciones') || 0);
+    let isrEncontrado = 0;
+    for (const d of xmlAll(doc, NS_NOM, 'Deduccion')) {
+      if (d.getAttribute('TipoDeduccion') === '002')
+        isrEncontrado += parseFloat(d.getAttribute('Importe') || 0);
+    }
+    if (isrEncontrado > 0) ret = isrEncontrado;
+
+    /* Detectar persona por RFC primero, luego por nombre */
+    const persona   = detectPersona(nombre, rfc);
+    const mesFiscal = mesFiscalDeFecha(fechaPago);
+
+    return { tipo: 'nomina', filename, uuid, folio, nombre, rfc, persona, fechaPago, mesFiscal,
+             bruto: round2(bruto), ret: round2(ret), neto: round2(bruto - ret) };
+  }
+
+  /* ── Honorarios / Ingreso (TipoDeComprobante = I con retenciones ISR+IVA) ── */
+  if (tipo === 'I') {
+    const emisor    = xmlCfdi(doc, 'Emisor');
+    const prestador = emisor?.getAttribute('Nombre') || '';
+
+    let iva = 0;
+    for (const t of xmlCfdiAll(doc, 'Traslado')) {
+      if (t.getAttribute('Impuesto') === '002')
+        iva += parseFloat(t.getAttribute('Importe') || 0);
+    }
+    let retISR = 0, retIVA = 0;
+    for (const r of xmlCfdiAll(doc, 'Retencion')) {
+      const imp = r.getAttribute('Impuesto');
+      if (imp === '001') retISR += parseFloat(r.getAttribute('Importe') || 0);
+      if (imp === '002') retIVA += parseFloat(r.getAttribute('Importe') || 0);
+    }
+    /* Solo tratar como honorarios si hay retención de ISR o IVA */
+    if (retISR === 0 && retIVA === 0)
+      return { tipo: 'otro', filename, tipoDoc: tipo, detalle: 'Sin retenciones ISR/IVA' };
+
+    const mesFiscal = mesFiscalDeFecha(fecha);
+    return { tipo: 'honorarios', filename, uuid, folio, prestador, fecha, mesFiscal,
+             bruto: round2(subtotal), iva: round2(iva),
+             retISR: round2(retISR), retIVA: round2(retIVA),
+             pagado: round2(subtotal + iva - retISR - retIVA),
+             totalRet: round2(retISR + retIVA) };
+  }
+
+  return { tipo: 'otro', filename, tipoDoc: tipo, detalle: `TipoDeComprobante=${tipo}` };
+}
+
+function round2(n) { return Math.round((n || 0) * 100) / 100; }
+
+/* Agrupa nómina CFDIs por fechaPago → records de asimilables (formato perPersona) */
+function agruparNomina(nominaRecs) {
+  const byDate = {};
+  for (const r of nominaRecs) {
+    const fp = r.fechaPago;
+    if (!byDate[fp]) byDate[fp] = { fechaPago: fp, mesFiscal: r.mesFiscal, mapeados: [], noMapeados: [] };
+    if (r.persona) byDate[fp].mapeados.push(r);
+    else           byDate[fp].noMapeados.push(r);
+  }
+  const result = [];
+  for (const grp of Object.values(byDate)) {
+    const perPersona = {};
+    let stB = 0, stR = 0, stN = 0;
+    for (const e of grp.mapeados) {
+      const col = getColaboradorByAlias(e.persona);
+      const key = e.rfc || e.persona;
+      perPersona[key] = {
+        alias:       e.persona,
+        nombre:      e.nombre,
+        nombreCorto: col ? col.nombreCorto : e.persona,
+        rfc:         e.rfc || '',
+        bruto:       e.bruto,
+        ret:         e.ret,
+        neto:        e.neto,
+      };
+      stB += e.bruto; stR += e.ret; stN += e.neto;
+    }
+    result.push({
+      fechaPago:     grp.fechaPago,
+      mesFiscal:     grp.mesFiscal,
+      perPersona,
+      subtotalBruto: round2(stB),
+      subtotalRet:   round2(stR),
+      subtotalNeto:  round2(stN),
+      _noMapeados:   grp.noMapeados,
+    });
+  }
+  return result.sort((a,b) => a.fechaPago.localeCompare(b.fechaPago));
+}
+
+/* ── Estado del parser ── */
+let cfdiParsed = { nomina: [], honorarios: [], otros: [], errores: [] };
+let cfdiAsimAgrupado = [];
+
+function abrirCFDI() {
+  cfdiParsed = { nomina:[], honorarios:[], otros:[], errores:[] };
+  cfdiAsimAgrupado = [];
+  document.getElementById('cfdi-file-list').innerHTML = '';
+  document.getElementById('cfdi-asim-preview').style.display = 'none';
+  document.getElementById('cfdi-hon-preview').style.display  = 'none';
+  document.getElementById('cfdi-errores').style.display      = 'none';
+  document.getElementById('cfdi-mapping-panel').style.display = 'none';
+  document.getElementById('cfdi-import-btn').style.display   = 'none';
+  document.getElementById('cfdi-file-input').value           = '';
+  openModal('modal-cfdi');
+}
+
+async function handleCFDIDrop(files) {
+  if (!files || !files.length) return;
+  const listEl = document.getElementById('cfdi-file-list');
+  listEl.innerHTML = `<div style="font-size:0.72rem; color:var(--text-dim); margin-bottom:0.5rem;">⏳ Analizando ${files.length} archivo(s)…</div>`;
+
+  cfdiParsed = { nomina:[], honorarios:[], otros:[], errores:[] };
+
+  for (const file of files) {
+    try {
+      const text = await file.text();
+      const rec  = parseCFDIXml(text, file.name);
+      if (rec.error)              cfdiParsed.errores.push(rec);
+      else if (rec.tipo==='nomina')     cfdiParsed.nomina.push(rec);
+      else if (rec.tipo==='honorarios') cfdiParsed.honorarios.push(rec);
+      else                              cfdiParsed.otros.push(rec);
+    } catch(e) {
+      cfdiParsed.errores.push({ error: e.message, filename: file.name });
+    }
+  }
+
+  renderCFDIPreview();
+}
+
+function renderCFDIPreview() {
+  const listEl = document.getElementById('cfdi-file-list');
+  const total  = cfdiParsed.nomina.length + cfdiParsed.honorarios.length +
+                 cfdiParsed.otros.length  + cfdiParsed.errores.length;
+  listEl.innerHTML = `
+    <div style="font-size:0.72rem; color:var(--text-dim); display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+      <span>📄 Total: <strong>${total}</strong></span>
+      <span style="color:var(--navy);">Nómina: <strong>${cfdiParsed.nomina.length}</strong></span>
+      <span style="color:var(--green);">Honorarios: <strong>${cfdiParsed.honorarios.length}</strong></span>
+      ${cfdiParsed.otros.length ? `<span style="color:var(--text-xs);">Otros: ${cfdiParsed.otros.length}</span>` : ''}
+      ${cfdiParsed.errores.length ? `<span style="color:var(--red);">Errores: ${cfdiParsed.errores.length}</span>` : ''}
+    </div>`;
+
+  /* Detectar RFCs sin mapear */
+  const rfcsSinCatalogo = [];
+  cfdiParsed.nomina.filter(r => !r.persona).forEach(r => {
+    if (!rfcsSinCatalogo.find(x => x.rfc === r.rfc))
+      rfcsSinCatalogo.push({ rfc: r.rfc, nombre: r.nombre });
+  });
+  if (rfcsSinCatalogo.length) {
+    document.getElementById('cfdi-mapping-panel').style.display = '';
+    document.getElementById('cfdi-mapping-rows').innerHTML = rfcsSinCatalogo.map(x =>
+      `<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.4rem;">
+        <span style="flex:1;font-weight:600;color:var(--navy);">${x.rfc || '(sin RFC)'} — ${x.nombre}</span>
+        <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+          onclick="abrirRfcDesconocido('${x.rfc}','${(x.nombre||'').replace(/'/g,'')}')">Dar de alta</button>
+      </div>`
+    ).join('');
+  } else {
+    document.getElementById('cfdi-mapping-panel').style.display = 'none';
+  }
+
+  /* Asimilables preview */
+  cfdiAsimAgrupado = agruparNomina(cfdiParsed.nomina);
+  const asimDiv = document.getElementById('cfdi-asim-preview');
+  if (cfdiAsimAgrupado.length) {
+    asimDiv.style.display = '';
+    document.getElementById('cfdi-asim-count').textContent = cfdiAsimAgrupado.length + ' registros';
+    const existentes = loadRegistry(KEY_ASIM);
+    document.getElementById('cfdi-asim-tbody').innerHTML = cfdiAsimAgrupado.map(r => {
+      const existsMigrated = existentes.map(migrateAsimRecord);
+      const dup = existsMigrated.find(e => e.fechaPago === r.fechaPago &&
+                    Math.abs(parseNum(e.subtotalRet) - r.subtotalRet) < 1);
+      const empleados = Object.values(r.perPersona || {})
+        .filter(pp => pp.bruto > 0)
+        .map(pp => pp.nombreCorto || pp.alias)
+        .join(', ') || '—';
+      const nmWarn = r._noMapeados && r._noMapeados.length
+        ? ` <span style="color:#a84400;" title="${r._noMapeados.map(x=>x.nombre).join(', ')}">&#x26A0; ${r._noMapeados.length} sin mapear</span>` : '';
+      return `<tr style="${dup?'background:#fff8f0;':''}">
+        <td>${r.fechaPago}</td>
+        <td><span class="badge badge-navy" style="font-size:0.62rem;">${r.mesFiscal}</span></td>
+        <td class="num">$${fmtNum(r.subtotalBruto)}</td>
+        <td class="num" style="color:var(--red);">$${fmtNum(r.subtotalRet)}</td>
+        <td class="num" style="color:var(--green);">$${fmtNum(r.subtotalNeto)}</td>
+        <td style="font-size:0.68rem;">${empleados}${nmWarn}</td>
+        <td class="center">${dup?'<span style="color:#a84400;" title="Ya existe un registro con esta fecha y retención similar">&#x26A0; Posible dup.</span>':'<span style="color:var(--green);">&#x2713;</span>'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    asimDiv.style.display = 'none';
+  }
+
+  /* Honorarios preview */
+  const honDiv = document.getElementById('cfdi-hon-preview');
+  if (cfdiParsed.honorarios.length) {
+    honDiv.style.display = '';
+    document.getElementById('cfdi-hon-count').textContent = cfdiParsed.honorarios.length + ' registros';
+    const existentes = loadRegistry(KEY_HON);
+    document.getElementById('cfdi-hon-tbody').innerHTML = cfdiParsed.honorarios.map(r => {
+      const dup = existentes.find(e => e.mesFiscal === r.mesFiscal &&
+                    Math.abs(parseNum(e.pagado) - r.pagado) < 5 &&
+                    (e.prestador||'').toLowerCase() === (r.prestador||'').toLowerCase());
+      return `<tr style="${dup?'background:#fff8f0;':''}">
+        <td>${r.fecha}</td>
+        <td><span class="badge badge-navy" style="font-size:0.62rem;">${r.mesFiscal}</span></td>
+        <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis;" title="${r.prestador}">${r.prestador||'—'}</td>
+        <td class="num">$${fmtNum(r.bruto)}</td>
+        <td class="num">$${fmtNum(r.iva)}</td>
+        <td class="num" style="color:var(--red);">$${fmtNum(r.retISR)}</td>
+        <td class="num" style="color:var(--red);">$${fmtNum(r.retIVA)}</td>
+        <td class="num" style="color:var(--green); font-weight:600;">$${fmtNum(r.pagado)}</td>
+        <td class="center">${dup?'<span style="color:#a84400;">⚠ Posible dup.</span>':'<span style="color:var(--green);">✓</span>'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    honDiv.style.display = 'none';
+  }
+
+  /* Errores */
+  const errDiv = document.getElementById('cfdi-errores');
+  if (cfdiParsed.errores.length || cfdiParsed.otros.length) {
+    errDiv.style.display = '';
+    const lines = [
+      ...cfdiParsed.errores.map(e => `⚠ ${e.filename}: ${e.error}`),
+      ...cfdiParsed.otros.map(e => `ℹ ${e.filename}: Tipo ${e.tipoDoc||'?'} — ${e.detalle||'ignorado'}`)
+    ];
+    errDiv.innerHTML = lines.map(l=>`<div>${l}</div>`).join('');
+  } else {
+    errDiv.style.display = 'none';
+  }
+
+  const hayDatos = cfdiAsimAgrupado.length || cfdiParsed.honorarios.length;
+  document.getElementById('cfdi-import-btn').style.display = hayDatos ? '' : 'none';
+}
+
+function aplicarMapeo(nombre, columna) {
+  if (!columna) return;
+  const map = getPersonaMap();
+  if (!map[columna]) map[columna] = [];
+  /* Añadir palabra clave del nombre */
+  const palabras = nombre.toLowerCase().split(/\s+/).filter(p => p.length > 3);
+  const nueva = palabras[0] || nombre.toLowerCase();
+  if (!map[columna].includes(nueva)) map[columna].push(nueva);
+  savePersonaMap(map);
+  /* Re-asignar persona en todos los registros (incluyendo mal-mapeados) */
+  cfdiParsed.nomina.forEach(r => { r.persona = detectPersona(r.nombre, r.rfc); });
+  renderCFDIPreview();
+  toast(`"${nombre}" → ${columna}`, 'success');
+}
+
+function importarCFDIs() {
+  let asimGuardados = 0, honGuardados = 0;
+
+  /* Asimilables */
+  if (cfdiAsimAgrupado.length) {
+    const all = loadRegistry(KEY_ASIM);
+    for (const rec of cfdiAsimAgrupado) {
+      const id = `asim-${rec.fechaPago.replace(/-/g,'')}`;
+      const existIdx = all.findIndex(e => e.id === id || (e.fechaPago === rec.fechaPago &&
+          Math.abs(parseNum(e.subtotalRet) - rec.subtotalRet) < 1));
+      if (existIdx >= 0) {
+        /* Ya existe — actualizar solo si el nuevo trae datos distintos */
+        const existing = migrateAsimRecord(all[existIdx]);
+        const hasNewData = Math.abs((rec.subtotalBruto||0) - (existing.subtotalBruto||0)) > 0.5 ||
+                           Math.abs((rec.subtotalRet||0)   - (existing.subtotalRet||0))   > 0.5 ||
+                           Object.keys(rec.perPersona||{}).some(k => {
+                             const rp = (rec.perPersona||{})[k] || {};
+                             const ep = (existing.perPersona||{})[k] || {};
+                             return Math.abs((rp.bruto||0) - (ep.bruto||0)) > 0.5;
+                           });
+        if (hasNewData) {
+          const creado = existing.creado;
+          Object.assign(all[existIdx], rec, { id, creado, modificado: new Date().toISOString() });
+          delete all[existIdx]._noMapeados;
+          asimGuardados++;
+        }
+        continue;
+      }
+      const newRec = { id, creado: new Date().toISOString(), ...rec };
+      delete newRec._noMapeados;
+      all.push(newRec);
+      asimGuardados++;
+    }
+    all.sort((a,b) => (a.fechaPago||'').localeCompare(b.fechaPago||''));
+    saveRegistry(KEY_ASIM, all);
+  }
+
+  /* Honorarios */
+  if (cfdiParsed.honorarios.length) {
+    const all = loadRegistry(KEY_HON);
+    for (const rec of cfdiParsed.honorarios) {
+      const id = rec.uuid || `hon-${rec.fecha.replace(/-/g,'')}-${rec.prestador.replace(/\s+/g,'').substring(0,8)}`;
+      if (all.some(e => e.id === id || (e.mesFiscal === rec.mesFiscal &&
+          Math.abs(parseNum(e.pagado) - rec.pagado) < 5 &&
+          normalStr(e.prestador||'') === normalStr(rec.prestador)))) continue;
+      all.push({
+        id, creado: new Date().toISOString(),
+        fechaPago: rec.fecha, mesFiscal: rec.mesFiscal, prestador: rec.prestador,
+        bruto: rec.bruto, iva: rec.iva, neto: rec.pagado,
+        retIsr: rec.retISR, retIva: rec.retIVA, pagado: rec.pagado,
+        subtotalRet: rec.totalRet, totalRetenciones: rec.totalRet,
+      });
+      honGuardados++;
+    }
+    all.sort((a,b) => (a.fechaPago||'').localeCompare(b.fechaPago||''));
+    saveRegistry(KEY_HON, all);
+  }
+
+  const msgs = [];
+  if (asimGuardados) msgs.push(`${asimGuardados} asimilables`);
+  if (honGuardados)  msgs.push(`${honGuardados} honorarios`);
+  const omitidos = (cfdiAsimAgrupado.length - asimGuardados) + (cfdiParsed.honorarios.length - honGuardados);
+
+  if (msgs.length) {
+    toast(`✓ Importados: ${msgs.join(' + ')}${omitidos?' ('+omitidos+' duplicados omitidos)':''}`, 'success');
+  } else {
+    toast('No se importaron registros nuevos — todos eran duplicados', 'success');
+  }
+
+  closeModal('modal-cfdi');
+  if (currentTab === 'asim') renderAsim(); else renderHon();
+  if (asimGuardados || honGuardados) syncRetencionesAProyeccion();
+}
+
+/* ══════════════════════════════════════════════════════
+   SINCRONIZACIÓN NÓMINA → PROYECCIÓN DE SALDOS
+   Cada vez que se guarden registros de asimilables u honorarios,
+   calcula las retenciones del mes y crea/actualiza un movimiento
+   proyectado para el día 17 del mes siguiente (ajustado a día hábil).
+════════════════════════════════════════════════════════ */
+const KEY_PROY_MOV   = 'stgl_mov_proyectados';
+const KEY_SAT_CUENTA = 'stgl_sat_cuenta_nom';
+
+function nextBusinessDayNom(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  if (dow === 6) d.setDate(d.getDate() + 2);
+  if (dow === 0) d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+}
+
+function syncRetencionesAProyeccion() {
+  const satCuenta = localStorage.getItem(KEY_SAT_CUENTA) || '';
+  if (!satCuenta) {
+    /* Notificar una sola vez que falta configurar la cuenta */
+    if (!sessionStorage.getItem('_ret_aviso')) {
+      sessionStorage.setItem('_ret_aviso', '1');
+      toast('⚙ Configura la cuenta bancaria SAT en Nómina → Configuración para sincronizar retenciones a la proyección', 'info', 6000);
+    }
+    return;
+  }
+
+  const asimRecs = loadRegistry(KEY_ASIM).map(r => {
+    /* Compatibilidad: si no tiene perPersona, usar subtotalRet directo */
+    return { fechaPago: r.fechaPago, ret: parseNum(r.subtotalRet) };
+  });
+  const honRecs  = loadRegistry(KEY_HON).map(r => ({
+    fechaPago: r.fechaPago, ret: parseNum(r.totalRetenciones || r.subtotalRet || 0)
+  }));
+
+  /* Agrupar retenciones por mes (YYYY-MM) */
+  const retByMes = {};
+  for (const r of [...asimRecs, ...honRecs]) {
+    const ym = (r.fechaPago || '').substring(0, 7);
+    if (!ym || ym.length < 7) continue;
+    retByMes[ym] = (retByMes[ym] || 0) + r.ret;
+  }
+
+  if (!Object.keys(retByMes).length) return;
+
+  let proyMovs = [];
+  try { proyMovs = JSON.parse(localStorage.getItem(KEY_PROY_MOV) || '[]'); } catch { proyMovs = []; }
+
+  let cambios = 0;
+  for (const [ym, totalRet] of Object.entries(retByMes)) {
+    if (!totalRet || totalRet < 0.01) continue;
+    /* Fecha de pago: día 17 del mes siguiente, ajustado a hábil */
+    const [y, m] = ym.split('-').map(Number);
+    const nextM  = m === 12 ? 1 : m + 1;
+    const nextY  = m === 12 ? y + 1 : y;
+    const raw17  = `${nextY}-${String(nextM).padStart(2,'0')}-17`;
+    const fecha  = nextBusinessDayNom(raw17);
+
+    const id  = `ret-sat-${ym}`;
+    const idx = proyMovs.findIndex(p => p.id === id);
+    const mov = {
+      id,
+      fecha,
+      tipo:        'RetencionesSAT',
+      descripcion: `Retenciones SAT — ${ym}`,
+      concepto:    'Retenciones fiscales (ISR asimilados + ISR honorarios + IVA ret.)',
+      cuentaCont:  '2100',
+      cuenta:      satCuenta,
+      cuentaDest:  '',
+      moneda:      'MXN',
+      entrada:     0,
+      salida:      round2(totalRet),
+      entradaDest: 0,
+      nominaMes:   ym,
+      _autoGenerado: true,
+    };
+    if (idx >= 0) {
+      proyMovs[idx] = { ...proyMovs[idx], ...mov };
+    } else {
+      proyMovs.push(mov);
+    }
+    cambios++;
+  }
+
+  if (cambios) {
+    proyMovs.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+    localStorage.setItem(KEY_PROY_MOV, JSON.stringify(proyMovs));
+  }
+}
+
+/* Abre el panel de configuración de cuenta SAT */
+function configurarCuentaSAT() {
+  const cuentaActual = localStorage.getItem(KEY_SAT_CUENTA) || '';
+  let cuentas = [];
+  try {
+    cuentas = JSON.parse(localStorage.getItem('stgl_saldos') || '[]')
+      .filter(c => !c.cancelada && c.moneda === 'MXN');
+  } catch {}
+  if (!cuentas.length) {
+    toast('No hay cuentas MXN configuradas en Finanzas → Mov. Bancarios', 'error');
+    return;
+  }
+  const sel = document.getElementById('sat-cuenta-sel');
+  sel.innerHTML = cuentas
+    .map(c => `<option value="${c.cuenta}"${c.cuenta === cuentaActual ? ' selected' : ''}>${c.cuenta}</option>`)
+    .join('');
+  openModal('modal-sat-cuenta');
+}
+
+function guardarCuentaSAT() {
+  const nombre = document.getElementById('sat-cuenta-sel').value;
+  if (!nombre) { toast('Selecciona una cuenta', 'error'); return; }
+  localStorage.setItem(KEY_SAT_CUENTA, nombre);
+  closeModal('modal-sat-cuenta');
+  toast(`Cuenta SAT configurada: "${nombre}"`, 'success');
+  renderHeaderBtns();
+  syncRetencionesAProyeccion();
+}
+
+/* ══ RFC Desconocido ══ */
+function abrirRfcDesconocido(rfc, nombre) {
+  document.getElementById('rfc-desc-rfc').textContent       = rfc || '(sin RFC)';
+  document.getElementById('rfc-desc-nombre').textContent    = nombre;
+  document.getElementById('rfc-desc-rfc-hidden').value      = rfc;
+  document.getElementById('rfc-new-rfc').value              = rfc;
+  document.getElementById('rfc-new-nombre').value           = nombre;
+  document.getElementById('rfc-new-alias').value            = '';
+  document.getElementById('rfc-new-nombreCorto').value      = '';
+  document.getElementById('rfc-new-telefono').value         = '';
+  document.getElementById('rfc-new-direccion').value        = '';
+  openModal('modal-rfc-desconocido');
+}
+
+function cerrarRfcDesconocido() {
+  closeModal('modal-rfc-desconocido');
+}
+
+function guardarRfcDesconocido() {
+  const rfc         = document.getElementById('rfc-new-rfc').value.trim();
+  const alias       = document.getElementById('rfc-new-alias').value.trim();
+  const nombre      = document.getElementById('rfc-new-nombre').value.trim();
+  const nombreCorto = document.getElementById('rfc-new-nombreCorto').value.trim() || alias;
+  const telefono    = document.getElementById('rfc-new-telefono').value.trim();
+  const direccion   = document.getElementById('rfc-new-direccion').value.trim();
+
+  if (!alias) { toast('El alias es obligatorio', 'error'); return; }
+
+  const colabs = loadColaboradores();
+  if (colabs.find(c => c.alias === alias)) {
+    toast(`El alias "${alias}" ya existe`, 'error'); return;
+  }
+
+  const nuevo = {
+    id: 'col-' + (rfc || alias + Date.now()),
+    rfc, nombre, nombreCorto, alias, telefono, direccion,
+    activo: true, creado: new Date().toISOString(),
+  };
+  colabs.push(nuevo);
+  saveColaboradores(colabs);
+
+  /* Re-asignar persona en CFDIs parseados */
+  cfdiParsed.nomina.forEach(r => {
+    if (!r.persona) r.persona = detectPersona(r.nombre, r.rfc);
+  });
+
+  cerrarRfcDesconocido();
+  toast(`"${nombre}" dado de alta como "${alias}"`, 'success');
+  renderCFDIPreview();
+}
+
+/* ══ Catálogo de colaboradores — gestionado en Configuración ══ */
+/* Para editar el catálogo ve a: Configuración → Colaboradores       */
+
+/* ── Init ── */
+/* Limpiar clave legacy de mapeo que puede tener keywords conflictivos */
+localStorage.removeItem(KEY_CFDI_MAP);
+
+/* Sembrar catálogo si es primera vez */
+loadColaboradores();
+
+document.getElementById('h-fecha').value = new Date().toISOString().split('T')[0];
+applyNominaSubfeatures();
+renderHeaderBtns();
+renderAsim();
+</script>
+
+<!-- ══ MODAL: Cuenta bancaria para pagos al SAT ══ -->
+<div class="modal-backdrop hidden" id="modal-sat-cuenta">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title">Cuenta para pagos al SAT</span>
+      <button class="modal-close" onclick="closeModal('modal-sat-cuenta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.78rem; color:var(--text-dim); margin-bottom:1rem;">
+        Selecciona la cuenta MXN desde la que se realizan los pagos de retenciones fiscales (ISR, IVA, IMSS). Esta cuenta se usará para proyectar automáticamente el pago del día 17 de cada mes.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Cuenta bancaria *</label>
+        <select class="form-input" id="sat-cuenta-sel"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sat-cuenta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCuentaSAT()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

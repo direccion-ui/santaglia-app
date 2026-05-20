@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Galería</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand">
+          <a href="dashboard.html">
+            <img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" />
+          </a>
+        </div>
+        <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item active" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+        <div class="header-actions">
+          <button class="btn-logout" onclick="logout()">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="main">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Material visual</div>
+            <h1 class="page-heading">Galería</h1>
+            <div class="page-meta" id="gal-count"></div>
+          </div>
+          <label for="gal-input" class="btn btn-primary" style="cursor:pointer;">+ Agregar imágenes</label>
+          <input type="file" id="gal-input" accept="image/*" multiple style="display:none;" />
+        </div>
+
+        <!-- Upload zone -->
+        <div class="upload-zone mb-3" id="gal-zone">
+          <input type="file" id="gal-zone-input" accept="image/*" multiple />
+          <div class="upload-label">🖼 Arrastra imágenes aquí o haz clic para seleccionar</div>
+          <div class="upload-sub">PNG, JPG, WEBP, GIF — Material gráfico de proyectos</div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="flex gap-1 mb-2" style="align-items:center; flex-wrap:wrap;">
+          <input class="form-input" id="gal-buscar" type="text" placeholder="Buscar por nombre o proyecto…"
+            style="max-width:280px;" oninput="renderGaleria()" />
+          <select class="form-input" id="gal-cat" style="width:auto; padding:0.55rem 0.9rem;" onchange="renderGaleria()">
+            <option value="todos">Todas las categorías</option>
+            <option>Proyectos</option>
+            <option>Equipo</option>
+            <option>Instalaciones</option>
+            <option>Marketing</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <!-- Grid -->
+        <div class="gallery-grid" id="gal-grid"></div>
+        <div id="gal-empty" class="hidden" style="text-align:center; padding:3rem; color:var(--text-xs); font-size:0.85rem;">
+          No hay imágenes aún. Sube el primero arriba.
+        </div>
+      </div>
+    </main>
+
+    <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+      <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+        <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+        <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal imagen -->
+  <div class="modal-backdrop hidden" id="modal-img">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <span class="modal-title">Nueva imagen</span>
+        <button class="modal-close" onclick="closeModal('modal-img')">✕</button>
+      </div>
+      <div class="modal-body">
+        <img id="img-preview" src="" alt="" style="width:100%; border-radius:2px; margin-bottom:1.25rem; border:1px solid var(--border);" />
+        <div class="form-group">
+          <label class="form-label">Título / descripción</label>
+          <input class="form-input" id="img-titulo" type="text" placeholder="Descripción de la imagen" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select class="form-input" id="img-cat">
+            <option>Proyectos</option>
+            <option>Equipo</option>
+            <option>Instalaciones</option>
+            <option>Marketing</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proyecto relacionado (opcional)</label>
+          <input class="form-input" id="img-proyecto" type="text" placeholder="Nombre del proyecto…" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-img')">Cancelar</button>
+        <button class="btn btn-primary" id="img-guardar-btn">Guardar imagen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="modal-backdrop hidden" id="lightbox" onclick="closeLightbox(event)">
+    <div style="position:relative; max-width:90vw; max-height:90vh;">
+      <img id="lightbox-img" src="" alt=""
+        style="max-width:90vw; max-height:85vh; object-fit:contain; border-radius:2px;" />
+      <div style="text-align:center; margin-top:0.75rem; color:#fff; font-size:0.82rem;" id="lightbox-caption"></div>
+      <button onclick="closeLightbox()" style="position:absolute; top:-2rem; right:0; color:#fff; font-size:1.4rem; background:none; border:none; cursor:pointer;">✕</button>
+    </div>
+  </div>
+
+  <div id="toasts" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+  <script>
+    let pendingImgFile = null;
+    let pendingImgData = null;
+
+    function renderGaleria() {
+      const all    = loadRegistry('stgl_galeria');
+      const buscar = document.getElementById('gal-buscar').value.toLowerCase();
+      const cat    = document.getElementById('gal-cat').value;
+
+      let data = all;
+      if (buscar) data = data.filter(i => (i.titulo + i.proyecto).toLowerCase().includes(buscar));
+      if (cat !== 'todos') data = data.filter(i => i.categoria === cat);
+
+      document.getElementById('gal-count').textContent =
+        `${all.length} imagen${all.length !== 1 ? 'es' : ''} en la galería`;
+
+      const grid  = document.getElementById('gal-grid');
+      const empty = document.getElementById('gal-empty');
+
+      if (data.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      grid.innerHTML = [...data].reverse().map(img => `
+        <div class="gallery-item" onclick="openLightbox('${img.id}')">
+          ${img.dataUrl
+            ? `<img src="${img.dataUrl}" alt="${img.titulo || ''}" loading="lazy" />`
+            : `<div class="gallery-placeholder"><span>🖼</span><p>${img.nombre}</p></div>`
+          }
+          <div class="gallery-overlay">
+            <div>
+              <div class="gallery-caption">${img.titulo || img.nombre}</div>
+              ${img.proyecto ? `<div style="font-size:0.65rem; color:rgba(255,255,255,0.7); margin-top:2px;">${img.proyecto}</div>` : ''}
+            </div>
+          </div>
+          <button onclick="event.stopPropagation(); eliminarImg('${img.id}')"
+            style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.5); color:#fff;
+                   border:none; border-radius:2px; padding:2px 7px; font-size:0.65rem; cursor:pointer; opacity:0;"
+            class="del-btn">✕</button>
+        </div>`).join('');
+
+      // Show delete buttons on hover
+      grid.querySelectorAll('.gallery-item').forEach(el => {
+        el.addEventListener('mouseenter', () => el.querySelector('.del-btn').style.opacity = '1');
+        el.addEventListener('mouseleave', () => el.querySelector('.del-btn').style.opacity = '0');
+      });
+    }
+
+    function abrirModalImg(file) {
+      pendingImgFile = file;
+      const reader = new FileReader();
+      reader.onload = e => {
+        pendingImgData = e.target.result;
+        document.getElementById('img-preview').src = pendingImgData;
+        document.getElementById('img-titulo').value = file.name.replace(/\.[^.]+$/, '');
+        document.getElementById('img-proyecto').value = '';
+        openModal('modal-img');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('img-guardar-btn').onclick = () => {
+      if (!pendingImgFile) return;
+      const gal = loadRegistry('stgl_galeria');
+      gal.push({
+        id:        Date.now().toString(),
+        nombre:    pendingImgFile.name,
+        size:      pendingImgFile.size,
+        titulo:    document.getElementById('img-titulo').value.trim() || pendingImgFile.name,
+        categoria: document.getElementById('img-cat').value,
+        proyecto:  document.getElementById('img-proyecto').value.trim(),
+        fecha:     new Date().toISOString(),
+        dataUrl:   pendingImgData,
+      });
+      saveRegistry('stgl_galeria', gal);
+      closeModal('modal-img');
+      pendingImgFile = null;
+      pendingImgData = null;
+      toast('Imagen guardada', 'success');
+      renderGaleria();
+    };
+
+    function eliminarImg(id) {
+      if (!confirm('¿Eliminar esta imagen?')) return;
+      saveRegistry('stgl_galeria', loadRegistry('stgl_galeria').filter(i => i.id !== id));
+      toast('Imagen eliminada');
+      renderGaleria();
+    }
+
+    function openLightbox(id) {
+      const img = loadRegistry('stgl_galeria').find(i => i.id === id);
+      if (!img || !img.dataUrl) return;
+      document.getElementById('lightbox-img').src = img.dataUrl;
+      document.getElementById('lightbox-caption').textContent =
+        (img.titulo || img.nombre) + (img.proyecto ? ' — ' + img.proyecto : '');
+      document.getElementById('lightbox').classList.remove('hidden');
+    }
+
+    function closeLightbox(e) {
+      if (!e || e.target === document.getElementById('lightbox') ||
+          e.target.tagName === 'BUTTON') {
+        document.getElementById('lightbox').classList.add('hidden');
+      }
+    }
+
+    function handleFiles(files) {
+      const arr = [...files].filter(f => f.type.startsWith('image/'));
+      if (!arr.length) { toast('Solo se aceptan imágenes', 'error'); return; }
+      abrirModalImg(arr[0]);
+    }
+
+    initUploadZone('gal-zone', 'gal-zone-input', handleFiles);
+    document.getElementById('gal-input').addEventListener('change', e => handleFiles([...e.target.files]));
+
+    renderGaleria();
+  </script>
+</body>
+</html>

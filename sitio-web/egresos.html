@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Egresos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    /* ── KPI bar ── */
+    .eg-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.25rem; }
+    .eg-kpi-item { background:var(--bg-white); padding:0.85rem 1.1rem; }
+    .eg-kpi-label { font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.2rem; }
+    .eg-kpi-val { font-family:var(--brand); font-size:1.1rem; font-weight:700; color:var(--navy); }
+    .eg-kpi-val.red  { color:var(--red); }
+    .eg-kpi-val.gold { color:#8a6800; }
+    .eg-kpi-sub { font-size:0.63rem; color:var(--text-xs); margin-top:0.1rem; }
+
+    /* ── Period bar ── */
+    .eg-period-bar {
+      display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;
+      padding:0.5rem 0.9rem;
+      background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius);
+      margin-bottom:1.1rem;
+    }
+    .eg-period-bar label { font-family:var(--brand); font-size:0.62rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-dim); white-space:nowrap; }
+    .eg-period-bar input[type=month], .eg-period-bar select {
+      padding:0.25rem 0.55rem; font-size:0.72rem;
+      border:1px solid var(--border); border-radius:2px;
+      background:var(--bg-white); color:var(--text);
+    }
+    .eg-pb-grp { display:flex; gap:0; border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+    .eg-pb { padding:0.25rem 0.65rem; font-size:0.7rem; font-family:var(--brand); font-weight:700; border:none; border-right:1px solid var(--border); background:var(--bg-white); color:var(--text-dim); cursor:pointer; transition:all 0.15s; }
+    .eg-pb:last-child { border-right:none; }
+    .eg-pb:hover { color:var(--navy); background:var(--navy-pale); }
+    .eg-pb.active { background:var(--navy); color:#fff; }
+
+    /* ── Charts row ── */
+    .eg-charts { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.5rem; }
+    .eg-chart-panel { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+    .eg-chart-hdr { padding:0.65rem 1rem; border-bottom:1px solid var(--border); }
+    .eg-chart-title { font-family:var(--brand); font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--navy); }
+    .eg-chart-body { display:grid; grid-template-columns:1fr 1fr; }
+    .eg-donut-wrap { padding:1rem; border-right:1px solid var(--border); position:relative; height:210px; }
+    .eg-top-wrap { padding:1rem; }
+
+    /* ── Section table ── */
+    .eg-section { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:1.5rem; overflow:hidden; box-shadow:var(--shadow); }
+    .eg-section-hdr { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 1rem; background:var(--navy); }
+    .eg-section-title { font-family:var(--brand); font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#fff; flex:1; }
+    .eg-section-count { font-size:0.63rem; color:rgba(255,255,255,0.55); white-space:nowrap; }
+    .eg-section-total { font-family:var(--brand); font-size:0.88rem; font-weight:700; color:#ffd04a; white-space:nowrap; }
+
+    .eg-table { width:100%; border-collapse:collapse; font-size:0.73rem; }
+    .eg-table th { background:#f0f2f8; color:var(--navy); font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:0.28rem 0.6rem; text-align:left; border-bottom:2px solid var(--border); white-space:nowrap; }
+    .eg-table th.num { text-align:right; }
+    .eg-table td { padding:0.19rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .eg-table tbody tr:hover td { background:var(--navy-pale); }
+    .eg-table .num { text-align:right; font-family:'Courier New',monospace; }
+    .eg-table tfoot td { border-top:2px solid var(--navy); background:#e8ecf8; font-weight:700; font-family:var(--brand); font-size:0.7rem; padding:0.4rem 0.6rem; color:var(--navy); }
+
+    .eg-filter-row td { padding:0.15rem 0.4rem; background:#fafbfd; border-bottom:1px solid var(--border); }
+    .eg-filter-row input { width:100%; padding:0.14rem 0.3rem; font-size:0.64rem; border:1px solid var(--border); border-radius:2px; background:#fff; color:var(--text); }
+    .eg-filter-row input:focus { outline:none; border-color:var(--navy); }
+
+    .eg-month-row td { padding:0.3rem 0.6rem; font-family:var(--brand); font-size:0.64rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--navy); cursor:pointer; user-select:none; background:#f5f6fa; }
+    .eg-month-row:hover td { background:var(--navy-pale); }
+    .eg-month-sub { color:var(--text-xs); font-weight:400; font-family:var(--font); font-size:0.65rem; letter-spacing:0; text-transform:none; margin-left:0.5rem; }
+    .eg-month-total { text-align:right !important; font-family:'Courier New',monospace; color:var(--red) !important; }
+
+    @media(max-width:1000px) { .eg-charts { grid-template-columns:1fr; } }
+    @media(max-width:800px)  { .eg-kpi { grid-template-columns:repeat(2,1fr); } .eg-chart-body { grid-template-columns:1fr; } .eg-donut-wrap { border-right:none; border-bottom:1px solid var(--border); } }
+    @media(max-width:500px)  { .eg-kpi { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html">
+          <img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" />
+        </a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item active" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Control de gastos</div>
+          <h1 class="page-heading">Egresos</h1>
+          <div class="page-meta">Basado en movimientos bancarios importados</div>
+        </div>
+        <a href="financiero.html" class="btn btn-ghost">← Mov. Bancarios</a>
+      </div>
+
+      <!-- Period filter bar -->
+      <div class="eg-period-bar">
+        <label>Período</label>
+        <input type="month" id="eg-desde" onchange="egUpdate()" />
+        <span style="color:var(--text-xs);">→</span>
+        <input type="month" id="eg-hasta" onchange="egUpdate()" />
+        <div class="eg-pb-grp">
+          <button class="eg-pb" id="eg-pb-3"   onclick="egSetPeriod(3)">3M</button>
+          <button class="eg-pb" id="eg-pb-6"   onclick="egSetPeriod(6)">6M</button>
+          <button class="eg-pb active" id="eg-pb-12"  onclick="egSetPeriod(12)">12M</button>
+          <button class="eg-pb" id="eg-pb-all" onclick="egSetPeriod(0)">Todo</button>
+        </div>
+        <select id="eg-cuenta" onchange="egUpdate()" style="max-width:190px;">
+          <option value="">Todas las cuentas</option>
+        </select>
+        <button onclick="egReset()"
+          style="padding:0.24rem 0.65rem; font-size:0.68rem; font-family:var(--brand); font-weight:600;
+                 border:1px solid var(--border); border-radius:2px; color:var(--navy); background:var(--bg-white); cursor:pointer;">
+          ↺ Reset
+        </button>
+        <span style="flex:1;"></span>
+        <span id="eg-period-label" style="font-family:var(--brand); font-size:0.63rem; font-weight:600; color:var(--text-dim);"></span>
+      </div>
+
+      <!-- KPIs -->
+      <div class="eg-kpi">
+        <div class="eg-kpi-item">
+          <div class="eg-kpi-label">Total egresos</div>
+          <div class="eg-kpi-val red" id="eg-kpi-total">—</div>
+          <div class="eg-kpi-sub" id="eg-kpi-total-sub"></div>
+        </div>
+        <div class="eg-kpi-item">
+          <div class="eg-kpi-label">Gastos operativos</div>
+          <div class="eg-kpi-val" id="eg-kpi-gastos">—</div>
+          <div class="eg-kpi-sub" id="eg-kpi-gastos-sub"></div>
+        </div>
+        <div class="eg-kpi-item">
+          <div class="eg-kpi-label">Impuestos y retenciones</div>
+          <div class="eg-kpi-val gold" id="eg-kpi-impuestos">—</div>
+          <div class="eg-kpi-sub" id="eg-kpi-impuestos-sub"></div>
+        </div>
+        <div class="eg-kpi-item">
+          <div class="eg-kpi-label">Promedio mensual</div>
+          <div class="eg-kpi-val" id="eg-kpi-avg">—</div>
+          <div class="eg-kpi-sub" id="eg-kpi-avg-sub">en el período</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="eg-charts">
+
+        <!-- Gastos donut -->
+        <div class="eg-chart-panel">
+          <div class="eg-chart-hdr">
+            <div class="eg-chart-title">💸 Distribución de gastos operativos</div>
+          </div>
+          <div class="eg-chart-body">
+            <div class="eg-donut-wrap">
+              <canvas id="eg-donut-gastos"></canvas>
+            </div>
+            <div class="eg-top-wrap">
+              <div style="font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:0.65rem;">Top 5 conceptos</div>
+              <div id="eg-top-gastos"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Impuestos donut -->
+        <div class="eg-chart-panel">
+          <div class="eg-chart-hdr">
+            <div class="eg-chart-title">🏛️ Distribución de impuestos y retenciones</div>
+          </div>
+          <div class="eg-chart-body">
+            <div class="eg-donut-wrap">
+              <canvas id="eg-donut-impuestos"></canvas>
+            </div>
+            <div class="eg-top-wrap">
+              <div style="font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:0.65rem;">Top 5 tipos</div>
+              <div id="eg-top-impuestos"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══════════ GASTOS SECTION ══════════ -->
+      <div class="eg-section">
+        <div class="eg-section-hdr">
+          <span class="eg-section-title">💸 Gastos operativos</span>
+          <span class="eg-section-count" id="eg-gastos-count"></span>
+          <span class="eg-section-total" id="eg-gastos-total">—</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="eg-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">Fecha</th>
+                <th>Descripción</th>
+                <th>Concepto</th>
+                <th>Cuenta</th>
+                <th>Cta. Contable</th>
+                <th>Mov.</th>
+                <th class="num" style="width:110px;">Importe</th>
+              </tr>
+              <tr class="eg-filter-row">
+                <td><input id="egf-g-fecha"  placeholder="Filtrar…" oninput="renderGastos()" /></td>
+                <td><input id="egf-g-desc"   placeholder="Filtrar…" oninput="renderGastos()" /></td>
+                <td><input id="egf-g-conc"   placeholder="Filtrar…" oninput="renderGastos()" /></td>
+                <td><input id="egf-g-cuenta" placeholder="Filtrar…" oninput="renderGastos()" /></td>
+                <td><input id="egf-g-cc"     placeholder="Filtrar…" oninput="renderGastos()" /></td>
+                <td><input id="egf-g-mov"    placeholder="Filtrar…" oninput="renderGastos()" /></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody id="eg-gastos-body"></tbody>
+            <tfoot id="eg-gastos-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══════════ IMPUESTOS SECTION ══════════ -->
+      <div class="eg-section">
+        <div class="eg-section-hdr">
+          <span class="eg-section-title">🏛️ Impuestos y retenciones</span>
+          <span class="eg-section-count" id="eg-impuestos-count"></span>
+          <span class="eg-section-total" id="eg-impuestos-total">—</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="eg-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">Fecha</th>
+                <th>Descripción</th>
+                <th>Concepto</th>
+                <th>Cuenta</th>
+                <th>Cta. Contable</th>
+                <th>Mov.</th>
+                <th class="num" style="width:110px;">Importe</th>
+              </tr>
+              <tr class="eg-filter-row">
+                <td><input id="egf-i-fecha"  placeholder="Filtrar…" oninput="renderImpuestos()" /></td>
+                <td><input id="egf-i-desc"   placeholder="Filtrar…" oninput="renderImpuestos()" /></td>
+                <td><input id="egf-i-conc"   placeholder="Filtrar…" oninput="renderImpuestos()" /></td>
+                <td><input id="egf-i-cuenta" placeholder="Filtrar…" oninput="renderImpuestos()" /></td>
+                <td><input id="egf-i-cc"     placeholder="Filtrar…" oninput="renderImpuestos()" /></td>
+                <td><input id="egf-i-mov"    placeholder="Filtrar…" oninput="renderImpuestos()" /></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody id="eg-impuestos-body"></tbody>
+            <tfoot id="eg-impuestos-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="border-top:1px solid var(--border); padding:0.9rem 2rem; background:var(--bg-white);">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+      <img src="assets/logo-color.png" alt="Santaglia Compass" style="height:22px; opacity:0.5;" />
+      <span style="font-family:var(--brand); font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-xs);">SANTAGLIA COMPASS · santaglia.com · CONFIDENCIAL</span>
+    </div>
+  </footer>
+
+</div><!-- /site-wrap -->
+
+<script src="js/app.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════
+   EGRESOS — clasificación desde movimientos bancarios
+══════════════════════════════════════════════════════ */
+
+const MESES_ES = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+];
+
+/* Palabras clave que identifican un pago de impuesto / retención */
+const TAX_KW = [
+  'isr','iva','imss','infonavit','sat ','impuest','retenci',
+  'predial','tenencia','ieps','iave','contribuy','derechos fiscal',
+  'declaracion','declaración','pagos provisionales','pago provisional',
+  'recargo','multa fiscal','subsidio empleo'
+];
+
+/* Colores para gráficas */
+const EG_COLORS = [
+  '#c0392b','#e67e22','#f39c12','#8e44ad','#2980b9',
+  '#16a085','#27ae60','#d35400','#1a6fbf','#e91e63',
+  '#3f51b5','#009688','#ff5722','#607d8b','#9e9e9e',
+];
+
+/* ── Clasificadores ── */
+function esImpuesto(r) {
+  const txt = ([r.cuentaCont, r.concepto, r.desc].join(' ') + ' ').toLowerCase();
+  return TAX_KW.some(k => txt.includes(k));
+}
+
+function esTraspaso(r) {
+  /* Movimientos manuales creados como traspaso */
+  if (r.tipo === 'Traspaso' || r.origenRef === 'traspaso' || r.traspasoId) return true;
+  /* Movimientos Excel donde el texto identifica un traspaso interno */
+  const txt = [r.desc, r.concepto, r.cuentaCont, r.mov].join(' ').toLowerCase();
+  return /\btraspaso\b/.test(txt);
+}
+
+/* ── Formato ── */
+function fmtMXN(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+function escHtml(s) {
+  return (s || '').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Carga de datos ── */
+function getMovData() {
+  let data = [];
+  try {
+    const raw = localStorage.getItem('stgl_mov_excel');
+    if (raw) data = JSON.parse(raw);
+  } catch(e) {}
+  try {
+    data = [...data, ...loadRegistry('stgl_mov_manual')];
+  } catch(e) {}
+  return data;
+}
+
+function getEgresosBase(desde, hasta, cuenta) {
+  return getMovData().filter(r => {
+    if (!(r.salidas > 0)) return false;
+    if (esTraspaso(r))   return false;
+    const f = (r.fecha || '').substring(0, 7);
+    if (desde && f < desde) return false;
+    if (hasta && f > hasta) return false;
+    if (cuenta && r.cuenta !== cuenta) return false;
+    return true;
+  });
+}
+
+/* ── Estado global ── */
+let __egGastos    = [];
+let __egImpuestos = [];
+let __egOpenG     = new Set();
+let __egOpenI     = new Set();
+let __egDonutG    = null;
+let __egDonutI    = null;
+
+/* ══════════════════════════════════════
+   CONTROL DE PERÍODO
+══════════════════════════════════════ */
+function egSetPeriod(months) {
+  document.querySelectorAll('.eg-pb').forEach(b => b.classList.remove('active'));
+  const allEg = getMovData().filter(r => r.salidas > 0 && !esTraspaso(r));
+  const fechas = allEg.map(r => (r.fecha||'').substring(0,7)).filter(Boolean).sort();
+
+  if (!fechas.length) {
+    document.getElementById('eg-pb-' + (months || 'all'))?.classList.add('active');
+    egUpdate();
+    return;
+  }
+
+  const last = fechas[fechas.length - 1];
+  if (months === 0) {
+    document.getElementById('eg-desde').value = fechas[0];
+    document.getElementById('eg-hasta').value = last;
+    document.getElementById('eg-pb-all')?.classList.add('active');
+  } else {
+    const d = new Date(last + '-01');
+    d.setMonth(d.getMonth() - (months - 1));
+    document.getElementById('eg-desde').value = d.toISOString().substring(0, 7);
+    document.getElementById('eg-hasta').value = last;
+    document.getElementById('eg-pb-' + months)?.classList.add('active');
+  }
+  egUpdate();
+}
+
+function egReset() {
+  document.getElementById('eg-cuenta').value = '';
+  egSetPeriod(12);
+}
+
+function egUpdate() {
+  const desde  = document.getElementById('eg-desde').value;
+  const hasta  = document.getElementById('eg-hasta').value;
+  const cuenta = document.getElementById('eg-cuenta').value;
+
+  /* Resetear grupos abiertos al cambiar período */
+  __egOpenG.clear();
+  __egOpenI.clear();
+
+  const base      = getEgresosBase(desde, hasta, cuenta);
+  __egGastos      = base.filter(r => !esImpuesto(r));
+  __egImpuestos   = base.filter(r =>  esImpuesto(r));
+
+  updateKPIs(base);
+  renderGastos();
+  renderImpuestos();
+  renderCharts();
+
+  /* Etiqueta de período */
+  const lbl = document.getElementById('eg-period-label');
+  if (desde || hasta)
+    lbl.textContent = (desde || '…') + ' → ' + (hasta || 'hoy');
+  else
+    lbl.textContent = 'Todo el histórico';
+}
+
+/* ── KPIs ── */
+function updateKPIs(base) {
+  const totG   = __egGastos.reduce((s,r) => s + r.salidas, 0);
+  const totI   = __egImpuestos.reduce((s,r) => s + r.salidas, 0);
+  const total  = totG + totI;
+  const meses  = new Set(base.map(r => (r.fecha||'').substring(0,7)).filter(Boolean));
+  const nM     = meses.size || 1;
+
+  document.getElementById('eg-kpi-total').textContent     = fmtMXN(total);
+  document.getElementById('eg-kpi-total-sub').textContent  = base.length + ' movimientos';
+  document.getElementById('eg-kpi-gastos').textContent    = fmtMXN(totG);
+  document.getElementById('eg-kpi-gastos-sub').textContent = __egGastos.length + ' mov.' +
+    (total > 0 ? ' · ' + (totG / total * 100).toFixed(1) + '%' : '');
+  document.getElementById('eg-kpi-impuestos').textContent  = fmtMXN(totI);
+  document.getElementById('eg-kpi-impuestos-sub').textContent = __egImpuestos.length + ' mov.' +
+    (total > 0 ? ' · ' + (totI / total * 100).toFixed(1) + '%' : '');
+  document.getElementById('eg-kpi-avg').textContent       = fmtMXN(total / nM);
+  document.getElementById('eg-kpi-avg-sub').textContent   = nM + ' mes' + (nM !== 1 ? 'es' : '') + ' en el período';
+}
+
+/* ══════════════════════════════════════
+   TABLAS
+══════════════════════════════════════ */
+function applyColFilters(data, fields, inputIds) {
+  const vals = inputIds.map(id => (document.getElementById(id)?.value || '').toLowerCase().trim());
+  return data.filter(r => fields.every((f, i) => !vals[i] || (r[f]||'').toLowerCase().includes(vals[i])));
+}
+
+function renderEgSection(data, bodyId, footId, totalId, countId, openSet, section) {
+  /* Aplicar filtros de columna */
+  const filtered = applyColFilters(
+    data,
+    ['fecha','desc','concepto','cuenta','cuentaCont','mov'],
+    section === 'G'
+      ? ['egf-g-fecha','egf-g-desc','egf-g-conc','egf-g-cuenta','egf-g-cc','egf-g-mov']
+      : ['egf-i-fecha','egf-i-desc','egf-i-conc','egf-i-cuenta','egf-i-cc','egf-i-mov']
+  );
+
+  const total = filtered.reduce((s,r) => s + r.salidas, 0);
+  document.getElementById(totalId).textContent = fmtMXN(total);
+  document.getElementById(countId).textContent = filtered.length + ' mov.';
+
+  /* Agrupar por mes (más reciente primero) */
+  const grupos = [...new Set(
+    filtered.map(r => (r.fecha||'').substring(0,7)).filter(Boolean)
+  )].sort().reverse();
+
+  const body = document.getElementById(bodyId);
+  const foot = document.getElementById(footId);
+  if (!body) return;
+
+  /* Auto-abrir primer mes si ninguno está abierto */
+  if (openSet.size === 0 && grupos.length > 0) openSet.add(grupos[0]);
+
+  let html = '';
+  for (const mes of grupos) {
+    const rows    = filtered.filter(r => (r.fecha||'').startsWith(mes));
+    const mesTotal= rows.reduce((s,r) => s + r.salidas, 0);
+    const isOpen  = openSet.has(mes);
+    const [yy, mm]= mes.split('-');
+    const label   = MESES_ES[parseInt(mm) - 1] + ' ' + yy;
+
+    html += `<tr class="eg-month-row" onclick="egToggleMonth('${mes}','${section}')">
+      <td colspan="6">${isOpen ? '▼' : '▶'} <strong>${label}</strong>
+        <span class="eg-month-sub">${rows.length} mov.</span>
+      </td>
+      <td class="num eg-month-total">${fmtMXN(mesTotal)}</td>
+    </tr>`;
+
+    if (isOpen) {
+      for (const r of rows) {
+        html += `<tr>
+          <td style="white-space:nowrap; font-size:0.68rem; color:var(--text-dim);">${escHtml(r.fecha||'—')}</td>
+          <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+              title="${escHtml(r.desc||'')}">${escHtml(r.desc||'—')}</td>
+          <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+              font-size:0.69rem; color:var(--text-dim);"
+              title="${escHtml(r.concepto||'')}">${escHtml(r.concepto||'—')}</td>
+          <td style="font-size:0.69rem; color:var(--text-dim); white-space:nowrap;">${escHtml(r.cuenta||'—')}</td>
+          <td style="font-size:0.67rem; color:var(--text-dim); white-space:nowrap;">${escHtml(r.cuentaCont||'—')}</td>
+          <td style="font-size:0.65rem; color:var(--text-xs); white-space:nowrap;">${escHtml(r.mov||'—')}</td>
+          <td class="num" style="color:var(--red); font-weight:700; font-size:0.72rem; white-space:nowrap;">${fmtMXN(r.salidas)}</td>
+        </tr>`;
+      }
+    }
+  }
+
+  body.innerHTML = html || '';
+
+  if (!filtered.length) {
+    foot.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.8rem; color:var(--text-xs); font-size:0.78rem;">
+      Sin registros en el período seleccionado</td></tr>`;
+  } else {
+    foot.innerHTML = `<tr>
+      <td colspan="6" style="font-family:var(--brand); font-size:0.7rem;">
+        Total período · ${filtered.length} registro${filtered.length !== 1 ? 's' : ''}
+      </td>
+      <td class="num">${fmtMXN(total)}</td>
+    </tr>`;
+  }
+}
+
+function egToggleMonth(mes, section) {
+  if (section === 'G') {
+    if (__egOpenG.has(mes)) __egOpenG.delete(mes); else __egOpenG.add(mes);
+    renderGastos();
+  } else {
+    if (__egOpenI.has(mes)) __egOpenI.delete(mes); else __egOpenI.add(mes);
+    renderImpuestos();
+  }
+}
+
+function renderGastos() {
+  renderEgSection(__egGastos, 'eg-gastos-body', 'eg-gastos-foot',
+    'eg-gastos-total', 'eg-gastos-count', __egOpenG, 'G');
+}
+
+function renderImpuestos() {
+  renderEgSection(__egImpuestos, 'eg-impuestos-body', 'eg-impuestos-foot',
+    'eg-impuestos-total', 'eg-impuestos-count', __egOpenI, 'I');
+}
+
+/* ══════════════════════════════════════
+   GRÁFICAS
+══════════════════════════════════════ */
+function groupByConcepto(data, topN) {
+  const map = new Map();
+  for (const r of data) {
+    const raw = r.concepto || r.cuentaCont || r.desc || 'Sin concepto';
+    const k   = raw.length > 38 ? raw.substring(0, 38) + '…' : raw;
+    map.set(k, (map.get(k) || 0) + r.salidas);
+  }
+  const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]);
+  const top    = sorted.slice(0, topN);
+  const others = sorted.slice(topN).reduce((s, [, v]) => s + v, 0);
+  if (others > 0) top.push(['Otros', others]);
+  return top; /* [[label, value], …] */
+}
+
+function renderDonut(canvasId, data, existingChart) {
+  const top    = groupByConcepto(data, 7);
+  const labels = top.map(([l]) => l);
+  const values = top.map(([, v]) => v);
+  const colors = top.map(([l], i) => l === 'Otros' ? '#9099aa' : (EG_COLORS[i] || '#9099aa'));
+  const grand  = values.reduce((a, b) => a + b, 0);
+
+  const ctx = document.getElementById(canvasId)?.getContext('2d');
+  if (!ctx) return null;
+  if (existingChart) { try { existingChart.destroy(); } catch(e) {} }
+
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v   = ctx.parsed;
+              const pct = grand > 0 ? (v / grand * 100).toFixed(1) + '%' : '—';
+              return ` ${ctx.label}: ${fmtMXN(v)} (${pct})`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { family:'Exo 2', size:10, weight:'700' },
+          formatter: (value, ctx) => {
+            const tot = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            const pct = tot > 0 ? value / tot * 100 : 0;
+            return pct >= 5 ? pct.toFixed(0) + '%' : '';
+          },
+          textShadowBlur: 4,
+          textShadowColor: 'rgba(0,0,0,0.4)',
+        }
+      }
+    }
+  });
+}
+
+function renderTopList(elId, data) {
+  const top   = groupByConcepto(data, 5);
+  const grand = top.reduce((s, [, v]) => s + v, 0);
+  const el    = document.getElementById(elId);
+  if (!el) return;
+
+  if (!data.length || !top.length) {
+    el.innerHTML = '<div style="color:var(--text-xs); font-size:0.72rem; padding:0.4rem 0;">Sin datos en el período</div>';
+    return;
+  }
+
+  el.innerHTML = top.map(([label, value], i) => {
+    const pct = grand > 0 ? (value / grand * 100).toFixed(1) : 0;
+    const col = label === 'Otros' ? '#9099aa' : (EG_COLORS[i] || '#9099aa');
+    return `
+      <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.28rem;">
+        <div style="width:8px; height:8px; border-radius:2px; background:${col}; flex-shrink:0;"></div>
+        <div style="flex:1; font-size:0.68rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+             title="${escHtml(label)}">${escHtml(label)}</div>
+        <div style="font-family:var(--brand); font-size:0.66rem; font-weight:700; color:var(--navy); white-space:nowrap;">${fmtMXN(value)}</div>
+      </div>
+      <div style="background:var(--border); border-radius:2px; height:3px; margin-bottom:0.4rem;">
+        <div style="background:${col}; width:${pct}%; height:100%; border-radius:2px;"></div>
+      </div>`;
+  }).join('');
+}
+
+function renderCharts() {
+  __egDonutG = renderDonut('eg-donut-gastos',    __egGastos,    __egDonutG);
+  __egDonutI = renderDonut('eg-donut-impuestos', __egImpuestos, __egDonutI);
+  renderTopList('eg-top-gastos',    __egGastos);
+  renderTopList('eg-top-impuestos', __egImpuestos);
+}
+
+/* ── Poblar selector de cuentas ── */
+function populateCuentas() {
+  const all = getMovData().filter(r => r.salidas > 0 && !esTraspaso(r));
+  const cuentas = [...new Set(all.map(r => r.cuenta).filter(Boolean))].sort();
+  const sel = document.getElementById('eg-cuenta');
+  cuentas.forEach(c => {
+    const o = document.createElement('option');
+    o.value = o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+/* ── Inicializar ── */
+populateCuentas();
+egSetPeriod(12);
+
+</script>
+</body>
+</html>
