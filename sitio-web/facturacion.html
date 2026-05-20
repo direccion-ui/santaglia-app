@@ -698,7 +698,8 @@
     return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function parseNum(s) {
-    return parseFloat((s || '0').toString().replace(/,/g, '')) || 0;
+    // Quita símbolos de moneda, espacios y comas de miles antes de parsear
+    return parseFloat(String(s || '').replace(/[^0-9.\-]/g, '')) || 0;
   }
   function numKey(f, col) {
     const map = {
@@ -852,7 +853,7 @@
         <td style="font-weight:500; max-width:200px; overflow:hidden; text-overflow:ellipsis;" title="${f.cliente||''}">${f.cliente || '—'}</td>
         <td style="color:var(--text-dim); max-width:220px; overflow:hidden; text-overflow:ellipsis;" title="${f.servicio||''}">${f.servicio || '—'}</td>
         <td class="num">${f.cant || '—'}</td>
-        <td class="num">${f.precio ? '$' + fmtNum(f.precio) : '—'}</td>
+        <td class="num">${f.precio ? '$' + fmtNum(parseNum(f.precio)) : '—'}</td>
         <td class="center"><span class="badge ${f.moneda==='USD'?'badge-blue':'badge-navy'}">${f.moneda||'MXN'}</span></td>
         <td class="num">${f.tcambio && parseFloat(f.tcambio)>1 ? fmtNum(f.tcambio) : '—'}</td>
         <td class="num">${f.impUsd ? '$' + f.impUsd : '—'}</td>
