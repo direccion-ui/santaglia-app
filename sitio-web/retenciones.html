@@ -281,6 +281,7 @@
         <div class="flex gap-1">
           <button class="btn btn-ghost" onclick="importarRetenciones()">↑ Importar histórico Excel</button>
           <button class="btn btn-primary" onclick="importarPagosSAT()">↑ Importar pagos SAT (Excel)</button>
+          <button class="btn btn-ghost" onclick="abrirImportBulkPdf()">↑ Previos / LCs (PDFs)</button>
         </div>
       </div>
 
@@ -542,6 +543,76 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-pdf')">Cerrar</button>
       <button class="btn btn-primary" id="pdf-aplicar-btn" onclick="aplicarPdfs()" style="display:none;">Aplicar datos extraídos</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Importar previos de pago / LCs desde PDFs (bulk) ══ -->
+<div class="modal-backdrop hidden" id="modal-bulk-pdf">
+  <div class="modal" style="max-width:820px; max-height:92vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title">Importar previos de pago / líneas de captura (PDFs)</span>
+      <button class="modal-close" onclick="closeModal('modal-bulk-pdf')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:1rem;">
+        Selecciona uno o varios PDFs del SAT (previos de pago, líneas de captura). El sistema extraerá automáticamente el período, la línea de captura y el importe. Revisa y corrige los datos antes de guardar.
+      </p>
+
+      <!-- Drop zone -->
+      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-pdf-inp').click()"
+        style="border:2px dashed var(--border); border-radius:var(--radius); padding:2rem; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--bg); margin-bottom:1rem;">
+        <input type="file" id="bulk-pdf-inp" accept=".pdf" multiple style="display:none;"
+          onchange="procesarBulkPdfs(this.files)" />
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📄</div>
+        <div style="font-family:var(--brand); font-weight:700; color:var(--navy); font-size:0.85rem;">
+          Haz clic o arrastra los PDFs aquí
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-xs); margin-top:0.3rem;">
+          Acepta múltiples PDFs — SAT previos de pago y/o líneas de captura
+        </div>
+      </div>
+
+      <!-- Spinner -->
+      <div id="bulk-pdf-spinner" style="display:none; text-align:center; padding:1.5rem; color:var(--text-dim); font-size:0.82rem;">
+        ⏳ Procesando PDFs…
+      </div>
+
+      <!-- Results table -->
+      <div id="bulk-pdf-results" style="display:none;">
+        <div style="font-family:var(--brand); font-size:0.72rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.5rem;">
+          Resultados — verifica y corrige antes de guardar
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.74rem;">
+            <thead>
+              <tr style="background:var(--navy); color:#fff;">
+                <th style="padding:0.4rem 0.6rem; text-align:left; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Archivo</th>
+                <th style="padding:0.4rem 0.6rem; text-align:left; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Período (YYYY-MM)</th>
+                <th style="padding:0.4rem 0.6rem; text-align:left; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Tipo</th>
+                <th style="padding:0.4rem 0.6rem; text-align:right; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Línea de captura</th>
+                <th style="padding:0.4rem 0.6rem; text-align:right; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Importe</th>
+                <th style="padding:0.4rem 0.6rem; text-align:left; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">F. Límite</th>
+                <th style="padding:0.4rem 0.6rem; text-align:center; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase;">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="bulk-pdf-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="bulk-pdf-aviso" style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-dim); background:var(--navy-pale); border-radius:var(--radius); padding:0.6rem 0.9rem;">
+          💡 <strong>Tipo:</strong> <em>1 — Asim+IVA+ISR PM</em> guarda en Línea de Captura 1 y Acuse 1.
+          <em>2 — ISR Honorarios</em> → LC2/Acuse 2. <em>3 — Arrendamiento</em> → LC3/Acuse 3.
+          Si el período no se detectó automáticamente, escríbelo en formato <code>YYYY-MM</code> (ej. 2026-01).
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bulk-pdf')">Cancelar</button>
+      <button class="btn btn-ghost" id="bulk-nuevo-btn" onclick="document.getElementById('bulk-pdf-inp').click()" style="display:none;">+ Agregar más PDFs</button>
+      <button class="btn btn-primary" id="bulk-guardar-btn" onclick="guardarBulkPdfs()" style="display:none;">✓ Guardar todos</button>
     </div>
   </div>
 </div>
@@ -1302,6 +1373,221 @@ function aplicarPdfs() {
   calcEditTotals();
   closeModal('modal-pdf');
   toast('Datos PDF aplicados — revisa y guarda','success');
+}
+
+/* ══════════════════════════════
+   IMPORTACIÓN MASIVA DE PDFs (previos de pago / líneas de captura)
+══════════════════════════════ */
+
+let _bulkPdfItems = [];  // [{nombre, periodo, slot, linea, importe, fecha, ok, error}]
+
+const _MESES_FULL_ES = {
+  enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6,
+  julio:7, agosto:8, septiembre:9, octubre:10, noviembre:11, diciembre:12
+};
+
+/** Detecta el período fiscal del texto del PDF → "YYYY-MM" o null */
+function _detectarPeriodoPDF(text) {
+  const t = text.toLowerCase();
+
+  // "ENERO 2026", "ENERO DE 2026"
+  const m1 = t.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b(?:\s+de)?\s+(20\d{2})\b/);
+  if (m1) {
+    const mn = _MESES_FULL_ES[m1[1]];
+    if (mn) return `${m1[2]}-${String(mn).padStart(2,'0')}`;
+  }
+
+  // "Período: 01/2026" o "01 / 2026"
+  const m2 = text.match(/\b(0[1-9]|1[0-2])\s*[\/\-]\s*(20\d{2})\b/);
+  if (m2) return `${m2[2]}-${m2[1].padStart(2,'0')}`;
+
+  // "2026/01" o "2026-01"
+  const m3 = text.match(/\b(20\d{2})[\/\-](0[1-9]|1[0-2])\b/);
+  if (m3) return `${m3[1]}-${m3[2]}`;
+
+  return null;
+}
+
+/**
+ * Detecta el slot del PDF:
+ *   1 = Asim + IVA + ISR PM (default)
+ *   2 = ISR Honorarios
+ *   3 = Arrendamiento
+ */
+function _detectarSlotPDF(text) {
+  const t = text.toLowerCase();
+  if (t.includes('arrendamiento'))                          return 3;
+  if (t.includes('honorario'))                              return 2;
+  if (t.includes('asimilad') || t.includes('asimilable'))  return 1;
+  // ISR PM / personas morales without "honorarios" → slot 1
+  return 1;
+}
+
+function abrirImportBulkPdf() {
+  _bulkPdfItems = [];
+  const inp = document.getElementById('bulk-pdf-inp');
+  if (inp) inp.value = '';
+  document.getElementById('bulk-pdf-results').style.display  = 'none';
+  document.getElementById('bulk-pdf-spinner').style.display  = 'none';
+  document.getElementById('bulk-guardar-btn').style.display  = 'none';
+  document.getElementById('bulk-nuevo-btn').style.display    = 'none';
+  // Wire drag-and-drop on the drop zone (once)
+  const dz = document.getElementById('bulk-drop-zone');
+  if (dz && !dz._ddWired) {
+    dz._ddWired = true;
+    dz.addEventListener('dragover',  e => { e.preventDefault(); dz.style.borderColor='var(--navy)'; dz.style.background='var(--navy-pale)'; });
+    dz.addEventListener('dragleave', e => { dz.style.borderColor='var(--border)'; dz.style.background='var(--bg)'; });
+    dz.addEventListener('drop',      e => { e.preventDefault(); dz.style.borderColor='var(--border)'; dz.style.background='var(--bg)'; procesarBulkPdfs(e.dataTransfer.files); });
+  }
+  openModal('modal-bulk-pdf');
+}
+
+async function procesarBulkPdfs(files) {
+  if (!files || !files.length) return;
+
+  // If we already have items (user added more), append; otherwise start fresh
+  const startIdx = _bulkPdfItems.length;
+
+  document.getElementById('bulk-pdf-spinner').style.display = '';
+  document.getElementById('bulk-pdf-results').style.display = 'none';
+  document.getElementById('bulk-guardar-btn').style.display = 'none';
+  document.getElementById('bulk-nuevo-btn').style.display   = 'none';
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js no disponible');
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      let text = '';
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page    = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        text += content.items.map(x => x.str).join(' ') + ' ';
+      }
+      const parsed  = parsearLineaCaptura(text);
+      const periodo = _detectarPeriodoPDF(text) || '';
+      const slot    = _detectarSlotPDF(text);
+      _bulkPdfItems.push({
+        nombre:  file.name,
+        periodo, slot,
+        linea:   parsed.linea,
+        importe: parsed.importe,
+        fecha:   parsed.fecha,
+        concepto: parsed.concepto,
+        ok: true
+      });
+    } catch(e) {
+      _bulkPdfItems.push({ nombre: file.name, ok: false, error: e.message });
+    }
+  }
+
+  document.getElementById('bulk-pdf-spinner').style.display = 'none';
+  _renderBulkPdfResults();
+}
+
+function _renderBulkPdfResults() {
+  const tbody = document.getElementById('bulk-pdf-tbody');
+  const ROW_STYLE = 'padding:0.38rem 0.55rem; border-bottom:1px solid var(--border); vertical-align:middle;';
+
+  tbody.innerHTML = _bulkPdfItems.map((item, i) => {
+    if (!item.ok) {
+      return `<tr style="background:#fff5f5;">
+        <td colspan="7" style="${ROW_STYLE} color:var(--red); font-size:0.72rem;">
+          ⚠ <strong>${item.nombre}</strong>: ${item.error}
+        </td></tr>`;
+    }
+    const hayDatos = item.linea || item.importe > 0;
+    const estadoBadge = hayDatos
+      ? `<span style="color:var(--green); font-weight:700;">✓</span>`
+      : `<span style="color:#d97706; font-weight:700;" title="No se detectaron datos — verifica el PDF">⚠ Sin datos</span>`;
+
+    // Period options: 2022-01 … 2027-12 + blank
+    let periodoOpts = '<option value="">— elegir —</option>';
+    for (let yr = 2022; yr <= 2027; yr++) {
+      for (let m = 1; m <= 12; m++) {
+        const k = `${yr}-${String(m).padStart(2,'0')}`;
+        periodoOpts += `<option value="${k}" ${item.periodo===k?'selected':''}>${k}</option>`;
+      }
+    }
+
+    return `<tr style="${i%2===1?'background:#f8f9fc;':''}">
+      <td style="${ROW_STYLE} max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim); font-size:0.7rem;" title="${item.nombre}">${item.nombre}</td>
+      <td style="${ROW_STYLE}">
+        <select style="font-size:0.72rem; padding:0.2rem 0.35rem; border:1.5px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); width:110px;"
+          onchange="_bulkPdfItems[${i}].periodo=this.value">${periodoOpts}</select>
+      </td>
+      <td style="${ROW_STYLE}">
+        <select style="font-size:0.72rem; padding:0.2rem 0.35rem; border:1.5px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text);"
+          onchange="_bulkPdfItems[${i}].slot=parseInt(this.value)">
+          <option value="1" ${item.slot===1?'selected':''}>1 — Asim+IVA+ISR PM</option>
+          <option value="2" ${item.slot===2?'selected':''}>2 — ISR Honorarios</option>
+          <option value="3" ${item.slot===3?'selected':''}>3 — Arrendamiento</option>
+        </select>
+      </td>
+      <td style="${ROW_STYLE} text-align:right; font-family:monospace; font-size:0.68rem; color:var(--text-dim);" title="${item.linea||''}">
+        ${item.linea ? item.linea.slice(0,10)+'…' : '—'}
+      </td>
+      <td style="${ROW_STYLE} text-align:right; font-family:monospace; font-weight:600; color:var(--navy);">
+        ${item.importe > 0 ? '$'+fmtNum(item.importe) : '—'}
+      </td>
+      <td style="${ROW_STYLE} white-space:nowrap; color:var(--text-dim);">
+        ${item.fecha || '—'}
+      </td>
+      <td style="${ROW_STYLE} text-align:center;">${estadoBadge}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('bulk-pdf-results').style.display = '';
+  const hayValidos = _bulkPdfItems.some(x => x.ok && (x.linea || x.importe > 0));
+  document.getElementById('bulk-guardar-btn').style.display = hayValidos ? '' : 'none';
+  document.getElementById('bulk-nuevo-btn').style.display   = '';
+}
+
+function guardarBulkPdfs() {
+  const extra   = loadExtraObj();
+  let guardados = 0;
+  const errores = [];
+
+  _bulkPdfItems.forEach(item => {
+    if (!item.ok) return;
+    if (!item.linea && item.importe <= 0) return;  // nothing extracted
+
+    const key = item.periodo;
+    if (!key || !/^\d{4}-\d{2}$/.test(key)) {
+      errores.push(`${item.nombre}: período no válido ("${key||'vacío'}")`);
+      return;
+    }
+
+    if (!extra[key]) extra[key] = {};
+
+    const slot      = item.slot || 1;
+    const sufAcuse  = slot === 1 ? 'Asim' : slot === 2 ? 'Hon' : 'Arr';
+
+    if (item.linea)       extra[key][`lineaCaptura${slot}`] = item.linea;
+    if (item.importe > 0) extra[key][`acuse${sufAcuse}`]   = item.importe;
+    // F. límite: solo llenar si no hay ya una fecha registrada
+    if (item.fecha && !extra[key].acuseFecha) extra[key].acuseFecha = item.fecha;
+
+    // Recalcular acuseTotal
+    const t = (extra[key].acuseAsim||0) + (extra[key].acuseHon||0) + (extra[key].acuseArr||0);
+    if (t > 0) extra[key].acuseTotal = t; else delete extra[key].acuseTotal;
+
+    guardados++;
+  });
+
+  saveExtraObj(extra);
+
+  if (errores.length) {
+    toast('Advertencias: ' + errores.join(' | '), 'error');
+  }
+  if (guardados > 0) {
+    toast(`${guardados} PDF${guardados!==1?'s':''} guardado${guardados!==1?'s':''} correctamente`, 'success');
+    closeModal('modal-bulk-pdf');
+    renderTable();
+  } else if (!errores.length) {
+    toast('No había datos válidos para guardar', 'error');
+  }
 }
 
 /* ── Importar histórico ── */
