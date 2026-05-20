@@ -1158,13 +1158,18 @@ function importarRecExcel(input) {
       let headerIdx = allRows.findIndex(r => r.some(c => String(c).toLowerCase().includes('descripcion')));
       if (headerIdx < 0) { toast('No encontré la fila de encabezados (Descripcion, Tipo…)', 'error'); return; }
 
-      const headers  = allRows[headerIdx].map(h => String(h).trim().toLowerCase().replace(/\s+/g,'_'));
+      // Normaliza: minúsculas, sin acentos, puntos/guiones → espacio
+      const normRec = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')
+        .toLowerCase().replace(/[._]/g,' ').replace(/\s+/g,' ').trim();
+
+      const headers  = allRows[headerIdx].map(h => normRec(h));
       const dataRows = allRows.slice(headerIdx + 1).filter(r => r.some(c => c !== ''));
 
-      // Mapeo flexible de columnas
+      // Mapeo flexible de columnas (partial match con normalización)
       const col = (row, ...names) => {
         for (const n of names) {
-          const idx = headers.findIndex(h => h.includes(n));
+          const nm  = normRec(n);
+          const idx = headers.findIndex(h => h.includes(nm));
           if (idx >= 0 && row[idx] !== undefined && row[idx] !== '') return String(row[idx]).trim();
         }
         return '';
