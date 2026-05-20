@@ -234,6 +234,7 @@
             <input type="file" accept=".csv,.txt,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;"
               onchange="importarArchivoFacturas(this.files[0]);this.value='';" />
           </button>
+          <button class="btn btn-ghost" onclick="limpiarImportadas()" title="Elimina solo las facturas importadas desde CSV/Excel (no las capturadas manualmente)" style="color:#c0392b;">✕ Limpiar importadas</button>
           <button class="btn btn-ghost" onclick="exportCSV()">↓ Exportar CSV</button>
           <button class="btn btn-primary" onclick="openModal('modal-factura')">+ Nueva factura</button>
         </div>
@@ -528,11 +529,14 @@
   function confirmarCambios() {
     const antes = loadRegistry(KEY);
 
-    /* Detectar facturas que pasan a pagada=Sí con fecha de cobro por primera vez */
+    /* Detectar facturas que pasan a pagada=Sí con fecha de cobro por primera vez.
+       Las facturas importadas (origenImport:true) NO generan movimientos automáticos
+       — sus cobros ya ocurrieron en el pasado y se registran en Financiero aparte. */
     const recienCobradas = [];
     for (const [id, changes] of Object.entries(pendingChanges)) {
       const f = antes.find(x => x.id === id);
       if (!f) continue;
+      if (f.origenImport) continue; // histórico importado → no crear movimiento
       const pagadaNueva  = changes.pagada  !== undefined ? changes.pagada  : f.pagada;
       const fcobroNueva  = changes.fcobro  !== undefined ? changes.fcobro  : f.fcobro;
       if (pagadaNueva === 'Sí' && fcobroNueva && f.pagada !== 'Sí') {
@@ -1205,6 +1209,13 @@
           return (i !== undefined && i < cols.length) ? cols[i].replace(/^"|"$/g,'').trim() : '';
         };
 
+        // Normalizar valor del campo "pagada" desde Excel a 'Sí' / 'No'
+        const normPagada = v => {
+          const s = String(v).trim().toLowerCase()
+            .normalize('NFD').replace(/[̀-ͯ]/g,''); // quita acentos
+          return ['si','yes','1','x','pagada','cobrada','true','cobrado'].includes(s) ? 'Sí' : 'No';
+        };
+
         const existentes = loadRegistry(KEY);
         const existIds   = new Set(existentes.map(f => f.no).filter(Boolean));
         const nuevas = [];
@@ -1219,31 +1230,32 @@
           const fecha   = parseDate(get(cols, 'fecha'));
           const cliente = get(cols, 'cliente');
 
-          // Mínimo: fecha o cliente (no ambos obligatorios — datos reales pueden tener uno vacío)
+          // Mínimo: al menos uno de los tres campos clave
           if (!fecha && !cliente && !no) continue;
 
           nuevas.push({
-            id:          `csv-${Date.now()}-${i}`,
+            id:           `csv-${Date.now()}-${i}`,
+            origenImport: true,   // flag: no genera movimientos al marcar como pagada
             no,
             fecha,
             cliente,
-            servicio:    get(cols, 'servicio'),
-            cant:        get(cols, 'cant'),
-            precio:      get(cols, 'precio'),
-            moneda:      get(cols, 'moneda') || 'MXN',
-            tcambio:     get(cols, 'tcambio'),
-            impUsd:      get(cols, 'impUsd'),
-            impMxn:      get(cols, 'impMxn'),
-            ivaPct:      get(cols, 'ivaPct'),
-            total:       get(cols, 'total'),
-            vendedor:    get(cols, 'vendedor'),
-            dias:        get(cols, 'dias'),
-            estado:      get(cols, 'estado') || 'Vigente',
-            pagada:      get(cols, 'pagada') || 'No',
-            fcobro:      parseDate(get(cols, 'fcobro')),
-            plazo:       get(cols, 'plazo'),
-            cuenta:      get(cols, 'cuenta'),
-            comprobante: get(cols, 'comprobante'),
+            servicio:     get(cols, 'servicio'),
+            cant:         get(cols, 'cant'),
+            precio:       get(cols, 'precio'),
+            moneda:       get(cols, 'moneda') || 'MXN',
+            tcambio:      get(cols, 'tcambio'),
+            impUsd:       get(cols, 'impUsd'),
+            impMxn:       get(cols, 'impMxn'),
+            ivaPct:       get(cols, 'ivaPct'),
+            total:        get(cols, 'total'),
+            vendedor:     get(cols, 'vendedor'),
+            dias:         get(cols, 'dias'),
+            estado:       get(cols, 'estado') || 'Vigente',
+            pagada:       normPagada(get(cols, 'pagada')),
+            fcobro:       parseDate(get(cols, 'fcobro')),
+            plazo:        get(cols, 'plazo'),
+            cuenta:       get(cols, 'cuenta'),
+            comprobante:  get(cols, 'comprobante'),
           });
         }
 
@@ -1286,6 +1298,19 @@
       if (rows.length < 2) { toast(`La hoja "${nombre}" está vacía o sin datos`, 'error'); return; }
       importarFacturasCSV(_rowsToCSVFile(rows, nombre));
     });
+  }
+
+  /* ── Elimina solo las facturas marcadas como origenImport (CSV/Excel) ─────
+     Las capturadas manualmente (sin ese flag) se conservan intactas.        */
+  function limpiarImportadas() {
+    const todas = loadRegistry(KEY);
+    const importadas = todas.filter(f => f.origenImport || String(f.id).startsWith('csv-'));
+    if (!importadas.length) { toast('No hay facturas importadas que limpiar', 'info'); return; }
+    if (!confirm(`¿Eliminar ${importadas.length} facturas importadas desde CSV/Excel?\nLas capturadas manualmente se conservarán.`)) return;
+    const manuales = todas.filter(f => !f.origenImport && !String(f.id).startsWith('csv-'));
+    saveRegistry(KEY, manuales);
+    toast(`🗑 ${importadas.length} facturas importadas eliminadas. Ahora puedes re-importar.`, 'success');
+    renderTabla();
   }
 </script>
 </body>
