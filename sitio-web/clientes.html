@@ -867,12 +867,30 @@ function makeGetCol(header) {
 /* Build a client record from a row + getCol helper */
 function buildClienteFromRow(row, getCol, idx) {
   const rfc         = getCol(row, 'rfc').toUpperCase().replace(/\s/g,'');
-  const razonSocial = (getCol(row, 'razon social', 'razón social', 'razon', 'empresa') || '').toUpperCase().trim();
+  const razonSocial = (getCol(row,
+    // Nombres comunes + columnas exactas del Excel de Santaglia
+    'cliente','razon social','razón social','razon','empresa',
+    'nombre empresa','nombre cliente','nombre','denominacion','denominación'
+  ) || '').toUpperCase().trim();
   if (!razonSocial && !rfc) return null;
 
-  const estadoRaw = getCol(row, 'estado').toLowerCase().trim();
+  const estadoRaw    = getCol(row, 'estado').toLowerCase().trim();
   const estadosValidos = ['prospecto','activo','pausa','inactivo','perdido'];
-  const estado = estadosValidos.includes(estadoRaw) ? estadoRaw : 'activo';
+  // "ESTADO" en el Excel es estado geográfico, no estatus del cliente
+  const estadoGeo    = getCol(row, 'estado','entidad','estado geografico','estado geográfico','estado geo');
+  const estadoCliente = estadosValidos.includes(estadoRaw) ? estadoRaw : 'activo';
+
+  // Contacto: columna "CONTACTO" o variantes
+  const contactoNombre = getCol(row,
+    'contacto','contacto nombre','contacto principal','nombre contacto','contact'
+  );
+  // Solicitante: columna "SOLICITANTE" (vendedor/ejecutivo de cuenta)
+  const solicitante = getCol(row, 'solicitante','vendedor','ejecutivo','account');
+
+  // Dirección completa desde columnas del Excel
+  const calle   = getCol(row, 'calle y numero','calle y número','calle numero','calle','direccion','dirección','address');
+  const colonia  = getCol(row, 'colonia o localidad','colonia','localidad','neighborhood');
+  const municipio = getCol(row, 'alcaldia municipio','alcaldía municipio','alcaldia','municipio','delegacion','ciudad','city');
 
   return {
     id: '',
@@ -880,34 +898,43 @@ function buildClienteFromRow(row, getCol, idx) {
     nombreComercial: getCol(row, 'nombre comercial', 'comercial') || razonSocial,
     rfc,
     tipoPersona:    getCol(row, 'tipo persona', 'tipo').toLowerCase().includes('fis') ? 'fisica' : 'moral',
-    giro:           getCol(row, 'giro'),
-    estado,
+    giro:           getCol(row, 'giro','actividad','sector'),
+    estado:         estadoCliente,
     desde:          getCol(row, 'desde', 'fecha inicio', 'inicio'),
     moneda:         (['MXN','USD','EUR'].includes(getCol(row,'moneda').toUpperCase())
                       ? getCol(row,'moneda').toUpperCase() : 'MXN'),
     diasCredito:    parseInt(getCol(row,'dias credito','días crédito','credito')) || 0,
     limiteCredito:  parseFloat(getCol(row,'limite credito','límite crédito','limite')) || 0,
     contactoPrincipal: {
-      nombre:   getCol(row,'contacto nombre','contacto principal','nombre contacto'),
-      puesto:   getCol(row,'puesto','cargo'),
-      email:    getCol(row,'email','correo'),
-      telefono: getCol(row,'telefono','tel'),
+      nombre:   contactoNombre,
+      puesto:   getCol(row,'puesto','cargo','position'),
+      email:    getCol(row,'email','correo','mail'),
+      telefono: getCol(row,'telefono','tel','phone'),
     },
-    ciudad:    getCol(row,'ciudad'),
-    estadoGeo: getCol(row,'estado geografico','estado geográfico','estado geo','entidad'),
-    cp:        getCol(row,'cp','codigo postal','código postal','postal'),
-    pais:      getCol(row,'pais','país') || 'México',
-    notas:     getCol(row,'notas','comentarios','observaciones'),
+    solicitante,
+    calle,
+    colonia,
+    ciudad:    municipio,
+    estadoGeo: estadoGeo !== estadoCliente ? estadoGeo : '',
+    cp:        getCol(row,'cp','codigo postal','código postal','postal','zip'),
+    pais:      getCol(row,'pais','país','country') || 'México',
+    notas:     getCol(row,'notas','comentarios','observaciones','notes'),
     actualizado: new Date().toISOString(),
   };
 }
 
 /* Merge imported records into existing store */
 function mergeClientes(records) {
+  const validos = records.filter(Boolean);
+  if (!validos.length) {
+    // Diagnóstico: mostrar qué columnas se leyeron
+    console.warn('[ImportClientes] Todas las filas regresaron nulas. ¿Los encabezados son correctos?');
+    toast('No se importó ningún cliente. Abre la consola (F12) y revisa "[ImportClientes] encabezados" para ver qué columnas detectó el sistema.', 'error');
+    return;
+  }
   const clientes = loadClientes();
-  let added = 0, updated = 0, skipped = 0;
-  records.forEach((reg, i) => {
-    if (!reg) { skipped++; return; }
+  let added = 0, updated = 0;
+  validos.forEach((reg, i) => {
     const existing = clientes.find(c =>
       (reg.rfc && c.rfc && c.rfc === reg.rfc) || c.razonSocial === reg.razonSocial
     );
@@ -924,7 +951,11 @@ function mergeClientes(records) {
     }
   });
   saveClientes(clientes);
-  toast(`Importado: ${added} nuevo${added!==1?'s':''}, ${updated} actualizado${updated!==1?'s':''}${skipped ? `, ${skipped} omitido${skipped!==1?'s':''}` : ''}`, 'success');
+  const omitidas = records.length - validos.length;
+  toast(`✅ ${added} cliente${added!==1?'s':''} importado${added!==1?'s':''}` +
+    (updated ? `, ${updated} actualizado${updated!==1?'s':''}` : '') +
+    (omitidas ? ` (${omitidas} fila${omitidas!==1?'s':''} sin nombre/RFC omitida${omitidas!==1?'s':''})` : ''),
+    'success');
   renderClientes();
 }
 
@@ -944,16 +975,24 @@ function importarClientesCSV(file) {
     const clean = text.replace(/^﻿/, '').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
     const lines = clean.split('\n').filter(l => l.trim());
     if (lines.length < 2) { toast('Archivo vacío o sin datos', 'error'); return; }
-    const headerRow = parseCSVRow(lines[0]);
+    // Auto-detectar fila de encabezados (puede no ser la primera)
+    let headerIdx = lines.findIndex(l =>
+      parseCSVRow(l).some(c => {
+        const n = normH(c);
+        return n.includes('razon') || n.includes('rfc') || n.includes('cliente') || n.includes('empresa');
+      })
+    );
+    if (headerIdx < 0) headerIdx = 0;
+    const headerRow = parseCSVRow(lines[headerIdx]);
+    console.log('[ImportClientes] encabezados (fila ' + headerIdx + '):', headerRow);
     const getCol    = makeGetCol(headerRow);
     const records   = [];
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = headerIdx + 1; i < lines.length; i++) {
       records.push(buildClienteFromRow(parseCSVRow(lines[i]), getCol, i));
     }
     mergeClientes(records);
   };
   const reader = new FileReader();
-  // Try UTF-8 first; if result has replacement chars, retry with latin-1
   reader.onload = e => {
     let text = e.target.result;
     if (text.includes('�')) {
@@ -966,31 +1005,26 @@ function importarClientesCSV(file) {
 }
 
 function importarClientesXLSX(file) {
-  const loadSheetJS = (cb) => {
-    if (window.XLSX) { cb(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = cb;
-    s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
-    document.head.appendChild(s);
-  };
-  loadSheetJS(() => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-        const ws   = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
-        if (rows.length < 2) { toast('Excel vacío o sin datos', 'error'); return; }
-        const headerRow = rows[0].map(String);
-        const getCol    = makeGetCol(headerRow);
-        const records   = rows.slice(1).map((row, i) =>
-          buildClienteFromRow(row.map(String), getCol, i + 1)
-        );
-        mergeClientes(records);
-      } catch(err) { toast('Error al leer el archivo Excel: ' + err.message, 'error'); }
-    };
-    reader.readAsArrayBuffer(file);
+  _seleccionarHojaExcel(file, (rows, nombre) => {
+    if (rows.length < 2) { toast(`La hoja "${nombre}" está vacía o sin datos`, 'error'); return; }
+    // Auto-detectar fila de encabezados:
+    // Buscar la primera fila donde "RFC" o "CLIENTE" aparezca como celda propia
+    // (no como parte de un título como "BASE DE DATOS DE CLIENTES")
+    let headerIdx = rows.findIndex(r => {
+      const cells = r.map(c => normH(String(c)));
+      const nonEmpty = cells.filter(n => n.length > 0);
+      // Necesita ≥2 celdas con contenido Y al menos una que sea exactamente 'rfc' o 'cliente'
+      return nonEmpty.length >= 2 &&
+             cells.some(n => n === 'rfc' || n === 'cliente' || n === 'nombre');
+    });
+    if (headerIdx < 0) headerIdx = 0;
+    console.log('[ImportClientes] encabezados (fila ' + headerIdx + '):', rows[headerIdx]);
+    const headerRow = rows[headerIdx].map(String);
+    const getCol    = makeGetCol(headerRow);
+    const records   = rows.slice(headerIdx + 1).map((row, i) =>
+      buildClienteFromRow(row.map(String), getCol, i + 1)
+    );
+    mergeClientes(records);
   });
 }
 
