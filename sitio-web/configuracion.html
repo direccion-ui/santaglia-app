@@ -1584,34 +1584,9 @@ function importarArchivoColab(file) {
 }
 
 function importarColabXLSX(file) {
-  const loadSheetJS = cb => {
-    if (window.XLSX) { cb(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = cb;
-    s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
-    document.head.appendChild(s);
-  };
-  loadSheetJS(() => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
-        const ws   = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
-        if (rows.length < 2) { toast('Excel vacío o sin datos', 'error'); return; }
-
-        const csv = rows.map(r => r.map(c => {
-          const s = String(c ?? '');
-          return s.includes(',') || s.includes('"') || s.includes('\n')
-            ? `"${s.replace(/"/g, '""')}"` : s;
-        }).join(',')).join('\n');
-
-        const fakeFile = new File([csv], file.name.replace(/\.xlsx?$/i, '.csv'), { type: 'text/csv' });
-        importarColabCSV(fakeFile);
-      } catch(err) { toast('Error al leer el Excel: ' + err.message, 'error'); }
-    };
-    reader.readAsArrayBuffer(file);
+  _seleccionarHojaExcel(file, (rows, nombre) => {
+    if (rows.length < 2) { toast('Excel vacío o sin datos', 'error'); return; }
+    importarColabCSV(_rowsToCSVFile(rows, nombre));
   });
 }
 
