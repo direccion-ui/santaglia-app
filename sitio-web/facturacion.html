@@ -703,7 +703,7 @@
   }
   function numKey(f, col) {
     const map = {
-      tcambio: parseFloat(f.tcambio) || 0,
+      tcambio: parseNum(f.tcambio),
       impUsd:  parseNum(f.impUsd),
       impMxn:  parseNum(f.impMxn),
       total:   parseNum(f.total),
@@ -811,7 +811,7 @@
     const sumPendiente= all.filter(f => f.estado === 'Pendiente').reduce((s, f) => s + parseNum(f.total), 0);
     const sumVencido  = all.filter(f => f.estado === 'Vencida').reduce((s, f) => s + parseNum(f.total), 0);
     const sumIva      = all.reduce((s, f) => s + parseNum(f.impMxn) * (parseFloat(f.ivaPct)||0) / 100, 0);
-    const tcValues    = all.filter(f => parseFloat(f.tcambio) > 1).map(f => parseFloat(f.tcambio));
+    const tcValues    = all.filter(f => parseNum(f.tcambio) > 1).map(f => parseNum(f.tcambio));
     const avgTc       = tcValues.length ? tcValues.reduce((a,b) => a+b, 0) / tcValues.length : 0;
 
     document.getElementById('res-total').textContent     = '$' + fmtNum(sumTotal);
@@ -855,7 +855,7 @@
         <td class="num">${f.cant || '—'}</td>
         <td class="num">${f.precio ? '$' + fmtNum(parseNum(f.precio)) : '—'}</td>
         <td class="center"><span class="badge ${f.moneda==='USD'?'badge-blue':'badge-navy'}">${f.moneda||'MXN'}</span></td>
-        <td class="num">${f.tcambio && parseFloat(f.tcambio)>1 ? fmtNum(f.tcambio) : '—'}</td>
+        <td class="num">${parseNum(f.tcambio)>1 ? fmtNum(parseNum(f.tcambio)) : '—'}</td>
         <td class="num">${f.impUsd ? '$' + f.impUsd : '—'}</td>
         <td class="num">${f.impMxn ? '$' + f.impMxn : '—'}</td>
         <td class="num">${f.ivaPct || 0}%</td>
@@ -893,7 +893,7 @@
     const sumMxn  = data.reduce((s, f) => s + parseNum(f.impMxn), 0);
     const sumTot  = data.reduce((s, f) => s + parseNum(f.total), 0);
     const sumIvaF = data.reduce((s, f) => s + parseNum(f.impMxn) * (parseFloat(f.ivaPct)||0) / 100, 0);
-    const tcVals  = data.filter(f => parseFloat(f.tcambio) > 1).map(f => parseFloat(f.tcambio));
+    const tcVals  = data.filter(f => parseNum(f.tcambio) > 1).map(f => parseNum(f.tcambio));
     const avgTcF  = tcVals.length ? tcVals.reduce((a,b)=>a+b,0)/tcVals.length : 0;
     const diasVals= data.filter(f => f.dias && parseFloat(f.dias) > 0).map(f => parseFloat(f.dias));
     const avgDias = diasVals.length ? diasVals.reduce((a,b)=>a+b,0)/diasVals.length : 0;
@@ -1244,7 +1244,7 @@
             cant:         get(cols, 'cant'),
             precio:       get(cols, 'precio'),
             moneda:       get(cols, 'moneda') || 'MXN',
-            tcambio:      get(cols, 'tcambio'),
+            tcambio:      parseNum(get(cols, 'tcambio')) || '',
             impUsd:       get(cols, 'impUsd'),
             impMxn:       get(cols, 'impMxn'),
             ivaPct:       get(cols, 'ivaPct'),
