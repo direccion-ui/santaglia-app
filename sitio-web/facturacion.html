@@ -1199,6 +1199,16 @@
             if (mes !== undefined)
               return `${mMatch[3]}-${String(mes+1).padStart(2,'0')}-${mMatch[1].padStart(2,'0')}`;
           }
+          // "09/Sep/22" o "04/May/2026" — formato SheetJS con mes abreviado en español
+          const mSlash = s.match(/^(\d{1,2})\/([A-Za-záéíóú]{3})\/(\d{2,4})$/i);
+          if (mSlash) {
+            const mes = MESES_ES[mSlash[2].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')];
+            if (mes !== undefined) {
+              let yr = parseInt(mSlash[3]);
+              if (yr < 100) yr += 2000; // 22 → 2022, 26 → 2026
+              return `${yr}-${String(mes+1).padStart(2,'0')}-${mSlash[1].padStart(2,'0')}`;
+            }
+          }
           // Excel serial number (número de 5 dígitos)
           if (/^\d{5}$/.test(s)) {
             const d = new Date(Math.round((+s - 25569) * 86400 * 1000));
@@ -1224,10 +1234,22 @@
         const nuevas = [];
         let omitidas = 0;
 
+        // Palabras que indican fila de totales/resumen del Excel (no son facturas)
+        const LABELS_TOTALES = ['total','totales','subtotal','suma','average','promedio',
+                                'grand total','total fac','total factura'];
+
         for (let i = headerLineIdx + 1; i < lines.length; i++) {
           const cols = allParsed[i];
           if (cols.every(c => !c)) continue; // línea vacía
           const no = get(cols, 'no');
+
+          // Saltar filas de totales/resumen: "no" contiene solo letras (ej. "Total", "Subtotal")
+          if (no && LABELS_TOTALES.includes(
+                norm(no.replace(/^"|"$/g,''))
+              )) { omitidas++; continue; }
+          // Saltar si "no" contiene letras pero NO dígitos (ej. "Total Facturado")
+          if (no && /[a-zA-ZáéíóúÁÉÍÓÚ]/.test(no) && !/\d/.test(no)) { omitidas++; continue; }
+
           if (no && existIds.has(no)) { omitidas++; continue; } // ya existe
 
           const fecha   = parseDate(get(cols, 'fecha'));
