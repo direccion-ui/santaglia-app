@@ -1118,54 +1118,86 @@
           return cols;
         };
 
-        const headers = parseLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
-
         // Mapa de nombres de columna → campo interno
+        // Normaliza: minúsculas, sin acentos, sin puntos/guiones sobrantes
+        const norm = s => s.toLowerCase()
+          .normalize('NFD').replace(/[̀-ͯ]/g,'') // quita acentos
+          .replace(/[._]/g,' ')                             // . y _ → espacio
+          .replace(/\s+/g,' ').trim();
+
         const MAP = {
-          'no.fac':'no','no fac':'no','nofac':'no','folio':'no',
+          'no fac':'no','nofac':'no','folio':'no','no':'no',
           'fecha':'fecha',
           'cliente':'cliente',
-          'tipo de servicio':'servicio','tipo_servicio':'servicio','servicio':'servicio',
-          'cant.':'cant','cant':'cant','cantidad':'cant',
-          'precio_unit':'precio','precio unit':'precio','precio unitario':'precio','precio':'precio',
+          'tipo de servicio':'servicio','tipo servicio':'servicio','servicio':'servicio',
+          'cant':'cant','cantidad':'cant',
+          'precio unit':'precio','precio unitario':'precio','precio':'precio',
           'moneda':'moneda',
-          't.cambio':'tcambio','tcambio':'tcambio','tipo de cambio':'tcambio','t cambio':'tcambio',
-          'importe_usd':'impUsd','importe usd':'impUsd','importeusd':'impUsd',
-          'importe_mxn':'impMxn','importe mxn':'impMxn','importemxn':'impMxn',
+          't cambio':'tcambio','tcambio':'tcambio','tipo de cambio':'tcambio','tipo cambio':'tcambio',
+          'importe usd':'impUsd','importeusd':'impUsd',
+          'importe mxn':'impMxn','importemxn':'impMxn',
           'iva':'ivaPct','iva%':'ivaPct','iva %':'ivaPct',
-          'total_fac':'total','total fac':'total','total factura':'total','total':'total',
+          'total fac':'total','total factura':'total','total':'total',
           'vence':'vence',
-          'días_disp.':'dias','dias_disp.':'dias','días disp':'dias','dias disp':'dias','días':'dias',
+          'dias disp':'dias','dias':'dias',
           'estado':'estado',
           'pagada':'pagada',
-          'f.cobro':'fcobro','fcobro':'fcobro','fecha cobro':'fcobro','fecha de cobro':'fcobro',
-          'plazo_real':'plazo','plazo real':'plazo','plazo':'plazo',
+          'f cobro':'fcobro','fcobro':'fcobro','fecha cobro':'fcobro','fecha de cobro':'fcobro',
+          'plazo real':'plazo','plazo':'plazo',
           'cuenta':'cuenta',
-          'no._orden':'comprobante','no orden':'comprobante','numero orden':'comprobante','comprobante':'comprobante',
+          'no orden':'comprobante','numero orden':'comprobante','comprobante':'comprobante',
           'vendedor':'vendedor',
         };
 
+        // ── Buscar la fila de encabezados (puede no ser la primera) ──
+        const allParsed = lines.map(parseLine);
+        let headerLineIdx = allParsed.findIndex(cols =>
+          cols.some(c => ['fecha','cliente','no.fac','no fac','nofac','folio'].includes(
+            norm(c.replace(/^"|"$/g,''))
+          ))
+        );
+        if (headerLineIdx < 0) headerLineIdx = 0; // fallback: primera fila
+
+        const headers = allParsed[headerLineIdx].map(h => h.replace(/^"|"$/g,'').trim());
+        console.log('[ImportFacturas] encabezados detectados (fila ' + headerLineIdx + '):', headers);
+
         const idx = {}; // campo interno → índice de columna
         headers.forEach((h, i) => {
-          const key = MAP[h.toLowerCase()];
-          if (key) idx[key] = i;
+          const key = MAP[norm(h)];
+          if (key && idx[key] === undefined) idx[key] = i;
         });
+        console.log('[ImportFacturas] columnas mapeadas:', idx);
 
+        const MESES_ES = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,
+                          jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
         const parseDate = s => {
           if (!s) return '';
-          // Formatos: DD/MM/YYYY, YYYY-MM-DD, MM/DD/YYYY
           s = String(s).trim();
+          // YYYY-MM-DD
           if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-          if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
-            const [d, m, y] = s.split('/');
+          // DD/MM/YYYY o D/M/YYYY
+          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+            const [d,m,y] = s.split('/');
             return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
           }
-          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
-            const parts = s.split('/');
-            // Intenta DD/MM/YYYY
-            return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+          // DD-MM-YYYY o D-M-YYYY
+          if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(s)) {
+            const [d,m,y] = s.split('-');
+            return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
           }
-          return s;
+          // "13 ene 2026" o "13-ene-2026"
+          const mMatch = s.match(/^(\d{1,2})[\s-]([a-záéíóú]{3})[\s-](\d{4})$/i);
+          if (mMatch) {
+            const mes = MESES_ES[mMatch[2].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')];
+            if (mes !== undefined)
+              return `${mMatch[3]}-${String(mes+1).padStart(2,'0')}-${mMatch[1].padStart(2,'0')}`;
+          }
+          // Excel serial number (número de 5 dígitos)
+          if (/^\d{5}$/.test(s)) {
+            const d = new Date(Math.round((+s - 25569) * 86400 * 1000));
+            if (!isNaN(d)) return d.toISOString().slice(0,10);
+          }
+          return s; // devuelve tal cual — no bloquea la fila
         };
 
         const get = (cols, field) => {
@@ -1176,18 +1208,25 @@
         const existentes = loadRegistry(KEY);
         const existIds   = new Set(existentes.map(f => f.no).filter(Boolean));
         const nuevas = [];
+        let omitidas = 0;
 
-        for (let i = 1; i < lines.length; i++) {
-          const cols = parseLine(lines[i]);
+        for (let i = headerLineIdx + 1; i < lines.length; i++) {
+          const cols = allParsed[i];
           if (cols.every(c => !c)) continue; // línea vacía
           const no = get(cols, 'no');
-          if (no && existIds.has(no)) continue; // ya existe, saltar
+          if (no && existIds.has(no)) { omitidas++; continue; } // ya existe
 
-          const fact = {
+          const fecha   = parseDate(get(cols, 'fecha'));
+          const cliente = get(cols, 'cliente');
+
+          // Mínimo: fecha o cliente (no ambos obligatorios — datos reales pueden tener uno vacío)
+          if (!fecha && !cliente && !no) continue;
+
+          nuevas.push({
             id:          `csv-${Date.now()}-${i}`,
             no,
-            fecha:       parseDate(get(cols, 'fecha')),
-            cliente:     get(cols, 'cliente'),
+            fecha,
+            cliente,
             servicio:    get(cols, 'servicio'),
             cant:        get(cols, 'cant'),
             precio:      get(cols, 'precio'),
@@ -1205,13 +1244,16 @@
             plazo:       get(cols, 'plazo'),
             cuenta:      get(cols, 'cuenta'),
             comprobante: get(cols, 'comprobante'),
-          };
-          if (!fact.fecha || !fact.cliente) continue; // mínimo requerido
-          nuevas.push(fact);
+          });
         }
 
+        console.log('[ImportFacturas] leídas:', nuevas.length, '| omitidas (ya existen):', omitidas);
+
         if (!nuevas.length) {
-          toast('No se encontraron filas nuevas para importar (verifica el formato)', 'info');
+          const detalle = omitidas > 0
+            ? `(${omitidas} ya existían, 0 nuevas)`
+            : `(encabezados en fila ${headerLineIdx}: ${Object.keys(idx).join(', ') || 'ninguno detectado'})`;
+          toast(`No se encontraron filas nuevas ${detalle}`, 'info');
           return;
         }
 
