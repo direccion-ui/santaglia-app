@@ -230,9 +230,9 @@
             title="Deshacer el último lote de movimientos registrados en Financiero">↩ Deshacer</button>
           <button class="btn btn-ghost" onclick="importarCFDIs()" title="Importar 307 facturas de Consecutivos 1-4">↑ Importar CFDIs</button>
           <button class="btn btn-ghost" style="position:relative;overflow:hidden;" title="Importar facturas desde CSV/Excel">
-            ↑ Importar CSV
-            <input type="file" accept=".csv,.txt" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;"
-              onchange="importarFacturasCSV(this.files[0]);this.value='';" />
+            ↑ Importar CSV/Excel
+            <input type="file" accept=".csv,.txt,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;"
+              onchange="importarArchivoFacturas(this.files[0]);this.value='';" />
           </button>
           <button class="btn btn-ghost" onclick="exportCSV()">↓ Exportar CSV</button>
           <button class="btn btn-primary" onclick="openModal('modal-factura')">+ Nueva factura</button>
@@ -1226,6 +1226,49 @@
       }
     };
     reader.readAsText(file, 'UTF-8');
+  }
+
+  function importarArchivoFacturas(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'xlsx' || ext === 'xls') {
+      importarFacturasXLSX(file);
+    } else {
+      importarFacturasCSV(file);
+    }
+  }
+
+  function importarFacturasXLSX(file) {
+    const loadSheetJS = cb => {
+      if (window.XLSX) { cb(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = cb;
+      s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
+      document.head.appendChild(s);
+    };
+    loadSheetJS(() => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+          if (rows.length < 2) { toast('Excel vacío o sin datos', 'error'); return; }
+
+          // Convertir a CSV en memoria y reutilizar el parser existente
+          const csv = rows.map(r => r.map(c => {
+            const s = String(c ?? '');
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+              ? `"${s.replace(/"/g, '""')}"` : s;
+          }).join(',')).join('\n');
+
+          const fakeFile = new File([csv], file.name.replace(/\.xlsx?$/i, '.csv'), { type: 'text/csv' });
+          importarFacturasCSV(fakeFile);
+        } catch(err) { toast('Error al leer el Excel: ' + err.message, 'error'); }
+      };
+      reader.readAsArrayBuffer(file);
+    });
   }
 </script>
 </body>

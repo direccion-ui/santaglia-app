@@ -607,8 +607,8 @@
                 <div style="display:flex; gap:0.35rem; align-items:center;">
                   <button class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem;" onclick="descargarPlantillaColab()">⬇ Plantilla CSV</button>
                   <label class="btn btn-ghost" style="font-size:0.67rem; padding:0.2rem 0.6rem; cursor:pointer; position:relative;">
-                    ⬆ Importar CSV
-                    <input type="file" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="importarColabCSV(this.files[0]);this.value='';" />
+                    ⬆ Importar CSV/Excel
+                    <input type="file" accept=".csv,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="importarArchivoColab(this.files[0]);this.value='';" />
                   </label>
                   <button class="btn btn-primary" style="font-size:0.67rem; padding:0.2rem 0.6rem;" onclick="abrirAltaColab()">+ Nuevo colaborador</button>
                 </div>
@@ -1571,6 +1571,48 @@ function importarColabCSV(file) {
     renderColabCfg();
   };
   reader.readAsText(file, 'utf-8');
+}
+
+function importarArchivoColab(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    importarColabXLSX(file);
+  } else {
+    importarColabCSV(file);
+  }
+}
+
+function importarColabXLSX(file) {
+  const loadSheetJS = cb => {
+    if (window.XLSX) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = cb;
+    s.onerror = () => toast('No se pudo cargar el lector de Excel (requiere internet)', 'error');
+    document.head.appendChild(s);
+  };
+  loadSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+        if (rows.length < 2) { toast('Excel vacío o sin datos', 'error'); return; }
+
+        const csv = rows.map(r => r.map(c => {
+          const s = String(c ?? '');
+          return s.includes(',') || s.includes('"') || s.includes('\n')
+            ? `"${s.replace(/"/g, '""')}"` : s;
+        }).join(',')).join('\n');
+
+        const fakeFile = new File([csv], file.name.replace(/\.xlsx?$/i, '.csv'), { type: 'text/csv' });
+        importarColabCSV(fakeFile);
+      } catch(err) { toast('Error al leer el Excel: ' + err.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════
