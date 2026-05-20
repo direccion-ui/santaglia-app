@@ -1189,10 +1189,15 @@ function importarTiempoCSV(file) {
     const clean = text.replace(/^﻿/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
     const lines = clean.split('\n').filter(l => l.trim());
     if (lines.length < 2) { toast('Archivo vacío o sin datos', 'error'); return; }
-    const headerRow = parseCSVRowTms(lines[0]);
+    // Auto-detectar fila de encabezados (puede no ser la primera)
+    let headerIdx = lines.findIndex(l =>
+      parseCSVRowTms(l).some(c => normHTms(c).includes('fecha') || normHTms(c).includes('hora'))
+    );
+    if (headerIdx < 0) headerIdx = 0;
+    const headerRow = parseCSVRowTms(lines[headerIdx]);
     const getCol    = makeGetColTms(headerRow);
     const records   = [];
-    for (let i = 1; i < lines.length; i++) records.push(buildTmsFromRow(parseCSVRowTms(lines[i]), getCol, i));
+    for (let i = headerIdx + 1; i < lines.length; i++) records.push(buildTmsFromRow(parseCSVRowTms(lines[i]), getCol, i));
     mergeTms(records);
   };
   const reader = new FileReader();
@@ -1208,9 +1213,14 @@ function importarTiempoXLSX(file) {
   _seleccionarHojaExcel(file, (rows, nombre) => {
     try {
       if (rows.length < 2) { toast('Excel vacío', 'error'); return; }
-      const headerRow = rows[0].map(String);
+      // Auto-detectar fila de encabezados
+      let headerIdx = rows.findIndex(r =>
+        r.some(c => normHTms(String(c)).includes('fecha') || normHTms(String(c)).includes('hora'))
+      );
+      if (headerIdx < 0) headerIdx = 0;
+      const headerRow = rows[headerIdx].map(String);
       const getCol    = makeGetColTms(headerRow);
-      const records   = rows.slice(1).map((row, i) => buildTmsFromRow(row.map(String), getCol, i+1));
+      const records   = rows.slice(headerIdx + 1).map((row, i) => buildTmsFromRow(row.map(String), getCol, i+1));
       mergeTms(records);
     } catch(err) { toast('Error al leer Excel: ' + err.message, 'error'); }
   });
