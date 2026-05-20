@@ -810,7 +810,8 @@
     const sumCobrado  = all.filter(f => f.pagada === 'Sí').reduce((s, f) => s + parseNum(f.total), 0);
     const sumPendiente= all.filter(f => f.estado === 'Pendiente').reduce((s, f) => s + parseNum(f.total), 0);
     const sumVencido  = all.filter(f => f.estado === 'Vencida').reduce((s, f) => s + parseNum(f.total), 0);
-    const sumIva      = all.reduce((s, f) => s + parseNum(f.impMxn) * (parseFloat(f.ivaPct)||0) / 100, 0);
+    const getIva = f => f.ivaAmount ? parseNum(f.ivaAmount) : parseNum(f.impMxn) * (parseNum(f.ivaPct)||0) / 100;
+    const sumIva      = all.reduce((s, f) => s + getIva(f), 0);
     const tcValues    = all.filter(f => parseNum(f.tcambio) > 1).map(f => parseNum(f.tcambio));
     const avgTc       = tcValues.length ? tcValues.reduce((a,b) => a+b, 0) / tcValues.length : 0;
 
@@ -858,7 +859,7 @@
         <td class="num">${parseNum(f.tcambio)>1 ? fmtNum(parseNum(f.tcambio)) : '—'}</td>
         <td class="num">${f.impUsd ? '$' + f.impUsd : '—'}</td>
         <td class="num">${f.impMxn ? '$' + f.impMxn : '—'}</td>
-        <td class="num">${f.ivaPct || 0}%</td>
+        <td class="num">${f.ivaAmount ? '$' + fmtNum(parseNum(f.ivaAmount)) : (f.ivaPct ? f.ivaPct + '%' : '—')}</td>
         <td class="num" style="font-weight:700; color:var(--navy);">${f.total ? '$' + f.total : '—'}</td>
         <td style="font-size:0.75rem;">${f.vendedor || '—'}</td>
         <td class="num">${f.dias || '—'}</td>
@@ -892,7 +893,8 @@
     const sumUsd  = data.reduce((s, f) => s + parseNum(f.impUsd), 0);
     const sumMxn  = data.reduce((s, f) => s + parseNum(f.impMxn), 0);
     const sumTot  = data.reduce((s, f) => s + parseNum(f.total), 0);
-    const sumIvaF = data.reduce((s, f) => s + parseNum(f.impMxn) * (parseFloat(f.ivaPct)||0) / 100, 0);
+    const getIvaF = f => f.ivaAmount ? parseNum(f.ivaAmount) : parseNum(f.impMxn) * (parseNum(f.ivaPct)||0) / 100;
+    const sumIvaF = data.reduce((s, f) => s + getIvaF(f), 0);
     const tcVals  = data.filter(f => parseNum(f.tcambio) > 1).map(f => parseNum(f.tcambio));
     const avgTcF  = tcVals.length ? tcVals.reduce((a,b)=>a+b,0)/tcVals.length : 0;
     const diasVals= data.filter(f => f.dias && parseFloat(f.dias) > 0).map(f => parseFloat(f.dias));
@@ -1141,7 +1143,7 @@
           't cambio':'tcambio','tcambio':'tcambio','tipo de cambio':'tcambio','tipo cambio':'tcambio',
           'importe usd':'impUsd','importeusd':'impUsd',
           'importe mxn':'impMxn','importemxn':'impMxn',
-          'iva':'ivaPct','iva%':'ivaPct','iva %':'ivaPct',
+          'iva':'ivaAmount','iva%':'ivaPct','iva %':'ivaPct','iva pct':'ivaPct','pct iva':'ivaPct',
           'total fac':'total','total factura':'total','total':'total',
           'vence':'vence',
           'dias disp':'dias','dias':'dias',
@@ -1248,6 +1250,7 @@
             impUsd:       get(cols, 'impUsd'),
             impMxn:       get(cols, 'impMxn'),
             ivaPct:       get(cols, 'ivaPct'),
+            ivaAmount:    parseNum(get(cols, 'ivaAmount')) || undefined,
             total:        get(cols, 'total'),
             vendedor:     get(cols, 'vendedor'),
             dias:         get(cols, 'dias'),
