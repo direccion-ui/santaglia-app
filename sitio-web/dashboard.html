@@ -790,13 +790,15 @@ function setPeriod(months) {
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('pb-'+months);
   if (btn) btn.classList.add('active');
-  const fechas = allFacturas.map(f=>f.fecha).filter(Boolean).sort();
+  const fechas = allFacturas.map(f=>f.fecha).filter(f=>f && /^\d{4}-\d{2}-\d{2}$/.test(f)).sort();
   if (!fechas.length) { renderChart(); return; }
-  const last = fechas[fechas.length-1].substring(0,7);
-  const d = new Date(last+'-01');
-  d.setMonth(d.getMonth()-(months-1));
-  document.getElementById('cf-desde').value = d.toISOString().substring(0,7);
-  document.getElementById('cf-hasta').value = last;
+  try {
+    const last = fechas[fechas.length-1].substring(0,7);
+    const d = new Date(last+'-01');
+    d.setMonth(d.getMonth()-(months-1));
+    document.getElementById('cf-desde').value = d.toISOString().substring(0,7);
+    document.getElementById('cf-hasta').value = last;
+  } catch(e) { /* fecha inválida — ignorar */ }
   renderChart();
 }
 
@@ -929,18 +931,18 @@ function init() {
   allClientes  = [...new Set(allFacturas.map(f=>f.cliente).filter(Boolean))].sort();
   activeClients= new Set(allClientes);
 
-  // Defaults: último año
-  const factFechas = allFacturas.map(f=>f.fecha).filter(Boolean).sort();
+  // Defaults: último año (solo fechas válidas YYYY-MM-DD)
+  const factFechas = allFacturas.map(f=>f.fecha).filter(f=>f && /^\d{4}-\d{2}-\d{2}$/.test(f)).sort();
   if (factFechas.length) {
-    const last = factFechas[factFechas.length-1].substring(0,7);
-    const first = factFechas[0].substring(0,7);
-    // Mostrar últimos 12 meses si hay suficientes datos
-    if (factFechas.length > 12) {
-      const d = new Date(last+'-01');
-      d.setMonth(d.getMonth()-11);
-      document.getElementById('cf-desde').value = d.toISOString().substring(0,7);
-    }
-    document.getElementById('cf-hasta').value = last;
+    try {
+      const last = factFechas[factFechas.length-1].substring(0,7);
+      if (factFechas.length > 12) {
+        const d = new Date(last+'-01');
+        d.setMonth(d.getMonth()-11);
+        document.getElementById('cf-desde').value = d.toISOString().substring(0,7);
+      }
+      document.getElementById('cf-hasta').value = last;
+    } catch(e) { /* fecha inválida — ignorar, los filtros quedan vacíos */ }
   }
 
   buildClientChips();
