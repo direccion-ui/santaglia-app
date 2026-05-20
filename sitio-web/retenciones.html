@@ -280,6 +280,7 @@
         </div>
         <div class="flex gap-1">
           <button class="btn btn-ghost" onclick="importarRetenciones()">↑ Importar histórico Excel</button>
+          <button class="btn btn-primary" onclick="importarPagosSAT()">↑ Importar pagos SAT (Excel)</button>
         </div>
       </div>
 
@@ -1310,6 +1311,109 @@ function importarRetenciones() {
   s.onerror = () => toast('No se encontró cargar_retenciones.js','error');
   s.onload  = () => { toast('Histórico importado','success'); renderTable(); };
   document.head.appendChild(s);
+}
+
+/* ── Importar pagos SAT desde Excel (Integración de Pagos Retenciones e ISR) ── */
+
+/** Mapa mes → número (inglés + español) para el Excel de pagos SAT */
+const MESES_SAT = {
+  jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12,
+  ene:1, abr:4, ago:8, dic:12
+};
+
+/**
+ * Convierte "Jan-26" → "2026-01"
+ * Acepta guión o diagonal: "Jan-26", "Jan/26"
+ */
+function parseMesExcel(label) {
+  if (!label) return null;
+  const m = String(label).trim().match(/^([A-Za-záéíóú]{3})[-\/](\d{2,4})$/i);
+  if (!m) return null;
+  const mesNum = MESES_SAT[m[1].toLowerCase()];
+  if (!mesNum) return null;
+  let yr = parseInt(m[2]);
+  if (yr < 100) yr += 2000;
+  return `${yr}-${String(mesNum).padStart(2,'0')}`;
+}
+
+/**
+ * Convierte "27/Feb/26" → "2026-02-27"
+ * Acepta: "DD/Mon/YY", "DD/Mon/YYYY", "DD-Mon-YY"
+ */
+function parseFechaPagoSAT(s) {
+  if (!s) return '';
+  const clean = String(s).trim();
+  const m = clean.match(/^(\d{1,2})[\/\-]([A-Za-záéíóú]{3})[\/\-](\d{2,4})$/i);
+  if (!m) return clean; // fallback: devuelve el texto tal como viene
+  const mesNum = MESES_SAT[m[2].toLowerCase()];
+  if (!mesNum) return clean;
+  let yr = parseInt(m[3]);
+  if (yr < 100) yr += 2000;
+  return `${yr}-${String(mesNum).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+}
+
+/** Elimina todo lo que no sea dígito, punto o signo negativo */
+function parseNumSAT(v) {
+  return parseFloat(String(v || '0').replace(/[^0-9.\-]/g, '')) || 0;
+}
+
+function importarPagosSAT() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.xlsx,.xls';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    _seleccionarHojaExcel(file, procesarPagosSATRows);
+  };
+  inp.click();
+}
+
+function procesarPagosSATRows(rows, hoja) {
+  const extra = loadExtraObj();
+  let importados = 0;
+  let mesActual = null;   // clave "YYYY-MM" del grupo actual
+
+  rows.forEach((row, idx) => {
+    const colA = String(row[0] || '').trim();
+    const colB = String(row[1] || '').trim().toLowerCase();
+
+    // Si col A tiene una etiqueta de mes ("Jan-26", "Feb-26"…), actualizar mesActual
+    const nuevaClave = parseMesExcel(colA);
+    if (nuevaClave) mesActual = nuevaClave;
+
+    // Solo procesar filas donde col B = "pagado"
+    if (colB !== 'pagado' || !mesActual) return;
+
+    // Columnas (0-indexed): C=2, D=3, E=4, F=5, K=10, O=14, P=15
+    const pagadoAsim   = parseNumSAT(row[2]);   // C — Subtotal Asimilables
+    const pagadoIsrHon = parseNumSAT(row[3]);   // D — ISR Honorarios
+    const pagadoIvaHon = parseNumSAT(row[4]);   // E — IVA Honorarios
+    const isrPm        = parseNumSAT(row[10]);  // K — ISR PM
+    const acuseTotal   = parseNumSAT(row[14]);  // O — Total Acuses
+    const fechaRaw     = String(row[15] || '').trim(); // P — Fecha Pago
+    const fechaPagoReal = parseFechaPagoSAT(fechaRaw);
+
+    if (!extra[mesActual]) extra[mesActual] = {};
+    Object.assign(extra[mesActual], {
+      pagadoAsim,
+      pagadoIsrHon,
+      pagadoIvaHon,
+      isrPm,
+      acuseTotal,
+      ...(fechaPagoReal ? { fechaPagoReal } : {})
+    });
+    importados++;
+  });
+
+  saveExtraObj(extra);
+
+  if (importados === 0) {
+    toast('No se encontraron filas "Pagado" en la hoja seleccionada. Verifica el formato.', 'error');
+  } else {
+    toast(`Pagos SAT importados: ${importados} mes${importados !== 1 ? 'es' : ''} actualizados de "${hoja}"`, 'success');
+  }
+  renderTable();
 }
 
 /* ── Init ── */
