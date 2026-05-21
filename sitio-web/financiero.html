@@ -594,7 +594,7 @@
               <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Concepto</th>
               <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Tipo</th>
               <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Total</th>
-              <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">IVA</th>
+              <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;" title="Para gastos: IVA trasladado. Para honorarios: ISR retenido + IVA retenido.">IVA / Ret.</th>
               <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">✎ Cuenta</th>
               <th style="width:24px;"></th>
             </tr></thead>
@@ -1652,7 +1652,10 @@
               <td style="padding:0.28rem 0.5rem;font-size:0.68rem;color:var(--text-dim);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.concepto||'')}">${escHtml(r.concepto||'')}</td>
               <td style="padding:0.28rem 0.5rem;text-align:center;">${tipoBadge(r._tipo)}</td>
               <td style="padding:0.28rem 0.5rem;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:var(--red);">${fmtN(displayTotal)}</td>
-              <td style="padding:0.28rem 0.5rem;text-align:right;font-family:'Courier New',monospace;font-size:0.68rem;color:var(--text-dim);" title="${auxLabel}">${fmtN(displayAux)}</td>
+              <td style="padding:0.28rem 0.5rem;text-align:right;font-family:'Courier New',monospace;font-size:0.68rem;color:var(--text-dim);" title="${r._tipo==='honorarios'?'Total retenciones: ISR+IVA ret':'IVA trasladado'}">
+                ${fmtN(displayAux)}
+                ${r._tipo==='honorarios' ? `<div style="font-size:0.57rem;color:var(--text-xs);margin-top:1px;white-space:nowrap;font-family:var(--font);">ISR ${fmtN(r.retISR)} · IVA ret ${fmtN(r.retIVA)}</div>` : ''}
+              </td>
               <td style="padding:0.28rem 0.5rem;">
                 ${dup ? '<span style="font-size:0.65rem;color:#c67d00;font-weight:700;">Ya importado</span>' :
                 `<select onchange="__cgzParsed[${i}].cuenta=this.value"
