@@ -1007,8 +1007,13 @@ function renderTable() {
     const isrHonP = parseNum(ex.pagadoIsrHon !== undefined ? ex.pagadoIsrHon : (r.pagadoIsrHon || 0));
     const ivaHonP = parseNum(ex.pagadoIvaHon !== undefined ? ex.pagadoIvaHon : (r.pagadoIvaHon || 0));
 
-    // Acuse total (from extra or Excel)
-    const acuseTotal = parseNum(ex.acuseTotal !== undefined ? ex.acuseTotal : (r.acuseTotal || 0));
+    // Acuse total: ex.acuseTotal > suma de acuseAsim+Hon+Arr > r.acuseTotal > 0
+    const _acuseSum = (ex.acuseAsim||0) + (ex.acuseHon||0) + (ex.acuseArr||0);
+    const acuseTotal = parseNum(
+      ex.acuseTotal !== undefined ? ex.acuseTotal :
+      _acuseSum > 0 ? _acuseSum :
+      (r.acuseTotal || 0)
+    );
     const acuseFecha = ex.acuseFecha || r.acuseFechaPago || '';
 
     // F. Pago Real: inline pending > extra > Excel
