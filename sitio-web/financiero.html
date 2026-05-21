@@ -1204,7 +1204,11 @@
     }
 
     function getAllMovData() {
-      return [...getExcelMovData(), ...loadRegistry('stgl_mov_manual')];
+      const manual   = loadRegistry('stgl_mov_manual');
+      const manualIds = new Set(manual.map(r => r.id));
+      /* Si un ID aparece en Excel Y en manual, prevalece manual (tiene UUID / cambios más recientes) */
+      const excel    = getExcelMovData().filter(r => !manualIds.has(r.id));
+      return [...excel, ...manual];
     }
 
     /* ══════════════════════════════════════
@@ -1703,7 +1707,12 @@
 
       let html = '';
       for (const ym of claves) {
-        const rows   = grupos[ym];
+        /* Ordenar por fecha_movimiento ASC; desempate por fecha_registro o id (orden de captura) */
+        const rows = grupos[ym].sort((a, b) => {
+          const fd = (a.fecha||'').localeCompare(b.fecha||'');
+          if (fd !== 0) return fd;
+          return (a.fecha_registro||a.id||'').localeCompare(b.fecha_registro||b.id||'');
+        });
         const open   = __movOpenGroups.has(ym);
         const ent    = rows.reduce((s,r) => s + (r.entradas||0), 0);
         const sal    = rows.reduce((s,r) => s + (r.salidas||0),  0);
@@ -2487,7 +2496,8 @@
         }
 
         const traspasoId = `TRP-${Date.now()}`;
-        const base = { fecha, tipo:'Traspaso', desc: desc||'Traspaso entre cuentas',
+        const base = { fecha, fecha_registro: new Date().toISOString().slice(0,10),
+                       tipo:'Traspaso', desc: desc||'Traspaso entre cuentas',
                        concepto, cuentaCont, folio, origenRef:'traspaso', traspasoId };
         const uid = () => `MAN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;
         const recEg = { ...base, id:uid(), mov:'Egresos',  cuenta:cuentaOr,
@@ -2514,7 +2524,9 @@
 
         const rec = {
           id: `MAN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
-          fecha, mov,
+          fecha,                                          /* fecha del movimiento (transacción) */
+          fecha_registro: new Date().toISOString().slice(0,10), /* fecha en que se capturó en Compass */
+          mov,
           tipo:     document.getElementById('nm-tipo').value.trim(),
           desc, concepto, cuentaCont, folio,
           cuenta:   document.getElementById('nm-cuenta').value,

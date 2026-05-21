@@ -367,15 +367,16 @@ function escHtml(s) {
 
 /* ── Carga de datos ── */
 function getMovData() {
-  let data = [];
+  let excel = [];
   try {
     const raw = localStorage.getItem('stgl_mov_excel');
-    if (raw) data = JSON.parse(raw);
+    if (raw) excel = JSON.parse(raw);
   } catch(e) {}
-  try {
-    data = [...data, ...loadRegistry('stgl_mov_manual')];
-  } catch(e) {}
-  return data;
+  let manual = [];
+  try { manual = loadRegistry('stgl_mov_manual'); } catch(e) {}
+  /* Si un ID aparece en Excel Y en manual, prevalece manual (tiene UUID / ediciones recientes) */
+  const manualIds = new Set(manual.map(r => r.id));
+  return [...excel.filter(r => !manualIds.has(r.id)), ...manual];
 }
 
 function getEgresosBase(desde, hasta, cuenta) {
@@ -514,7 +515,13 @@ function renderEgSection(data, bodyId, footId, totalId, countId, openSet, sectio
 
   let html = '';
   for (const mes of grupos) {
-    const rows    = filtered.filter(r => (r.fecha||'').startsWith(mes));
+    const rows    = filtered
+      .filter(r => (r.fecha||'').startsWith(mes))
+      .sort((a, b) => {
+        const fd = (a.fecha||'').localeCompare(b.fecha||'');
+        if (fd !== 0) return fd;
+        return (a.fecha_registro||a.id||'').localeCompare(b.fecha_registro||b.id||'');
+      });
     const mesTotal= rows.reduce((s,r) => s + r.salidas, 0);
     const isOpen  = openSet.has(mes);
     const [yy, mm]= mes.split('-');
