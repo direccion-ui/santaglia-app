@@ -1693,7 +1693,9 @@ function parseNumSAT(v) {
  * Retorna { colAcuse, colFecha, colRetAsim, colRetHon } o los defaults (A-P layout).
  */
 function _detectarColumnasExcel(rows) {
-  const defaults = { colRetAsim:2, colRetHon:3, colRetIva:4, colIsrPm:10, colAcuse:14, colFecha:15 };
+  // colIsrPm:-1 significa "no detectado" → solo se usará si el encabezado
+  // aparece explícitamente en el Excel para evitar leer columnas incorrectas
+  const defaults = { colRetAsim:2, colRetHon:3, colRetIva:4, colIsrPm:-1, colAcuse:14, colFecha:15 };
 
   for (let ri = 0; ri < Math.min(rows.length, 8); ri++) {
     const row = rows[ri];
@@ -1763,7 +1765,7 @@ function _parsearPagosSATPreview(rows, hoja) {
     const retAsim    = parseNumSAT(row[cols.colRetAsim]);
     const retHon     = parseNumSAT(row[cols.colRetHon]);
     const retIva     = parseNumSAT(row[cols.colRetIva]);
-    const isrPm      = parseNumSAT(row[cols.colIsrPm]);
+    const isrPm      = cols.colIsrPm >= 0 ? parseNumSAT(row[cols.colIsrPm]) : 0;
     const acuseTotal = parseNumSAT(row[cols.colAcuse]);
     const fechaRaw   = String(row[cols.colFecha] || '').trim();
     const fechaPagoReal = parseFechaPagoSAT(fechaRaw);

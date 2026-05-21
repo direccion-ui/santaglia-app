@@ -1414,6 +1414,36 @@ function xmlCfdiAll(doc, tag) {
   return [...xmlAll(doc, NS_CFDI3, tag), ...xmlAll(doc, NS_CFDI4, tag)];
 }
 
+/**
+ * Retorna el nodo <cfdi:Impuestos> que es hijo DIRECTO del Comprobante (nivel raíz).
+ * Evita leer los nodos <cfdi:Impuestos> anidados dentro de cada <cfdi:Concepto>,
+ * que en CFDI 4.0 duplican los importes de traslados y retenciones.
+ */
+function xmlRootImpuestos(doc) {
+  const root = doc.documentElement;
+  for (let i = 0; i < root.children.length; i++) {
+    const child = root.children[i];
+    const ln = child.localName || child.nodeName.replace(/^[^:]*:/, '');
+    if (ln === 'Impuestos') return child;
+  }
+  return null;
+}
+
+/** Suma un impuesto específico solo del <cfdi:Impuestos> raíz */
+function xmlImpuestoRaiz(doc, tag, attrImpuesto) {
+  const imp = xmlRootImpuestos(doc);
+  if (!imp) return {};
+  const totales = {};
+  const elems = [...imp.getElementsByTagNameNS(NS_CFDI3, tag),
+                 ...imp.getElementsByTagNameNS(NS_CFDI4, tag)];
+  for (const el of elems) {
+    const tipo = el.getAttribute('Impuesto') || '';
+    const val  = parseFloat(el.getAttribute('Importe') || 0);
+    totales[tipo] = (totales[tipo] || 0) + val;
+  }
+  return totales;
+}
+
 function mesFiscalDeFecha(fecha) {
   const EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const d = new Date((fecha || '').substring(0,10) + 'T12:00:00');
@@ -1467,26 +1497,26 @@ function parseCFDIXml(text, filename) {
     const emisor    = xmlCfdi(doc, 'Emisor');
     const prestador = emisor?.getAttribute('Nombre') || '';
 
-    let iva = 0;
-    for (const t of xmlCfdiAll(doc, 'Traslado')) {
-      if (t.getAttribute('Impuesto') === '002')
-        iva += parseFloat(t.getAttribute('Importe') || 0);
-    }
-    let retISR = 0, retIVA = 0;
-    for (const r of xmlCfdiAll(doc, 'Retencion')) {
-      const imp = r.getAttribute('Impuesto');
-      if (imp === '001') retISR += parseFloat(r.getAttribute('Importe') || 0);
-      if (imp === '002') retIVA += parseFloat(r.getAttribute('Importe') || 0);
-    }
+    /* Leer SOLO del <cfdi:Impuestos> raíz para evitar doble-conteo con CFDI 4.0.
+       En CFDI 4.0 los importes aparecen también en cada <cfdi:Concepto/cfdi:Impuestos>,
+       lo que duplicaría la suma si se usa getElementsByTagNameNS en todo el documento. */
+    const traslados   = xmlImpuestoRaiz(doc, 'Traslado',  null);
+    const retenciones = xmlImpuestoRaiz(doc, 'Retencion', null);
+    const iva    = traslados['002']   || 0;
+    const retISR = retenciones['001'] || 0;
+    const retIVA = retenciones['002'] || 0;
+
     /* Solo tratar como honorarios si hay retención de ISR o IVA */
     if (retISR === 0 && retIVA === 0)
       return { tipo: 'otro', filename, tipoDoc: tipo, detalle: 'Sin retenciones ISR/IVA' };
 
+    /* Usar el Total del CFDI directamente (ya incluye IVA - retenciones) */
+    const totalCFDI = parseFloat(root.getAttribute('Total') || 0);
     const mesFiscal = mesFiscalDeFecha(fecha);
     return { tipo: 'honorarios', filename, uuid, folio, prestador, fecha, mesFiscal,
              bruto: round2(subtotal), iva: round2(iva),
              retISR: round2(retISR), retIVA: round2(retIVA),
-             pagado: round2(subtotal + iva - retISR - retIVA),
+             pagado: round2(totalCFDI || subtotal + iva - retISR - retIVA),
              totalRet: round2(retISR + retIVA) };
   }
 

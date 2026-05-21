@@ -156,14 +156,14 @@
           .mov-table td { padding:0.32rem 0.55rem; border-bottom:1px solid var(--border); vertical-align:middle; }
           .mov-table tbody tr:hover td { background:var(--navy-pale) !important; }
           .mov-table .num { text-align:right; font-family:'Courier New',monospace; white-space:nowrap; }
-          .mov-filter-row td { background:#1b2f55; padding:0.22rem 0.3rem; position:sticky; top:32px; z-index:1; }
+          .mov-filter-row td { background:#1b2f55; padding:0.22rem 0.3rem; position:sticky; top:32px; z-index:3; }
           .mov-filter-row input, .mov-filter-row select {
             width:100%; padding:0.15rem 0.3rem; font-size:0.64rem; border:1px solid rgba(255,255,255,0.18);
             border-radius:2px; background:rgba(255,255,255,0.1); color:#fff; outline:none; box-sizing:border-box; font-family:inherit;
           }
           .mov-filter-row input::placeholder { color:rgba(255,255,255,0.4); font-style:italic; }
           .mov-filter-row select option { background:#1b2a4a; color:#fff; }
-          .mov-group-hdr td { background:#e8ecf8; border-top:2px solid var(--navy); border-bottom:1px solid #c5ceea; padding:0.42rem 0.7rem; cursor:pointer; user-select:none; }
+          .mov-group-hdr td { background:#e8ecf8; border-top:2px solid var(--navy); border-bottom:1px solid #c5ceea; padding:0.42rem 0.7rem; cursor:pointer; user-select:none; position:sticky; top:62px; z-index:2; box-shadow:0 2px 4px rgba(26,45,128,0.08); }
           .mov-group-hdr:hover td { background:#d8deef; }
           .mov-group-chevron { display:inline-block; width:14px; font-size:0.75rem; transition:transform 0.18s; }
           .mov-group-title { font-family:var(--brand); font-size:0.72rem; font-weight:800; color:var(--navy); letter-spacing:0.04em; text-transform:uppercase; }
@@ -184,11 +184,22 @@
             <div class="flex gap-1" style="align-items:center;">
               <span id="mov-count-label" style="font-family:var(--brand); font-size:0.68rem; color:var(--text-dim);">Sin datos — importa el Excel</span>
               <button class="btn btn-ghost" onclick="limpiarMovFiltros()" style="font-size:0.72rem;" title="Limpiar todos los filtros">✕ Limpiar</button>
-              <button class="btn btn-ghost" onclick="expandirTodosMov(true)"  style="font-size:0.72rem;" title="Expandir todos los meses">⊞ Todo</button>
-              <button class="btn btn-ghost" onclick="expandirTodosMov(false)" style="font-size:0.72rem;" title="Colapsar todos los meses">⊟ Colapsar</button>
+              <!-- Pill selector de vista de meses -->
+              <span style="display:inline-flex; border:1px solid var(--border); border-radius:4px; overflow:hidden; flex-shrink:0;">
+                <button id="movVista-solo-actual" onclick="setMovVista('solo-actual')"
+                  title="Acordeón: muestra solo el mes seleccionado (persistente)"
+                  style="padding:0.22rem 0.55rem; border:none; cursor:pointer; font-size:0.7rem; border-right:1px solid var(--border); transition:all .15s;">📅 Mes actual</button>
+                <button id="movVista-compacto" onclick="setMovVista('compacto')"
+                  title="Todos los meses colapsados — solo encabezados visibles"
+                  style="padding:0.22rem 0.55rem; border:none; cursor:pointer; font-size:0.7rem; border-right:1px solid var(--border); transition:all .15s;">⊟ Compacto</button>
+                <button id="movVista-todo" onclick="setMovVista('todo')"
+                  title="Todos los meses expandidos"
+                  style="padding:0.22rem 0.55rem; border:none; cursor:pointer; font-size:0.7rem; transition:all .15s;">⊞ Todo</button>
+              </span>
               <button class="btn btn-ghost" onclick="importarMovimientos()" style="font-size:0.72rem;">↑ Importar Excel</button>
               <button class="btn btn-ghost" onclick="abrirImportPDF()" style="font-size:0.72rem;" title="Importar estado de cuenta en PDF">📄 PDF</button>
               <button class="btn btn-ghost" onclick="abrirCFDIGasto()" style="font-size:0.72rem;" title="Importar CFDIs de gastos">📎 CFDI</button>
+              <button class="btn btn-ghost" onclick="abrirFX()" style="font-size:0.72rem;" title="Registrar operación de cambio de divisas">💱 FX</button>
               <button class="btn btn-primary" onclick="abrirNuevoMov()" style="font-size:0.72rem;">+ Movimiento</button>
             </div>
           </div>
@@ -202,6 +213,10 @@
             <div class="mov-kpi-item" id="mov-k-cont-wrap" style="cursor:pointer;border-left:2px solid var(--border);" onclick="filtrarSinContabilizar()" title="Clic para filtrar sin contabilizar">
               <div class="mov-kpi-label" style="color:var(--gold);">📒 Sin contabilizar</div>
               <div class="mov-kpi-val" id="mov-k-sincont" style="color:var(--gold);">—</div>
+            </div>
+            <div class="mov-kpi-item" id="mov-k-cfdi-wrap" style="cursor:pointer;border-left:2px solid var(--border);" onclick="filtrarSinCFDI()" title="Clic para filtrar movimientos con CFDI pendiente">
+              <div class="mov-kpi-label" style="color:var(--red);">📎 CFDI pendientes</div>
+              <div class="mov-kpi-val" id="mov-k-sincfdi" style="color:var(--red);">—</div>
             </div>
           </div>
 
@@ -224,6 +239,7 @@
                   <th class="num" style="min-width:88px;">Salidas</th>
                   <th class="num" style="min-width:90px;">Conciliado</th>
                   <th style="min-width:110px;">Contabilizado</th>
+                  <th style="min-width:80px;">CFDI</th>
                   <th style="width:28px;"></th>
                 </tr>
                 <tr class="mov-filter-row">
@@ -251,6 +267,14 @@
                       <option value="">Todos</option>
                       <option value="1">📒 Sí</option>
                       <option value="0">⬜ Pendiente</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select id="mcf-cfdi" onchange="filterMovimientos()">
+                      <option value="">Todos</option>
+                      <option value="ok">✅ Con CFDI</option>
+                      <option value="pend">⚠ Pendiente</option>
+                      <option value="na">— N/A</option>
                     </select>
                   </td>
                   <td></td>
@@ -736,6 +760,110 @@
     </div>
   </div>
 
+  <!-- ══ MODAL: OPERACIÓN FX ══ -->
+  <div class="modal-backdrop hidden" id="modal-fx">
+    <div class="modal" style="max-width:640px; width:95vw;">
+      <div class="modal-header">
+        <span class="modal-title">💱 Operación FX — Cambio de Divisas</span>
+        <button class="modal-close" onclick="closeModal('modal-fx')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1.1rem;">
+
+        <!-- CFDI import strip -->
+        <div style="background:#f0f4ff; border:1px dashed #b0bce0; border-radius:4px; padding:0.65rem 0.9rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.75rem;">
+          <span style="font-size:0.7rem; font-weight:700; color:var(--text-dim); white-space:nowrap;">CFDI Banco Base</span>
+          <input type="file" id="fx-cfdi-input" accept=".xml" style="font-size:0.7rem; flex:1;"
+                 onchange="cargarCFDIFX(this.files[0])" />
+          <span id="fx-cfdi-status" style="font-size:0.68rem; color:var(--green);"></span>
+        </div>
+
+        <!-- Campos principales -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; margin-bottom:0.9rem;">
+          <div>
+            <label style="font-size:0.68rem; font-weight:700; color:var(--text-dim); display:block; margin-bottom:0.2rem;">FECHA OPERACIÓN</label>
+            <input class="form-input" id="fx-fecha" type="date" />
+          </div>
+          <div>
+            <label style="font-size:0.68rem; font-weight:700; color:var(--text-dim); display:block; margin-bottom:0.2rem;">DESCRIPCIÓN</label>
+            <input class="form-input" id="fx-desc" placeholder="Venta de divisas" />
+          </div>
+          <div>
+            <label style="font-size:0.68rem; font-weight:700; color:var(--text-dim); display:block; margin-bottom:0.2rem;">MONTO USD</label>
+            <input class="form-input" id="fx-usd" type="number" step="0.01" min="0" placeholder="0.00"
+                   oninput="calcFXMxn()" style="font-family:'Courier New',monospace;" />
+          </div>
+          <div>
+            <label style="font-size:0.68rem; font-weight:700; color:var(--text-dim); display:block; margin-bottom:0.2rem;">TIPO DE CAMBIO PACTADO</label>
+            <input class="form-input" id="fx-tc" type="number" step="0.0001" min="0" placeholder="0.0000"
+                   oninput="calcFXMxn()" style="font-family:'Courier New',monospace;" />
+          </div>
+          <div style="grid-column:1/-1;">
+            <label style="font-size:0.68rem; font-weight:700; color:var(--text-dim); display:block; margin-bottom:0.2rem;">MONTO MXN A RECIBIR</label>
+            <input class="form-input" id="fx-mxn" readonly
+                   style="font-family:'Courier New',monospace; font-weight:700; font-size:1rem; color:var(--green); background:#f5faf5;" />
+          </div>
+        </div>
+
+        <!-- Cuentas -->
+        <div style="border-top:1px solid var(--border); padding-top:0.8rem; margin-bottom:0.9rem;">
+          <div style="font-size:0.68rem; font-weight:700; color:var(--text-dim); margin-bottom:0.55rem; letter-spacing:0.06em;">FLUJO DE CUENTAS</div>
+          <div style="display:grid; gap:0.55rem;">
+            <div style="display:grid; grid-template-columns:120px 1fr; align-items:center; gap:0.5rem;">
+              <span style="font-size:0.68rem; color:var(--text-xs);">① Origen USD</span>
+              <select class="form-input" id="fx-cta-origen" onchange="calcFXMxn()" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
+                <option value="">— Seleccionar —</option>
+              </select>
+            </div>
+            <div style="display:grid; grid-template-columns:120px 1fr; align-items:center; gap:0.5rem;">
+              <span style="font-size:0.68rem; color:var(--text-xs);">② Intermediario USD</span>
+              <select class="form-input" id="fx-cta-inter" onchange="calcFXMxn()" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
+                <option value="">— Seleccionar —</option>
+              </select>
+            </div>
+            <div style="display:grid; grid-template-columns:120px 1fr; align-items:center; gap:0.5rem;">
+              <span style="font-size:0.68rem; color:var(--text-xs);">③ Destino MXN</span>
+              <select class="form-input" id="fx-cta-destino" onchange="calcFXMxn()" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
+                <option value="">— Seleccionar —</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview de los 4 movimientos -->
+        <div style="border-top:1px solid var(--border); padding-top:0.8rem;">
+          <div style="font-size:0.68rem; font-weight:700; color:var(--text-dim); margin-bottom:0.5rem; letter-spacing:0.06em;">MOVIMIENTOS QUE SE GENERARÁN</div>
+          <table style="width:100%; border-collapse:collapse; font-size:0.7rem;">
+            <tr style="background:#f8f9fc;">
+              <td style="padding:0.28rem 0.5rem; color:var(--text-xs);">① Egreso</td>
+              <td style="padding:0.28rem 0.5rem;" id="fx-prev-origen-nombre">—</td>
+              <td style="padding:0.28rem 0.5rem; text-align:right; font-family:'Courier New',monospace; color:var(--red);" id="fx-prev-usd-sal">—</td>
+            </tr>
+            <tr>
+              <td style="padding:0.28rem 0.5rem; color:var(--text-xs);">② Ingreso</td>
+              <td style="padding:0.28rem 0.5rem;" id="fx-prev-inter-nombre-in">—</td>
+              <td style="padding:0.28rem 0.5rem; text-align:right; font-family:'Courier New',monospace; color:var(--green);" id="fx-prev-usd-ent">—</td>
+            </tr>
+            <tr style="background:#f8f9fc;">
+              <td style="padding:0.28rem 0.5rem; color:var(--text-xs);">③ Egreso</td>
+              <td style="padding:0.28rem 0.5rem;" id="fx-prev-inter-nombre-out">—</td>
+              <td style="padding:0.28rem 0.5rem; text-align:right; font-family:'Courier New',monospace; color:var(--red);" id="fx-prev-usd-sal2">—</td>
+            </tr>
+            <tr>
+              <td style="padding:0.28rem 0.5rem; color:var(--text-xs);">④ Ingreso</td>
+              <td style="padding:0.28rem 0.5rem;" id="fx-prev-destino-nombre">—</td>
+              <td style="padding:0.28rem 0.5rem; text-align:right; font-family:'Courier New',monospace; color:var(--green); font-weight:700;" id="fx-prev-mxn-ent">—</td>
+            </tr>
+          </table>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-fx')">Cancelar</button>
+        <button class="btn btn-primary" onclick="registrarFX()">Registrar operación FX</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toasts" class="toast-container"></div>
 
   <script src="js/app.js"></script>
@@ -869,6 +997,16 @@
 
     function equivMxn(saldo, moneda) {
       return moneda === 'USD' ? saldo * getTc() : saldo;
+    }
+
+    /* Ajusta el saldo almacenado de una cuenta (positivo = abono, negativo = cargo) */
+    function ajustarSaldoCuenta(cuentaNombre, delta) {
+      if (!cuentaNombre || !delta) return;
+      const data = loadRegistry(KEY_SAL);
+      const idx  = data.findIndex(s => s.cuenta === cuentaNombre);
+      if (idx < 0) return;
+      data[idx].saldo = (data[idx].saldo || 0) + delta;
+      saveRegistry(KEY_SAL, data);
     }
 
     let __salShowCancelled = false;
@@ -1048,6 +1186,11 @@
     const KEY_MOV_EXCEL = 'stgl_mov_excel';
     let __movFiltered   = [];            /* resultado del filtro activo */
     let __movOpenGroups = new Set();     /* meses expandidos en la tabla */
+    /* Vista de meses: 'solo-actual' (acordeón, default) | 'compacto' (todos cerrados) | 'todo' (todos abiertos) */
+    let __movModoVista  = (() => {
+      const v = localStorage.getItem('stgl_mov_vista');
+      return (v === 'compacto' || v === 'todo' || v === 'solo-actual') ? v : 'solo-actual';
+    })();
     const KEY_CONC      = 'stgl_mov_conciliado';
     const KEY_CONT      = 'stgl_mov_contabilizado';
     const MESES_ES      = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -1072,6 +1215,8 @@
       initMovSelect();
       filterMovimientos();
     }
+    /* Sincronizar estilos del pill de vista una vez el DOM esté listo */
+    setTimeout(_syncMovVistaButtons, 0);
 
     /* ══════════════════════════════════════
        MOVIMIENTOS BANCARIOS
@@ -1169,7 +1314,8 @@
         toast(`${n.toLocaleString('es-MX')} movimientos importados y guardados`, 'success');
       }
 
-      __movOpenGroups = new Set();
+      /* Resetear grupos respetando el modo de vista activo */
+      __movOpenGroups = new Set();  /* se resolverá en renderMovPagina según __movModoVista */
       initMovSelect();
       filterMovimientos();
     }
@@ -1189,9 +1335,114 @@
     function limpiarMovFiltros() {
       ['mcf-fecha','mcf-mov','mcf-tipo','mcf-desc','mcf-concepto',
        'mcf-cuenta','mcf-cuentaCont','mcf-folio','mcf-origen',
-       'mcf-dest','mcf-entradas','mcf-salidas','mcf-conciliado','mcf-contabilizado']
+       'mcf-dest','mcf-entradas','mcf-salidas','mcf-conciliado','mcf-contabilizado','mcf-cfdi']
         .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       filterMovimientos();
+    }
+
+    /* ════════════════════════════════════════════════════
+       CFDI TRACKING
+    ════════════════════════════════════════════════════ */
+
+    /* Devuelve el estado CFDI de un movimiento:
+       'ok'   — ya tiene CFDI vinculado (uuid presente)
+       'pend' — marcado como "requiere CFDI" pero sin uuid
+       'na'   — no aplica (traspasos, FX, excel sin marcar) */
+    function cfdiStatus(r) {
+      if (r.uuid) return 'ok';
+      if (r.requiereCFDI) return 'pend';
+      return 'na';
+    }
+
+    /* Renderiza la celda CFDI de una fila */
+    function cfdiCelda(r) {
+      const st = cfdiStatus(r);
+      const id = escHtml(r.id);
+      const esExcel = r.origenRef === 'excel';   // movimientos de estado de cuenta no se marcan
+
+      if (st === 'ok') {
+        return `<span title="CFDI vinculado: ${escHtml(r.uuid||'')}"
+          style="font-size:0.62rem;background:#e8f8ee;color:var(--green);padding:0.1rem 0.35rem;border-radius:3px;font-weight:700;cursor:default;">✅ CFDI</span>`;
+      }
+      if (st === 'pend') {
+        return `<span onclick="vincularCFDI('${id}')" title="Pendiente — haz clic para vincular XML"
+          style="font-size:0.62rem;background:#fff3e0;color:#c67d00;padding:0.1rem 0.35rem;border-radius:3px;font-weight:700;cursor:pointer;border:1px solid #f0c060;">⚠ Sin CFDI</span>
+          <button onclick="toggleRequiereCFDI('${id}')" title="Quitar marca de CFDI requerido"
+            style="background:none;border:none;cursor:pointer;font-size:0.65rem;color:var(--text-xs);padding:0 0.1rem;opacity:0.5;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'">✕</button>`;
+      }
+      /* na — solo mostrar botón si no es excel puro */
+      if (esExcel) return '<span style="color:var(--text-xs);font-size:0.62rem;">—</span>';
+      return `<button onclick="toggleRequiereCFDI('${id}')" title="Marcar como pendiente de CFDI"
+        style="background:none;border:1px dashed var(--border);border-radius:3px;cursor:pointer;font-size:0.62rem;padding:0.1rem 0.3rem;color:var(--text-xs);opacity:0.45;"
+        onmouseover="this.style.opacity='1';this.style.borderColor='#c67d00';this.style.color='#c67d00'"
+        onmouseout="this.style.opacity='0.45';this.style.borderColor='var(--border)';this.style.color='var(--text-xs)'">📎</button>`;
+    }
+
+    /* Marcar/desmarcar un movimiento como "requiere CFDI" */
+    function toggleRequiereCFDI(id) {
+      const manual = loadRegistry('stgl_mov_manual');
+      const idx = manual.findIndex(r => r.id === id);
+      if (idx < 0) {
+        /* Movimiento de Excel: guardarlo en manual con el flag */
+        const excel = getExcelMovData();
+        const rec   = excel.find(r => r.id === id);
+        if (!rec) return;
+        const nuevo = { ...rec, requiereCFDI: !rec.requiereCFDI };
+        excel[excel.indexOf(rec)] = nuevo;
+        try { localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excel)); } catch {}
+      } else {
+        manual[idx].requiereCFDI = !manual[idx].requiereCFDI;
+        saveRegistry('stgl_mov_manual', manual);
+      }
+      filterMovimientos();
+    }
+
+    /* Vincular un XML de CFDI a un movimiento existente */
+    function vincularCFDI(id) {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.xml';
+      inp.onchange = e => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const doc  = new DOMParser().parseFromString(ev.target.result, 'text/xml');
+            const root = doc.documentElement;
+            if (!root || root.querySelector('parsererror')) throw new Error('XML inválido');
+            const tfd  = doc.getElementsByTagNameNS('http://www.sat.gob.mx/TimbreFiscalDigital','TimbreFiscalDigital')[0];
+            const uuid = tfd?.getAttribute('UUID') || '';
+            if (!uuid) { toast('No se encontró UUID en el XML', 'error'); return; }
+
+            /* Guardar UUID en el movimiento */
+            const manual = loadRegistry('stgl_mov_manual');
+            const idx = manual.findIndex(r => r.id === id);
+            if (idx >= 0) {
+              manual[idx].uuid = uuid;
+              manual[idx].requiereCFDI = false;
+              saveRegistry('stgl_mov_manual', manual);
+            } else {
+              /* Excel: copiar a manual con UUID */
+              const excel = getExcelMovData();
+              const rec = excel.find(r => r.id === id);
+              if (rec) {
+                manual.push({ ...rec, uuid, requiereCFDI: false });
+                saveRegistry('stgl_mov_manual', manual);
+              }
+            }
+            toast(`CFDI vinculado: ${uuid.substring(0,8)}…`, 'success');
+            filterMovimientos();
+          } catch(err) { toast('Error al leer el XML: ' + err.message, 'error'); }
+        };
+        reader.readAsText(file, 'UTF-8');
+      };
+      inp.click();
+    }
+
+    /* Filtrar rápido a movimientos con CFDI pendiente */
+    function filtrarSinCFDI() {
+      const sel = document.getElementById('mcf-cfdi');
+      if (sel) { sel.value = sel.value === 'pend' ? '' : 'pend'; filterMovimientos(); }
     }
 
     /* ── Helper: leer valor de un input/select ── */
@@ -1218,6 +1469,7 @@
       const minSal    = parseFloat(gv('mcf-salidas'));
       const fConc     = gv('mcf-conciliado');      // '1' | '0' | ''
       const fCont     = gv('mcf-contabilizado');   // '1' | '0' | ''
+      const fCFDI     = gv('mcf-cfdi');            // 'ok' | 'pend' | 'na' | ''
 
       __movFiltered = data.filter(r => {
         if (fecha     && !r.fecha.includes(fecha))                          return false;
@@ -1236,6 +1488,7 @@
         if (fConc === '0' &&  conc.has(r.id)) return false;
         if (fCont === '1' && !cont.has(r.id)) return false;
         if (fCont === '0' &&  cont.has(r.id)) return false;
+        if (fCFDI && cfdiStatus(r) !== fCFDI) return false;
         return true;
       });
 
@@ -1267,6 +1520,15 @@
         ksc.style.color = sinCont > 0 ? 'var(--gold)' : 'var(--green)';
         if (kwrap) kwrap.querySelector('.mov-kpi-label').style.color = sinCont > 0 ? 'var(--gold)' : 'var(--green)';
       }
+      // Badge CFDI pendientes
+      const sinCFDI  = allMovs.filter(r => cfdiStatus(r) === 'pend').length;
+      const kCFDI    = document.getElementById('mov-k-sincfdi');
+      const kCFDIW   = document.getElementById('mov-k-cfdi-wrap');
+      if (kCFDI) {
+        kCFDI.textContent = sinCFDI > 0 ? sinCFDI + ' movs.' : '✅ Al día';
+        kCFDI.style.color = sinCFDI > 0 ? 'var(--red)' : 'var(--green)';
+        if (kCFDIW) kCFDIW.querySelector('.mov-kpi-label').style.color = sinCFDI > 0 ? 'var(--red)' : 'var(--green)';
+      }
     }
 
     /* ── Helpers ── */
@@ -1287,8 +1549,14 @@
     /* ── Estado de grupos abiertos/cerrados ── */
 
     function toggleMovGroup(ym) {
-      if (__movOpenGroups.has(ym)) __movOpenGroups.delete(ym);
-      else __movOpenGroups.add(ym);
+      if (__movModoVista === 'solo-actual') {
+        /* Acordeón: abrir uno cierra los demás */
+        if (__movOpenGroups.has(ym)) __movOpenGroups.clear();
+        else __movOpenGroups = new Set([ym]);
+      } else {
+        if (__movOpenGroups.has(ym)) __movOpenGroups.delete(ym);
+        else __movOpenGroups.add(ym);
+      }
       renderMovPagina();
     }
 
@@ -1300,6 +1568,40 @@
         __movOpenGroups = new Set();
       }
       renderMovPagina();
+    }
+
+    /* ── Pill selector de vista de meses ── */
+    function _syncMovVistaButtons() {
+      const estilos = {
+        'solo-actual': { bg:'var(--navy)', color:'#fff', fw:'700' },
+        'compacto':    { bg:'var(--navy-pale,#eef1fa)', color:'var(--navy)', fw:'600' },
+        'todo':        { bg:'var(--navy-pale,#eef1fa)', color:'var(--navy)', fw:'600' },
+      };
+      ['solo-actual','compacto','todo'].forEach(m => {
+        const b = document.getElementById('movVista-' + m);
+        if (!b) return;
+        const active = (m === __movModoVista);
+        b.style.background  = active ? 'var(--navy)'                : 'none';
+        b.style.color       = active ? '#fff'                       : 'var(--text-dim)';
+        b.style.fontWeight  = active ? '700'                        : '400';
+      });
+    }
+
+    function setMovVista(modo) {
+      __movModoVista = modo;
+      localStorage.setItem('stgl_mov_vista', modo);
+      _syncMovVistaButtons();
+      /* Actualizar __movOpenGroups según el modo */
+      const todasClaves = [...new Set(__movFiltered.map(r => r.fecha.slice(0,7)))].sort();
+      if (modo === 'todo') {
+        __movOpenGroups = new Set(todasClaves);
+      } else if (modo === 'compacto') {
+        __movOpenGroups = new Set();
+      } else {
+        /* solo-actual: acordeón → abrir solo el mes más reciente */
+        __movOpenGroups = new Set(todasClaves.length ? [todasClaves[todasClaves.length - 1]] : []);
+      }
+      renderMovPagina(modo === 'solo-actual');
     }
 
     /* ── Render agrupado por mes ── */
@@ -1328,9 +1630,16 @@
          el más reciente al fondo — coincide con el scroll invertido */
       const claves = Object.keys(grupos).sort();
 
-      /* Abrir sólo el mes más reciente por defecto */
+      /* Apertura por defecto según el modo de vista */
       if (__movOpenGroups.size === 0 && claves.length > 0) {
-        __movOpenGroups.add(claves[claves.length - 1]);
+        if (__movModoVista === 'todo') {
+          __movOpenGroups = new Set(claves);
+        } else if (__movModoVista === 'compacto') {
+          /* nada — todos colapsados */
+        } else {
+          /* solo-actual (default): abrir únicamente el mes más reciente */
+          __movOpenGroups.add(claves[claves.length - 1]);
+        }
       }
 
       const movBadge = mov => {
@@ -1372,11 +1681,20 @@
               ${isCont ? '📒' : '⬜'}
             </button>
           </td>
-          <td style="text-align:center; padding:0.1rem 0.2rem;">
+          <td style="text-align:center; padding:0.1rem 0.3rem; white-space:nowrap;">
+            ${cfdiCelda(r)}
+          </td>
+          <td style="text-align:center; padding:0.1rem 0.2rem; white-space:nowrap;">
             <button onclick="editarMovimiento('${escHtml(r.id)}')" title="Editar movimiento"
               style="background:none; border:none; cursor:pointer; font-size:0.8rem; line-height:1; padding:0.15rem 0.3rem; border-radius:3px; color:var(--text-xs); opacity:0.5;"
               onmouseover="this.style.opacity='1';this.style.background='var(--navy-pale)'"
-              onmouseout="this.style.opacity='0.5';this.style.background='none'">✏️</button>
+              onmouseout="this.style.opacity='0.5';this.style.background='none'">✏️</button>${
+            r.origenRef !== 'excel'
+              ? `<button onclick="eliminarMovimiento('${escHtml(r.id)}')" title="Eliminar movimiento"
+                  style="background:none; border:none; cursor:pointer; font-size:0.8rem; line-height:1; padding:0.15rem 0.3rem; border-radius:3px; color:var(--red); opacity:0.35;"
+                  onmouseover="this.style.opacity='1';this.style.background='#fff0f0'"
+                  onmouseout="this.style.opacity='0.35';this.style.background='none'">🗑</button>`
+              : ''}
           </td>
         </tr>`;
       };
@@ -1454,6 +1772,32 @@
     function xmlAllF(doc,ns,tag){ return [...doc.getElementsByTagNameNS(ns,tag)]; }
     function xmlCfdiF(doc,tag){ return xmlOneF(doc,CFD4,tag)||xmlOneF(doc,CFD3,tag); }
     function xmlCfdiAllF(doc,tag){ return [...xmlAllF(doc,CFD4,tag),...xmlAllF(doc,CFD3,tag)]; }
+
+    /* Devuelve el nodo <cfdi:Impuestos> hijo DIRECTO de <cfdi:Comprobante>
+       para evitar sumar doble los traslados/retenciones de conceptos */
+    function xmlRootImpuestosF(doc) {
+      const root = doc.documentElement;
+      for (let i = 0; i < root.children.length; i++) {
+        const child = root.children[i];
+        const ln = child.localName || child.nodeName.replace(/^[^:]*:/, '');
+        if (ln === 'Impuestos') return child;
+      }
+      return null;
+    }
+    /* Suma Importe por Impuesto sólo del nodo raíz de Impuestos */
+    function xmlImpuestosRaizF(doc, tag) {
+      const imp = xmlRootImpuestosF(doc);
+      if (!imp) return {};
+      const totales = {};
+      const elems = [...imp.getElementsByTagNameNS(CFD4, tag),
+                     ...imp.getElementsByTagNameNS(CFD3, tag)];
+      for (const el of elems) {
+        const tipo = el.getAttribute('Impuesto') || '';
+        const val  = parseFloat(el.getAttribute('Importe') || 0);
+        totales[tipo] = (totales[tipo] || 0) + val;
+      }
+      return totales;
+    }
     function agruparNominaF(recs){
       const byDate={};
       for(const r of recs){
@@ -1573,22 +1917,21 @@
           const emisorRfc = ga(emisor,'Rfc')||'';
           const conceptos = xmlCfdiAllF(doc,'Concepto');
           const concepto  = conceptos.length ? ga(conceptos[0],'Descripcion') : '';
-          let iva=0, retISR=0, retIVA=0;
-          for(const t of xmlCfdiAllF(doc,'Traslado'))
-            if(ga(t,'Impuesto')==='002') iva+=parseFloat(ga(t,'Importe'))||0;
-          for(const re of xmlCfdiAllF(doc,'Retencion')){
-            const imp=ga(re,'Impuesto');
-            if(imp==='001') retISR+=parseFloat(ga(re,'Importe'))||0;
-            if(imp==='002') retIVA+=parseFloat(ga(re,'Importe'))||0;
-          }
-          const total=parseFloat(ga(root,'Total'))||0;
+          /* Usar sólo el nodo raíz <cfdi:Impuestos> para evitar duplicar
+             los valores que CFDI 4.0 lista también a nivel de <Concepto> */
+          const _traslados   = xmlImpuestosRaizF(doc, 'Traslado');
+          const _retenciones = xmlImpuestosRaizF(doc, 'Retencion');
+          const iva    = _traslados['002']   || 0;
+          const retISR = _retenciones['001'] || 0;
+          const retIVA = _retenciones['002'] || 0;
+          const total  = parseFloat(ga(root,'Total'))||0;
           const mesFiscal=mesFiscalDeF(fecha);
           /* Honorarios: hay retención ISR o IVA */
           if (retISR>0||retIVA>0) {
             return { _tipo:'honorarios', _id:newId(), filename, uuid, folio,
                      prestador, emisorRfc, fecha, mesFiscal, concepto, cuenta:'',
                      bruto:r2(subtotal), iva:r2(iva), retISR:r2(retISR), retIVA:r2(retIVA),
-                     pagado:r2(subtotal+iva-retISR-retIVA), totalRet:r2(retISR+retIVA),
+                     pagado:r2(total||subtotal+iva-retISR-retIVA), totalRet:r2(retISR+retIVA),
                      fechaCFDI:fecha, fechaAfect:fecha,
                      emisorNombre:prestador, total:r2(total) };
           }
@@ -1690,6 +2033,13 @@
       const pendientes = __cgzParsed.filter(r => r.fechaAfect);
       if (!pendientes.length) { toast('Sin CFDIs para importar', 'error'); return; }
 
+      /* Advertir si algún CFDI no tiene cuenta asignada — sin cuenta no se ajusta saldo */
+      const sinCuenta = pendientes.filter(r => !r.cuenta);
+      if (sinCuenta.length) {
+        const nombres = sinCuenta.map(r => r.prestador || r.emisorNombre || r.nombre || r.filename).join(', ');
+        if (!confirm(`${sinCuenta.length} CFDI(s) sin cuenta bancaria asignada:\n${nombres}\n\n¿Continuar sin ajustar el saldo de esos movimientos?`)) return;
+      }
+
       /* ── existentes en cada registro para dedup ── */
       const exUuidM = new Set(loadRegistry('stgl_mov_manual').filter(m=>m.uuid).map(m=>m.uuid));
       const exUuidA = new Set(loadRegistry('stgl_asimilables').filter(m=>m.uuid).map(m=>m.uuid));
@@ -1710,6 +2060,7 @@
             cuenta: r.cuenta, cuentaCont:'Nómina', folio: r.folio,
             origen: r.nombre, dest: r.nombre,
             entradas: null, salidas: r.neto, uuid: r.uuid, origenRef:'cfdi-nomina',
+            _saldoAjustado: !!r.cuenta,
           });
         } else if (r._tipo === 'honorarios') {
           if (exUuidH.has(r.uuid)) continue;
@@ -1717,8 +2068,9 @@
             id: r._id, uuid: r.uuid, filename: r.filename,
             fechaPago: r.fechaAfect, mesFiscal: mesFiscalDeF(r.fechaAfect),
             prestador: r.prestador||r.emisorNombre, folio: r.folio,
-            bruto: r.bruto, iva: r.iva, retISR: r.retISR, retIVA: r.retIVA,
-            pagado: r.pagado, totalRet: r.totalRet,
+            bruto: r.bruto, iva: r.iva,
+            retIsr: r.retISR, retIva: r.retIVA,   /* nombres canónicos de stgl_honorarios */
+            pagado: r.pagado, neto: r.pagado, subtotalRet: r.totalRet, totalRet: r.totalRet,
           });
           nuevosMovs.push({
             id: r._id, fecha: r.fechaAfect, mov:'Egresos', tipo:'Honorarios',
@@ -1726,6 +2078,7 @@
             concepto: r.concepto, cuenta: r.cuenta, cuentaCont:'Honorarios',
             folio: r.folio, origen: r.emisorRfc||r.prestador, dest: r.prestador,
             entradas: null, salidas: r.pagado, uuid: r.uuid, origenRef:'cfdi-honorarios',
+            _saldoAjustado: !!r.cuenta,
           });
         } else {
           /* gasto general */
@@ -1736,6 +2089,7 @@
             concepto: r.concepto, cuenta: r.cuenta, cuentaCont:'Gastos',
             folio: r.folio, origen: r.emisorRfc||r.emisorNombre, dest: r.emisorNombre,
             entradas: null, salidas: r.total, uuid: r.uuid, origenRef:'cfdi-gasto',
+            _saldoAjustado: !!r.cuenta,
           });
         }
       }
@@ -1755,6 +2109,12 @@
       if (nuevosMovs.length) {
         const manual = loadRegistry('stgl_mov_manual');
         saveRegistry('stgl_mov_manual', [...manual, ...nuevosMovs]);
+      }
+
+      /* ── Ajustar saldos de cuentas por los movimientos importados ── */
+      for (const mov of nuevosMovs) {
+        const delta = parseFloat(mov.entradas || 0) - parseFloat(mov.salidas || 0);
+        ajustarSaldoCuenta(mov.cuenta, delta);
       }
 
       const totalNuevos = nuevosNominaRaw.length + nuevosHonorarios.length +
@@ -1780,6 +2140,52 @@
     // ── Catalog system ──
     const KEY_NM_CAT = 'stgl_nm_cat';
     let __nmEditId = null;   /* null = nuevo movimiento; string = ID del registro en edición */
+
+    /* ── Eliminar un movimiento manual (con reversión de saldo) ── */
+    function eliminarMovimiento(id) {
+      const manual = loadRegistry('stgl_mov_manual');
+      const rec = manual.find(r => r.id === id);
+      if (!rec) { toast('Solo se pueden eliminar movimientos manuales/CFDI', 'info'); return; }
+
+      const desc = rec.desc || rec.tipo || id;
+      if (!confirm(`¿Eliminar el movimiento "${desc}"?\n\nEsta acción revertirá el efecto en el saldo de la cuenta.`)) return;
+
+      /* Revertir saldo SOLO si el movimiento fue creado después del fix de saldos
+         (indicado por el flag _saldoAjustado). Movimientos anteriores no tocaron el saldo. */
+      if (rec._saldoAjustado && rec.cuenta) {
+        const deltaOriginal = (parseFloat(rec.entradas||0)) - (parseFloat(rec.salidas||0));
+        ajustarSaldoCuenta(rec.cuenta, -deltaOriginal);
+      }
+
+      /* Si era un traspaso, revertir también la cuenta contraria (solo si fue ajustado) */
+      if (rec.origenRef === 'traspaso' && rec.traspasoId) {
+        const contraparte = manual.find(r => r.traspasoId === rec.traspasoId && r.id !== id);
+        if (contraparte) {
+          if (rec._saldoAjustado) {
+            const deltaContra = (parseFloat(contraparte.entradas||0)) - (parseFloat(contraparte.salidas||0));
+            ajustarSaldoCuenta(contraparte.cuenta, -deltaContra);
+          }
+          saveRegistry('stgl_mov_manual', manual.filter(r => r.traspasoId !== rec.traspasoId));
+          toast('Traspaso eliminado', 'success');
+          filterMovimientos(); renderSaldos(); return;
+        }
+      }
+
+      /* Eliminar también de stgl_honorarios si vino de CFDI */
+      if (rec.uuid && rec.origenRef === 'cfdi-honorarios') {
+        const hon = loadRegistry('stgl_honorarios');
+        saveRegistry('stgl_honorarios', hon.filter(h => h.uuid !== rec.uuid));
+      }
+      /* Eliminar también de stgl_asimilables si vino de CFDI nómina */
+      if (rec.uuid && rec.origenRef === 'cfdi-nomina') {
+        const asim = loadRegistry('stgl_asimilables');
+        saveRegistry('stgl_asimilables', asim.filter(a => a.uuid !== rec.uuid));
+      }
+
+      saveRegistry('stgl_mov_manual', manual.filter(r => r.id !== id));
+      toast('Movimiento eliminado y saldo revertido', 'success');
+      filterMovimientos(); renderSaldos();
+    }
 
     /* ── Buscar un movimiento por ID en cualquier registro ── */
     function findMovById(id) {
@@ -2085,11 +2491,15 @@
                        concepto, cuentaCont, folio, origenRef:'traspaso', traspasoId };
         const uid = () => `MAN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;
         const recEg = { ...base, id:uid(), mov:'Egresos',  cuenta:cuentaOr,
-                        origen:cuentaOr, dest:cuentaDst, entradas:null, salidas:monto };
+                        origen:cuentaOr, dest:cuentaDst, entradas:null, salidas:monto,
+                        _saldoAjustado: true };
         const recIn = { ...base, id:uid(), mov:'Ingresos', cuenta:cuentaDst,
-                        origen:cuentaOr, dest:cuentaDst, entradas:montoDestino, salidas:null };
+                        origen:cuentaOr, dest:cuentaDst, entradas:montoDestino, salidas:null,
+                        _saldoAjustado: true };
 
         saveRegistry('stgl_mov_manual', [...loadRegistry('stgl_mov_manual'), recEg, recIn]);
+        ajustarSaldoCuenta(cuentaOr,  -monto);
+        ajustarSaldoCuenta(cuentaDst, +montoDestino);
         closeModal('modal-nuevo-mov');
         const info = diffMoneda
           ? `${fmtMov(monto)} ${cOr.moneda} → ${fmtMov(montoDestino)} ${cDs.moneda}`
@@ -2112,9 +2522,11 @@
           dest:     document.getElementById('nm-dest').value.trim(),
           entradas: mov === 'Ingresos' ? monto : null,
           salidas:  mov !== 'Ingresos' ? monto : null,
-          origenRef:'manual',
+          origenRef:'manual', _saldoAjustado: true,
         };
         saveRegistry('stgl_mov_manual', [...loadRegistry('stgl_mov_manual'), rec]);
+        const delta = (rec.entradas || 0) - (rec.salidas || 0);
+        ajustarSaldoCuenta(rec.cuenta, delta);
         closeModal('modal-nuevo-mov');
         toast('Movimiento registrado', 'success');
       }
@@ -2772,6 +3184,183 @@
         btn.disabled    = true;
         btn.style.background = 'var(--green)';
       }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       OPERACIÓN FX — Cambio de Divisas (4 patas)
+    ══════════════════════════════════════════════════════════ */
+
+    function abrirFX() {
+      /* Poblar selects con cuentas activas */
+      const cuentas = loadRegistry(KEY_SAL).filter(s => !s.cancelada);
+      const optsUSD = '<option value="">— Seleccionar —</option>' +
+        cuentas.filter(c => c.moneda === 'USD')
+               .map(c => `<option value="${escHtml(c.cuenta)}">${escHtml(c.cuenta)}</option>`).join('');
+      const optsMXN = '<option value="">— Seleccionar —</option>' +
+        cuentas.filter(c => c.moneda !== 'USD')
+               .map(c => `<option value="${escHtml(c.cuenta)}">${escHtml(c.cuenta)}</option>`).join('');
+
+      document.getElementById('fx-cta-origen').innerHTML  = optsUSD;
+      document.getElementById('fx-cta-inter').innerHTML   = optsUSD;
+      document.getElementById('fx-cta-destino').innerHTML = optsMXN;
+
+      /* Defaults */
+      document.getElementById('fx-fecha').value  = new Date().toISOString().slice(0,10);
+      document.getElementById('fx-desc').value   = 'Venta de divisas';
+      document.getElementById('fx-usd').value    = '';
+      document.getElementById('fx-tc').value     = '';
+      document.getElementById('fx-mxn').value    = '';
+      document.getElementById('fx-cfdi-input').value = '';
+      document.getElementById('fx-cfdi-status').textContent = '';
+      _fxCFDIData = null;
+      calcFXMxn();
+      openModal('modal-fx');
+    }
+
+    let _fxCFDIData = null;   /* datos parseados del CFDI FX */
+
+    function cargarCFDIFX(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const doc  = new DOMParser().parseFromString(e.target.result, 'text/xml');
+          const root = doc.documentElement;
+          if (!root || root.querySelector('parsererror')) throw new Error('XML inválido');
+
+          const ga = (el, a) => el?.getAttribute(a) || '';
+          const moneda   = ga(root, 'Moneda');
+          const total    = parseFloat(ga(root, 'Total'))    || 0;
+          const subtotal = parseFloat(ga(root, 'SubTotal')) || 0;
+          const fecha    = ga(root, 'Fecha').slice(0, 10);
+          const emisor   = root.getElementsByTagNameNS(CFD4, 'Emisor')[0] ||
+                           root.getElementsByTagNameNS(CFD3, 'Emisor')[0];
+          const nombreEmisor = ga(emisor, 'Nombre');
+          const concepto = (() => {
+            const cs = [...root.getElementsByTagNameNS(CFD4, 'Concepto'),
+                        ...root.getElementsByTagNameNS(CFD3, 'Concepto')];
+            return cs.length ? ga(cs[0], 'Descripcion') : '';
+          })();
+
+          /* El monto USD es el Total del CFDI cuando Moneda=USD,
+             o puede venir en la descripción del concepto */
+          const montoUSD = (moneda === 'USD') ? total : subtotal;
+
+          _fxCFDIData = { montoUSD, fecha, nombreEmisor, concepto };
+
+          /* Pre-llenar campos */
+          if (montoUSD > 0) document.getElementById('fx-usd').value = montoUSD;
+          if (fecha) document.getElementById('fx-fecha').value = fecha;
+          if (nombreEmisor) document.getElementById('fx-desc').value = `Venta FX — ${nombreEmisor}`;
+          calcFXMxn();
+
+          document.getElementById('fx-cfdi-status').textContent =
+            `✓ ${nombreEmisor || 'CFDI'} — ${moneda} ${montoUSD.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+        } catch(err) {
+          document.getElementById('fx-cfdi-status').textContent = '⚠ No se pudo leer el CFDI';
+          document.getElementById('fx-cfdi-status').style.color = 'var(--red)';
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function calcFXMxn() {
+      const usd = parseFloat(document.getElementById('fx-usd').value) || 0;
+      const tc  = parseFloat(document.getElementById('fx-tc').value)  || 0;
+      const mxn = usd && tc ? Math.round(usd * tc * 100) / 100 : 0;
+
+      const fmtUSD = n => n ? `USD ${n.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2})}` : '—';
+      const fmtMXN = n => n ? `$${n.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2})}` : '—';
+
+      document.getElementById('fx-mxn').value = mxn ? fmtMXN(mxn) : '';
+
+      /* Preview de los 4 movimientos */
+      const origen  = document.getElementById('fx-cta-origen').value  || '—';
+      const inter   = document.getElementById('fx-cta-inter').value   || '—';
+      const destino = document.getElementById('fx-cta-destino').value || '—';
+
+      document.getElementById('fx-prev-origen-nombre').textContent    = origen;
+      document.getElementById('fx-prev-inter-nombre-in').textContent  = inter;
+      document.getElementById('fx-prev-inter-nombre-out').textContent = inter;
+      document.getElementById('fx-prev-destino-nombre').textContent   = destino;
+      document.getElementById('fx-prev-usd-sal').textContent  = usd ? `−${fmtUSD(usd)}` : '—';
+      document.getElementById('fx-prev-usd-ent').textContent  = usd ? `+${fmtUSD(usd)}` : '—';
+      document.getElementById('fx-prev-usd-sal2').textContent = usd ? `−${fmtUSD(usd)}` : '—';
+      document.getElementById('fx-prev-mxn-ent').textContent  = mxn ? `+${fmtMXN(mxn)}` : '—';
+    }
+
+    /* Actualizar preview cuando el usuario cambia una cuenta (inline via onchange en el select) */
+
+    function registrarFX() {
+      const fecha    = document.getElementById('fx-fecha').value;
+      const usd      = parseFloat(document.getElementById('fx-usd').value);
+      const tc       = parseFloat(document.getElementById('fx-tc').value);
+      const desc     = document.getElementById('fx-desc').value.trim() || 'Venta de divisas';
+      const ctaOrig  = document.getElementById('fx-cta-origen').value;
+      const ctaInter = document.getElementById('fx-cta-inter').value;
+      const ctaDest  = document.getElementById('fx-cta-destino').value;
+
+      if (!fecha)               { toast('Ingresa la fecha de operación', 'error'); return; }
+      if (!usd || usd <= 0)     { toast('Ingresa el monto USD', 'error'); return; }
+      if (!tc  || tc  <= 0)     { toast('Ingresa el tipo de cambio pactado', 'error'); return; }
+      if (!ctaOrig)             { toast('Selecciona la cuenta origen USD', 'error'); return; }
+      if (!ctaInter)            { toast('Selecciona la cuenta intermediaria USD', 'error'); return; }
+      if (!ctaDest)             { toast('Selecciona la cuenta destino MXN', 'error'); return; }
+      if (ctaOrig === ctaInter) { toast('La cuenta origen e intermediaria deben ser diferentes', 'error'); return; }
+
+      const mxn   = Math.round(usd * tc * 100) / 100;
+      const fxId  = `FX-${Date.now()}`;
+      const uid   = () => `MAN-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+      const nota  = `FX: USD ${usd.toLocaleString('es-MX',{minimumFractionDigits:2})} @ ${tc} = MXN ${mxn.toLocaleString('es-MX',{minimumFractionDigits:2})}`;
+
+      const movs = [
+        {
+          id: uid(), fecha, mov:'Egresos', tipo:'FX Envío USD',
+          desc: `${desc} — envío a intermediario`,
+          concepto: nota, cuenta: ctaOrig, cuentaCont:'FX',
+          folio: fxId, origen: ctaOrig, dest: ctaInter,
+          entradas: null, salidas: usd,
+          origenRef:'fx', fxId, _saldoAjustado: true,
+        },
+        {
+          id: uid(), fecha, mov:'Ingresos', tipo:'FX Recepción USD',
+          desc: `${desc} — ingreso en intermediario`,
+          concepto: nota, cuenta: ctaInter, cuentaCont:'FX',
+          folio: fxId, origen: ctaOrig, dest: ctaInter,
+          entradas: usd, salidas: null,
+          origenRef:'fx', fxId, _saldoAjustado: true,
+        },
+        {
+          id: uid(), fecha, mov:'Egresos', tipo:'FX Cargo USD',
+          desc: `${desc} — cargo por intermediario (FX)`,
+          concepto: nota, cuenta: ctaInter, cuentaCont:'FX',
+          folio: fxId, origen: ctaInter, dest: ctaDest,
+          entradas: null, salidas: usd,
+          origenRef:'fx', fxId, _saldoAjustado: true,
+        },
+        {
+          id: uid(), fecha, mov:'Ingresos', tipo:'FX Abono MXN',
+          desc: `${desc} — abono MXN @ ${tc}`,
+          concepto: nota, cuenta: ctaDest, cuentaCont:'FX',
+          folio: fxId, origen: ctaInter, dest: ctaDest,
+          entradas: mxn, salidas: null,
+          origenRef:'fx', fxId, _saldoAjustado: true,
+        },
+      ];
+
+      saveRegistry('stgl_mov_manual', [...loadRegistry('stgl_mov_manual'), ...movs]);
+
+      /* Ajustar saldos:
+         - Origen USD: pierde el monto USD
+         - Intermediario USD: recibe y envía → neto 0 (no ajustar)
+         - Destino MXN: gana el equivalente MXN */
+      ajustarSaldoCuenta(ctaOrig, -usd);
+      ajustarSaldoCuenta(ctaDest, +mxn);
+
+      closeModal('modal-fx');
+      toast(`FX registrado: USD ${usd.toLocaleString('es-MX',{minimumFractionDigits:2})} @ ${tc} → MXN ${mxn.toLocaleString('es-MX',{minimumFractionDigits:2})}`, 'success');
+      filterMovimientos();
+      renderSaldos();
     }
 
   </script>
