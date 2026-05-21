@@ -547,6 +547,46 @@
   </div>
 </div>
 
+<!-- ══ MODAL: Preview importación pagos SAT ══ -->
+<div class="modal-backdrop hidden" id="modal-pagos-preview">
+  <div class="modal" style="max-width:700px; max-height:92vh; overflow-y:auto;">
+    <div class="modal-header">
+      <span class="modal-title">Previsualización — Importar pagos SAT</span>
+      <button class="modal-close" onclick="closeModal('modal-pagos-preview')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem;">
+        Hoja: <strong id="pagos-preview-hoja"></strong> — Verifica que los valores coincidan con tu Excel antes de confirmar.
+        Los meses con ⚠ no tienen Total Acuses ni fecha de pago y están desmarcados por defecto.
+      </p>
+      <div style="overflow-x:auto; margin-bottom:0.75rem;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.76rem;">
+          <thead>
+            <tr style="background:var(--navy); color:#fff;">
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; width:36px;"></th>
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; text-align:left;">Mes</th>
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; text-align:right;">Total Acuses</th>
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; text-align:right;">Asim+IVA+ISR PM</th>
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; text-align:right;">ISR Hon.</th>
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; text-align:left;">Fecha Pago</th>
+              <th style="padding:0.4rem 0.6rem; font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; text-align:center;">OK</th>
+            </tr>
+          </thead>
+          <tbody id="pagos-preview-tbody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:0.7rem; color:var(--text-dim); background:var(--navy-pale); border-radius:var(--radius); padding:0.55rem 0.9rem;">
+        💡 Los datos importados <strong>sobreescriben</strong> los valores de pago existentes para cada mes seleccionado, pero conservan líneas de captura y ajustes manuales.
+        Si algo no cuadra, abre la consola (⌘+Opt+J) para ver el diagnóstico detallado.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pagos-preview')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarImportPagosSAT()">✓ Importar seleccionados</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: Importar previos de pago / LCs desde PDFs (bulk) ══ -->
 <div class="modal-backdrop hidden" id="modal-bulk-pdf">
   <div class="modal" style="max-width:820px; max-height:92vh; overflow-y:auto;">
@@ -1630,7 +1670,7 @@ function parseFechaPagoSAT(s) {
   if (!s) return '';
   const clean = String(s).trim();
   const m = clean.match(/^(\d{1,2})[\/\-]([A-Za-záéíóú]{3})[\/\-](\d{2,4})$/i);
-  if (!m) return clean; // fallback: devuelve el texto tal como viene
+  if (!m) return clean;
   const mesNum = MESES_SAT[m[2].toLowerCase()];
   if (!mesNum) return clean;
   let yr = parseInt(m[3]);
@@ -1643,6 +1683,39 @@ function parseNumSAT(v) {
   return parseFloat(String(v || '0').replace(/[^0-9.\-]/g, '')) || 0;
 }
 
+/**
+ * Detecta dinámicamente los índices de columna buscando keywords en las primeras filas.
+ * Retorna { colAcuse, colFecha, colRetAsim, colRetHon } o los defaults (A-P layout).
+ */
+function _detectarColumnasExcel(rows) {
+  const defaults = { colRetAsim:2, colRetHon:3, colRetIva:4, colIsrPm:10, colAcuse:14, colFecha:15 };
+
+  for (let ri = 0; ri < Math.min(rows.length, 8); ri++) {
+    const row = rows[ri];
+    let found = {};
+    for (let ci = 0; ci < row.length; ci++) {
+      const h = String(row[ci] || '').toLowerCase().trim()
+                .normalize('NFD').replace(/[̀-ͯ]/g,'');
+      if (/total\s*acuse/.test(h))                               found.colAcuse   = ci;
+      if (/fecha.*pago|pago.*fecha/.test(h))                     found.colFecha   = ci;
+      if (/retenc.*asim|asim.*iva|asim.*isr/.test(h))            found.colRetAsim = ci;
+      if (/retenc.*isr.*honor|isr.*honor/.test(h))               found.colRetHon  = ci;
+      if (/retenc.*iva.*honor|iva.*honor/.test(h))               found.colRetIva  = ci;
+      if (/^isr\s*pm$|pago.*provisional.*isr|isr.*pm/.test(h))   found.colIsrPm   = ci;
+    }
+    // Si encontramos al menos Total Acuses y Fecha, usamos los detectados
+    if (found.colAcuse !== undefined && found.colFecha !== undefined) {
+      console.log('[ImportPagosSAT] Columnas detectadas por cabecera:', found);
+      return { ...defaults, ...found };
+    }
+  }
+
+  console.log('[ImportPagosSAT] Columnas no detectadas por cabecera — usando defaults (A-P layout):', defaults);
+  return defaults;
+}
+
+let _pagosSATPreview = [];  // [{key, retAsim, retHon, acuseTotal, fechaPagoReal, seleccionado}]
+
 function importarPagosSAT() {
   const inp = document.createElement('input');
   inp.type = 'file';
@@ -1650,56 +1723,133 @@ function importarPagosSAT() {
   inp.onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
-    _seleccionarHojaExcel(file, procesarPagosSATRows);
+    _seleccionarHojaExcel(file, _parsearPagosSATPreview);
   };
   inp.click();
 }
 
-function procesarPagosSATRows(rows, hoja) {
-  const extra = loadExtraObj();
-  let importados = 0;
-  let mesActual = null;   // clave "YYYY-MM" del grupo actual
+function _parsearPagosSATPreview(rows, hoja) {
+  _pagosSATPreview = [];
+  let mesActual = null;
+
+  // Detectar columnas dinámicamente
+  const cols = _detectarColumnasExcel(rows);
+
+  // Log diagnóstico de las primeras filas con datos
+  console.log(`[ImportPagosSAT] Hoja: "${hoja}" — ${rows.length} filas`);
+  rows.slice(0, 20).forEach((row, i) => {
+    if (row.some(c => String(c||'').trim())) {
+      console.log(`  fila ${i}: A="${row[0]}" B="${row[1]}" C="${row[2]}" colAcuse[${cols.colAcuse}]="${row[cols.colAcuse]}" colFecha[${cols.colFecha}]="${row[cols.colFecha]}"`);
+    }
+  });
 
   rows.forEach((row, idx) => {
     const colA = String(row[0] || '').trim();
     const colB = String(row[1] || '').trim().toLowerCase();
 
-    // Si col A tiene una etiqueta de mes ("Jan-26", "Feb-26"…), actualizar mesActual
     const nuevaClave = parseMesExcel(colA);
-    if (nuevaClave) mesActual = nuevaClave;
+    if (nuevaClave) {
+      mesActual = nuevaClave;
+      console.log(`[ImportPagosSAT] fila ${idx}: mes detectado "${colA}" → "${mesActual}"`);
+    }
 
-    // Solo procesar filas donde col B = "pagado"
     if (colB !== 'pagado' || !mesActual) return;
 
-    // Columnas (0-indexed): C=2, D=3, E=4, F=5, K=10, O=14, P=15
-    const pagadoAsim   = parseNumSAT(row[2]);   // C — Subtotal Asimilables
-    const pagadoIsrHon = parseNumSAT(row[3]);   // D — ISR Honorarios
-    const pagadoIvaHon = parseNumSAT(row[4]);   // E — IVA Honorarios
-    const isrPm        = parseNumSAT(row[10]);  // K — ISR PM
-    const acuseTotal   = parseNumSAT(row[14]);  // O — Total Acuses
-    const fechaRaw     = String(row[15] || '').trim(); // P — Fecha Pago
+    const retAsim    = parseNumSAT(row[cols.colRetAsim]);
+    const retHon     = parseNumSAT(row[cols.colRetHon]);
+    const retIva     = parseNumSAT(row[cols.colRetIva]);
+    const isrPm      = parseNumSAT(row[cols.colIsrPm]);
+    const acuseTotal = parseNumSAT(row[cols.colAcuse]);
+    const fechaRaw   = String(row[cols.colFecha] || '').trim();
     const fechaPagoReal = parseFechaPagoSAT(fechaRaw);
 
-    if (!extra[mesActual]) extra[mesActual] = {};
-    Object.assign(extra[mesActual], {
-      pagadoAsim,
-      pagadoIsrHon,
-      pagadoIvaHon,
-      isrPm,
-      acuseTotal,
-      ...(fechaPagoReal ? { fechaPagoReal } : {})
+    console.log(`[ImportPagosSAT] fila ${idx} Pagado → key="${mesActual}" acuseTotal=${acuseTotal} fecha="${fechaRaw}"→"${fechaPagoReal}"`);
+
+    // Auto-seleccionar solo meses con datos reales
+    const tieneData = acuseTotal > 0 || (fechaPagoReal && /^\d{4}-\d{2}-\d{2}$/.test(fechaPagoReal));
+
+    _pagosSATPreview.push({
+      key: mesActual,
+      retAsim, retHon, retIva, isrPm, acuseTotal, fechaPagoReal,
+      seleccionado: tieneData
     });
+  });
+
+  if (_pagosSATPreview.length === 0) {
+    toast('No se encontraron filas "Pagado" en la hoja. Verifica el formato.', 'error');
+    return;
+  }
+
+  _mostrarPreviewPagosSAT(hoja);
+}
+
+function _mostrarPreviewPagosSAT(hoja) {
+  const tbody = document.getElementById('pagos-preview-tbody');
+  const TDS = 'padding:0.38rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle;';
+
+  document.getElementById('pagos-preview-hoja').textContent = hoja;
+
+  tbody.innerHTML = _pagosSATPreview.map((item, i) => {
+    const tieneData = item.acuseTotal > 0 || item.fechaPagoReal;
+    const rowBg = !tieneData ? 'background:#f8f9fc;' : '';
+    const mesLabel = (() => {
+      const parts = item.key.split('-');
+      return MES_NOMBRES[parseInt(parts[1])-1] + '-' + parts[0].slice(2);
+    })();
+
+    return `<tr style="${rowBg}">
+      <td style="${TDS} text-align:center;">
+        <input type="checkbox" ${item.seleccionado?'checked':''} onchange="_pagosSATPreview[${i}].seleccionado=this.checked" />
+      </td>
+      <td style="${TDS} font-family:var(--brand); font-weight:700; color:var(--navy);">${mesLabel}</td>
+      <td style="${TDS} font-family:monospace; font-size:0.75rem; text-align:right; color:var(--navy); font-weight:600;">
+        ${item.acuseTotal > 0 ? '$'+fmtNum(item.acuseTotal) : '<span style="color:var(--text-xs);">—</span>'}
+      </td>
+      <td style="${TDS} font-size:0.72rem; text-align:right; color:var(--text-dim);">
+        ${item.retAsim > 0 ? '$'+fmtNum(item.retAsim) : '—'}
+      </td>
+      <td style="${TDS} font-size:0.72rem; text-align:right; color:var(--text-dim);">
+        ${item.retHon > 0 ? '$'+fmtNum(item.retHon) : '—'}
+      </td>
+      <td style="${TDS} font-size:0.72rem; white-space:nowrap; color:var(--text-dim);">
+        ${item.fechaPagoReal || '<span style="color:var(--red);">Sin fecha</span>'}
+      </td>
+      <td style="${TDS} text-align:center;">
+        ${tieneData ? '<span style="color:var(--green); font-weight:700;">✓</span>'
+                    : '<span style="color:#d97706;" title="Sin Total Acuses ni fecha de pago">⚠</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  openModal('modal-pagos-preview');
+}
+
+function confirmarImportPagosSAT() {
+  const extra = loadExtraObj();
+  let importados = 0;
+
+  _pagosSATPreview.filter(x => x.seleccionado).forEach(item => {
+    if (!extra[item.key]) extra[item.key] = {};
+    // Sobreescribir campos de pago; preservar líneas de captura y overrides manuales
+    const patch = { acuseTotal: item.acuseTotal };
+    if (item.retAsim    > 0) patch.pagadoAsim    = item.retAsim;
+    if (item.retHon     > 0) patch.pagadoIsrHon  = item.retHon;
+    if (item.retIva     > 0) patch.pagadoIvaHon  = item.retIva;
+    if (item.isrPm      > 0) patch.isrPm         = item.isrPm;
+    if (item.fechaPagoReal) patch.fechaPagoReal  = item.fechaPagoReal;
+    Object.assign(extra[item.key], patch);
     importados++;
   });
 
   saveExtraObj(extra);
+  closeModal('modal-pagos-preview');
 
   if (importados === 0) {
-    toast('No se encontraron filas "Pagado" en la hoja seleccionada. Verifica el formato.', 'error');
+    toast('No se seleccionó ningún mes para importar.', 'error');
   } else {
-    toast(`Pagos SAT importados: ${importados} mes${importados !== 1 ? 'es' : ''} actualizados de "${hoja}"`, 'success');
+    toast(`Pagos SAT importados: ${importados} mes${importados !== 1 ? 'es' : ''} actualizados`, 'success');
+    renderTable();
   }
-  renderTable();
 }
 
 /* ── Init ── */
