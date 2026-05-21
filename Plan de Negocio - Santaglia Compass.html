@@ -2185,11 +2185,14 @@
     <div class="card">
       <h4>Tácticas de retención</h4>
       <ul style="font-size:var(--fs-sm)">
-        <li>Churn anual objetivo: &lt; 15%</li>
+        <li>Churn anual objetivo: <strong>&lt; 8%</strong> con stack completo de retención (vs. 18–25% media B2SMB LATAM)</li>
         <li>Check-in mensual automático (email con métricas del mes)</li>
         <li>Webinars mensuales de fiscal + producto</li>
         <li><strong>Programa de referidos bilateral:</strong> promotor recibe 1 mes gratis (o upgrade temporal) por cada referido que permanezca activo; referido no pasa por trial — recibe 20% off primeros 3 meses</li>
-        <li>Score de salud del cliente (login, módulos usados, datos cargados)</li>
+        <li><strong>Dunning management:</strong> churn involuntario (fallo de pago) atacado con reintentos D+1/D+3/D+7 + 7 días de gracia + emails amigables — recupera 25–40% del churn por cobro fallido</li>
+        <li><strong>Pausa de suscripción</strong> (1–3 meses, máx. 2 veces/año): alternativa a la cancelación para clientes en temporada baja o pausa temporal — datos preservados, sin churn real</li>
+        <li><strong>Exit survey + save flow:</strong> al iniciar cancelación, flujo de 1 pantalla detecta motivo y ofrece alternativa contextual (descuento, extensión, pausa, downgrade, soporte prioritario) — recupera 20–35% de intenciones de cancelación</li>
+        <li><strong>Score de salud proactivo:</strong> alerta interna si un cliente lleva 10+ días sin login o usa &lt; 2 módulos — outreach personalizado antes de que llegue a cancelar</li>
       </ul>
     </div>
     <div class="card">
@@ -2201,6 +2204,78 @@
         <li>NRR objetivo Año 2: 110%+ (expansión supera churn)</li>
         <li>Módulos AI de pago como add-on premium en 2028</li>
       </ul>
+    </div>
+  </div>
+
+  <!-- Bloque de gestión de churn -->
+  <div style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:1px solid #86efac;border-radius:14px;padding:1.5rem 1.75rem;margin-top:1.75rem;">
+    <h4 style="color:#14532d;margin-bottom:1rem;">🛡️ Sistema de Gestión de Churn — Capas de Retención</h4>
+    <p style="font-size:var(--fs-sm);color:#166534;margin-bottom:1.25rem;">Churn objetivo &lt; 8% anual mediante cuatro capas complementarias: proactiva (antes de que piensen en cancelar), de rescate (al iniciar cancelación), de pago (cobros fallidos) y de re-enganche (clientes perdidos).</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.25rem;">
+
+      <div style="background:#fff;border:1px solid #86efac;border-radius:10px;padding:1rem;">
+        <div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;color:#16a34a;margin-bottom:.5rem;">CAPA 1 — PROACTIVA</div>
+        <p style="font-size:var(--fs-sm);font-weight:600;color:#14532d;margin-bottom:.4rem;">Score de salud del cliente</p>
+        <ul style="font-size:var(--fs-sm);color:#166534;margin:0;padding-left:1.1rem;">
+          <li>Sin login 10+ días → email personalizado</li>
+          <li>Usa &lt; 2 módulos → hints de activación in-app</li>
+          <li>No conectó SAT en 30 días → recordatorio de valor</li>
+          <li>ARPU Básico &gt; 6 meses → nudge de upsell contextual</li>
+        </ul>
+      </div>
+
+      <div style="background:#fff;border:1px solid #86efac;border-radius:10px;padding:1rem;">
+        <div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;color:#16a34a;margin-bottom:.5rem;">CAPA 2 — RESCATE (EXIT SURVEY)</div>
+        <p style="font-size:var(--fs-sm);font-weight:600;color:#14532d;margin-bottom:.4rem;">Flujo de cancelación con oferta contextual</p>
+        <table style="width:100%;border-collapse:collapse;font-size:var(--fs-xs);">
+          <thead><tr style="background:#dcfce7;"><th style="padding:.3rem .5rem;text-align:left;">Motivo</th><th style="padding:.3rem .5rem;text-align:left;">Save action</th></tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Precio</td><td style="padding:.3rem .5rem;">50% dto × 2 meses</td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Tiempo insuficiente</td><td style="padding:.3rem .5rem;">+14 días evaluación</td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">No encuentro valor</td><td style="padding:.3rem .5rem;">Sesión 1:1 de onboarding 30 min</td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Falta función</td><td style="padding:.3rem .5rem;">Roadmap + aviso de lanzamiento</td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Bug / problema técnico</td><td style="padding:.3rem .5rem;">Soporte prioritario 48 hrs</td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Temporada baja / pausa</td><td style="padding:.3rem .5rem;"><strong>Pausar 1–3 meses</strong></td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Precio no justificado</td><td style="padding:.3rem .5rem;">Downgrade a Básico $299</td></tr>
+            <tr style="border-top:1px solid #bbf7d0;"><td style="padding:.3rem .5rem;">Negocio cerrado</td><td style="padding:.3rem .5rem;">Datos preservados 90 días</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:var(--fs-xs);color:#166534;margin-top:.5rem;">Recuperación estimada: 20–35% de intenciones de cancelación voluntaria</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #86efac;border-radius:10px;padding:1rem;">
+        <div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;color:#16a34a;margin-bottom:.5rem;">CAPA 3 — DUNNING (CHURN INVOLUNTARIO)</div>
+        <p style="font-size:var(--fs-sm);font-weight:600;color:#14532d;margin-bottom:.4rem;">Fallo de pago ≠ cancelación</p>
+        <ul style="font-size:var(--fs-sm);color:#166534;margin:0;padding-left:1.1rem;">
+          <li>Cobro falla → reintento automático D+1, D+3, D+7</li>
+          <li>Email amigable en cada reintento (no agresivo)</li>
+          <li>7 días de acceso completo después del primer fallo</li>
+          <li>D+14 sin resolución → suspensión (datos intactos)</li>
+          <li>Recupera 25–40% del churn involuntario</li>
+        </ul>
+        <p style="font-size:var(--fs-xs);color:#166534;margin-top:.6rem;">⚠️ En B2SMB LATAM el churn involuntario representa 25–40% del churn total — atacarlo es de altísimo ROI sin negociación.</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #86efac;border-radius:10px;padding:1rem;">
+        <div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;color:#16a34a;margin-bottom:.5rem;">CAPA 4 — WIN-BACK</div>
+        <p style="font-size:var(--fs-sm);font-weight:600;color:#14532d;margin-bottom:.4rem;">Re-enganche de clientes perdidos</p>
+        <ul style="font-size:var(--fs-sm);color:#166534;margin:0;padding-left:1.1rem;">
+          <li>Email D+30: "¿Volviste a trabajar solo con Excel?"</li>
+          <li>Email D+60: actualización de roadmap / nuevas funciones</li>
+          <li>Email D+90: oferta de regreso (1 mes gratis)</li>
+          <li>Segmentación por motivo de salida (del exit survey)</li>
+        </ul>
+        <p style="font-size:var(--fs-xs);color:#166534;margin-top:.6rem;">Clientes que ya usaron Compass y regresan tienen churn 2× menor que nuevos clientes orgánicos.</p>
+      </div>
+
+    </div>
+
+    <div style="background:#166534;color:#fff;border-radius:8px;padding:.75rem 1rem;font-size:var(--fs-sm);display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
+      <span>📊 <strong>Impacto estimado acumulado en churn:</strong></span>
+      <span>Sólo dunning → ~10–11% anual</span>
+      <span>+ Save flow → ~8–9%</span>
+      <span>+ Pausa → ~7–8%</span>
+      <span>+ Score proactivo → <strong>&lt; 6–8% objetivo</strong></span>
     </div>
   </div>
 </div>
