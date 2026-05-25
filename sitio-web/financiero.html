@@ -7,6 +7,85 @@
   <link rel="stylesheet" href="css/styles.css" />
   <!-- PDF.js — extracción de texto de estados de cuenta en PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    /* ── Verificación automática ── */
+    #verif-badge button {
+      font-family: var(--brand); font-size: 0.7rem; font-weight: 700;
+      padding: 0.22rem 0.55rem; border-radius: 5px; cursor: pointer;
+      border: 1px solid currentColor; background: transparent; transition: opacity .2s;
+    }
+    #verif-badge button:hover { opacity: .8; }
+    #verif-panel {
+      display: none; margin: 0 0 0.75rem; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08); overflow: hidden;
+    }
+    #verif-panel.open { display: block; }
+    .verif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 1rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+    }
+    .verif-title { font-family: var(--brand); font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+    .verif-body  { padding: 0.75rem 1rem; max-height: 340px; overflow-y: auto; }
+    .verif-section-title {
+      font-family: var(--brand); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-dim); margin: 0.5rem 0 0.3rem;
+    }
+    .verif-item {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.6rem;
+      align-items: start; padding: 0.3rem 0; border-bottom: 1px solid #f0f1f5; font-size: 0.72rem;
+    }
+    .verif-item:last-child { border-bottom: none; }
+    .verif-dot  { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .verif-dot.error   { background: var(--red); }
+    .verif-dot.warning { background: #d97706; }
+    .verif-dot.info    { background: var(--text-dim); }
+    .verif-msg  { color: var(--text-main); line-height: 1.4; }
+    .verif-accion { font-size: 0.65rem; color: var(--text-dim); grid-column: 2; margin-top: -2px; }
+    .verif-ok { text-align: center; padding: 1rem; color: var(--green); font-family: var(--brand); font-weight: 700; }
+    .verif-footer { padding: 0.4rem 1rem; background: #f7f8fc; border-top: 1px solid var(--border);
+                    display: flex; align-items: center; gap: 0.75rem; font-size: 0.68rem; color: var(--text-dim); }
+    /* ── Descarte de items de verificación ── */
+    .verif-btns { display: flex; gap: 0.35rem; margin-top: 0.28rem; }
+    .verif-btn {
+      font-size: 0.61rem; padding: 0.12rem 0.4rem; border-radius: 4px; cursor: pointer;
+      border: 1px solid; font-family: inherit; line-height: 1.5; transition: opacity .15s;
+    }
+    .verif-btn-descartar { color: var(--text-dim); border-color: var(--border); background: #f7f8fc; }
+    .verif-btn-descartar:hover { background: #e8eaf0; color: var(--text-main); }
+    .verif-descartados-note {
+      font-size: 0.62rem; color: var(--text-dim); font-style: italic;
+      margin-top: 0.5rem; padding: 0.25rem 0; text-align: center;
+      border-top: 1px dashed #e0e2ec;
+    }
+    .verif-descartados-note button {
+      font-size: 0.62rem; color: var(--navy); background: none; border: none;
+      cursor: pointer; text-decoration: underline; padding: 0;
+    }
+    /* ── Sección colapsable "¿Qué se verifica?" ── */
+    .verif-checks { border-top: 1px dashed #e0e2ec; margin-top: 0.6rem; padding-top: 0.35rem; }
+    .verif-checks-toggle {
+      width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+      font-size: 0.64rem; color: var(--text-dim); display: flex; align-items: center;
+      gap: 0.3rem; padding: 0.15rem 0; font-family: inherit;
+    }
+    .verif-checks-toggle:hover { color: var(--navy); }
+    .vct-arrow { font-size: 0.58rem; transition: transform .2s; display: inline-block; }
+    .verif-checks-toggle.open .vct-arrow { transform: rotate(90deg); }
+    .verif-checks-body { display: none; padding: 0.35rem 0 0.1rem; }
+    .verif-checks-body.open { display: block; }
+    .verif-check-row {
+      display: flex; gap: 0.45rem; align-items: baseline; font-size: 0.66rem;
+      color: var(--text-dim); padding: 0.18rem 0; border-bottom: 1px solid #f4f5fb; line-height: 1.4;
+    }
+    .verif-check-row:last-child { border-bottom: none; }
+    .verif-check-num { font-weight: 700; color: var(--navy); flex-shrink: 0; min-width: 1.1rem; font-size: 0.61rem; }
+    .verif-check-name { font-weight: 600; color: var(--text-main); }
+    .verif-check-badge {
+      display: inline-block; font-size: 0.56rem; font-weight: 700; padding: 0.03rem 0.28rem;
+      border-radius: 3px; background: #eef3fa; color: var(--navy); margin-left: 0.25rem; vertical-align: middle;
+    }
+  </style>
 </head>
 <body>
   <div class="site-wrap">
@@ -61,6 +140,7 @@
         <a class="nav-link" href="ayuda.html">Ayuda</a>
       </nav>
         <div class="header-actions">
+          <span id="verif-badge" style="margin-right:0.5rem;"></span>
           <button class="btn-logout" onclick="logout()">Salir</button>
         </div>
       </div>
@@ -68,6 +148,24 @@
 
     <main>
       <div class="main">
+
+        <!-- ══ PANEL DE AUTO-VERIFICACIÓN ══ -->
+        <div id="verif-panel">
+          <div class="verif-header">
+            <span class="verif-title">🔍 Auto-verificación de Mov. Bancarios</span>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                      onclick="lanzarVerificacion('manual')">↻ Re-verificar</button>
+              <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                      onclick="document.getElementById('verif-panel').classList.remove('open')">✕</button>
+            </div>
+          </div>
+          <div class="verif-body" id="verif-body">
+            <div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.75rem;">Ejecutando verificación…</div>
+          </div>
+          <div class="verif-footer" id="verif-footer"></div>
+        </div>
+
         <!-- ══ ARCHIVOS FINANCIEROS (barra compacta) ══ -->
         <div style="display:flex; align-items:center; gap:0.75rem; padding:0.35rem 0.75rem; margin-bottom:0.9rem; background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); font-size:0.72rem;">
           <span style="font-family:var(--brand); font-weight:700; color:var(--navy); letter-spacing:0.04em; white-space:nowrap;">📁 Archivos financieros</span>
@@ -124,6 +222,7 @@
                 style="width:80px; padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:var(--radius);"
                 oninput="renderSaldos()" />
               <button class="btn btn-ghost" onclick="importarSaldos()" style="font-size:0.72rem;">↑ Importar Excel</button>
+              <button class="btn btn-ghost" onclick="recalcularSaldosDesdeExtracto()" title="Aplica a stgl_saldos los movimientos del estado de cuenta (Excel) que aún no habían sido contabilizados. Úsalo si los saldos proyectados no coinciden con la realidad." style="font-size:0.72rem; color:#c67000;">⟳ Recalcular saldos</button>
             </div>
           </div>
 
@@ -198,6 +297,8 @@
               </span>
               <button class="btn btn-ghost" onclick="importarMovimientos()" style="font-size:0.72rem;">↑ Importar Excel</button>
               <button class="btn btn-ghost" onclick="abrirImportPDF()" style="font-size:0.72rem;" title="Importar estado de cuenta en PDF">📄 PDF</button>
+              <button class="btn btn-ghost" onclick="abrirImportCSVUniversal()" style="font-size:0.72rem;" title="Importar CSV de cualquier banco o tarjeta — detección automática de columnas">📊 CSV</button>
+              <input type="file" id="csv-universal-input" accept=".csv,.tsv,.txt" style="display:none;" onchange="procesarCSVUniversal(this)" />
               <button class="btn btn-ghost" onclick="abrirCFDIGasto()" style="font-size:0.72rem;" title="Importar CFDIs de gastos">📎 CFDI</button>
               <button class="btn btn-ghost" onclick="abrirFX()" style="font-size:0.72rem;" title="Registrar operación de cambio de divisas">💱 FX</button>
               <button class="btn btn-primary" onclick="abrirNuevoMov()" style="font-size:0.72rem;">+ Movimiento</button>
@@ -416,6 +517,59 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modal-import-modo')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: importar CSV universal ══ -->
+  <div class="modal-backdrop hidden" id="modal-csv-universal">
+    <div class="modal" style="max-width:680px;width:95%;">
+      <div class="modal-header">
+        <span class="modal-title">Importar movimientos · CSV</span>
+        <button class="modal-close" onclick="closeModal('modal-csv-universal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1.25rem;">
+
+        <!-- Institución detectada -->
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;padding:0.6rem 0.9rem;background:var(--navy-pale);border-radius:var(--radius);border:1px solid var(--border);">
+          <span style="font-size:1.1rem;" id="csv-inst-icon">🏦</span>
+          <div>
+            <div style="font-family:var(--brand);font-size:0.72rem;font-weight:700;color:var(--navy);" id="csv-inst-nombre">Detectando…</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);" id="csv-inst-detalle"></div>
+          </div>
+          <div style="margin-left:auto;font-size:0.65rem;color:var(--text-dim);" id="csv-inst-filas"></div>
+        </div>
+
+        <!-- Mapeo de columnas detectado -->
+        <div style="margin-bottom:1rem;">
+          <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Columnas detectadas</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;" id="csv-col-badges"></div>
+        </div>
+
+        <!-- Cuenta bancaria destino -->
+        <div style="margin-bottom:1rem;">
+          <label class="form-label">Cuenta bancaria destino</label>
+          <select class="form-input" id="csv-cuenta-destino" style="padding:0.35rem 0.6rem;"></select>
+        </div>
+
+        <!-- Preview de primeras filas -->
+        <div style="margin-bottom:1rem;">
+          <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Vista previa <span id="csv-preview-label" style="font-weight:400;text-transform:none;">(primeras 5 filas)</span></div>
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:4px;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.68rem;" id="csv-preview-table">
+              <thead style="background:var(--navy-pale);"><tr id="csv-preview-head"></tr></thead>
+              <tbody id="csv-preview-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Advertencia duplicados -->
+        <div id="csv-dup-warn" style="display:none;font-size:0.72rem;color:var(--gold);margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fefce8;border-radius:4px;border:1px solid #fde68a;"></div>
+
+      </div>
+      <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:flex-end;padding:0.9rem 1.25rem;border-top:1px solid var(--border);">
+        <button class="btn btn-ghost" onclick="closeModal('modal-csv-universal')">Cancelar</button>
+        <button class="btn btn-primary" id="csv-import-btn" onclick="confirmarCSVUniversal()">↓ Importar</button>
       </div>
     </div>
   </div>
@@ -1009,6 +1163,57 @@
       saveRegistry(KEY_SAL, data);
     }
 
+    /* Aplica a stgl_saldos los movimientos del estado de cuenta (stgl_mov_excel)
+       que aún no tienen _saldoAjustado=true. Corrige el desajuste cuando se
+       importaron extractos bancarios antes de que este mecanismo existiera. */
+    function recalcularSaldosDesdeExtracto() {
+      const excel     = getExcelMovData();
+      const sinAjuste = excel.filter(m => !m._saldoAjustado && m.cuenta);
+      if (!sinAjuste.length) {
+        toast('Todos los movimientos del extracto ya están contabilizados en los saldos', 'info');
+        return;
+      }
+
+      // Agrupar deltas por cuenta para mostrar resumen
+      const resumen = {};
+      const manualIds = new Set(loadRegistry('stgl_mov_manual').map(r => r.id));
+      const aAplicar = sinAjuste.filter(m => !manualIds.has(m.id));
+
+      aAplicar.forEach(m => {
+        const delta = parseFloat(m.entradas || 0) - parseFloat(m.salidas || 0);
+        if (!delta) return;
+        resumen[m.cuenta] = (resumen[m.cuenta] || 0) + delta;
+      });
+
+      if (!Object.keys(resumen).length) {
+        toast('Sin deltas a aplicar (todos están en movimientos manuales)', 'info');
+        return;
+      }
+
+      const lineas = Object.entries(resumen)
+        .map(([c, d]) => `${c}: ${d >= 0 ? '+' : ''}$${Math.abs(d).toLocaleString('es-MX', {minimumFractionDigits:2})}`)
+        .join('\n');
+
+      if (!confirm(`Se ajustarán los saldos con ${aAplicar.length} movimientos del extracto:\n\n${lineas}\n\n¿Continuar?`)) return;
+
+      // Aplicar deltas y marcar como ajustados
+      aAplicar.forEach(m => {
+        const delta = parseFloat(m.entradas || 0) - parseFloat(m.salidas || 0);
+        if (delta) {
+          ajustarSaldoCuenta(m.cuenta, delta);
+          m._saldoAjustado = true;
+        }
+      });
+
+      // Guardar el Excel con los marcadores actualizados
+      try {
+        localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excel));
+      } catch {}
+
+      renderSaldos();
+      toast(`Saldos actualizados con ${aAplicar.length} movimientos del extracto bancario`, 'success');
+    }
+
     let __salShowCancelled = false;
 
     function toggleSalCanceladas() {
@@ -1261,6 +1466,405 @@
       if (sel) { sel.value = sel.value === '0' ? '' : '0'; filterMovimientos(); }
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       IMPORTADOR CSV UNIVERSAL
+       Detecta automáticamente el layout de cualquier CSV bancario:
+       Clara, BBVA, Banamex/Citi, Santander, AMEX, Banorte, HSBC, genérico.
+       La detección es por keywords en headers + análisis de contenido,
+       NO por posición de columna — funciona aunque el banco cambie el orden.
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* Estado compartido entre la detección y la confirmación */
+    let _csvParsedState = null;
+
+    /* Perfiles de instituciones: keywords en headers (normalizados) → roles */
+    const _CSV_PROFILES = [
+      {
+        id: 'clara', nombre: 'Clara (tarjeta corporativa)', icon: '💳',
+        detect: h => h.some(c => c.includes('monto en mxn')) && h.some(c => c.includes('autorizac')),
+        cols: { fecha: ['fecha de transac','fecha'], desc: ['transacci','descripci','concepto'],
+                cargo: ['monto en mxn','monto mxn'], ref: ['codigo de autorizac','autorizaci'],
+                categoria: ['categor'], estado: ['estado de aprobac','aprobac'], alias: ['alias','tarjeta'] },
+        parseFecha: _csvDateDMYY,
+        filterRow(cells, ci) {
+          const e = (cells[ci.estado] || '').toLowerCase();
+          return !e.includes('cancelad') && !e.includes('revertid') && !e.includes('declin');
+        },
+        cuentaDefault: 'Clara',
+      },
+      {
+        id: 'bbva_mx', nombre: 'BBVA México', icon: '🏦',
+        detect: h => h.some(c => c.includes('fecha operac') || c.includes('num operac') || (c.includes('bbva') && c.includes('fecha'))),
+        cols: { fecha: ['fecha operac','fecha de operac','fecha'], desc: ['descripcion','concepto','comercio'],
+                cargo: ['cargo','retiro','debito'], abono: ['deposito','abono','credito'], ref: ['referencia','num oper','folio'] },
+        parseFecha: _csvDateDMYY,
+        cuentaDefault: '',
+      },
+      {
+        id: 'banamex', nombre: 'Banamex / Citibanamex', icon: '🏦',
+        detect: h => h.some(c => c.includes('banamex') || c.includes('citibanamex')) ||
+                     (h.some(c => c.includes('cargo')) && h.some(c => c.includes('abono')) && h.some(c => c.includes('saldo'))),
+        cols: { fecha: ['fecha'], desc: ['descripcion','concepto','establecimiento'],
+                cargo: ['cargo','retiro'], abono: ['deposito','abono'], ref: ['referencia','num de mov'] },
+        parseFecha: _csvDateDMYY,
+        cuentaDefault: '',
+      },
+      {
+        id: 'santander', nombre: 'Santander México', icon: '🏦',
+        detect: h => h.some(c => c.includes('santander')) ||
+                     (h.some(c => c.includes('mov') && c.includes('descripci')) && h.some(c => c.includes('cargo (-)'))),
+        cols: { fecha: ['fecha'], desc: ['descripcion del mov','descripcion','concepto'],
+                cargo: ['cargo (-)','cargo','retiro'], abono: ['abono (+)','abono','deposito'], ref: ['referencia'] },
+        parseFecha: _csvDateDMYY,
+        cuentaDefault: '',
+      },
+      {
+        id: 'amex', nombre: 'American Express', icon: '💳',
+        detect: h => h.some(c => c.includes('amex') || c.includes('american express')) ||
+                     (h.some(c => c.includes('fecha')) && h.some(c => c === 'importe' || c.includes('monto')) &&
+                      h.some(c => c.includes('descripci'))),
+        cols: { fecha: ['fecha de la transac','fecha'], desc: ['descripcion','establecimiento','nombre del comercio'],
+                cargo: ['importe','monto','cargo'], ref: ['num de referencia','referencia','folio'] },
+        parseFecha: _csvDateDMYY,
+        cuentaDefault: '',
+      },
+      {
+        id: 'banorte', nombre: 'Banorte', icon: '🏦',
+        detect: h => h.some(c => c.includes('banorte')) ||
+                     (h.some(c => c.includes('fecha')) && h.some(c => c === 'cargo' || c === 'abono') &&
+                      h.some(c => c.includes('concepto') || c.includes('descripci'))),
+        cols: { fecha: ['fecha'], desc: ['descripcion','concepto','establecimiento'],
+                cargo: ['cargo'], abono: ['abono'], ref: ['referencia','clave de rastreo'] },
+        parseFecha: _csvDateDMYY,
+        cuentaDefault: '',
+      },
+      {
+        id: 'hsbc', nombre: 'HSBC México', icon: '🏦',
+        detect: h => h.some(c => c.includes('hsbc')),
+        cols: { fecha: ['fecha'], desc: ['descripcion','concepto'], cargo: ['cargo','debito'], abono: ['abono','credito'], ref: ['referencia'] },
+        parseFecha: _csvDateDMYY,
+        cuentaDefault: '',
+      },
+      /* Genérico: última opción — detecta por contenido */
+      {
+        id: 'generico', nombre: 'Genérico (detección automática)', icon: '📄',
+        detect: () => true,
+        cols: null,   /* se calcula con _csvDetectColsByContent */
+        parseFecha: _csvDateAuto,
+        cuentaDefault: '',
+      },
+    ];
+
+    /* Normaliza un string de header para comparación */
+    function _csvNorm(s) {
+      return (s || '').toLowerCase().trim()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    /* Parsers de fecha */
+    function _csvDateDMYY(s) {
+      s = (s || '').trim();
+      // DD/MM/YY  DD/MM/YYYY  DD-MM-YY  DD-MM-YYYY
+      let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (m) {
+        const [,d,mo,yRaw] = m;
+        const y = yRaw.length === 2 ? '20'+yRaw : yRaw;
+        return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      }
+      // YYYY-MM-DD  YYYY/MM/DD
+      m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+      return null;
+    }
+    function _csvDateAuto(s) {
+      const d = _csvDateDMYY(s);
+      if (d) return d;
+      // "12 ENE 2026"  "12-ENE-26"
+      const MESES = {ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',
+                     jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
+      const m2 = (s||'').trim().toLowerCase().match(/^(\d{1,2})[\s\-]([a-z]{3})[\s\-](\d{2,4})$/);
+      if (m2) {
+        const [,d2,mes,yRaw] = m2;
+        const mo = MESES[mes]; if (!mo) return null;
+        const y = yRaw.length === 2 ? '20'+yRaw : yRaw;
+        return `${y}-${mo}-${d2.padStart(2,'0')}`;
+      }
+      return null;
+    }
+
+    /* Divide una línea CSV respetando campos entre comillas */
+    function _csvSplitLine(line, sep = ',') {
+      const result = []; let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === sep && !inQ) { result.push(cur); cur = ''; }
+        else { cur += c; }
+      }
+      result.push(cur);
+      return result.map(v => v.trim().replace(/^"|"$/g, ''));
+    }
+
+    /* Detecta roles de columna por contenido cuando no hay perfil conocido */
+    function _csvDetectColsByContent(header, dataRows) {
+      const sample = dataRows.slice(0, 15);
+      const roles  = {};
+      header.forEach((h, idx) => {
+        const vals = sample.map(r => (r[idx] || '').trim()).filter(Boolean);
+        if (!vals.length) return;
+        const dateHits = vals.filter(v => _csvDateAuto(v)).length;
+        const numVals  = vals.map(v => parseFloat(v.replace(/[$, ]/g, ''))).filter(n => !isNaN(n) && n > 0);
+        const avgNum   = numVals.length ? numVals.reduce((a,b)=>a+b,0)/numVals.length : 0;
+        const longText = vals.filter(v => v.length > 6 && isNaN(parseFloat(v.replace(/[$,]/g,'')))).length;
+        // Prioridad: fecha > desc (texto largo) > monto
+        if (dateHits / vals.length > 0.6 && !roles.fecha)          roles.fecha  = idx;
+        else if (longText / vals.length > 0.6 && !roles.desc)      roles.desc   = idx;
+        else if (numVals.length / vals.length > 0.6 && avgNum > 0) {
+          if (!roles.cargo) roles.cargo = idx;
+          else if (!roles.abono) roles.abono = idx;
+        }
+      });
+      return roles; // { fecha:N, desc:N, cargo:N, abono:N }
+    }
+
+    /* Resuelve índice de columna para un perfil dado una lista de keywords */
+    function _csvFindCol(header, keywords) {
+      return header.findIndex(h => keywords.some(k => h.includes(k)));
+    }
+
+    /* Mapeo de categorías (Clara y similares) → descripción contable */
+    const _CSV_CAT_MAP = {
+      'alimentos'              : 'Gastos de Representación: Alimentos y Entretenimiento',
+      'software'               : 'Gastos de Administración: Cuotas y Suscripciones',
+      'hardware'               : 'Gastos de Administración: Cuotas y Suscripciones',
+      'comunicaciones'         : 'Gastos de Comunicación: Líneas Celulares',
+      'transporte'             : 'Gastos de Transporte: Casetas y Peajes',
+      'salud'                  : 'Gastos de Personal: Salud y Bienestar',
+      'servicios profesionales': 'Honorarios y Servicios Profesionales',
+      'pagos gubernamentales'  : 'Impuestos y Derechos Gubernamentales',
+      'combustibles'           : 'Gastos de Transporte: Combustibles',
+      'viajes'                 : 'Gastos de Representación: Viajes',
+      'comercio digital'       : 'Gastos de Administración: Cuotas y Suscripciones',
+      'restaurantes'           : 'Gastos de Representación: Alimentos y Entretenimiento',
+    };
+    function _csvCategoria(raw) {
+      const k = _csvNorm(raw);
+      for (const [key, val] of Object.entries(_CSV_CAT_MAP)) { if (k.includes(key)) return val; }
+      return 'Gastos de Administración';
+    }
+
+    /* ── Entrada: click en botón CSV ── */
+    function abrirImportCSVUniversal() {
+      document.getElementById('csv-universal-input').value = '';
+      document.getElementById('csv-universal-input').click();
+    }
+
+    /* ── Lectura del archivo y detección de perfil ── */
+    function procesarCSVUniversal(inputEl) {
+      const file = inputEl.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const text  = ev.target.result.replace(/^﻿/, '');   // quitar BOM
+          const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l => l.trim());
+          if (lines.length < 2) { toast('El archivo no contiene datos suficientes', 'error'); return; }
+
+          // Detectar separador
+          const sep = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
+
+          // Header normalizado
+          const rawHeader = _csvSplitLine(lines[0], sep);
+          const header    = rawHeader.map(_csvNorm);
+          const dataLines = lines.slice(1);
+          const dataRows  = dataLines.map(l => _csvSplitLine(l, sep));
+
+          // Detectar perfil
+          const perfil = _CSV_PROFILES.find(p => p.detect(header)) || _CSV_PROFILES[_CSV_PROFILES.length - 1];
+
+          // Resolver índices de columna
+          let ci = {};
+          if (perfil.cols) {
+            Object.entries(perfil.cols).forEach(([role, kws]) => {
+              ci[role] = _csvFindCol(header, kws);
+            });
+          } else {
+            ci = _csvDetectColsByContent(header, dataRows);
+          }
+
+          // Parsear filas en objetos Compass
+          const movimientos = _csvBuildMovimientos(dataRows, ci, perfil, rawHeader);
+
+          // Guardar estado para confirmar
+          _csvParsedState = { movimientos, perfil, rawHeader, dataRows, ci, sep };
+
+          // Mostrar modal de confirmación
+          _csvMostrarModal(movimientos, perfil, rawHeader, dataRows, ci);
+        } catch(e) {
+          console.error('[CSV Universal]', e);
+          toast('Error al leer el archivo: ' + e.message, 'error');
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function _csvBuildMovimientos(dataRows, ci, perfil, rawHeader, cuentaOverride) {
+      const movimientos = [];
+      dataRows.forEach((cells, i) => {
+        if (cells.every(c => !c.trim())) return;
+
+        // Filtro de perfil (ej: omitir canceladas en Clara)
+        if (perfil.filterRow && !perfil.filterRow(cells, ci)) return;
+
+        const fechaRaw = ci.fecha >= 0 ? cells[ci.fecha] : '';
+        const fecha    = perfil.parseFecha(fechaRaw);
+        if (!fecha) return;
+
+        const descripcion = ci.desc >= 0 ? cells[ci.desc] : (rawHeader[i] || '');
+
+        // Montos: perfil puede tener cargo / abono separados, o solo cargo (monto único)
+        const rawCargo = ci.cargo >= 0 ? parseFloat((cells[ci.cargo]||'0').replace(/[$, ]/g,'')) : 0;
+        const rawAbono = ci.abono >= 0 ? parseFloat((cells[ci.abono]||'0').replace(/[$, ]/g,'')) : 0;
+        if (isNaN(rawCargo) && isNaN(rawAbono)) return;
+        const cargo = isNaN(rawCargo) ? 0 : rawCargo;
+        const abono = isNaN(rawAbono) ? 0 : rawAbono;
+
+        const ref = ci.ref >= 0 ? (cells[ci.ref]||'').trim() : '';
+        const cat = ci.categoria >= 0 ? (cells[ci.categoria]||'').trim() : '';
+        const alias = ci.alias >= 0 ? (cells[ci.alias]||'').trim() : '';
+
+        // ¿Es un pago/abono a tarjeta de crédito? (detectar por descripción)
+        const dl = descripcion.toLowerCase();
+        const esPago = abono > 0 && cargo === 0 ? true
+          : (dl.includes('pago tarjeta') || dl.includes('pago de tarjeta') ||
+             dl.includes('pago clara') || dl.includes('liquidaci'));
+
+        const entradas = (abono > 0 && !esPago) ? abono : (esPago ? (abono || cargo) : null);
+        const salidas  = (!esPago && cargo > 0) ? cargo : null;
+        if (!entradas && !salidas) return;
+
+        const cuenta  = cuentaOverride || perfil.cuentaDefault || '';
+        const descContable = cat ? _csvCategoria(cat)
+          : (esPago ? 'Pagos y Abonos: Pago Tarjeta' : 'Gastos de Administración');
+
+        // ID único: preferir ref, sino hash de fecha+monto+desc
+        const uid = ref
+          ? `${perfil.id.toUpperCase()}-${ref}`
+          : `${perfil.id.toUpperCase()}-${fecha}-${Math.round(cargo||abono)}-${descripcion.replace(/\W/g,'').substring(0,6).toUpperCase()}`;
+
+        movimientos.push({
+          id: uid, fecha,
+          mov      : (entradas && !salidas) ? 'Ingresos' : 'Egresos',
+          tipo     : esPago ? 'Pagos Tarjeta' : 'Gastos',
+          desc     : descContable,
+          concepto : descripcion,
+          cuenta, cuentaCont: 'No Existe', folio: '',
+          origen   : alias || perfil.nombre,
+          dest     : descripcion.substring(0, 40),
+          entradas : entradas || null,
+          salidas  : salidas  || null,
+        });
+      });
+      return movimientos;
+    }
+
+    /* ── Poblar y mostrar el modal de confirmación ── */
+    function _csvMostrarModal(movimientos, perfil, rawHeader, dataRows, ci) {
+      // Institución detectada
+      document.getElementById('csv-inst-icon').textContent   = perfil.icon;
+      document.getElementById('csv-inst-nombre').textContent = perfil.nombre;
+      document.getElementById('csv-inst-detalle').textContent =
+        `Separador detectado · ${rawHeader.length} columnas`;
+      document.getElementById('csv-inst-filas').textContent =
+        `${movimientos.length} mov. detectados`;
+
+      // Badges de columnas detectadas
+      const badges = document.getElementById('csv-col-badges');
+      const ROLES_ES = { fecha:'📅 Fecha', desc:'📝 Descripción', cargo:'💸 Cargo', abono:'💰 Abono', ref:'🔑 Referencia', categoria:'🏷 Categoría', estado:'✅ Estado', alias:'💳 Tarjeta' };
+      badges.innerHTML = Object.entries(ci)
+        .filter(([,idx]) => idx >= 0)
+        .map(([role, idx]) => `
+          <div style="background:var(--navy-pale);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.65rem;">
+            <div style="color:var(--text-dim);font-size:0.6rem;">${ROLES_ES[role]||role}</div>
+            <div style="font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rawHeader[idx]||idx}</div>
+          </div>`).join('');
+
+      // Selector de cuenta
+      const sel = document.getElementById('csv-cuenta-destino');
+      try {
+        const saldos = JSON.parse(localStorage.getItem('stgl_saldos')||'[]');
+        sel.innerHTML = saldos.map(s =>
+          `<option value="${escHtml(s.cuenta)}" ${s.cuenta===perfil.cuentaDefault?'selected':''}>${escHtml(s.cuenta)}</option>`
+        ).join('');
+      } catch { sel.innerHTML = `<option value="${perfil.cuentaDefault}">${perfil.cuentaDefault||'(sin cuentas)'}</option>`; }
+
+      // Preview tabla
+      const thRow = document.getElementById('csv-preview-head');
+      const tbody  = document.getElementById('csv-preview-body');
+      thRow.innerHTML = ['Fecha','Descripción','Cargo','Abono']
+        .map(h => `<th style="padding:0.3rem 0.5rem;text-align:left;border-bottom:1px solid var(--border);font-family:var(--brand);font-size:0.58rem;white-space:nowrap;">${h}</th>`).join('');
+      tbody.innerHTML = movimientos.slice(0,5).map(m => `
+        <tr>
+          <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);white-space:nowrap;">${m.fecha}</td>
+          <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.concepto)}</td>
+          <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);text-align:right;color:var(--red);">${m.salidas ? '$'+m.salidas.toLocaleString('es-MX',{minimumFractionDigits:2}) : ''}</td>
+          <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);text-align:right;color:var(--green);">${m.entradas ? '$'+m.entradas.toLocaleString('es-MX',{minimumFractionDigits:2}) : ''}</td>
+        </tr>`).join('');
+
+      // Advertencia duplicados
+      const existIds = new Set([...getExcelMovData(),...loadRegistry('stgl_mov_manual')].map(r=>r.id));
+      const dups = movimientos.filter(m => existIds.has(m.id)).length;
+      const warn = document.getElementById('csv-dup-warn');
+      if (dups) {
+        warn.style.display = '';
+        warn.textContent = `⚠️ ${dups} movimiento${dups>1?'s':''} ya exist${dups>1?'en':'e'} — se omitirán al importar`;
+      } else { warn.style.display = 'none'; }
+
+      document.getElementById('csv-preview-label').textContent =
+        `(${Math.min(5,movimientos.length)} de ${movimientos.length})`;
+
+      openModal('modal-csv-universal');
+    }
+
+    /* ── Confirmación: importar con la cuenta seleccionada ── */
+    function confirmarCSVUniversal() {
+      if (!_csvParsedState) return;
+      const cuenta = document.getElementById('csv-cuenta-destino').value;
+      const { movimientos: rawMovs, perfil, dataRows, ci } = _csvParsedState;
+
+      // Re-parsear con la cuenta seleccionada
+      const movimientos = rawMovs.map(m => ({ ...m, cuenta }));
+
+      const existIds = new Set([...getExcelMovData(),...loadRegistry('stgl_mov_manual')].map(r=>r.id));
+      const nuevos   = movimientos.filter(m => !existIds.has(m.id));
+      const dups     = movimientos.length - nuevos.length;
+
+      closeModal('modal-csv-universal');
+      if (!nuevos.length) {
+        toast('Todos los movimientos ya estaban registrados', 'info'); return;
+      }
+
+      // Guardar y actualizar saldos
+      const excel     = getExcelMovData();
+      const finalData = [...excel, ...nuevos];
+      const manualIds = new Set(loadRegistry('stgl_mov_manual').map(r=>r.id));
+      let saldosAct = 0;
+      nuevos.filter(m => m.cuenta && !manualIds.has(m.id)).forEach(m => {
+        const delta = parseFloat(m.entradas||0) - parseFloat(m.salidas||0);
+        if (delta) { ajustarSaldoCuenta(m.cuenta, delta); m._saldoAjustado = true; saldosAct++; }
+      });
+
+      localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(finalData));
+      const resumen = `${nuevos.length} nuevos${dups ? ` · ${dups} duplicados omitidos` : ''}${saldosAct ? ` · ${saldosAct} saldos actualizados` : ''}`;
+      toast(`📊 ${perfil.nombre} importado · ${resumen}`, 'success');
+
+      __movOpenGroups = new Set();
+      renderSaldos(); initMovSelect(); filterMovimientos();
+      if (typeof verificarMovimientosBancarios === 'function') setTimeout(verificarMovimientosBancarios, 500);
+      _csvParsedState = null;
+    }
+
     /* ── Importar histórico desde Excel (se persiste en localStorage) ── */
     function importarMovimientos() {
       const s = document.createElement('script');
@@ -1290,8 +1894,19 @@
       if (!newData.length) { toast('Sin datos en el archivo', 'error'); return; }
 
       let finalData;
+      let movsSaldoAplicar = [];   // movimientos cuyos saldos hay que ajustar en stgl_saldos
+
       if (modo === 'reemplazar') {
+        // Revertir saldos de movimientos Excel que ya habían sido aplicados
+        const oldExcel = getExcelMovData().filter(r => r._saldoAjustado);
+        oldExcel.forEach(m => {
+          if (m.cuenta) {
+            const delta = parseFloat(m.entradas || 0) - parseFloat(m.salidas || 0);
+            if (delta) ajustarSaldoCuenta(m.cuenta, -delta);  // revert
+          }
+        });
         finalData = newData;
+        movsSaldoAplicar = newData;  // aplicar todos los nuevos
       } else {
         /* Complementar: unir, deduplicar por id */
         const existing  = getExcelMovData();
@@ -1302,8 +1917,25 @@
           toast('No hay movimientos nuevos — todos ya estaban registrados', 'info');
           return;
         }
+        movsSaldoAplicar = agregados;  // solo los nuevos
         toast(`${agregados.length.toLocaleString('es-MX')} movimientos nuevos agregados`, 'success');
       }
+
+      /* Ajustar stgl_saldos con el delta de cada movimiento nuevo del extracto.
+         Los movimientos de stgl_mov_manual (CFDI, manuales) ya lo hacen vía ajustarSaldoCuenta —
+         aquí solo se aplican los que vienen exclusivamente del Excel (banco). */
+      const manualIds = new Set(loadRegistry('stgl_mov_manual').map(r => r.id));
+      let saldosActualizados = 0;
+      movsSaldoAplicar
+        .filter(m => m.cuenta && !manualIds.has(m.id))  // excluir los que ya están en manual
+        .forEach(m => {
+          const delta = parseFloat(m.entradas || 0) - parseFloat(m.salidas || 0);
+          if (delta) {
+            ajustarSaldoCuenta(m.cuenta, delta);
+            m._saldoAjustado = true;
+            saldosActualizados++;
+          }
+        });
 
       try {
         localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(finalData));
@@ -1315,11 +1947,14 @@
 
       if (modo === 'reemplazar') {
         const n = finalData.length;
-        toast(`${n.toLocaleString('es-MX')} movimientos importados y guardados`, 'success');
+        toast(`${n.toLocaleString('es-MX')} movimientos importados${saldosActualizados ? ` · ${saldosActualizados} saldos actualizados` : ''}`, 'success');
+      } else if (saldosActualizados) {
+        toast(`Saldos actualizados con ${saldosActualizados} movimiento${saldosActualizados!==1?'s':''} del extracto`, 'info');
       }
 
       /* Resetear grupos respetando el modo de vista activo */
       __movOpenGroups = new Set();  /* se resolverá en renderMovPagina según __movModoVista */
+      renderSaldos();
       initMovSelect();
       filterMovimientos();
     }
@@ -3374,6 +4009,426 @@
       filterMovimientos();
       renderSaldos();
     }
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-VERIFICACIÓN — Mov. Bancarios (Financiero)
+   Checks: saldos negativos en cuentas activas, movimientos
+   incompletos (sin monto/sin cuenta), corte sin definir,
+   extracto sin conciliar, recurrentes del mes sin cubrir
+   (con detección de desfase de fecha ±7 días).
+══════════════════════════════════════════════════════════════ */
+const KEY_VERIF_LOG           = 'stgl_verificacion_log_financiero';
+const KEY_VERIF_DISMISSED_FIN = 'stgl_verificacion_dismissed_fin';
+const VENTANA_DESFASE_FIN     = 7;    // días de tolerancia para detectar desfases
+const MONTO_TOL_FIN           = 0.08; // 8% de tolerancia en monto (igual que proyectados)
+
+/* ── Dismiss helpers ── */
+function getDescartados() {
+  try { return new Set(JSON.parse(localStorage.getItem(KEY_VERIF_DISMISSED_FIN) || '[]')); }
+  catch { return new Set(); }
+}
+function saveDescartados(s) {
+  localStorage.setItem(KEY_VERIF_DISMISSED_FIN, JSON.stringify([...s]));
+}
+function itemFingerprint(it) {
+  if (it.key) return it.key;
+  return ((it.msg || '') + '|' + (it.fecha || '')).replace(/\s{2,}/g, ' ').trim();
+}
+function filtrarDescartados(res) {
+  if (!res) return res;
+  const desc = getDescartados();
+  if (!desc.size) return res;
+  const isDesc = it => {
+    if (desc.has(itemFingerprint(it))) return true;
+    if (it.key) {
+      const legacy = ((it.msg || '') + '|' + (it.fecha || '')).replace(/\s{2,}/g, ' ').trim();
+      if (desc.has(legacy)) return true;
+    }
+    return false;
+  };
+  const f = arr => arr.filter(it => !isDesc(it));
+  return { ...res, errores: f(res.errores), alertas: f(res.alertas), info: f(res.info) };
+}
+function descartarVerifItem(fp) {
+  const s = getDescartados(); s.add(fp); saveDescartados(s);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+function restaurarDescartados() {
+  localStorage.removeItem(KEY_VERIF_DISMISSED_FIN);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+
+function _fmtNumVerif(n) {
+  return Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+/* Días entre dos fechas ISO */
+function _diasEntreFin(f1, f2) {
+  const d1 = new Date(((f1||'').substring(0,10))+'T12:00:00');
+  const d2 = new Date(((f2||'').substring(0,10))+'T12:00:00');
+  if (isNaN(d1)||isNaN(d2)) return Infinity;
+  return Math.round((d2 - d1) / 86400000);
+}
+
+/**
+ * Busca en `movs` el movimiento real más cercano a `fechaRef` dentro de
+ * ±VENTANA_DESFASE_FIN días con monto similar (±MONTO_TOL_FIN).
+ * esEgreso: true → compara salidas; false → compara entradas.
+ * Devuelve { fecha, delta, dir } o null.
+ */
+function _buscarRealCercanoFin(movs, fechaRef, monto, esEgreso) {
+  let mejor = null, mejorDelta = Infinity;
+  movs.forEach(m => {
+    const f   = (m.fecha || m.Fecha || '').substring(0, 10);
+    const amt = esEgreso
+      ? parseFloat(m.salidas  || m.salida  || 0)
+      : parseFloat(m.entradas || m.entrada || 0);
+    if (!f || !amt) return;
+    const delta  = Math.abs(_diasEntreFin(fechaRef, f));
+    const montoOk = monto > 0
+      ? Math.abs(amt - monto) / Math.max(monto, 1) <= MONTO_TOL_FIN
+      : false;
+    if (delta > 0 && delta <= VENTANA_DESFASE_FIN && montoOk && delta < mejorDelta) {
+      mejorDelta = delta;
+      mejor = { fecha: f, delta, dir: _diasEntreFin(fechaRef, f) > 0 ? 'después' : 'antes' };
+    }
+  });
+  return mejor;
+}
+
+function ejecutarVerificacion(trigger) {
+  trigger = trigger || 'auto';
+  const errores = [], alertas = [], info = [];
+
+  const saldos   = loadRegistry('stgl_saldos').filter(s => !s.cancelada);
+  const manual   = loadRegistry('stgl_mov_manual');
+  const cutoff   = localStorage.getItem('stgl_proy_cutoff') || '';
+
+  /* ── 1. Saldos negativos en cuentas activas ── */
+  saldos.forEach(s => {
+    const sal = parseFloat(s.saldo || 0);
+    if (sal < 0) {
+      const tipoCta = (s.tipo || '').toLowerCase();
+      // Las tarjetas de crédito con saldo negativo son normales (representan deuda)
+      if (!tipoCta.includes('tarjeta') && !tipoCta.includes('credito') && !tipoCta.includes('crédito')) {
+        errores.push({
+          tipo:   'SALDO_NEGATIVO', modulo: 'Saldos',
+          key:    `SALDO_NEGATIVO|${s.id||s.cuenta||s.nombre||'?'}`,
+          msg:    `${s.nombre||s.cuenta||'?'}: saldo negativo $${_fmtNumVerif(sal)}`,
+          accion: 'Verifica si falta registrar algún ingreso o si el extracto bancario está actualizado',
+        });
+      }
+    }
+  });
+
+  /* ── 2. Movimientos sin cuenta asignada ── */
+  const sinCuenta = manual.filter(m => !m.cuenta && !m._saldoAjustado);
+  if (sinCuenta.length > 0) alertas.push({
+    tipo:   'CUENTA_FALTANTE', modulo: 'Movimientos',
+    key:    'CUENTA_FALTANTE',
+    msg:    `${sinCuenta.length} movimiento${sinCuenta.length!==1?'s':''} sin cuenta bancaria asignada`,
+    accion: 'Edita los movimientos y asigna la cuenta correspondiente para conciliar correctamente',
+  });
+
+  /* ── 3. Movimientos sin monto (entradas y salidas vacíos) ── */
+  const sinMonto = manual.filter(m => {
+    const ent = parseFloat(m.entradas || 0);
+    const sal = parseFloat(m.salidas  || 0);
+    return !ent && !sal && !m._saldoAjustado;
+  });
+  if (sinMonto.length > 0) alertas.push({
+    tipo:   'MONTO_FALTANTE', modulo: 'Movimientos',
+    key:    'MONTO_FALTANTE',
+    msg:    `${sinMonto.length} movimiento${sinMonto.length!==1?'s':''} sin monto (entradas y salidas vacíos)`,
+    accion: 'Revisa y completa los importes de estos movimientos',
+  });
+
+  /* ── 4. Corte bancario sin definir ── */
+  if (!cutoff) {
+    info.push({
+      tipo:   'CORTE_INDEFINIDO', modulo: 'Financiero',
+      key:    'CORTE_INDEFINIDO',
+      msg:    'Fecha de corte bancario no definida — la Proyección puede no tener base de saldos reales',
+      accion: 'Importa un extracto bancario para que el sistema detecte automáticamente la fecha de corte',
+    });
+  }
+
+  /* ── 5. Cuentas sin saldo inicial configurado ── */
+  const sinSaldo = saldos.filter(s => s.saldo === undefined || s.saldo === null || s.saldo === '');
+  if (sinSaldo.length > 0) info.push({
+    tipo:   'SALDO_SIN_CAPTURAR', modulo: 'Saldos',
+    key:    'SALDO_SIN_CAPTURAR',
+    msg:    `${sinSaldo.length} cuenta${sinSaldo.length!==1?'s':''} sin saldo capturado`,
+    accion: 'Agrega el saldo actual de cada cuenta bancaria en la tabla de Saldos',
+  });
+
+  /* ── 6. Sin movimientos registrados en absoluto ── */
+  const excelRaw = localStorage.getItem('stgl_mov_excel');
+  if (!manual.length && !excelRaw) {
+    info.push({
+      tipo:   'SIN_MOVIMIENTOS', modulo: 'Financiero',
+      key:    'SIN_MOVIMIENTOS',
+      msg:    'No hay movimientos bancarios registrados en el sistema',
+      accion: 'Importa el extracto bancario (Excel/CSV) o captura movimientos manualmente',
+    });
+  }
+
+  /* ── 7. Recurrentes activos del mes actual sin movimiento real ──────────
+     Para cada recurrente activo cuya fecha esperada ya pasó este mes,
+     busca primero coincidencia exacta (fecha + monto ±8%) en stgl_mov_manual
+     y stgl_mov_excel.  Si no la hay, busca una cercana en ±VENTANA_DESFASE_FIN
+     días.  Reporta desfase o falta según corresponda. */
+  try {
+    const hoy      = new Date();
+    const hoyISO   = hoy.toISOString().substring(0, 10);
+    const year     = hoy.getFullYear();
+    const month    = hoy.getMonth();            // 0-indexed
+    const pad2     = n => String(n).padStart(2, '0');
+
+    // Unir excel + manual en un solo array (sin duplicar por id)
+    let excel = [];
+    try { excel = JSON.parse(localStorage.getItem('stgl_mov_excel') || '[]'); } catch {}
+    const manualIds = new Set(manual.map(r => r.id));
+    const realesAll = [...excel.filter(r => !manualIds.has(r.id)), ...manual];
+
+    const recurrentes = loadRegistry('stgl_recurrentes')
+      .filter(r => r.activo && !r.cancelado);
+
+    recurrentes.forEach(r => {
+      // Calcular la(s) fecha(s) esperada(s) de este mes para el recurrente
+      // Soporte básico: diaEstimado (mensual) o frecuencia semanal
+      const frecuencia = (r.frecuencia || 'mensual').toLowerCase();
+      const fechasEsperadas = [];
+
+      if (frecuencia.includes('seman')) {
+        // Semanal: todos los días diaEstimado del mes actual
+        let d = new Date(year, month, 1);
+        const diaSem = (r.diaEstimado || 1) % 7; // 0=Dom … 6=Sáb
+        while (d.getMonth() === month) {
+          if (d.getDay() === diaSem) {
+            fechasEsperadas.push(`${year}-${pad2(month+1)}-${pad2(d.getDate())}`);
+          }
+          d.setDate(d.getDate() + 1);
+        }
+      } else {
+        // Mensual (default)
+        const dia = Math.min(r.diaEstimado || 1, 28);
+        fechasEsperadas.push(`${year}-${pad2(month+1)}-${pad2(dia)}`);
+      }
+
+      fechasEsperadas
+        .filter(f => f <= hoyISO)   // solo las que ya debieron ocurrir
+        .forEach(fechaEsp => {
+          const monto    = parseFloat(r.importe || 0);
+          const esEgreso = (r.tipo || '').toLowerCase() === 'egreso';
+
+          // Buscar coincidencia exacta en fecha + monto
+          const exacto = realesAll.find(m => {
+            const f   = (m.fecha || m.Fecha || '').substring(0, 10);
+            const amt = esEgreso
+              ? parseFloat(m.salidas  || m.salida  || 0)
+              : parseFloat(m.entradas || m.entrada || 0);
+            return f === fechaEsp && monto > 0
+              && Math.abs(amt - monto) / Math.max(monto, 1) <= MONTO_TOL_FIN;
+          });
+          if (exacto) return; // ✓ coincidencia exacta
+
+          const cercano = _buscarRealCercanoFin(realesAll, fechaEsp, monto, esEgreso);
+
+          if (cercano) {
+            alertas.push({
+              tipo:   'DESFASE_FECHA', modulo: 'Recurrentes',
+              key:    `DESFASE_FECHA|${r.id||r.descripcion||r.desc||'?'}|${fechaEsp}`,
+              fecha:  fechaEsp,
+              msg:    `"${r.descripcion||r.desc||'?'}" (esperado ${fechaEsp}): posible desfase — existe movimiento real el ${cercano.fecha} (${cercano.delta} día${cercano.delta!==1?'s':''} ${cercano.dir})`,
+              accion: 'Confirmar que el movimiento del '+cercano.fecha+' corresponde a este recurrente; si es correcto, no requiere acción adicional',
+            });
+          } else {
+            alertas.push({
+              tipo:   'REC_SIN_CUBRIR', modulo: 'Recurrentes',
+              key:    `REC_SIN_CUBRIR|${r.id||r.descripcion||r.desc||'?'}|${fechaEsp}`,
+              fecha:  fechaEsp,
+              msg:    `"${r.descripcion||r.desc||'?'}" (esperado ${fechaEsp}): sin movimiento real en Financiero (±${VENTANA_DESFASE_FIN} días, ±${Math.round(MONTO_TOL_FIN*100)}% monto)`,
+              accion: `Verifica si el ${esEgreso?'pago':'cobro'} se realizó y regístralo en Financiero`,
+            });
+          }
+        });
+    });
+  } catch(e) {
+    // Check no crítico — no interrumpir la verificación si algo falla
+    console.warn('[verif] Error en check #7 recurrentes:', e);
+  }
+
+  const resultado = {
+    fecha: new Date().toISOString(), trigger, errores, alertas, info,
+    ok:    !errores.length && !alertas.length,
+    total: errores.length + alertas.length + info.length,
+  };
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    logs.unshift(resultado);
+    localStorage.setItem(KEY_VERIF_LOG, JSON.stringify(logs.slice(0, 30)));
+  } catch {}
+  return resultado;
+}
+
+function cargarUltimaVerificacion() {
+  try { return JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]')[0] || null; } catch { return null; }
+}
+
+function lanzarVerificacion(trigger) {
+  const resultado = ejecutarVerificacion(trigger || 'manual');
+  renderVerificacionBadge(resultado);
+  renderVerificacionPanel(resultado);
+  document.getElementById('verif-panel').classList.add('open');
+}
+
+function toggleVerifPanel() {
+  const panel = document.getElementById('verif-panel');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+  } else {
+    const last = cargarUltimaVerificacion();
+    if (last) renderVerificacionPanel(last);
+    panel.classList.add('open');
+  }
+}
+
+function renderVerificacionBadge(resultado) {
+  const el = document.getElementById('verif-badge');
+  if (!el) return;
+  if (!resultado) {
+    el.innerHTML = `<button onclick="lanzarVerificacion('manual')"
+        style="color:var(--text-dim);border-color:var(--border);">🔍 Verificar</button>`;
+    return;
+  }
+  const { errores, alertas } = resultado;
+  const color = errores.length ? 'var(--red)' : alertas.length ? '#c8801b' : 'var(--green)';
+  const bg    = errores.length ? '#fff5f5'    : alertas.length ? '#fffbeb'  : '#f0fdf4';
+  const icon  = errores.length ? '⚠'          : alertas.length ? '🔔'       : '✓';
+  const label = errores.length ? `${errores.length} error${errores.length>1?'es':''}`
+              : alertas.length ? `${alertas.length} alerta${alertas.length>1?'s':''}`
+              : 'Datos OK';
+  el.innerHTML = `<button onclick="toggleVerifPanel()"
+      style="color:${color};border-color:${color};background:${bg};"
+      title="Ver log de verificación">${icon} ${label}</button>`;
+}
+
+function _renderChecksSection() {
+  const id = 'verif-checks-fin';
+  return `<div class="verif-checks">
+    <button class="verif-checks-toggle" onclick="
+      const b=document.getElementById('${id}');
+      b.classList.toggle('open');
+      this.classList.toggle('open');">
+      <span class="vct-arrow">▶</span> ¿Qué se verifica en este módulo?
+    </button>
+    <div class="verif-checks-body" id="${id}">
+      <div class="verif-check-row">
+        <span class="verif-check-num">1</span>
+        <span><span class="verif-check-name">Saldos negativos</span> — Detecta cuentas bancarias activas con saldo negativo (excluye tarjetas de crédito donde el saldo negativo representa deuda normal).<span class="verif-check-badge">ERROR</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">2</span>
+        <span><span class="verif-check-name">Movimientos sin cuenta</span> — Movimientos capturados manualmente sin cuenta bancaria asignada impiden la conciliación correcta por cuenta.<span class="verif-check-badge">ALERTA</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">3</span>
+        <span><span class="verif-check-name">Movimientos sin monto</span> — Registros donde tanto entradas como salidas están vacíos o en cero.<span class="verif-check-badge">ALERTA</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">4</span>
+        <span><span class="verif-check-name">Fecha de corte</span> — Verifica que la fecha de corte bancario esté definida; sin ella, Proyectados no tiene saldos base reales.<span class="verif-check-badge">INFO</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">5</span>
+        <span><span class="verif-check-name">Saldos sin capturar</span> — Cuentas configuradas sin saldo inicial registrado.<span class="verif-check-badge">INFO</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">6</span>
+        <span><span class="verif-check-name">Sin movimientos</span> — Verifica que existan movimientos importados o capturados; sin ellos el módulo está vacío.<span class="verif-check-badge">INFO</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">7</span>
+        <span><span class="verif-check-name">Recurrentes del mes</span> — Para cada recurrente activo cuya fecha ya pasó este mes, busca el movimiento real (±${VENTANA_DESFASE_FIN} días, ±${Math.round(MONTO_TOL_FIN*100)}% monto). Reporta desfase de fecha o falta de registro según corresponda.<span class="verif-check-badge">ALERTA</span></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderVerificacionPanel(resultado) {
+  const body   = document.getElementById('verif-body');
+  const footer = document.getElementById('verif-footer');
+  if (!body) return;
+  // Filtrar descartados antes de renderizar
+  const res = filtrarDescartados(resultado);
+  const totalOriginal = resultado.errores.length + resultado.alertas.length + resultado.info.length;
+  const totalFiltrado = res.errores.length + res.alertas.length + res.info.length;
+  const nDescartados  = totalOriginal - totalFiltrado;
+  const { errores, alertas, info, fecha, trigger, ok } = res;
+  const triggerLabel = {load:'carga de página',import:'importación',save:'guardado',manual:'manual',auto:'automático'}[trigger] || trigger;
+  const ts = new Date(fecha).toLocaleString('es-MX', {dateStyle:'short', timeStyle:'short'});
+  const renderItems = (items, cls) => items.map(it => {
+    const fp = itemFingerprint(it).replace(/'/g, "\\'");
+    return `<div class="verif-item">
+      <div class="verif-dot ${cls}"></div>
+      <div style="flex:1">
+        <div class="verif-msg">${it.msg}</div>
+        ${it.accion ? `<div class="verif-accion">→ ${it.accion}</div>` : ''}
+        <div class="verif-btns">
+          <button class="verif-btn verif-btn-descartar" onclick="descartarVerifItem('${fp}')">✕ Descartar</button>
+        </div>
+      </div>
+      ${it.fecha ? `<div style="font-size:0.63rem;color:var(--text-xs);white-space:nowrap;">${it.fecha}</div>` : '<div></div>'}
+    </div>`;
+  }).join('');
+  let html = '';
+  if (!errores.length && !alertas.length && !info.length) {
+    html = `<div class="verif-ok">✓ Todos los movimientos bancarios están íntegros y consistentes</div>`;
+  } else {
+    if (errores.length) { html += `<div class="verif-section-title">🔴 Errores — acción requerida (${errores.length})</div>`; html += renderItems(errores, 'error'); }
+    if (alertas.length) { html += `<div class="verif-section-title">🟡 Alertas — revisar (${alertas.length})</div>`; html += renderItems(alertas, 'warning'); }
+    if (info.length)    { html += `<div class="verif-section-title">ℹ️ Información (${info.length})</div>`; html += renderItems(info, 'info'); }
+  }
+  if (nDescartados > 0) {
+    html += `<div class="verif-descartados-note">
+      ${nDescartados} elemento${nDescartados!==1?'s':''} descartado${nDescartados!==1?'s':''} oculto${nDescartados!==1?'s':''} —
+      <button class="verif-btn" onclick="restaurarDescartados()" style="display:inline;padding:0;border:none;background:none;color:var(--navy);font-size:0.64rem;cursor:pointer;font-weight:600;">restaurar todos</button>
+    </div>`;
+  }
+  html += _renderChecksSection();
+  body.innerHTML = html;
+  footer.innerHTML = `<span>Última verificación: ${ts} · disparador: ${triggerLabel}</span>
+    <span style="margin-left:auto;font-size:0.63rem;">${resultado.errores.length} error${resultado.errores.length!==1?'es':''} · ${resultado.alertas.length} alerta${resultado.alertas.length!==1?'s':''} · ${resultado.info.length} info</span>`;
+}
+
+/* ── Init badge desde última verificación guardada ── */
+renderVerificacionBadge(cargarUltimaVerificacion());
+
+/* ── Auto-verificación al cargar ── */
+setTimeout(() => {
+  try {
+    const res = ejecutarVerificacion('load');
+    renderVerificacionBadge(res);
+    if (res.errores.length > 0) {
+      renderVerificacionPanel(res);
+      document.getElementById('verif-panel').classList.add('open');
+    }
+  } catch(e) { console.warn('verif:', e); }
+}, 800);
+
+/* ── Periódica cada 5 min ── */
+setInterval(() => {
+  try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+}, 5 * 60 * 1000);
 
   </script>
 </body>
