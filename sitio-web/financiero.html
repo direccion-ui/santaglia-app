@@ -133,6 +133,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -299,6 +300,7 @@
               <button class="btn btn-ghost" onclick="abrirImportPDF()" style="font-size:0.72rem;" title="Importar estado de cuenta en PDF">📄 PDF</button>
               <button class="btn btn-ghost" onclick="abrirImportCSVUniversal()" style="font-size:0.72rem;" title="Importar CSV de cualquier banco o tarjeta — detección automática de columnas">📊 CSV</button>
               <input type="file" id="csv-universal-input" accept=".csv,.tsv,.txt" style="display:none;" onchange="procesarCSVUniversal(this)" />
+              <button id="btn-limpiar-csv-malo" class="btn btn-ghost" onclick="limpiarCSVMalImportado()" style="display:none;font-size:0.72rem;color:var(--gold);border-color:var(--gold);">🧹</button>
               <button class="btn btn-ghost" onclick="abrirCFDIGasto()" style="font-size:0.72rem;" title="Importar CFDIs de gastos">📎 CFDI</button>
               <button class="btn btn-ghost" onclick="abrirFX()" style="font-size:0.72rem;" title="Registrar operación de cambio de divisas">💱 FX</button>
               <button class="btn btn-primary" onclick="abrirNuevoMov()" style="font-size:0.72rem;">+ Movimiento</button>
@@ -563,8 +565,18 @@
           </div>
         </div>
 
-        <!-- Advertencia duplicados -->
+        <!-- Advertencia duplicados / sin concepto -->
         <div id="csv-dup-warn" style="display:none;font-size:0.72rem;color:var(--gold);margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fefce8;border-radius:4px;border:1px solid #fde68a;"></div>
+
+        <!-- Conceptos por completar (filas sin concepto conocido) -->
+        <div id="csv-pendientes-wrap" style="display:none;margin-bottom:0.75rem;">
+          <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">
+            Conceptos por completar <span id="csv-pendientes-count" style="font-weight:400;text-transform:none;color:var(--gold);"></span>
+          </div>
+          <datalist id="csv-conceptos-datalist"></datalist>
+          <div id="csv-pendientes-body"></div>
+          <div style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;">✓ Marcados con "Guardar" → se añaden al directorio de contactos para autocompletar en futuras importaciones</div>
+        </div>
 
       </div>
       <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:flex-end;padding:0.9rem 1.25rem;border-top:1px solid var(--border);">
@@ -755,7 +767,7 @@
           <span style="font-family:var(--brand); font-size:0.62rem; font-weight:800; color:var(--navy); letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap;">Aplicar a todos:</span>
           <label style="font-size:0.7rem; color:var(--text-dim); white-space:nowrap;">Fecha afectación:</label>
           <input type="date" id="cgz-fecha-global" style="padding:0.18rem 0.4rem; font-size:0.72rem; border:1px solid var(--border); border-radius:2px;" onchange="aplicarFechaGlobal()" />
-          <label style="font-size:0.7rem; color:var(--text-dim); white-space:nowrap;">Cuenta bancaria:</label>
+          <label style="font-size:0.7rem; color:var(--text-dim); white-space:nowrap;">Cuenta de origen (débito):</label>
           <select id="cgz-cuenta-global" style="padding:0.18rem 0.4rem; font-size:0.72rem; border:1px solid var(--border); border-radius:2px; min-width:140px;" onchange="aplicarCuentaGlobal()">
             <option value="">— Seleccionar —</option>
           </select>
@@ -773,7 +785,7 @@
               <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">Tipo</th>
               <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Total</th>
               <th style="padding:0.38rem 0.5rem; text-align:right; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;" title="Para gastos: IVA trasladado. Para honorarios: ISR retenido + IVA retenido.">IVA / Ret.</th>
-              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">✎ Cuenta</th>
+              <th style="padding:0.38rem 0.5rem; font-family:var(--brand); font-size:0.57rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;" title="Cuenta que se debita (gastos) o acredita (ingresos)">✎ Cuenta</th>
               <th style="width:24px;"></th>
             </tr></thead>
             <tbody id="cgz-tbody">
@@ -969,7 +981,7 @@
               </select>
             </div>
             <div style="display:grid; grid-template-columns:120px 1fr; align-items:center; gap:0.5rem;">
-              <span style="font-size:0.68rem; color:var(--text-xs);">② Intermediario USD</span>
+              <span style="font-size:0.68rem; color:var(--text-xs);">② Intermediario USD <em style="opacity:.6;">(opcional)</em></span>
               <select class="form-input" id="fx-cta-inter" onchange="calcFXMxn()" style="font-size:0.75rem; padding:0.3rem 0.5rem;">
                 <option value="">— Seleccionar —</option>
               </select>
@@ -1153,11 +1165,13 @@
       return moneda === 'USD' ? saldo * getTc() : saldo;
     }
 
-    /* Ajusta el saldo almacenado de una cuenta (positivo = abono, negativo = cargo) */
+    /* Ajusta el saldo almacenado de una cuenta (positivo = abono, negativo = cargo).
+       Normaliza el nombre antes de buscar para evitar cuentas fantasma. */
     function ajustarSaldoCuenta(cuentaNombre, delta) {
       if (!cuentaNombre || !delta) return;
-      const data = loadRegistry(KEY_SAL);
-      const idx  = data.findIndex(s => s.cuenta === cuentaNombre);
+      const canon = _normalizarCuenta(cuentaNombre);
+      const data  = loadRegistry(KEY_SAL);
+      const idx   = data.findIndex(s => s.cuenta === canon);
       if (idx < 0) return;
       data[idx].saldo = (data[idx].saldo || 0) + delta;
       saveRegistry(KEY_SAL, data);
@@ -1494,7 +1508,8 @@
       },
       {
         id: 'bbva_mx', nombre: 'BBVA México', icon: '🏦',
-        detect: h => h.some(c => c.includes('fecha operac') || c.includes('num operac') || (c.includes('bbva') && c.includes('fecha'))),
+        detect: h => h.some(c => c.includes('fecha operac') || c.includes('num operac') || (c.includes('bbva') && c.includes('fecha'))) ||
+                     (h.length === 4 && h[0] === 'fecha' && h[1] === 'concepto' && h[2] === 'cargo' && h[3] === 'abono'),
         cols: { fecha: ['fecha operac','fecha de operac','fecha'], desc: ['descripcion','concepto','comercio'],
                 cargo: ['cargo','retiro','debito'], abono: ['deposito','abono','credito'], ref: ['referencia','num oper','folio'] },
         parseFecha: _csvDateDMYY,
@@ -1654,6 +1669,32 @@
       return 'Gastos de Administración';
     }
 
+    /* ── Enriquecimiento: copia desc/cuentaCont de movimientos ya conocidos ── */
+    function _csvEnrich(movimientos) {
+      const existentes = [...getExcelMovData(), ...loadRegistry('stgl_mov_manual')];
+      // Índice: primeras 20 chars normalizadas del concepto → {desc, cuentaCont}
+      const lookup = new Map();
+      existentes.forEach(ex => {
+        if (!ex.concepto) return;
+        const key = _csvNorm(ex.concepto).substring(0, 20);
+        if (!lookup.has(key) && ex.desc && ex.desc !== 'Gastos de Administración') {
+          lookup.set(key, { desc: ex.desc, cuentaCont: ex.cuentaCont || 'No Existe' });
+        }
+      });
+      movimientos.forEach(m => {
+        const key = _csvNorm(m.concepto).substring(0, 20);
+        const hit = lookup.get(key);
+        if (hit) {
+          m.desc = hit.desc;
+          if (hit.cuentaCont && hit.cuentaCont !== 'No Existe') m.cuentaCont = hit.cuentaCont;
+          m._enriched = true;
+        } else {
+          m._sinConcepto = true;
+        }
+      });
+      return movimientos;
+    }
+
     /* ── Entrada: click en botón CSV ── */
     function abrirImportCSVUniversal() {
       document.getElementById('csv-universal-input').value = '';
@@ -1683,18 +1724,23 @@
           // Detectar perfil
           const perfil = _CSV_PROFILES.find(p => p.detect(header)) || _CSV_PROFILES[_CSV_PROFILES.length - 1];
 
-          // Resolver índices de columna
+          // Resolver índices de columna en orden de prioridad, sin reutilizar índices
           let ci = {};
           if (perfil.cols) {
-            Object.entries(perfil.cols).forEach(([role, kws]) => {
-              ci[role] = _csvFindCol(header, kws);
-            });
+            const used = new Set();
+            const PRIORITY = ['fecha','ref','cargo','abono','desc','categoria','estado','alias'];
+            for (const role of PRIORITY) {
+              if (!perfil.cols[role]) { ci[role] = -1; continue; }
+              const idx = header.findIndex((h, i) => !used.has(i) && perfil.cols[role].some(k => h.includes(k)));
+              ci[role] = idx;
+              if (idx >= 0) used.add(idx);
+            }
           } else {
             ci = _csvDetectColsByContent(header, dataRows);
           }
 
-          // Parsear filas en objetos Compass
-          const movimientos = _csvBuildMovimientos(dataRows, ci, perfil, rawHeader);
+          // Parsear filas en objetos Compass y enriquecer con concepots ya conocidos
+          const movimientos = _csvEnrich(_csvBuildMovimientos(dataRows, ci, perfil, rawHeader));
 
           // Guardar estado para confirmar
           _csvParsedState = { movimientos, perfil, rawHeader, dataRows, ci, sep };
@@ -1794,9 +1840,13 @@
       const sel = document.getElementById('csv-cuenta-destino');
       try {
         const saldos = JSON.parse(localStorage.getItem('stgl_saldos')||'[]');
-        sel.innerHTML = saldos.map(s =>
-          `<option value="${escHtml(s.cuenta)}" ${s.cuenta===perfil.cuentaDefault?'selected':''}>${escHtml(s.cuenta)}</option>`
-        ).join('');
+        const _nc = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
+        const defN = _nc(perfil.cuentaDefault || '');
+        sel.innerHTML = saldos.map(s => {
+          const sN = _nc(s.cuenta);
+          const match = defN && (sN === defN || sN.includes(defN) || defN.includes(sN));
+          return `<option value="${escHtml(s.cuenta)}" ${match?'selected':''}>${escHtml(s.cuenta)}</option>`;
+        }).join('');
       } catch { sel.innerHTML = `<option value="${perfil.cuentaDefault}">${perfil.cuentaDefault||'(sin cuentas)'}</option>`; }
 
       // Preview tabla
@@ -1805,24 +1855,66 @@
       thRow.innerHTML = ['Fecha','Descripción','Cargo','Abono']
         .map(h => `<th style="padding:0.3rem 0.5rem;text-align:left;border-bottom:1px solid var(--border);font-family:var(--brand);font-size:0.58rem;white-space:nowrap;">${h}</th>`).join('');
       tbody.innerHTML = movimientos.slice(0,5).map(m => `
-        <tr>
+        <tr style="${m._sinConcepto ? 'background:rgba(253,200,0,0.13);' : ''}">
           <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);white-space:nowrap;">${m.fecha}</td>
-          <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.concepto)}</td>
+          <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(m.desc)}">${escHtml(m.concepto)}</td>
           <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);text-align:right;color:var(--red);">${m.salidas ? '$'+m.salidas.toLocaleString('es-MX',{minimumFractionDigits:2}) : ''}</td>
           <td style="padding:0.28rem 0.5rem;border-bottom:1px solid var(--border);text-align:right;color:var(--green);">${m.entradas ? '$'+m.entradas.toLocaleString('es-MX',{minimumFractionDigits:2}) : ''}</td>
         </tr>`).join('');
 
-      // Advertencia duplicados
+      // Advertencias
       const existIds = new Set([...getExcelMovData(),...loadRegistry('stgl_mov_manual')].map(r=>r.id));
       const dups = movimientos.filter(m => existIds.has(m.id)).length;
+      const sinConcepto = movimientos.filter(m => m._sinConcepto).length;
       const warn = document.getElementById('csv-dup-warn');
-      if (dups) {
-        warn.style.display = '';
-        warn.textContent = `⚠️ ${dups} movimiento${dups>1?'s':''} ya exist${dups>1?'en':'e'} — se omitirán al importar`;
-      } else { warn.style.display = 'none'; }
+      const msgs = [];
+      if (dups) msgs.push(`⚠️ ${dups} movimiento${dups>1?'s':''} ya exist${dups>1?'en':'e'} — se omitirán`);
+      if (sinConcepto) msgs.push(`🟡 ${sinConcepto} con concepto nuevo — fondo amarillo — completa manualmente tras importar`);
+      if (msgs.length) { warn.style.display = ''; warn.innerHTML = msgs.join('<br>'); }
+      else warn.style.display = 'none';
 
       document.getElementById('csv-preview-label').textContent =
         `(${Math.min(5,movimientos.length)} de ${movimientos.length})`;
+
+      // Sección editable para movimientos sin concepto
+      const sinC     = movimientos.filter(m => m._sinConcepto);
+      const pendWrap = document.getElementById('csv-pendientes-wrap');
+      if (sinC.length) {
+        document.getElementById('csv-pendientes-count').textContent = `— ${sinC.length} de ${movimientos.length}`;
+
+        // Datalist: sugerencias desde directorio + cfdi_index + mov existentes
+        const sugsDir = [...loadRegistry('stgl_directorio'), ...loadRegistry('stgl_cfdi_index')]
+          .map(e => e.conceptoDefault || e.conceptoUltimoUso).filter(Boolean);
+        const sugsExist = new Set([...getExcelMovData(), ...loadRegistry('stgl_mov_manual')]
+          .map(m => m.desc).filter(v => v && v !== 'Gastos de Administración'));
+        const dl = document.getElementById('csv-conceptos-datalist');
+        dl.innerHTML = [...new Set([...sugsDir, ...sugsExist])]
+          .map(v => `<option value="${escHtml(v)}">`).join('');
+
+        document.getElementById('csv-pendientes-body').innerHTML = sinC.map(m => {
+          const monto = parseFloat(m.salidas||m.cargo||0) || parseFloat(m.entradas||m.abono||0) || 0;
+          const montoFmt = monto ? `$${monto.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '—';
+          const esAbono  = !parseFloat(m.salidas||m.cargo||0) && parseFloat(m.entradas||m.abono||0);
+          return `
+          <div style="display:grid;grid-template-columns:72px 1fr auto auto;gap:0.4rem;align-items:center;margin-bottom:0.35rem;padding:0.35rem 0.5rem;background:rgba(253,200,0,0.1);border-radius:4px;border:1px solid #fde68a;">
+            <span style="font-size:0.63rem;color:var(--text-dim);white-space:nowrap;">${m.fecha}</span>
+            <div>
+              <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:0.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.concepto)}</div>
+              <input type="text" list="csv-conceptos-datalist" data-csv-uid="${escHtml(m.id)}"
+                class="form-input" style="padding:0.22rem 0.4rem;font-size:0.68rem;width:100%;"
+                placeholder="Concepto contable…" />
+            </div>
+            <span style="font-size:0.72rem;font-weight:700;white-space:nowrap;color:${esAbono?'var(--green)':'var(--text-main)'};">${montoFmt}</span>
+            <label style="font-size:0.6rem;display:flex;flex-direction:column;align-items:center;gap:0.1rem;cursor:pointer;white-space:nowrap;">
+              <input type="checkbox" data-csv-guardar="${escHtml(m.id)}" checked style="cursor:pointer;">
+              <span>Guardar</span>
+            </label>
+          </div>`;
+        }).join('');
+        pendWrap.style.display = '';
+      } else {
+        pendWrap.style.display = 'none';
+      }
 
       openModal('modal-csv-universal');
     }
@@ -1830,15 +1922,63 @@
     /* ── Confirmación: importar con la cuenta seleccionada ── */
     function confirmarCSVUniversal() {
       if (!_csvParsedState) return;
-      const cuenta = document.getElementById('csv-cuenta-destino').value;
+      const cuenta = _normalizarCuenta(document.getElementById('csv-cuenta-destino').value);
       const { movimientos: rawMovs, perfil, dataRows, ci } = _csvParsedState;
 
       // Re-parsear con la cuenta seleccionada
       const movimientos = rawMovs.map(m => ({ ...m, cuenta }));
 
+      // Aplicar conceptos editados por el usuario en la sección "pendientes"
+      document.querySelectorAll('[data-csv-uid]').forEach(input => {
+        const uid     = input.dataset.csvUid;
+        const val     = input.value.trim();
+        const guardar = document.querySelector(`[data-csv-guardar="${CSS.escape(uid)}"]`)?.checked;
+        const mov     = movimientos.find(m => m.id === uid);
+        if (mov && val) {
+          mov.desc = val;
+          mov._sinConcepto = false;
+          if (guardar) _dirAgregar(mov.concepto, val, mov.cuentaCont || 'No Existe', '', 'proveedor');
+        }
+      });
+
+      // ── Deduplicación en 2 pasadas ─────────────────────────────────────────
+      // Pasada 1: por ID exacto (referencia de autorización)
       const existIds = new Set([...getExcelMovData(),...loadRegistry('stgl_mov_manual')].map(r=>r.id));
-      const nuevos   = movimientos.filter(m => !existIds.has(m.id));
-      const dups     = movimientos.length - nuevos.length;
+      let sinDupId = movimientos.filter(m => !existIds.has(m.id));
+
+      // Pasada 2: por concepto normalizado + monto, fechas ±3 días (mismo registro excel)
+      //   Captura "Pendientes" que Clara re-exporta con fecha del día siguiente
+      const _normConc = s => (s||'').toLowerCase().normalize('NFD')
+        .replace(/[̀-ͯ]/g,'').replace(/\W+/g,' ').trim().substring(0,14);
+      const existentes = getExcelMovData();
+      const existConc  = existentes.map(m => ({
+        k: `${_normConc(m.concepto)}|${Math.abs(parseFloat(m.entradas||0)-parseFloat(m.salidas||0)).toFixed(2)}`,
+        ts: new Date(m.fecha||'').getTime()
+      }));
+      sinDupId = sinDupId.filter(m => {
+        const monto = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+        const k     = `${_normConc(m.concepto)}|${monto}`;
+        const ts    = new Date(m.fecha||'').getTime();
+        return !existConc.some(e => e.k === k && Math.abs(e.ts - ts) <= 3 * 86400000);
+      });
+
+      // Pasada 2b: cruzar contra stgl_mov_manual MISMA CUENTA (monto exacto + fecha ±1 día + dirección)
+      //   Captura CFDI de nómina y movimientos FX ya registrados que coinciden con el banco
+      const mnlMismaCuenta = loadRegistry('stgl_mov_manual').filter(m => m.cuenta === cuentaSeleccionada);
+      const mnlAmts = mnlMismaCuenta.map(m => ({
+        amt: Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2),
+        dir: parseFloat(m.entradas||0) > 0 ? '+' : '-',
+        ts:  new Date(m.fecha||'').getTime()
+      }));
+      sinDupId = sinDupId.filter(m => {
+        const monto = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+        const dir   = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+        const ts    = new Date(m.fecha||'').getTime();
+        return !mnlAmts.some(e => e.amt === monto && e.dir === dir && Math.abs(e.ts - ts) <= 86400000);
+      });
+
+      const nuevos = sinDupId;
+      const dups   = movimientos.length - nuevos.length;
 
       closeModal('modal-csv-universal');
       if (!nuevos.length) {
@@ -2753,6 +2893,13 @@
       if (nuevosMovs.length) {
         const manual = loadRegistry('stgl_mov_manual');
         saveRegistry('stgl_mov_manual', [...manual, ...nuevosMovs]);
+      }
+
+      /* Indexar proveedores en directorio de contactos */
+      for (const r of pendientes) {
+        const nombre = r.prestador || r.emisorNombre || r.nombre || '';
+        const rfc    = r.emisorRfc || '';
+        if (nombre || rfc) _cfdiIdxAgregar(rfc, nombre, r.concepto || '', '');
       }
 
       /* ── Ajustar saldos de cuentas por los movimientos importados ── */
@@ -3951,16 +4098,16 @@
       if (!usd || usd <= 0)     { toast('Ingresa el monto USD', 'error'); return; }
       if (!tc  || tc  <= 0)     { toast('Ingresa el tipo de cambio pactado', 'error'); return; }
       if (!ctaOrig)             { toast('Selecciona la cuenta origen USD', 'error'); return; }
-      if (!ctaInter)            { toast('Selecciona la cuenta intermediaria USD', 'error'); return; }
       if (!ctaDest)             { toast('Selecciona la cuenta destino MXN', 'error'); return; }
-      if (ctaOrig === ctaInter) { toast('La cuenta origen e intermediaria deben ser diferentes', 'error'); return; }
+      if (ctaInter && ctaOrig === ctaInter) { toast('La cuenta origen e intermediaria deben ser diferentes', 'error'); return; }
 
       const mxn   = Math.round(usd * tc * 100) / 100;
       const fxId  = `FX-${Date.now()}`;
       const uid   = () => `MAN-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
       const nota  = `FX: USD ${usd.toLocaleString('es-MX',{minimumFractionDigits:2})} @ ${tc} = MXN ${mxn.toLocaleString('es-MX',{minimumFractionDigits:2})}`;
 
-      const movs = [
+      // Si hay cuenta intermediaria → 4 movimientos; si no → 2 directos
+      const movs = ctaInter ? [
         {
           id: uid(), fecha, mov:'Egresos', tipo:'FX Envío USD',
           desc: `${desc} — envío a intermediario`,
@@ -3990,6 +4137,23 @@
           desc: `${desc} — abono MXN @ ${tc}`,
           concepto: nota, cuenta: ctaDest, cuentaCont:'FX',
           folio: fxId, origen: ctaInter, dest: ctaDest,
+          entradas: mxn, salidas: null,
+          origenRef:'fx', fxId, _saldoAjustado: true,
+        },
+      ] : [
+        {
+          id: uid(), fecha, mov:'Egresos', tipo:'FX Envío USD',
+          desc: `${desc} — venta USD`,
+          concepto: nota, cuenta: ctaOrig, cuentaCont:'FX',
+          folio: fxId, origen: ctaOrig, dest: ctaDest,
+          entradas: null, salidas: usd,
+          origenRef:'fx', fxId, _saldoAjustado: true,
+        },
+        {
+          id: uid(), fecha, mov:'Ingresos', tipo:'FX Abono MXN',
+          desc: `${desc} — abono MXN @ ${tc}`,
+          concepto: nota, cuenta: ctaDest, cuentaCont:'FX',
+          folio: fxId, origen: ctaOrig, dest: ctaDest,
           entradas: mxn, salidas: null,
           origenRef:'fx', fxId, _saldoAjustado: true,
         },
@@ -4116,9 +4280,13 @@ function ejecutarVerificacion(trigger) {
   saldos.forEach(s => {
     const sal = parseFloat(s.saldo || 0);
     if (sal < 0) {
-      const tipoCta = (s.tipo || '').toLowerCase();
+      const tipoCta = (s.tipo   || '').toLowerCase();
+      const nomCta  = (s.nombre || s.cuenta || '').toLowerCase();
       // Las tarjetas de crédito con saldo negativo son normales (representan deuda)
-      if (!tipoCta.includes('tarjeta') && !tipoCta.includes('credito') && !tipoCta.includes('crédito')) {
+      // Se excluyen si el tipo O el nombre contiene palabras de TDC
+      const esTDC = tipoCta.includes('tarjeta') || tipoCta.includes('credito') || tipoCta.includes('crédito')
+                 || nomCta.includes('tarjeta')   || nomCta.includes('credito')  || nomCta.includes('crédito');
+      if (!esTDC) {
         errores.push({
           tipo:   'SALDO_NEGATIVO', modulo: 'Saldos',
           key:    `SALDO_NEGATIVO|${s.id||s.cuenta||s.nombre||'?'}`,
@@ -4429,6 +4597,101 @@ setTimeout(() => {
 setInterval(() => {
   try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
 }, 5 * 60 * 1000);
+
+/* ── Migración v2: normalizar cuentas en movimientos Y fusionar cuentas fantasma ── */
+setTimeout(() => {
+  if (localStorage.getItem('stgl_cuentas_normalized_v2')) return;
+  try {
+    let redraw = false;
+
+    // 1. Fusionar cuentas fantasma en stgl_saldos
+    //    Si "Tarjeta de Crédito CLARA" y "Clara" coexisten, mover el saldo a "Clara"
+    const saldos = loadRegistry(KEY_SAL);
+    const toRemove = new Set();
+    saldos.forEach(s => {
+      const canon = _normalizarCuenta(s.cuenta);
+      if (canon === s.cuenta) return;
+      const target = saldos.find(c => c.cuenta === canon);
+      if (target) {
+        target.saldo = (parseFloat(target.saldo) || 0) + (parseFloat(s.saldo) || 0);
+        toRemove.add(s.cuenta);
+      }
+    });
+    if (toRemove.size) {
+      saveRegistry(KEY_SAL, saldos.filter(s => !toRemove.has(s.cuenta)));
+      redraw = true;
+    }
+
+    // 2. Normalizar cuenta en stgl_mov_excel
+    const excel = getExcelMovData();
+    let fixed = 0;
+    const normalizado = excel.map(m => {
+      if (!m.cuenta) return m;
+      const canon = _normalizarCuenta(m.cuenta);
+      if (canon !== m.cuenta) { fixed++; return { ...m, cuenta: canon }; }
+      return m;
+    });
+    if (fixed) {
+      localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(normalizado));
+      redraw = true;
+    }
+
+    if (redraw) { renderSaldos(); filterMovimientos(); }
+    if (toRemove.size || fixed) {
+      const parts = [];
+      if (toRemove.size) parts.push(`${toRemove.size} cuenta${toRemove.size>1?'s':''} fusionada${toRemove.size>1?'s':''}`);
+      if (fixed) parts.push(`${fixed} movimiento${fixed>1?'s':''} normalizados`);
+      toast(`✅ ${parts.join(' · ')}`, 'success');
+    }
+
+    // 3. Detectar movimientos con fecha en el concepto y mostrar botón de limpieza
+    _mostrarBtnLimpiarCSV();
+
+    localStorage.setItem('stgl_cuentas_normalized_v2', '1');
+  } catch(e) { console.warn('norm-v2:', e); }
+}, 2000);
+
+/* ── Limpieza de movimientos CSV con fecha en el concepto ── */
+function _esFechaEnConcepto(concepto) {
+  return /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test((concepto || '').trim());
+}
+
+function _mostrarBtnLimpiarCSV() {
+  const malos = getExcelMovData().filter(m =>
+    (m.id || '').match(/^[A-Z]+_?[A-Z]*-/) && _esFechaEnConcepto(m.concepto)
+  );
+  const btn = document.getElementById('btn-limpiar-csv-malo');
+  if (btn) {
+    if (malos.length) {
+      btn.style.display = '';
+      btn.title = `${malos.length} movimiento${malos.length>1?'s':''} importados con fecha en el campo de descripción — haz clic para eliminarlos y re-importar`;
+      btn.textContent = `🧹 Limpiar ${malos.length} CSV (re-importar)`;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+}
+
+function limpiarCSVMalImportado() {
+  const excel = getExcelMovData();
+  const malos = excel.filter(m =>
+    (m.id || '').match(/^[A-Z]+_?[A-Z]*-/) && _esFechaEnConcepto(m.concepto)
+  );
+  if (!malos.length) { toast('No hay movimientos CSV con fecha en el concepto', 'info'); return; }
+
+  // Revertir saldos de los movimientos malos
+  malos.filter(m => m._saldoAjustado && m.cuenta).forEach(m => {
+    const delta = parseFloat(m.entradas || 0) - parseFloat(m.salidas || 0);
+    if (delta) ajustarSaldoCuenta(m.cuenta, -delta);
+  });
+
+  const malosIds = new Set(malos.map(m => m.id));
+  localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excel.filter(m => !malosIds.has(m.id))));
+
+  renderSaldos(); filterMovimientos();
+  _mostrarBtnLimpiarCSV();
+  toast(`🧹 ${malos.length} movimientos eliminados — vuelve a importar el CSV para registrarlos correctamente`, 'success');
+}
 
   </script>
 </body>

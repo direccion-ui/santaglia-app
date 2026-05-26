@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Waitlist CRM</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── KPI bar ── */
+    .wl-kpi-bar {
+      display: flex; flex-wrap: wrap;
+      gap: 1px; background: var(--border); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+    .wl-kpi { background: var(--bg-white); padding: 0.85rem 1.25rem; flex: 1 1 140px; min-width: 110px; }
+    .wl-kpi-label {
+      font-family: var(--brand); font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim);
+      margin-bottom: 0.25rem; white-space: nowrap;
+    }
+    .wl-kpi-val { font-family: var(--brand); font-size: 1.5rem; font-weight: 700; color: var(--navy); }
+    .wl-kpi-val.green { color: var(--green); }
+    .wl-kpi-val.blue  { color: #2563eb; }
+    .wl-kpi-val.amber { color: #b45309; }
+
+    /* ── Filter tabs ── */
+    .wl-tabs {
+      display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 1rem;
+    }
+    .wl-tab {
+      padding: 0.3rem 0.85rem; font-family: var(--brand); font-size: 0.72rem;
+      font-weight: 700; border-radius: 20px; border: 1.5px solid var(--border);
+      background: var(--bg-white); color: var(--text-dim); cursor: pointer;
+      transition: all 0.15s; letter-spacing: 0.04em; white-space: nowrap;
+    }
+    .wl-tab:hover   { border-color: var(--navy); color: var(--navy); }
+    .wl-tab.active  { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+    /* ── Badge de estado ── */
+    .wl-badge {
+      display: inline-block; padding: 0.18rem 0.55rem;
+      font-family: var(--brand); font-size: 0.62rem; font-weight: 700;
+      border-radius: 4px; letter-spacing: 0.04em; white-space: nowrap;
+    }
+    .wl-badge.pendiente    { background: #fef9c3; color: #854d0e; }
+    .wl-badge.bienvenida   { background: #dbeafe; color: #1d4ed8; }
+    .wl-badge.seguimiento_1{ background: #e0f2fe; color: #0369a1; }
+    .wl-badge.seguimiento_2{ background: #fce7f3; color: #9d174d; }
+    .wl-badge.onboarded    { background: #dcfce7; color: #15803d; }
+    .wl-badge.descartado   { background: #f1f5f9; color: #94a3b8; }
+
+    /* ── Tabla ── */
+    .wl-table-wrap {
+      background: var(--bg-white); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .wl-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .wl-table th {
+      font-family: var(--brand); font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
+      padding: 0.6rem 1rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+      text-align: left; white-space: nowrap;
+    }
+    .wl-table td {
+      padding: 0.7rem 1rem; border-bottom: 1px solid #f0f1f5;
+      vertical-align: middle; color: var(--text-main);
+    }
+    .wl-table tr:last-child td { border-bottom: none; }
+    .wl-table tr:hover td { background: #f9fafc; }
+    .wl-email { font-weight: 600; color: var(--navy); }
+    .wl-date  { font-family: var(--brand); font-size: 0.68rem; color: var(--text-dim); white-space: nowrap; }
+
+    /* ── Acciones rápidas de fila ── */
+    .wl-actions { display: flex; gap: 0.35rem; }
+    .wl-btn {
+      padding: 0.2rem 0.6rem; font-size: 0.65rem; font-family: var(--brand); font-weight: 700;
+      border-radius: 5px; cursor: pointer; border: 1.5px solid; transition: all 0.15s;
+      white-space: nowrap; background: transparent;
+    }
+    .wl-btn-detail { border-color: var(--navy); color: var(--navy); }
+    .wl-btn-detail:hover { background: var(--navy); color: #fff; }
+    .wl-btn-email  { border-color: #2563eb; color: #2563eb; }
+    .wl-btn-email:hover  { background: #2563eb; color: #fff; }
+    .wl-btn-done   { border-color: var(--green); color: var(--green); }
+    .wl-btn-done:hover   { background: var(--green); color: #fff; }
+
+    /* ── Modal de contacto ── */
+    .wl-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .wl-modal-overlay.open { display: flex; }
+    .wl-modal {
+      background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto;
+    }
+    .wl-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .wl-modal-title { font-family: var(--brand); font-weight: 700; color: var(--navy); font-size: 0.9rem; }
+    .wl-modal-close {
+      width: 28px; height: 28px; border-radius: 50%; border: none; background: #f1f5f9;
+      cursor: pointer; font-size: 1rem; color: var(--text-dim); display: flex;
+      align-items: center; justify-content: center; transition: background 0.15s;
+    }
+    .wl-modal-close:hover { background: #e2e8f0; }
+    .wl-modal-body { padding: 1.5rem; }
+
+    /* Modal: sección de info */
+    .wl-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1.5rem; margin-bottom: 1.25rem; }
+    .wl-info-item {}
+    .wl-info-label {
+      font-family: var(--brand); font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.2rem;
+    }
+    .wl-info-val { font-size: 0.82rem; color: var(--text-main); font-weight: 500; }
+
+    /* Modal: timeline de emails */
+    .wl-timeline { margin: 1rem 0; }
+    .wl-timeline-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.5rem 0; border-bottom: 1px dashed #f0f1f5;
+    }
+    .wl-timeline-item:last-child { border-bottom: none; }
+    .wl-tl-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .wl-tl-dot.sent   { background: var(--green); }
+    .wl-tl-dot.pending{ background: #cbd5e1; }
+    .wl-tl-label { font-size: 0.75rem; color: var(--text-main); font-weight: 500; }
+    .wl-tl-date  { font-size: 0.65rem; color: var(--text-dim); margin-top: 0.1rem; font-family: var(--brand); }
+
+    /* Modal: notas */
+    .wl-notas-area {
+      width: 100%; min-height: 80px; padding: 0.6rem 0.75rem;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 0.8rem; font-family: inherit; color: var(--text-main);
+      resize: vertical; transition: border-color 0.15s; box-sizing: border-box;
+    }
+    .wl-notas-area:focus { outline: none; border-color: var(--navy); }
+
+    /* Modal: email quick actions */
+    .wl-email-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .wl-email-action {
+      padding: 0.4rem 0.85rem; font-size: 0.7rem; font-family: var(--brand); font-weight: 700;
+      border-radius: 6px; border: 1.5px solid; cursor: pointer; transition: all 0.15s;
+      background: transparent; letter-spacing: 0.03em;
+    }
+    .wl-ea-seguimiento1 { border-color: #0284c7; color: #0284c7; }
+    .wl-ea-seguimiento1:hover { background: #0284c7; color: #fff; }
+    .wl-ea-seguimiento2 { border-color: #7c3aed; color: #7c3aed; }
+    .wl-ea-seguimiento2:hover { background: #7c3aed; color: #fff; }
+    .wl-ea-onboarding { border-color: var(--green); color: var(--green); }
+    .wl-ea-onboarding:hover { background: var(--green); color: #fff; }
+
+    /* Empty state */
+    .wl-empty {
+      padding: 3rem 1rem; text-align: center;
+      font-family: var(--brand); font-size: 0.8rem; color: var(--text-dim);
+    }
+
+    /* Loading skeleton */
+    .wl-skeleton {
+      background: linear-gradient(90deg, #f0f1f5 25%, #e8eaf0 50%, #f0f1f5 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite;
+      border-radius: 4px; height: 0.8rem; margin: 0.2rem 0;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Status change in modal */
+    .wl-status-select {
+      padding: 0.3rem 0.6rem; font-size: 0.75rem; font-family: var(--brand); font-weight: 600;
+      border: 1.5px solid var(--border); border-radius: 6px; background: #fff;
+      color: var(--text-main); cursor: pointer;
+    }
+    .wl-status-select:focus { outline: none; border-color: var(--navy); }
+
+    /* Extra mensaje textarea */
+    .wl-extra-area {
+      width: 100%; padding: 0.5rem 0.65rem; border: 1.5px solid var(--border);
+      border-radius: 6px; font-size: 0.75rem; font-family: inherit;
+      color: var(--text-main); resize: vertical; min-height: 60px;
+      box-sizing: border-box; margin-top: 0.35rem;
+    }
+    .wl-extra-area:focus { outline: none; border-color: var(--navy); }
+
+    @media (max-width: 720px) {
+      .wl-info-grid { grid-template-columns: 1fr; }
+      .wl-table th:nth-child(n+4),
+      .wl-table td:nth-child(n+4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+          </div>
+        </div>
+
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item active" href="waitlist.html">Waitlist Beta</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Santaglia Compass</div>
+          <h1 class="page-heading">Waitlist · Beta CRM</h1>
+          <div class="page-meta" id="wl-meta">Cargando contactos…</div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-ghost" onclick="wlRefresh()">↻ Actualizar</button>
+        </div>
+      </div>
+
+      <!-- KPI bar -->
+      <div class="wl-kpi-bar">
+        <div class="wl-kpi">
+          <div class="wl-kpi-label">Total registros</div>
+          <div class="wl-kpi-val" id="kpi-total">—</div>
+        </div>
+        <div class="wl-kpi">
+          <div class="wl-kpi-label">Bienvenida enviada</div>
+          <div class="wl-kpi-val blue" id="kpi-bienvenida">—</div>
+        </div>
+        <div class="wl-kpi">
+          <div class="wl-kpi-label">En seguimiento</div>
+          <div class="wl-kpi-val amber" id="kpi-seguimiento">—</div>
+        </div>
+        <div class="wl-kpi">
+          <div class="wl-kpi-label">Onboarding completo</div>
+          <div class="wl-kpi-val green" id="kpi-onboarded">—</div>
+        </div>
+        <div class="wl-kpi">
+          <div class="wl-kpi-label">Pendientes</div>
+          <div class="wl-kpi-val" id="kpi-pendiente">—</div>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="wl-tabs" id="wl-tabs">
+        <button class="wl-tab active" data-filter="todos" onclick="wlSetFilter('todos', this)">Todos</button>
+        <button class="wl-tab" data-filter="pendiente" onclick="wlSetFilter('pendiente', this)">Pendiente</button>
+        <button class="wl-tab" data-filter="bienvenida" onclick="wlSetFilter('bienvenida', this)">Bienvenida enviada</button>
+        <button class="wl-tab" data-filter="seguimiento_1" onclick="wlSetFilter('seguimiento_1', this)">Seguimiento 1</button>
+        <button class="wl-tab" data-filter="seguimiento_2" onclick="wlSetFilter('seguimiento_2', this)">Seguimiento 2</button>
+        <button class="wl-tab" data-filter="onboarded" onclick="wlSetFilter('onboarded', this)">Onboarded</button>
+        <button class="wl-tab" data-filter="descartado" onclick="wlSetFilter('descartado', this)">Descartados</button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="wl-table-wrap">
+        <table class="wl-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Nombre</th>
+              <th>Estado</th>
+              <th>Fuente</th>
+              <th>Registro</th>
+              <th>Bienvenida</th>
+              <th>Seg. 1</th>
+              <th>Onboarding</th>
+              <th style="text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="wl-tbody">
+            <tr><td colspan="9"><div class="wl-empty">Cargando…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ── Modal de contacto ── -->
+<div class="wl-modal-overlay" id="wl-modal" onclick="if(event.target===this)wlCloseModal()">
+  <div class="wl-modal">
+    <div class="wl-modal-header">
+      <div class="wl-modal-title" id="modal-title">Contacto</div>
+      <button class="wl-modal-close" onclick="wlCloseModal()">✕</button>
+    </div>
+    <div class="wl-modal-body">
+
+      <!-- Info grid -->
+      <div class="wl-info-grid" id="modal-info"></div>
+
+      <!-- Estado -->
+      <div style="margin-bottom:1rem;">
+        <div class="wl-info-label" style="margin-bottom:.35rem;">Cambiar estado</div>
+        <select class="wl-status-select" id="modal-status-select" onchange="wlUpdateStatus()">
+          <option value="pendiente">Pendiente</option>
+          <option value="bienvenida">Bienvenida enviada</option>
+          <option value="seguimiento_1">Seguimiento 1</option>
+          <option value="seguimiento_2">Seguimiento 2</option>
+          <option value="onboarded">Onboarded ✓</option>
+          <option value="descartado">Descartado</option>
+        </select>
+      </div>
+
+      <!-- Timeline emails -->
+      <div style="margin-bottom:1.25rem;">
+        <div class="wl-info-label" style="margin-bottom:.5rem;">Historial de correos</div>
+        <div class="wl-timeline" id="modal-timeline"></div>
+      </div>
+
+      <!-- Envío de correos -->
+      <div style="margin-bottom:1.25rem;">
+        <div class="wl-info-label" style="margin-bottom:.4rem;">Enviar correo</div>
+        <div style="font-size:.72rem;color:var(--text-dim);margin-bottom:.5rem;">
+          Mensaje adicional opcional (aparece en el correo como nota destacada):
+        </div>
+        <textarea class="wl-extra-area" id="modal-extra" placeholder="Escribe un mensaje personalizado (opcional)…"></textarea>
+        <div class="wl-email-grid">
+          <button class="wl-email-action wl-ea-seguimiento1" onclick="wlSendEmail('followup_1')">
+            📧 Seguimiento 1
+          </button>
+          <button class="wl-email-action wl-ea-seguimiento2" onclick="wlSendEmail('followup_2')">
+            📧 Seguimiento 2
+          </button>
+          <button class="wl-email-action wl-ea-onboarding" onclick="wlSendEmail('onboarding')">
+            🧭 Enviar acceso (Onboarding)
+          </button>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div>
+        <div class="wl-info-label" style="margin-bottom:.4rem;">Notas internas</div>
+        <textarea class="wl-notas-area" id="modal-notas" placeholder="Agrega notas sobre este contacto…"></textarea>
+        <div style="margin-top:.5rem; text-align:right;">
+          <button class="btn btn-primary" style="font-size:.72rem; padding:.3rem .85rem;" onclick="wlSaveNotas()">
+            Guardar notas
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   WAITLIST CRM — lógica principal
+   ══════════════════════════════════════════════════════════════ */
+
+const SB_URL  = 'https://vblazgxsyidxttobiszt.supabase.co';
+const SB_KEY  = 'sb_publishable_T6iu_Tk9mxxXdBMngfqE8A_hPCH4cXA';
+const FN_BASE = SB_URL + '/functions/v1';
+
+let _sbWL     = null;   // cliente Supabase
+let _contacts = [];     // todos los contactos
+let _filter   = 'todos';
+let _current  = null;   // contacto abierto en modal
+
+/* ── Inicialización ── */
+window.addEventListener('DOMContentLoaded', async () => {
+  // Verificar sesión
+  const session = await _initSupabase().then(sb => sb.auth.getSession()).catch(() => null);
+  if (!session?.data?.session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  _sbWL = await _initSupabase();
+  await wlRefresh();
+});
+
+/* ── Cargar contactos desde Supabase ── */
+async function wlRefresh() {
+  document.getElementById('wl-meta').textContent = 'Actualizando…';
+  try {
+    const { data, error } = await _sbWL
+      .from('waitlist_contacts')
+      .select('*')
+      .order('submitted_at', { ascending: false });
+
+    if (error) throw error;
+    _contacts = data || [];
+    wlUpdateKPIs();
+    wlRenderTable();
+    document.getElementById('wl-meta').textContent =
+      `${_contacts.length} contacto${_contacts.length !== 1 ? 's' : ''} · actualizado ${_fmtTime(new Date())}`;
+  } catch(e) {
+    toast('Error al cargar waitlist: ' + (e.message || e), 'error');
+    document.getElementById('wl-meta').textContent = 'Error al cargar';
+  }
+}
+
+/* ── KPIs ── */
+function wlUpdateKPIs() {
+  const c = _contacts;
+  document.getElementById('kpi-total').textContent        = c.length;
+  document.getElementById('kpi-bienvenida').textContent   = c.filter(x => x.status === 'bienvenida').length;
+  document.getElementById('kpi-seguimiento').textContent  = c.filter(x => x.status === 'seguimiento_1' || x.status === 'seguimiento_2').length;
+  document.getElementById('kpi-onboarded').textContent    = c.filter(x => x.status === 'onboarded').length;
+  document.getElementById('kpi-pendiente').textContent    = c.filter(x => x.status === 'pendiente').length;
+}
+
+/* ── Tabla ── */
+function wlRenderTable() {
+  const filtered = _filter === 'todos' ? _contacts : _contacts.filter(c => c.status === _filter);
+  const tbody = document.getElementById('wl-tbody');
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="wl-empty">Sin contactos en esta categoría</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => `
+    <tr>
+      <td><span class="wl-email">${_esc(c.email)}</span></td>
+      <td>${_esc(c.nombre || '—')}</td>
+      <td>${_statusBadge(c.status)}</td>
+      <td style="font-size:.7rem;color:var(--text-dim);">${_esc(c.fuente || '—')}</td>
+      <td><span class="wl-date">${_fmtDate(c.submitted_at)}</span></td>
+      <td><span class="wl-date">${c.welcome_sent_at ? '✓ ' + _fmtDate(c.welcome_sent_at) : '—'}</span></td>
+      <td><span class="wl-date">${c.followup_1_sent_at ? '✓ ' + _fmtDate(c.followup_1_sent_at) : '—'}</span></td>
+      <td><span class="wl-date">${c.onboarding_at ? '✓ ' + _fmtDate(c.onboarding_at) : '—'}</span></td>
+      <td>
+        <div class="wl-actions" style="justify-content:center;">
+          <button class="wl-btn wl-btn-detail" onclick="wlOpenModal('${c.id}')">Ver</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/* ── Filtros ── */
+function wlSetFilter(filter, btn) {
+  _filter = filter;
+  document.querySelectorAll('.wl-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  wlRenderTable();
+}
+
+/* ── Modal ── */
+function wlOpenModal(id) {
+  const c = _contacts.find(x => x.id === id);
+  if (!c) return;
+  _current = c;
+
+  document.getElementById('modal-title').textContent = c.email;
+  document.getElementById('modal-status-select').value = c.status || 'pendiente';
+  document.getElementById('modal-notas').value = c.notas || '';
+  document.getElementById('modal-extra').value = '';
+
+  // Info grid
+  const infoItems = [
+    { label: 'Email',    val: c.email },
+    { label: 'Nombre',   val: c.nombre || '—' },
+    { label: 'Fuente',   val: c.fuente || '—' },
+    { label: 'Registro', val: _fmtDateLong(c.submitted_at) },
+    { label: 'Estado',   val: _statusBadge(c.status) },
+    { label: 'Referido por', val: c.referido_por || '—' },
+  ];
+  document.getElementById('modal-info').innerHTML = infoItems.map(i =>
+    `<div class="wl-info-item">
+      <div class="wl-info-label">${i.label}</div>
+      <div class="wl-info-val">${i.val}</div>
+    </div>`
+  ).join('');
+
+  // Timeline
+  const tl = [
+    { label: 'Correo de bienvenida', date: c.welcome_sent_at,    tipo: 'bienvenida' },
+    { label: 'Seguimiento 1',        date: c.followup_1_sent_at, tipo: 'followup_1' },
+    { label: 'Seguimiento 2',        date: c.followup_2_sent_at, tipo: 'followup_2' },
+    { label: 'Onboarding',           date: c.onboarding_at,      tipo: 'onboarding' },
+  ];
+  document.getElementById('modal-timeline').innerHTML = tl.map(t => `
+    <div class="wl-timeline-item">
+      <div class="wl-tl-dot ${t.date ? 'sent' : 'pending'}"></div>
+      <div>
+        <div class="wl-tl-label">${t.label}</div>
+        <div class="wl-tl-date">${t.date ? '✓ Enviado ' + _fmtDateLong(t.date) : 'Pendiente'}</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('wl-modal').classList.add('open');
+}
+
+function wlCloseModal() {
+  document.getElementById('wl-modal').classList.remove('open');
+  _current = null;
+}
+
+/* ── Cambiar estado ── */
+async function wlUpdateStatus() {
+  if (!_current) return;
+  const newStatus = document.getElementById('modal-status-select').value;
+  const { error } = await _sbWL
+    .from('waitlist_contacts')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', _current.id);
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  _current.status = newStatus;
+  _contacts = _contacts.map(c => c.id === _current.id ? { ...c, status: newStatus } : c);
+  wlUpdateKPIs();
+  wlRenderTable();
+  toast('Estado actualizado', 'success');
+}
+
+/* ── Guardar notas ── */
+async function wlSaveNotas() {
+  if (!_current) return;
+  const notas = document.getElementById('modal-notas').value.trim();
+  const { error } = await _sbWL
+    .from('waitlist_contacts')
+    .update({ notas, updated_at: new Date().toISOString() })
+    .eq('id', _current.id);
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  _current.notas = notas;
+  _contacts = _contacts.map(c => c.id === _current.id ? { ...c, notas } : c);
+  toast('Notas guardadas', 'success');
+}
+
+/* ── Enviar email de seguimiento ── */
+async function wlSendEmail(emailType) {
+  if (!_current) return;
+  const labels = {
+    followup_1: 'Seguimiento 1',
+    followup_2: 'Seguimiento 2',
+    onboarding: 'Onboarding',
+  };
+  if (!confirm(`¿Enviar correo "${labels[emailType]}" a ${_current.email}?`)) return;
+
+  const mensajeExtra = document.getElementById('modal-extra').value.trim();
+
+  // Obtener sesión para el token de auth
+  const { data: { session } } = await _sbWL.auth.getSession();
+  if (!session) { toast('Sesión expirada. Recarga la página.', 'error'); return; }
+
+  const btn = event.target;
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+
+  try {
+    const res = await fetch(`${FN_BASE}/waitlist-send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({
+        contact_id: _current.id,
+        email_type: emailType,
+        mensaje_extra: mensajeExtra,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+
+    toast(`✉️ Correo "${labels[emailType]}" enviado a ${_current.email}`, 'success');
+    document.getElementById('modal-extra').value = '';
+    await wlRefresh();
+    // Reabrir modal con datos frescos
+    const fresh = _contacts.find(c => c.id === _current.id);
+    if (fresh) wlOpenModal(fresh.id);
+
+  } catch(e) {
+    toast('Error al enviar: ' + (e.message || e), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+/* ── Helpers ── */
+function _statusBadge(status) {
+  const labels = {
+    pendiente:     'Pendiente',
+    bienvenida:    'Bienvenida ✓',
+    seguimiento_1: 'Seguimiento 1',
+    seguimiento_2: 'Seguimiento 2',
+    onboarded:     'Onboarded ✓',
+    descartado:    'Descartado',
+  };
+  return `<span class="wl-badge ${status || 'pendiente'}">${labels[status] || status || 'Pendiente'}</span>`;
+}
+
+function _fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'2-digit' });
+}
+
+function _fmtDateLong(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function _fmtTime(d) {
+  return d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+}
+
+function _esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
