@@ -328,34 +328,34 @@
             <table class="mov-table">
               <thead>
                 <tr>
-                  <th style="min-width:86px;">Fecha</th>
-                  <th style="min-width:80px;">Mov.</th>
-                  <th style="min-width:100px;">Tipo</th>
-                  <th style="min-width:180px;">Descripción</th>
-                  <th style="min-width:140px;">Concepto</th>
-                  <th style="min-width:110px;">Cuenta Bancaria</th>
-                  <th style="min-width:110px;">Cuenta Contable</th>
-                  <th style="min-width:100px;">Folio Fiscal</th>
-                  <th style="min-width:110px;">Origen</th>
-                  <th style="min-width:130px;">Destinatario</th>
-                  <th class="num" style="min-width:88px;">Entradas</th>
-                  <th class="num" style="min-width:88px;">Salidas</th>
-                  <th class="num" style="min-width:90px;">Conciliado</th>
-                  <th style="min-width:110px;">Contabilizado</th>
-                  <th style="min-width:80px;">CFDI</th>
+                  <th style="min-width:86px;" title="Fecha de operación del movimiento (AAAA-MM-DD)">Fecha</th>
+                  <th style="min-width:80px;" title="Flujo de efectivo: Ingresos (entrada), Egresos (salida), General (traslado interno). NIF B-2: Actividades de Operación.">Flujo</th>
+                  <th style="min-width:100px;" title="Naturaleza del movimiento: Nómina Asimilable, Honorarios, Gastos de Adm., Gastos de Venta, Gastos Financieros, Ingreso por Servicios, Inversión, Fiscal, etc.">Naturaleza</th>
+                  <th style="min-width:180px;" title="Descripción que aparece en el estado de cuenta bancario (texto del banco)">Concepto del banco</th>
+                  <th style="min-width:140px;" title="Rubro contable interno: clasifica el movimiento según el catálogo de cuentas (NIF / SAT). Ej: 601 Gastos de Adm., 401 Ingresos por Servicios.">Rubro Contable</th>
+                  <th style="min-width:110px;" title="Cuenta bancaria donde se registró el movimiento">Cuenta Bancaria</th>
+                  <th style="min-width:110px;" title="Cuenta contable conforme al Catálogo SAT (Art. 28 CFF) o plan de cuentas NIF. Se usa para pólizas contables y Contabilidad Electrónica.">Cta. Contable / NIF</th>
+                  <th style="min-width:100px;" title="UUID del CFDI emitido o recibido (folio fiscal de 36 caracteres). Requerido para deducción fiscal (Art. 29-A CFF).">UUID / CFDI</th>
+                  <th style="min-width:110px;" title="Emisor del pago o del CFDI (RFC o nombre). Equivale al campo 'Emisor' en CFDI 4.0.">Emisor / RFC</th>
+                  <th style="min-width:130px;" title="Receptor del pago o del CFDI (RFC o nombre). Equivale al campo 'Receptor' en CFDI 4.0.">Receptor / RFC</th>
+                  <th class="num" style="min-width:88px;" title="Entradas de efectivo (cobros, abonos, ingresos). NIF B-2: flujos positivos de efectivo.">Entradas ↓</th>
+                  <th class="num" style="min-width:88px;" title="Salidas de efectivo (pagos, cargos, egresos). NIF B-2: flujos negativos de efectivo.">Salidas ↑</th>
+                  <th class="num" style="min-width:90px;" title="Conciliado: el movimiento bancario coincide con el registro contable / CFDI correspondiente.">Conciliado</th>
+                  <th style="min-width:110px;" title="Registrado en póliza contable por el despacho / contador. Equivale a 'Contabilidad Electrónica generada' (Art. 28 CFF).">Póliza / Reg.</th>
+                  <th style="min-width:80px;" title="Comprobante Fiscal Digital (CFDI 4.0): Con CFDI = deducible; Pendiente = sin soporte fiscal; N/A = no aplica (nómina asimilable, traslados, etc.)">CFDI</th>
                   <th style="width:28px;"></th>
                 </tr>
                 <tr class="mov-filter-row">
-                  <td><input type="text" id="mcf-fecha"      placeholder="2024-03…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-fecha"      placeholder="AAAA-MM-DD…" oninput="filterMovimientos()" /></td>
                   <td><select id="mcf-mov" onchange="filterMovimientos()"><option value="">Todos</option></select></td>
-                  <td><input type="text" id="mcf-tipo"       placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-desc"       placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-concepto"   placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-cuenta"     placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-cuentaCont" placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-folio"      placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-origen"     placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
-                  <td><input type="text" id="mcf-dest"       placeholder="Filtrar…"  oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-tipo"       placeholder="Naturaleza…" oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-desc"       placeholder="Banco…"    oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-concepto"   placeholder="Rubro…"    oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-cuenta"     placeholder="Banco…"    oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-cuentaCont" placeholder="Cta. NIF…" oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-folio"      placeholder="UUID…"     oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-origen"     placeholder="RFC…"      oninput="filterMovimientos()" /></td>
+                  <td><input type="text" id="mcf-dest"       placeholder="RFC…"      oninput="filterMovimientos()" /></td>
                   <td><input type="text" id="mcf-entradas"   placeholder="≥ monto"   oninput="filterMovimientos()" /></td>
                   <td><input type="text" id="mcf-salidas"    placeholder="≥ monto"   oninput="filterMovimientos()" /></td>
                   <td>
@@ -829,9 +829,37 @@
         <!-- Normal section: Egresos / Ingresos -->
         <div id="nm-sect-normal" style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem 1.25rem; margin-bottom:0.9rem;">
           <div class="form-group">
-            <label class="form-label">Tipo</label>
-            <input class="form-input" id="nm-tipo" type="text" placeholder="Gastos, Facturación…" list="nm-tipo-list" />
-            <datalist id="nm-tipo-list"></datalist>
+            <label class="form-label" title="Naturaleza del movimiento conforme a NIF/SAT. Ej: 401 Ingresos por Servicios, 511 Sueldos, 601 Gastos de Adm., 613 Activo Fijo.">Naturaleza del movimiento</label>
+            <input class="form-input" id="nm-tipo" type="text" placeholder="601 Gastos, 401 Ingresos, 511 Nómina…" list="nm-tipo-list" />
+            <datalist id="nm-tipo-list">
+              <option value="401 Ingresos por Servicios Prestados">
+              <option value="403 Anticipos de Clientes">
+              <option value="407 Productos Financieros: Intereses Ganados">
+              <option value="501 Costo de lo Vendido / Costo de Servicios">
+              <option value="511 Sueldos, Salarios y Prestaciones">
+              <option value="513 Honorarios y Servicios Profesionales">
+              <option value="601 Gastos de Administración: Por Clasificar">
+              <option value="601 Gastos de Administración: Renta de Oficina / Local">
+              <option value="601 Gastos de Administración: Seguros y Fianzas">
+              <option value="601 Gastos de Administración: Cuotas y Suscripciones TI">
+              <option value="601 Gastos de Comunicación: Internet y Telefonía">
+              <option value="601 Gastos de Personal: Salud y Bienestar">
+              <option value="601 Gastos de Transporte: Combustibles y Lubricantes">
+              <option value="601 Gastos de Transporte: Casetas y Peajes">
+              <option value="603 Gastos de Representación: Alimentos y Entretenimiento">
+              <option value="603 Gastos de Representación: Viajes y Hospedaje">
+              <option value="613 Activo Fijo: Equipo de Cómputo — ⚠ Verificar con contador">
+              <option value="701 Gastos de Venta: Publicidad y Mercadotecnia">
+              <option value="801 ISR — Pago Provisional / Retención">
+              <option value="801 IVA — Pago / Complemento de Pago">
+              <option value="801 Impuestos y Derechos Gubernamentales">
+              <option value="802 Gastos No Deducibles: Multas y Recargos">
+              <option value="901 Gastos Financieros: Comisiones Bancarias">
+              <option value="901 Gastos Financieros: Intereses a Cargo">
+              <option value="Nómina Asimilable">
+              <option value="Pago Tarjeta de Crédito">
+              <option value="Traspaso entre Cuentas">
+            </datalist>
           </div>
           <div class="form-group">
             <label class="form-label" id="nm-label-monto">Salidas *</label>
@@ -845,12 +873,12 @@
             <!-- intentionally empty -->
           </div>
           <div class="form-group">
-            <label class="form-label">Origen</label>
-            <input class="form-input" id="nm-origen" type="text" placeholder="Quién envía / paga" />
+            <label class="form-label" title="Emisor del pago o del CFDI — RFC o nombre del pagador. Campo 'Emisor' en CFDI 4.0.">Emisor / RFC origen</label>
+            <input class="form-input" id="nm-origen" type="text" placeholder="RFC o nombre del que paga / emite" />
           </div>
           <div class="form-group">
-            <label class="form-label">Destinatario</label>
-            <input class="form-input" id="nm-dest" type="text" placeholder="Quién recibe" />
+            <label class="form-label" title="Receptor del pago o del CFDI — RFC o nombre del beneficiario. Campo 'Receptor' en CFDI 4.0.">Receptor / RFC destino</label>
+            <input class="form-input" id="nm-dest" type="text" placeholder="RFC o nombre del que recibe" />
           </div>
         </div>
 
@@ -902,7 +930,7 @@
 
           <!-- Cuenta Contable smart -->
           <div class="form-group" style="grid-column:span 2;">
-            <label class="form-label">Cuenta Contable</label>
+            <label class="form-label" title="Cuenta contable conforme al Catálogo SAT (Art. 28 CFF). Prefijos: 4xx Ingresos · 5xx Costo · 6xx Gastos Adm. · 7xx Gastos Vta. · 8xx Fiscal · 9xx Financiero.">Cuenta Contable / NIF–SAT</label>
             <select class="form-input" id="nm-cc-sel" onchange="nmSmartSel('cc')"></select>
             <div id="nm-cc-add" style="display:none; gap:0.4rem; margin-top:0.4rem; align-items:center;">
               <input class="form-input" id="nm-cc-inp" type="text" placeholder="Nueva cuenta contable…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();nmSmartConfirm('cc')}" />
@@ -913,8 +941,8 @@
 
           <!-- Folio -->
           <div class="form-group" style="grid-column:span 2;">
-            <label class="form-label">Folio Fiscal / Referencia</label>
-            <input class="form-input" id="nm-folio" type="text" placeholder="UUID, número de referencia, etc." />
+            <label class="form-label" title="UUID del CFDI emitido o recibido (36 caracteres: 8-4-4-4-12 hex). Requerido para deducciones (Art. 29-A CFF). También acepta número de referencia bancaria si no hay CFDI.">UUID CFDI / Folio Fiscal</label>
+            <input class="form-input" id="nm-folio" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (UUID) o referencia bancaria" />
           </div>
 
         </div>
@@ -1648,27 +1676,65 @@
       return header.findIndex(h => keywords.some(k => h.includes(k)));
     }
 
-    /* Mapeo de categorías (Clara y similares) → descripción contable */
+    /* Mapeo de categorías (Clara y similares) → descripción contable alineada NIF / Catálogo SAT.
+       Referencia: Catálogo de Cuentas SAT (Art. 28 CFF), NIF B-2 y LISR Art. 28 (deducciones).
+       Prefijos numéricos opcionales: 4xx = Ingresos · 5xx = Costo · 6xx = Gastos Adm. · 7xx = Gastos Vta.
+       Hardware = posible Activo Fijo (NIF C-6) — marcar para revisión del contador. */
     const _CSV_CAT_MAP = {
-      'alimentos'              : 'Gastos de Representación: Alimentos y Entretenimiento',
-      'software'               : 'Gastos de Administración: Cuotas y Suscripciones',
-      'hardware'               : 'Gastos de Administración: Cuotas y Suscripciones',
-      'comunicaciones'         : 'Gastos de Comunicación: Líneas Celulares',
-      'transporte'             : 'Gastos de Transporte: Casetas y Peajes',
-      'salud'                  : 'Gastos de Personal: Salud y Bienestar',
-      'servicios profesionales': 'Honorarios y Servicios Profesionales',
-      'pagos gubernamentales'  : 'Impuestos y Derechos Gubernamentales',
-      'combustibles'           : 'Gastos de Transporte: Combustibles',
-      'viajes'                 : 'Gastos de Representación: Viajes',
-      'comercio digital'       : 'Gastos de Administración: Cuotas y Suscripciones',
-      'restaurantes'           : 'Gastos de Representación: Alimentos y Entretenimiento',
+      /* ── Ingresos (4xx) ── */
+      'cobro'                  : '401 Ingresos por Servicios Prestados',
+      'ingreso'                : '401 Ingresos por Servicios Prestados',
+      'factura cobrada'        : '401 Ingresos por Servicios Prestados',
+      'anticipo cliente'       : '403 Anticipos de Clientes',
+      'devolucion cliente'     : '402 Devoluciones y Descuentos sobre Ventas',
+      'intereses ganados'      : '407 Productos Financieros: Intereses Ganados',
+      /* ── Costos (5xx) ── */
+      'costo'                  : '501 Costo de lo Vendido / Costo de Servicios',
+      /* ── Gastos de Administración (6xx) ── */
+      'alimentos'              : '603 Gastos de Representación: Alimentos y Entretenimiento',
+      'restaurantes'           : '603 Gastos de Representación: Alimentos y Entretenimiento',
+      'software'               : '601 Gastos de Administración: Cuotas y Suscripciones TI',
+      'hardware'               : '613 Activo Fijo: Equipo de Cómputo — ⚠ Verificar si es gasto o inversión (NIF C-6)',
+      'comunicaciones'         : '601 Gastos de Comunicación: Internet y Telefonía',
+      'internet'               : '601 Gastos de Comunicación: Internet y Telefonía',
+      'telefonia'              : '601 Gastos de Comunicación: Líneas Celulares',
+      'salud'                  : '601 Gastos de Personal: Salud y Bienestar',
+      'renta'                  : '601 Gastos de Administración: Renta de Oficina / Local',
+      'arrendamiento'          : '601 Gastos de Administración: Renta de Oficina / Local',
+      'seguros'                : '601 Gastos de Administración: Seguros y Fianzas',
+      'papeleria'              : '601 Gastos de Administración: Papelería y Útiles de Oficina',
+      'limpieza'               : '601 Gastos de Administración: Limpieza y Mantenimiento',
+      'mantenimiento'          : '601 Gastos de Administración: Mantenimiento y Reparaciones',
+      'nomina'                 : '511 Sueldos, Salarios y Prestaciones',
+      'servicios profesionales': '513 Honorarios y Servicios Profesionales',
+      'honorarios'             : '513 Honorarios y Servicios Profesionales',
+      'comercio digital'       : '601 Gastos de Administración: Cuotas y Suscripciones TI',
+      /* ── Gastos de Venta (7xx) ── */
+      'publicidad'             : '701 Gastos de Venta: Publicidad y Mercadotecnia',
+      'marketing'              : '701 Gastos de Venta: Publicidad y Mercadotecnia',
+      'comisiones venta'       : '702 Gastos de Venta: Comisiones a Vendedores',
+      'viajes'                 : '703 Gastos de Representación: Viajes y Hospedaje',
+      /* ── Transporte (6xx/7xx) ── */
+      'transporte'             : '601 Gastos de Transporte: Fletes y Acarreos',
+      'combustibles'           : '601 Gastos de Transporte: Combustibles y Lubricantes',
+      'casetas'                : '601 Gastos de Transporte: Casetas y Peajes',
+      /* ── Fiscal / Gubernamental (8xx) ── */
+      'pagos gubernamentales'  : '801 Impuestos y Derechos Gubernamentales',
+      'impuestos'              : '801 Impuestos y Contribuciones a Cargo',
+      'multas'                 : '802 Gastos No Deducibles: Multas y Recargos',
+      'recargos'               : '802 Gastos No Deducibles: Multas y Recargos',
+      'isr'                    : '801 ISR — Pago Provisional / Retención',
+      'iva'                    : '801 IVA — Pago / Complemento de Pago',
+      /* ── Financieros (9xx) ── */
+      'intereses bancarios'    : '901 Gastos Financieros: Intereses a Cargo',
+      'comisiones bancarias'   : '901 Gastos Financieros: Comisiones Bancarias',
+      'tipo de cambio'         : '902 Gastos Financieros: Pérdida Cambiaria',
     };
     function _csvCategoria(raw) {
       const k = _csvNorm(raw);
       for (const [key, val] of Object.entries(_CSV_CAT_MAP)) { if (k.includes(key)) return val; }
-      return 'Gastos de Administración';
+      return '601 Gastos de Administración: Por Clasificar';
     }
-
     /* ── Enriquecimiento: copia desc/cuentaCont de movimientos ya conocidos ── */
     function _csvEnrich(movimientos) {
       const existentes = [...getExcelMovData(), ...loadRegistry('stgl_mov_manual')];
@@ -1677,8 +1743,8 @@
       existentes.forEach(ex => {
         if (!ex.concepto) return;
         const key = _csvNorm(ex.concepto).substring(0, 20);
-        if (!lookup.has(key) && ex.desc && ex.desc !== 'Gastos de Administración') {
-          lookup.set(key, { desc: ex.desc, cuentaCont: ex.cuentaCont || 'No Existe' });
+        if (!lookup.has(key) && ex.desc && ex.desc !== '601 Gastos de Administración: Por Clasificar') {
+          lookup.set(key, { desc: ex.desc, cuentaCont: ex.cuentaCont || 'Por Clasificar' });
         }
       });
       movimientos.forEach(m => {
@@ -1686,7 +1752,7 @@
         const hit = lookup.get(key);
         if (hit) {
           m.desc = hit.desc;
-          if (hit.cuentaCont && hit.cuentaCont !== 'No Existe') m.cuentaCont = hit.cuentaCont;
+          if (hit.cuentaCont && hit.cuentaCont !== 'Por Clasificar') m.cuentaCont = hit.cuentaCont;
           m._enriched = true;
         } else {
           m._sinConcepto = true;
@@ -1802,10 +1868,10 @@
         movimientos.push({
           id: uid, fecha,
           mov      : (entradas && !salidas) ? 'Ingresos' : 'Egresos',
-          tipo     : esPago ? 'Pagos Tarjeta' : 'Gastos',
+          tipo     : esPago ? 'Pago Tarjeta de Crédito' : 'Gastos de Administración',
           desc     : descContable,
           concepto : descripcion,
-          cuenta, cuentaCont: 'No Existe', folio: '',
+          cuenta, cuentaCont: 'Por Clasificar', folio: '',
           origen   : alias || perfil.nombre,
           dest     : descripcion.substring(0, 40),
           entradas : entradas || null,
@@ -3067,14 +3133,56 @@
     }
     function nmSaveCat(cat) { localStorage.setItem(KEY_NM_CAT, JSON.stringify(cat)); }
 
+    /* Catálogo base NIF/SAT de cuentas contables — se inyecta siempre en el dropdown cc */
+    const _NIF_SAT_CC_BASE = [
+      '401 Ingresos por Servicios Prestados',
+      '401 Ventas de Bienes',
+      '402 Devoluciones y Descuentos sobre Ventas',
+      '403 Anticipos de Clientes',
+      '407 Productos Financieros: Intereses Ganados',
+      '501 Costo de lo Vendido / Costo de Servicios',
+      '511 Sueldos, Salarios y Prestaciones',
+      '513 Honorarios y Servicios Profesionales',
+      '601 Gastos de Administración: Por Clasificar',
+      '601 Gastos de Administración: Renta de Oficina / Local',
+      '601 Gastos de Administración: Seguros y Fianzas',
+      '601 Gastos de Administración: Cuotas y Suscripciones TI',
+      '601 Gastos de Administración: Papelería y Útiles de Oficina',
+      '601 Gastos de Administración: Limpieza y Mantenimiento',
+      '601 Gastos de Comunicación: Internet y Telefonía',
+      '601 Gastos de Personal: Salud y Bienestar',
+      '601 Gastos de Transporte: Combustibles y Lubricantes',
+      '601 Gastos de Transporte: Casetas y Peajes',
+      '603 Gastos de Representación: Alimentos y Entretenimiento',
+      '603 Gastos de Representación: Viajes y Hospedaje',
+      '613 Activo Fijo: Equipo de Cómputo',
+      '613 Activo Fijo: Mobiliario y Equipo de Oficina',
+      '613 Activo Fijo: Vehículos',
+      '701 Gastos de Venta: Publicidad y Mercadotecnia',
+      '702 Gastos de Venta: Comisiones a Vendedores',
+      '801 ISR — Pago Provisional / Retención',
+      '801 IVA — Pago / Complemento de Pago',
+      '801 Impuestos y Derechos Gubernamentales',
+      '802 Gastos No Deducibles: Multas y Recargos',
+      '901 Gastos Financieros: Comisiones Bancarias',
+      '901 Gastos Financieros: Intereses a Cargo',
+      '902 Gastos Financieros: Pérdida Cambiaria',
+      'Nómina Asimilable',
+      'Pago Tarjeta de Crédito',
+      'Por Clasificar',
+      'Traspaso entre Cuentas',
+    ];
+
     function nmSeedCat() {
       const cat = nmGetCat();
-      if (cat.desc?.length || cat.conc?.length || cat.cc?.length) return;
       const data = getAllMovData();
       const uniq = key => [...new Set(data.map(r => r[key]).filter(Boolean))].sort();
-      cat.desc = uniq('desc').slice(0, 150);
-      cat.conc = uniq('concepto').slice(0, 150);
-      cat.cc   = uniq('cuentaCont').slice(0, 100);
+      if (!cat.desc?.length) cat.desc = uniq('desc').slice(0, 150);
+      if (!cat.conc?.length) cat.conc = uniq('concepto').slice(0, 150);
+      // cc: always merge base catalog + existing data values, dedup, sort
+      const existingCC = uniq('cuentaCont');
+      const merged = [...new Set([..._NIF_SAT_CC_BASE, ...existingCC])].sort();
+      cat.cc = merged.slice(0, 200);
       nmSaveCat(cat);
     }
 

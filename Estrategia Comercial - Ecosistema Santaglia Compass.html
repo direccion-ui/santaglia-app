@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estrategia Comercial — Ecosistema Santaglia Compass</title>
+<style>
+:root {
+  --navy:#1a2b4a; --gold:#c8a84b; --green:#16a34a; --red:#dc2626;
+  --blue:#2563eb; --purple:#7c3aed; --orange:#ea580c; --teal:#0d9488;
+  --slate:#475569; --bg:#f8f9fc; --white:#fff; --border:#e2e6f0;
+  --text:#1e293b; --dim:#64748b; --xs:#94a3b8;
+  --brand:'Georgia',serif; --sans:system-ui,-apple-system,sans-serif;
+  --radius:10px; --shadow:0 2px 12px rgba(0,0,0,.07);
+  --t1:#1a2b4a; --t1l:#e8eaf0;
+  --t2:#2563eb; --t2l:#dbeafe;
+  --t3:#7c3aed; --t3l:#ede9fe;
+  --t4:#0d9488; --t4l:#ccfbf1;
+  --t5:#ea580c; --t5l:#ffedd5;
+  --t6:#16a34a; --t6l:#dcfce7;
+  --t7:#c8a84b; --t7l:#fef9c3;
+  --t8:#475569; --t8l:#f1f5f9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;}
+.page{max-width:1080px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+
+/* Cover */
+.cover{background:linear-gradient(135deg,var(--navy) 0%,#0f1e38 55%,#1a3a6a 100%);
+  color:#fff;border-radius:16px;padding:3.5rem 3rem 3rem;margin-bottom:2.5rem;position:relative;overflow:hidden;}
+.cover::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,168,75,.18) 0%,transparent 70%);}
+.cover-badge{display:inline-block;background:rgba(200,168,75,.15);border:1px solid rgba(200,168,75,.4);
+  color:var(--gold);font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:.3rem .75rem;border-radius:20px;margin-bottom:1.25rem;}
+.cover-title{font-family:var(--brand);font-size:2.3rem;font-weight:400;line-height:1.2;margin-bottom:.5rem;}
+.cover-sub{font-family:var(--brand);font-size:1.05rem;color:rgba(255,255,255,.6);margin-bottom:2rem;}
+.cover-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.ckpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.9rem;text-align:center;}
+.ckpi-val{font-family:var(--brand);font-size:1.5rem;color:var(--gold);font-weight:700;}
+.ckpi-lbl{font-size:.62rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem;}
+
+/* Sections */
+.section{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);
+  padding:2rem;margin-bottom:1.5rem;box-shadow:var(--shadow);}
+.section-label{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim);background:var(--bg);border:1px solid var(--border);
+  padding:.2rem .6rem;border-radius:4px;margin-bottom:.75rem;}
+.section-title{font-family:var(--brand);font-size:1.3rem;color:var(--navy);margin-bottom:.3rem;}
+.section-sub{font-size:.82rem;color:var(--dim);margin-bottom:1.5rem;}
+p{font-size:.82rem;color:var(--dim);line-height:1.65;margin-bottom:.75rem;}
+p:last-child{margin-bottom:0;}
+
+/* Pillars grid */
+.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem;}
+.pillar{border-radius:10px;padding:1rem;border:1px solid var(--border);}
+.pillar-icon{font-size:1.4rem;margin-bottom:.35rem;}
+.pillar-name{font-family:var(--brand);font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.25rem;}
+.pillar-desc{font-size:.67rem;color:var(--dim);line-height:1.4;}
+
+/* KPI master table */
+.kpi-table{width:100%;border-collapse:collapse;font-size:.74rem;}
+.kpi-table th{background:var(--navy);color:#fff;padding:.45rem .75rem;text-align:left;font-size:.64rem;letter-spacing:.04em;}
+.kpi-table td{padding:.4rem .75rem;border-bottom:1px solid var(--border);}
+.kpi-table tr:last-child td{border-bottom:none;}
+.kpi-table tr:hover td{background:#f8f9fc;}
+.kpi-tag{font-size:.58rem;font-weight:700;padding:.1rem .4rem;border-radius:3px;}
+.kpi-north{background:#dcfce7;color:#15803d;}
+.kpi-lead{background:#dbeafe;color:#1e40af;}
+.kpi-health{background:#fef9c3;color:#854d0e;}
+
+/* Tactic cards */
+.tactic-card{border-radius:12px;border:1px solid var(--border);margin-bottom:1.25rem;overflow:hidden;}
+.tactic-header{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border);}
+.tactic-color-bar{width:4px;height:40px;border-radius:2px;flex-shrink:0;}
+.tactic-emoji{font-size:1.4rem;flex-shrink:0;}
+.tactic-meta{flex:1;}
+.tactic-name{font-family:var(--brand);font-size:.98rem;font-weight:700;color:var(--navy);}
+.tactic-kpi{font-size:.66rem;color:var(--dim);margin-top:.1rem;}
+.tactic-body{padding:1.1rem 1.25rem;}
+.tactic-objetivo{font-size:.78rem;color:var(--dim);margin-bottom:1rem;line-height:1.5;
+  border-left:3px solid var(--border);padding-left:.65rem;}
+.tasks-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.task-item{display:flex;gap:.5rem;align-items:flex-start;padding:.45rem .6rem;
+  border-radius:6px;background:var(--bg);border:1px solid var(--border);font-size:.71rem;}
+.task-num{font-weight:700;flex-shrink:0;font-size:.68rem;opacity:.6;}
+.task-text{line-height:1.4;color:var(--text);}
+.task-q{font-size:.6rem;color:var(--xs);margin-top:.15rem;font-style:italic;}
+.task-tag{display:inline-block;font-size:.58rem;font-weight:700;padding:.08rem .35rem;border-radius:3px;
+  margin-left:.3rem;vertical-align:middle;}
+
+/* Callouts */
+.callout{border-radius:10px;padding:1rem 1.25rem;margin:1rem 0;font-size:.78rem;line-height:1.5;}
+.callout-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+.callout-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;}
+.callout-gold{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
+.callout-title{font-weight:700;margin-bottom:.25rem;}
+
+/* Milestone strip */
+.milestone-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem;}
+.ms-card{border-radius:10px;padding:.9rem;text-align:center;border:2px solid;}
+.ms-period{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:.2rem;}
+.ms-val{font-family:var(--brand);font-size:1.25rem;font-weight:700;margin-bottom:.15rem;}
+.ms-label{font-size:.62rem;color:var(--dim);line-height:1.3;}
+.ms-tag{font-size:.58rem;font-weight:700;background:currentColor;opacity:.12;border-radius:3px;padding:.1rem .35rem;}
+
+/* Gantt */
+#gantt-wrap{overflow-x:auto;margin-top:1.25rem;}
+#gantt-container{min-width:1100px;}
+.gantt-milestone-row{display:grid;gap:0;margin-bottom:.5rem;}
+.g-ms-cell{text-align:center;font-size:.6rem;font-weight:700;padding:.3rem .25rem;background:var(--bg);border-radius:4px;border:1px solid var(--border);}
+.g-ms-cell.active{color:#fff;border-color:transparent;}
+.gantt-header{display:grid;gap:0;border-bottom:2px solid var(--navy);margin-bottom:.2rem;}
+.g-hcell{padding:.3rem .2rem;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);text-align:center;border-right:1px solid var(--border);}
+.g-hcell.year-start{border-left:2px solid var(--navy);color:var(--navy);}
+.gantt-group-label{font-family:var(--brand);font-size:.72rem;font-weight:700;color:var(--navy);
+  padding:.5rem 0 .2rem;border-bottom:1px solid var(--border);margin-bottom:.15rem;
+  display:flex;align-items:center;gap:.4rem;}
+.gantt-row{display:grid;gap:0;margin-bottom:2px;min-height:22px;align-items:center;}
+.g-name{font-size:.65rem;color:var(--text);padding:.1rem .4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.g-cell{height:22px;position:relative;border-right:1px solid rgba(0,0,0,.04);}
+.g-cell.ms-line{border-right:2px dashed rgba(200,168,75,.6);}
+.bar{position:absolute;top:4px;bottom:4px;border-radius:3px;opacity:.88;}
+.bar-l{border-radius:4px 0 0 4px;}
+.bar-r{border-radius:0 4px 4px 0;}
+.bar-single{border-radius:4px;}
+.bar-mid{border-radius:0;}
+.gantt-legend{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem;font-size:.67rem;color:var(--dim);}
+.gl-dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:.3rem;vertical-align:middle;}
+
+/* Checklist per milestone */
+.ms-checklist{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.ms-check-card{border:1px solid var(--border);border-radius:10px;padding:1rem;border-top:3px solid;}
+.msc-head{font-family:var(--brand);font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.15rem;}
+.msc-mrr{font-size:.65rem;color:var(--dim);margin-bottom:.7rem;}
+.msc-item{display:flex;gap:.4rem;align-items:flex-start;font-size:.69rem;padding:.18rem 0;color:var(--dim);}
+.msc-item::before{content:'□';font-size:.75rem;color:var(--xs);flex-shrink:0;margin-top:-.02rem;}
+.msc-item strong{color:var(--text);}
+
+/* KPI dashboard */
+.kpi-dash{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+.kpi-box{border:1px solid var(--border);border-radius:10px;padding:1rem;background:var(--bg);}
+.kpi-box-title{font-family:var(--brand);font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.6rem;
+  padding-bottom:.4rem;border-bottom:1px solid var(--border);}
+.kpi-row{display:flex;justify-content:space-between;align-items:center;font-size:.69rem;padding:.2rem 0;
+  border-bottom:1px solid #f0f1f5;}
+.kpi-row:last-child{border-bottom:none;}
+.kpi-metric{color:var(--dim);}
+.kpi-target{font-weight:700;color:var(--navy);}
+
+@media(max-width:700px){
+  .cover-kpis,.pillars,.tasks-grid,.ms-checklist{grid-template-columns:1fr 1fr;}
+  .milestone-strip,.kpi-dash{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-badge">Estrategia Comercial · Mayo 2026 — Actualizado 24 mayo 2026</div>
+  <div class="cover-title">Estrategia General Comercial<br>Ecosistema Santaglia Compass</div>
+  <div class="cover-sub">8 tácticas · tareas por trimestre · roadmap a $2.73M MRR</div>
+  <div class="cover-kpis">
+    <div class="ckpi"><div class="ckpi-val">8</div><div class="ckpi-lbl">Tácticas comerciales</div></div>
+    <div class="ckpi"><div class="ckpi-val">72</div><div class="ckpi-lbl">Tareas específicas</div></div>
+    <div class="ckpi"><div class="ckpi-val">8</div><div class="ckpi-lbl">Milestones MRR</div></div>
+    <div class="ckpi"><div class="ckpi-val">2030</div><div class="ckpi-lbl">Horizonte $2.73M MRR</div></div>
+  </div>
+</div>
+
+<!-- §0 EL EJE DE SUPERVIVENCIA — ARGUMENTO CENTRAL DEL PITCH -->
+<div class="section" style="border-left:4px solid #dc2626;background:linear-gradient(135deg,#fff5f5 0%,#fff 100%);">
+  <div class="section-label" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;">§ 0 — Eje Estratégico Central</div>
+  <div class="section-title" style="color:#991b1b;">El argumento de supervivencia: el eje de todos los pitches</div>
+  <div class="section-sub">Antes de cualquier táctica, canal o funnel — este es el fundamento de por qué comprará el cliente</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+    <div>
+      <p style="font-size:.9rem;font-weight:700;color:#1a2b4a;margin-bottom:.6rem;">La estadística que cambia la conversación</p>
+      <p>El <strong style="color:#991b1b;">75% de las empresas mexicanas cierran antes de cumplir 2 años</strong> (INEGI, Censos Económicos 2024). El <strong style="color:#991b1b;">65% de esos cierres</strong> se atribuyen directamente a mala gestión financiera y administrativa (OCDE, Perspectivas PyME 2023). El <strong style="color:#991b1b;">82% de las PyMEs</strong> que quiebran lo hacen por problemas de flujo de caja (U.S. Bank Study — patrón documentado en LATAM).</p>
+      <p>Esto no es contexto de mercado. Es el argumento de venta más poderoso disponible: <strong>Santaglia Compass es literalmente la herramienta que hubiera evitado esos cierres.</strong></p>
+    </div>
+    <div>
+      <div style="background:#1a2b4a;border-radius:10px;padding:1.25rem;color:#fff;">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(200,168,75,0.8);margin-bottom:.75rem;">El pitch en una sola línea — por audiencia</div>
+        <div style="font-size:.78rem;margin-bottom:.6rem;line-height:1.5;border-left:3px solid rgba(200,168,75,.4);padding-left:.75rem;"><strong style="color:#c8a84b;">Al dueño de empresa:</strong> "El 75% de los negocios como el tuyo cierran en 2 años. Todos por las mismas razones. Compass resuelve exactamente esas razones — antes de que te ocurran."</div>
+        <div style="font-size:.78rem;margin-bottom:.6rem;line-height:1.5;border-left:3px solid rgba(200,168,75,.4);padding-left:.75rem;"><strong style="color:#c8a84b;">Al despacho contable:</strong> "Tus clientes tienen un 75% de probabilidad de cerrar en 2 años. Compass los mantiene vivos. Tú los sigues facturando."</div>
+        <div style="font-size:.78rem;line-height:1.5;border-left:3px solid rgba(200,168,75,.4);padding-left:.75rem;"><strong style="color:#c8a84b;">Al prospecto escéptico:</strong> "¿$799/mes es caro? Una multa SAT por retenciones incorrectas cuesta entre $15,000 y $80,000. Compass paga su suscripción con evitar un solo error al año."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA DE CAUSAS DE CIERRE → ARGUMENTO COMPASS -->
+  <p style="font-weight:700;color:#1a2b4a;font-size:.82rem;margin-bottom:.75rem;">Mapa de causas de cierre → argumento Compass correspondiente</p>
+  <table class="kpi-table">
+    <thead>
+      <tr><th>Causa de cierre</th><th>% de cierres asociados</th><th>Fuente</th><th>Argumento Compass</th><th>Táctica que lo activa</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Problemas de flujo de caja</strong></td><td style="color:#dc2626;font-weight:700;">82%</td><td>U.S. Bank / LATAM</td><td>"¿Sabes cuánto tendrás en caja la próxima quincena? Compass sí."</td><td>T2 contenidos · T5 demo</td></tr>
+      <tr><td><strong>Mala gestión financiera general</strong></td><td style="color:#dc2626;font-weight:700;">65%</td><td>OCDE 2023</td><td>"El 65% de los cierres se evitarían con visibilidad financiera básica. Compass la da en 10 minutos."</td><td>T1 landing · T7 PR</td></tr>
+      <tr><td><strong>Retenciones fiscales incorrectas</strong></td><td style="color:#dc2626;font-weight:700;">43% con irregularidades</td><td>IMCO 2022</td><td>"¿Cuándo calculaste por última vez tus retenciones de IVA e ISR? Compass lo hace solo."</td><td>T2 lead magnet · T4 despachos</td></tr>
+      <tr><td><strong>Nómina IMSS mal calculada</strong></td><td style="color:#dc2626;font-weight:700;">35% con errores</td><td>IMSS 2022</td><td>"Un error de IMSS puede costarte 2× la diferencia en recargos. Compass calcula cuotas exactas."</td><td>T5 onboarding · T6 retención</td></tr>
+      <tr><td><strong>Sin datos de rentabilidad</strong></td><td style="color:#dc2626;font-weight:700;">67% no saben si fueron rentables</td><td>IMCO / INEGI 2023</td><td>"Si no sabes cuáles clientes te dejan más, estás escalando lo que no funciona."</td><td>T3 comunidades · T8 pricing</td></tr>
+      <tr><td><strong>Decisiones sin información</strong></td><td style="color:#dc2626;font-weight:700;">42% de cierres globales</td><td>CB Insights 2023</td><td>"Tu software de contabilidad registra lo que pasó. Compass te dice lo que viene."</td><td>T7 autoridad · T1 posicionamiento</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-green" style="margin-top:1.25rem;">
+    <div class="callout-title">Cómo integrar el argumento de supervivencia en cada táctica comercial</div>
+    <strong>T1 (Posicionamiento):</strong> Cada landing page abre con la estadística del 75% como gancho — no como dato sino como espejo: "¿Eres parte de ese 75%?" · <strong>T2 (Contenidos):</strong> El primer artículo del blog y el primer video de YouTube se titulan "Por qué el 75% de los negocios mexicanos cierran antes de 2 años (y cómo evitarlo)" — SEO de alta intención. · <strong>T4 (Alianzas):</strong> El pitch a despachos contables usa la estadística como argumento de negocio propio: "Tus clientes cierran — Compass los mantiene vivos y tú los sigues facturando." · <strong>T5 (Conversión):</strong> La demo comienza siempre con el cálculo de ROI: "$799/mes vs. el costo de un solo error fiscal." · <strong>T7 (PR):</strong> El primer press release y pitch a medios se titula: "Santaglia Compass: el SaaS mexicano que combate el 75% de mortalidad empresarial."
+  </div>
+</div>
+
+<!-- §1 RESUMEN ESTRATÉGICO -->
+<div class="section">
+  <div class="section-label">§ 1 — Resumen Estratégico</div>
+  <div class="section-title">Los cuatro pilares de la estrategia comercial</div>
+  <div class="section-sub">Todo lo que se hace comercialmente pertenece a uno de estos cuatro pilares — la táctica sirve al pilar, la tarea sirve a la táctica</div>
+
+  <div class="pillars">
+    <div class="pillar" style="background:#eef3fa;border-color:#bfdbfe;">
+      <div class="pillar-icon">📡</div>
+      <div class="pillar-name" style="color:#1e40af;">Atracción</div>
+      <div class="pillar-desc">Crear demanda y llevar prospectos calificados a cada vertical. Contenido, SEO, comunidades, redes sociales y PR.</div>
+    </div>
+    <div class="pillar" style="background:#f0fdf4;border-color:#bbf7d0;">
+      <div class="pillar-icon">🔄</div>
+      <div class="pillar-name" style="color:#15803d;">Conversión</div>
+      <div class="pillar-desc">Convertir prospectos en suscriptores de pago. Trial, demos, onboarding, pricing, alianzas de canal.</div>
+    </div>
+    <div class="pillar" style="background:#fff7ed;border-color:#fed7aa;">
+      <div class="pillar-icon">🔒</div>
+      <div class="pillar-name" style="color:#c2410c;">Retención</div>
+      <div class="pillar-desc">Mantener y expandir la base existente. NPS, check-ins, alertas de churn, upsell de tiers.</div>
+    </div>
+    <div class="pillar" style="background:#fdf4ff;border-color:#e9d5ff;">
+      <div class="pillar-icon">🚀</div>
+      <div class="pillar-name" style="color:#7c3aed;">Expansión</div>
+      <div class="pillar-desc">Crecer revenue per account. Cross-sell entre verticales, referidos, plan anual, enterprise.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-gold">
+    <div class="callout-title">Principio rector</div>
+    Cada táctica se activa en el trimestre justo antes de que el producto que soporta sea lanzado — nunca antes (desperdicias recursos) ni después (llegas sin demanda). El canal de contenidos es la única excepción: se construye 6 meses antes del primer lanzamiento para tener autoridad SEO cuando se necesite.
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <p style="font-weight:600;color:var(--navy);font-size:.8rem;margin-bottom:.6rem;">KPIs maestros del ecosistema — seguimiento mensual</p>
+    <table class="kpi-table">
+      <thead>
+        <tr><th>Métrica</th><th>Tipo</th><th>Q4 2026</th><th>Q4 2027</th><th>Q4 2028</th><th>Q2 2030</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>MRR Total Ecosistema</td><td><span class="kpi-tag kpi-north">North Star</span></td><td>$138K</td><td>$370K</td><td>$988K</td><td>$2.73M</td></tr>
+        <tr><td>Nuevos suscriptores / mes</td><td><span class="kpi-tag kpi-lead">Adquisición</span></td><td>25</td><td>60</td><td>150</td><td>300</td></tr>
+        <tr><td>Churn rate mensual</td><td><span class="kpi-tag kpi-health">Retención</span></td><td>&lt;4%</td><td>&lt;3%</td><td>&lt;2.5%</td><td>&lt;2%</td></tr>
+        <tr><td>NPS promedio ecosistema</td><td><span class="kpi-tag kpi-health">Retención</span></td><td>≥40</td><td>≥50</td><td>≥55</td><td>≥60</td></tr>
+        <tr><td>CAC promedio (todos canales)</td><td><span class="kpi-tag kpi-lead">Adquisición</span></td><td>$1,200</td><td>$900</td><td>$650</td><td>$450</td></tr>
+        <tr><td>LTV promedio ecosistema</td><td><span class="kpi-tag kpi-north">North Star</span></td><td>$3,600</td><td>$6,000</td><td>$9,600</td><td>$19,200</td></tr>
+        <tr><td>LTV/CAC ratio</td><td><span class="kpi-tag kpi-north">North Star</span></td><td>3×</td><td>6.7×</td><td>14.8×</td><td>42.7×</td></tr>
+        <tr><td>% ingresos por cross-sell</td><td><span class="kpi-tag kpi-lead">Expansión</span></td><td>0%</td><td>5%</td><td>18%</td><td>32%</td></tr>
+        <tr><td>Referidos activos (clientes)</td><td><span class="kpi-tag kpi-lead">Adquisición</span></td><td>0</td><td>30</td><td>120</td><td>500</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- §2–§9 TÁCTICAS -->
+
+<!-- T1 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t1);"></div>
+    <div class="tactic-emoji">🎯</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T1 — Posicionamiento y Marca</div>
+      <div class="tactic-kpi">KPI: reconocimiento de marca · tráfico orgánico · conversión landing page &gt;3%</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Atracción</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">Construir una identidad visual y verbal coherente para el ecosistema Compass que permita a cada vertical ser reconocida como parte de una familia confiable, al mismo tiempo que tiene personalidad propia para su nicho específico.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Crear brand kit del ecosistema: logo, paleta por vertical, tipografía, tono de voz</div><div class="task-q">▸ Q3 2026 · Entregable: guía de marca PDF + assets Figma</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Optimizar landing page Empresarial: propuesta de valor, testimoniales, ROI vs. contador</div><div class="task-q">▸ Q3–Q4 2026 · Meta: conversión ≥3.5%</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">Crear landing page Compass Personal con calculadora "¿cuánto estás perdiendo sin control?"</div><div class="task-q">▸ Q4 2026 · Meta: 200 leads antes del lanzamiento α</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Iniciar trámite de registro de marca "Compass" + "Santaglia" ante el IMPI</div><div class="task-q">▸ Q4 2026–Q1 2027 · Costo estimado: $8,000 MXN</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Diseñar y publicar landing page Compass Conductor con simulador de ingresos reales</div><div class="task-q">▸ Q3 2027 · 60 días antes del lanzamiento</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Landing pages Compass Freelance y Compass Clínica</div><div class="task-q">▸ Q4 2027 · Lead gen pre-lanzamiento Q1 2028</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Landing page Compass Educativo</div><div class="task-q">▸ Q3 2028 · 45 días antes del lanzamiento</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Landing pages Tier 2: Contratista, Franquiciatario, Migrante</div><div class="task-q">▸ Q4 2028–Q1 2029 · con formulario de lista de espera</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Rediseño del sitio web ecosistema: hub central con acceso a todas las verticales</div><div class="task-q">▸ Q1 2030 · Preparar para expansión LATAM</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T2 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t2);"></div>
+    <div class="tactic-emoji">📝</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T2 — Marketing de Contenidos e Inbound</div>
+      <div class="tactic-kpi">KPI: visitas orgánicas mensuales · leads capturados · suscriptores newsletter · visualizaciones YouTube</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Atracción</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">Posicionar a Santaglia Compass como la autoridad fiscal de referencia para cada nicho en México mediante contenido educativo que resuelve dudas reales — SEO orgánico, YouTube y newsletter actúan como el motor de adquisición de bajo costo a largo plazo.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Crear canal YouTube "Compass por Santaglia" + estrategia editorial trimestral</div><div class="task-q">▸ Q3 2026 · Frecuencia objetivo: 2 videos/mes</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">SEO: keyword research fiscal MX por vertical (Ahrefs/Semrush) + mapa de contenidos</div><div class="task-q">▸ Q3 2026 · 80+ keywords objetivo identificadas</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">Lanzar blog fiscal en sitio web: 4 artículos/mes desde Q4 2026</div><div class="task-q">▸ Q4 2026 → continuo · Meta: 5K visitas orgánicas/mes en Q2 2027</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Videos YouTube: serie "Finanzas para PYME" y "Compass Personal explicado"</div><div class="task-q">▸ Q4 2026 → Q2 2027 · 2 videos/mes, duración 8–15 min</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Lead magnet: "Calculadora de referencia de retenciones ISR + IVA para PYME" (descarga gratis — uso informativo; incluye nota de que la validación definitiva corresponde al despacho contable del usuario)</div><div class="task-q">▸ Q1 2027 · Meta: 500 leads capturados primer mes</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Newsletter mensual "El Fiscal" — resumen de cambios SAT + tips prácticos</div><div class="task-q">▸ Q1 2027 → continuo · Meta: 2,000 suscriptores en Q4 2027</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Lead magnet: "Simulador de ingresos reales Uber/DiDi: cuánto ganas después de todo"</div><div class="task-q">▸ Q2 2027 · para alimentar lista pre-lanzamiento Conductor</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Serie YouTube: "¿Cuánto ganas en realidad manejando para Uber en 2027?" (5 episodios)</div><div class="task-q">▸ Q2–Q4 2027 · clave para GTM Conductor</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Guía PDF: "Fiscal Kit Freelance MX — RESICO, provisionales y facturación explicados"</div><div class="task-q">▸ Q4 2027 · Lead magnet pre-lanzamiento Freelance</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Serie YouTube + blog: contenido para médicos, clínicas, tutores y academias</div><div class="task-q">▸ Q4 2027–Q3 2028 · por cada vertical Tier 1</div></div></div>
+      <div class="task-item"><span class="task-num">11</span><div><div class="task-text">Webinar trimestral en vivo por vertical: "Fiscalidad sin miedo para [nicho]"</div><div class="task-q">▸ Q2 2028 → continuo · Meta: 150+ asistentes/webinar</div></div></div>
+      <div class="task-item"><span class="task-num">12</span><div><div class="task-text">Reporte anual: "Estado de las Finanzas de la PYME Mexicana" (posicionamiento de autoridad)</div><div class="task-q">▸ Q1 2029 → anual · base de datos propia de clientes</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T3 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t3);"></div>
+    <div class="tactic-emoji">👥</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T3 — Comunidades y Redes Sociales</div>
+      <div class="tactic-kpi">KPI: seguidores activos · engagement rate · leads desde redes · grupos WhatsApp activos</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Atracción</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">Las redes sociales y comunidades digitales son el canal de adquisición más eficiente para los nichos de Conductor, Personal y Freelance — el cliente objetivo pasa tiempo en grupos de Facebook, WhatsApp y TikTok donde comparte sus dolores fiscales sin filtros.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Crear y optimizar cuentas: Instagram, TikTok y LinkedIn @compasssantaglia</div><div class="task-q">▸ Q3 2026 · identidad visual coherente con brand kit</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Publicar 3 posts/semana en Instagram: tips fiscales visuales, casos reales, polls</div><div class="task-q">▸ Q4 2026 → continuo · banco de contenidos 30 días adelante</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">TikTok: serie "¿Sabías que el SAT...?" — 60 segundos, 3 veces/semana</div><div class="task-q">▸ Q1 2027 → continuo · formato: gancho + dolor + solución</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">LinkedIn Empresarial: 2 posts/semana sobre gestión fiscal PYME, casos de éxito</div><div class="task-q">▸ Q1 2027 → continuo · objetivo: decisores en PYME 10–100 colabs</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Infiltración y participación activa en 10+ grupos FB de conductores Uber/DiDi MX</div><div class="task-q">▸ Q1–Q2 2027 · responder dudas fiscales, NO publicitar directamente</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Crear grupo WhatsApp oficial "Conductores Compass — Comunidad Fiscal"</div><div class="task-q">▸ Q2 2027 · Meta: 500 miembros para el lanzamiento Q4 2027</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Crear grupo WhatsApp "Freelancers Compass MX — Finanzas y Fiscalidad"</div><div class="task-q">▸ Q4 2027 · alimentar lista de espera para lanzamiento Q1 2028</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Participar en comunidades FB/WA de médicos, dentistas y profesionistas de salud</div><div class="task-q">▸ Q4 2027–Q1 2028 · previo al lanzamiento Clínica</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Comunidades de tutores, academias y centros de idiomas en Facebook</div><div class="task-q">▸ Q3 2028 · previo al lanzamiento Educativo</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Grupos de contratistas y constructores PYME en Facebook/WhatsApp</div><div class="task-q">▸ Q4 2028–Q1 2029 · Tier 2 Contratista</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T4 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t4);"></div>
+    <div class="tactic-emoji">🤝</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T4 — Canal de Alianzas Estratégicas</div>
+      <div class="tactic-kpi">KPI: alianzas activas · leads por canal aliado · % revenue por referidos de alianzas · despachos en Tier Socio+</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Conversión</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">Las alianzas son el canal con mayor credibilidad y menor CAC. El canal de despachos contables es el más estratégico de todos: un despacho con 40 clientes puede generar más MRR en 60 días que 6 meses de marketing digital. La clave es que el despacho no compra Compass — <strong>lo incorpora como diferenciador de su propio servicio y fuente de ingreso pasivo</strong>.</div>
+
+    <!-- Subtítulo: Despachos como canal primario -->
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);border-radius:10px;padding:1.1rem 1.25rem;margin-bottom:1rem;color:#fff;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);margin-bottom:.5rem;">Sub-táctica T4a · Canal Despachos Contables — Prioridad MAX · Q3 2026 →</div>
+      <div style="font-size:.85rem;font-weight:600;color:#fff;margin-bottom:.75rem;">El canal más rentable del ecosistema: un despacho con 40 clientes = $2,971 MXN/mes de comisión sin costo marginal. CAC efectivo: el despacho trae su propia cartera.</div>
+
+      <!-- Proceso de activación del canal despacho -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-bottom:.85rem;">
+        <div style="background:rgba(255,255,255,.12);border-radius:7px;padding:.65rem .5rem;text-align:center;">
+          <div style="font-size:.75rem;font-weight:800;color:#fbbf24;margin-bottom:.2rem;">① Prospectar</div>
+          <div style="font-size:.62rem;color:rgba(255,255,255,.7);">Despachos 20–80 clientes PYME · LinkedIn + IMCP · warm intro</div>
+        </div>
+        <div style="background:rgba(255,255,255,.12);border-radius:7px;padding:.65rem .5rem;text-align:center;">
+          <div style="font-size:.75rem;font-weight:800;color:#fbbf24;margin-bottom:.2rem;">② Demo en 45 min</div>
+          <div style="font-size:.62rem;color:rgba(255,255,255,.7);">Panel despacho + panel cliente + simulador de ingreso personalizado</div>
+        </div>
+        <div style="background:rgba(255,255,255,.12);border-radius:7px;padding:.65rem .5rem;text-align:center;">
+          <div style="font-size:.75rem;font-weight:800;color:#fbbf24;margin-bottom:.2rem;">③ Piloto 5 clientes</div>
+          <div style="font-size:.62rem;color:rgba(255,255,255,.7);">60 días gratis · Tier Referente · 0 compromisos · medir ROI</div>
+        </div>
+        <div style="background:rgba(255,255,255,.12);border-radius:7px;padding:.65rem .5rem;text-align:center;">
+          <div style="font-size:.75rem;font-weight:800;color:#fbbf24;margin-bottom:.2rem;">④ Escalar tier</div>
+          <div style="font-size:.62rem;color:rgba(255,255,255,.7);">Asociado → Socio · enrolar cartera completa · firmar Partner Agreement</div>
+        </div>
+        <div style="background:rgba(255,255,255,.15);border-radius:7px;padding:.65rem .5rem;text-align:center;border:1.5px solid rgba(255,255,255,.3);">
+          <div style="font-size:.75rem;font-weight:800;color:#fff;margin-bottom:.2rem;">⑤ Referencia</div>
+          <div style="font-size:.62rem;color:rgba(255,255,255,.8);">El despacho satisfecho recomienda a otros socios del IMCP · loop de crecimiento</div>
+        </div>
+      </div>
+
+      <!-- Argumentos de venta sintetizados -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.75rem;">
+        <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:.6rem .75rem;">
+          <strong style="color:#fbbf24;">💰 Para el socio financiero del despacho</strong><br>
+          <span style="color:rgba(255,255,255,.8);">"20 clientes en Estándar = $1,398/mes sin una hora adicional de trabajo. $16,776 MXN/año de ingreso pasivo puro."</span>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:.6rem .75rem;">
+          <strong style="color:#fbbf24;">🏆 Para el socio operativo del despacho</strong><br>
+          <span style="color:rgba(255,255,255,.8);">"El WhatsApp de las 11pm del cliente que pregunta '¿cuánto pago este mes?' desaparece. Compass lo responde."</span>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:.6rem .75rem;">
+          <strong style="color:#fbbf24;">🔒 Para el socio conservador del despacho</strong><br>
+          <span style="color:rgba(255,255,255,.8);">"Piloto con 5 clientes, 60 días gratis, 0 compromisos. En 60 días los datos te convencen o cancelamos sin costo."</span>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:.6rem .75rem;">
+          <strong style="color:#fbbf24;">🚀 Para el socio visionario del despacho</strong><br>
+          <span style="color:rgba(255,255,255,.8);">"Eres el primer despacho en tu zona con plataforma de inteligencia financiera para clientes. 18 meses de ventaja competitiva."</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Objeciones y rebates -->
+    <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#374151;margin-bottom:.65rem;">🛡 Manejo de objeciones del socio de despacho</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.75rem;">
+        <div>
+          <strong style="color:#991b1b;">"El cliente ya no me va a necesitar"</strong><br>
+          <span style="color:#374151;">Falso. El cliente que entiende mejor su negocio necesita más asesoría estratégica. Los despachos que trabajan con clientes financieramente educados facturan 2–3× más en honorarios que los que trabajan con clientes dependientes.</span>
+        </div>
+        <div>
+          <strong style="color:#991b1b;">"Somos muy chicos para esto"</strong><br>
+          <span style="color:#374151;">El Tier Referente está diseñado para 1–5 clientes. El ROI es inmediato desde el cliente #1. El tamaño del despacho no es la variable — el número de clientes con Compass, sí.</span>
+        </div>
+        <div>
+          <strong style="color:#991b1b;">"¿Qué pasa si Compass falla?"</strong><br>
+          <span style="color:#374151;">SLA 99.5% en producción. Datos críticos accesibles offline. El despacho puede exportar toda la información de sus clientes en CSV/Excel en cualquier momento, sin bloqueo.</span>
+        </div>
+        <div>
+          <strong style="color:#991b1b;">"Mis socios no lo van a aceptar"</strong><br>
+          <span style="color:#374151;">El simulador de ingreso hace el trabajo por ti. Muéstrale: "Con nuestra cartera de 35 clientes, la proyección es $2,800/mes de comisión sin costo adicional." Eso no necesita convencimiento — necesita un click en 'Confirmar'.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Diseñar Partner Kit del despacho: deck de 8 diapositivas + guión de pitch de 5 minutos + simulador de ingreso por cartera</div><div class="task-q">▸ Q3 2026 · prioridad 1 · materiales que el despacho usa con sus propios clientes</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Construir landing exclusiva para despachos (/partner) con flujo de alta en Tier Referente: formulario + acceso al portal + link de tracking único</div><div class="task-q">▸ Q3 2026 · meta: tiempo de alta < 10 min desde primer contacto</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">Firmar convenios con 5 despachos piloto (cartera 20–80 clientes PYME): acceso beta al Panel Despacho + onboarding dedicado 2h</div><div class="task-q">▸ Q3–Q4 2026 · seleccionar despachos con perfil microempresa · warm intros del fundador</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Lanzar portal partner: dashboard de comisiones, métricas de cartera, estado de clientes, descarga de materiales de pitch</div><div class="task-q">▸ Q4 2026 · KPI: tiempo promedio de activación de un nuevo cliente desde referido del despacho < 48h</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Crear secuencia de onboarding del despacho: email D0 → D7 → D30 con métricas de activación de su cartera y tips de pitch a sus clientes</div><div class="task-q">▸ Q4 2026 · herramienta: Resend o Loops.so · trigger: alta del partner en el portal</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Webinar mensual "Compass para Despachos": demo del Panel Despacho + casos reales + sesión de preguntas + alta inmediata al Tier Referente</div><div class="task-q">▸ Q1 2027 → mensual · meta: 5 despachos nuevos por webinar</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Convenio con IMCP regionales (CDMX, Monterrey, Guadalajara): acceso a directorio + stand en evento de despachos + co-branded webinar</div><div class="task-q">▸ Q1–Q2 2027 · objetivo: presentación ante 200+ socios de despacho</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Programa de referencia despacho-a-despacho: el despacho partner que refiere a otro despacho recibe 5% adicional durante 12 meses sobre la cartera del referido</div><div class="task-q">▸ Q2 2027 · loop viral entre despachos del mismo IMCP regional</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Alianzas con 20+ talleres mecánicos: flyers QR en sala de espera, descuento cruzado para Conductor</div><div class="task-q">▸ Q2–Q3 2027 · mercado meta: conductores que ya llevan el auto al taller</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Alianzas con gasolineras asociadas: descuento en litros por suscripción Conductor activa</div><div class="task-q">▸ Q3–Q4 2027 · negociar con cadenas: Oxxo Gas, G500, Hidrosina</div></div></div>
+      <div class="task-item"><span class="task-num">11</span><div><div class="task-text">Lanzar white-label para Tier Alianza (31+ clientes): el despacho ofrece "su propia plataforma" con marca propia · incremento de ticket 40% vs. Tier Socio</div><div class="task-q">▸ Q3 2027 · objetivo: 3 despachos en white-label para cierre 2027</div></div></div>
+      <div class="task-item"><span class="task-num">12</span><div><div class="task-text">Convenio con Colegio Médico de México / CONAMED: acceso a médicos independientes</div><div class="task-q">▸ Q4 2027–Q1 2028 · previo al lanzamiento Clínica</div></div></div>
+      <div class="task-item"><span class="task-num">13</span><div><div class="task-text">Meta Q4 2027: 20 despachos activos en Tier Asociado o superior, promedio 25 clientes/despacho = 500 clientes adicionales por canal</div><div class="task-q">▸ Q4 2027 · equivale a $186K MRR incremental solo por canal despacho</div></div></div>
+      <div class="task-item"><span class="task-num">14</span><div><div class="task-text">Alianza con AMITI (Asociación Mexicana de Internet) para freelancers tech + CANACINTRA para PYME y contratistas</div><div class="task-q">▸ Q1–Q3 2028 · canal de alianzas verticales complementario al canal despachos</div></div></div>
+      <div class="task-item"><span class="task-num">15</span><div><div class="task-text">Piloto API con 2–3 despachos grandes o fintechs: motor fiscal como servicio B2B</div><div class="task-q">▸ Q2–Q4 2029 · Tier 3 API/B2B · ticket promedio $5,000+ MXN/mes</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T5 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t5);"></div>
+    <div class="tactic-emoji">⚡</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T5 — Adquisición Directa y Conversión</div>
+      <div class="tactic-kpi">KPI: tasa de conversión trial→pago · CAC por canal · demos realizadas · ROAS Google/Meta Ads</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Conversión</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">Maximizar la tasa de conversión de cada prospecto que llega a la plataforma — a través de un trial sin fricción, onboarding automatizado de 10 minutos y campañas de pago que complementan el inbound cuando el volumen orgánico no alcanza para cubrir los targets de MRR de cada fase.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Implementar free trial 30 días sin tarjeta de crédito + secuencia de onboarding 5 emails (7 días)</div><div class="task-q">▸ Q4 2026 · herramienta: Loops.so o Resend</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Grabar demo de Compass Empresarial (20 min): desde importar CFDI hasta ver retenciones SAT</div><div class="task-q">▸ Q4 2026 · plataforma: Loom embebido en landing page</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">Configurar Calendly para demos en vivo con el fundador (slots M-V 10:00–12:00)</div><div class="task-q">▸ Q4 2026 · target: prospectos Empresarial >$399/mes</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Crear página de precios con tabla ROI vs. contador (ahorro estimado por vertical)</div><div class="task-q">▸ Q4 2026 · incluir calculadora interactiva de ahorro anual</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Chat en vivo en sitio web (Tidio free) para resolver objeciones en tiempo real</div><div class="task-q">▸ Q1 2027 · respuesta &lt;2 min en horario hábil</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Demo grabada Compass Personal: setup multi-miembro + conexión bancaria en 8 minutos</div><div class="task-q">▸ Q1 2027 · previo al lanzamiento público Q2 2027</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Google Ads: keywords de alta intención — "software retenciones PYME", "control nómina SAT"</div><div class="task-q">▸ Q2 2027 → continuo · presupuesto inicial: $8K MXN/mes</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Demo grabada Compass Conductor: análisis de semana real Uber/DiDi en 10 minutos</div><div class="task-q">▸ Q3 2027 · antes del lanzamiento Q4 2027</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Facebook/Instagram Ads: lookalike audiences de clientes actuales por vertical</div><div class="task-q">▸ Q3 2027 → continuo · segmentación por ocupación + grupo de edad</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Demos grabadas Freelance y Clínica + ajuste de onboarding para cada vertical</div><div class="task-q">▸ Q1 2028 · lanzamiento simultáneo Freelance + Clínica</div></div></div>
+      <div class="task-item"><span class="task-num">11</span><div><div class="task-text">Funnel de retargeting para visitantes que no convirtieron (Meta + Google Display)</div><div class="task-q">▸ Q2 2028 · presupuesto: $5K MXN/mes, ROAS objetivo ≥4×</div></div></div>
+      <div class="task-item"><span class="task-num">12</span><div><div class="task-text">Enterprise demo y propuesta personalizada para Empresarial >50 colaboradores</div><div class="task-q">▸ Q3 2028 → continuo · ciclo de venta ≤21 días</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T6 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t6);"></div>
+    <div class="tactic-emoji">🔒</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T6 — Retención y Expansión de Revenue</div>
+      <div class="tactic-kpi">KPI: churn mensual · NPS · expansión MRR (upsell + cross-sell) · Net Revenue Retention</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilares: Retención · Expansión</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">Con un margen bruto del 93%, retener a un cliente existente es 7× más rentable que adquirir uno nuevo. El objetivo es que el 40% del crecimiento de MRR a partir de 2028 provenga de expansión dentro de la base existente — upsell de tier, cross-sell de vertical y plan anual.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Configurar NPS survey mensual automatizado (Typeform → Slack) para cada vertical</div><div class="task-q">▸ Q4 2026 · envío automático al día 30 + cada 90 días</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Proceso de check-in mensual proactivo para cuentas >$399/mes (call 20 min)</div><div class="task-q">▸ Q1 2027 · agenda automática con Calendly</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">Lanzar programa de referidos: código personal, 10% del primer año por cada referido activo</div><div class="task-q">▸ Q1 2027 · landing dedicada + dashboard de referidos por cliente</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Automatizar flujo de upsell: trigger a los 60 días si el cliente usa >80% del límite de su tier</div><div class="task-q">▸ Q1–Q2 2027 · email + notificación Telegram en app</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Implementar alerta de churn temprano: sin login 21 días → secuencia de reactivación</div><div class="task-q">▸ Q2 2027 · 3 emails + oferta de pausa de cuenta</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Lanzar descuento plan anual: 2 meses gratis (16.7% descuento) para todos los productos</div><div class="task-q">▸ Q1 2027 · objetivo: 30% de clientes en plan anual en Q4 2027</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Cross-sell T6a: conductores que también tienen actividad freelance → upgrade a Freelance</div><div class="task-q">▸ Q4 2027 · trigger: datos fiscales sugieren actividad mixta</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Cross-sell T6b: clientes Empresarial → Personal para sus empleados clave o socios</div><div class="task-q">▸ Q1 2028 · oferta: 20% off Personal si tiene Empresarial activo</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Implementar reporte de valor mensual automático: "Este mes Compass te ahorró $X en multas / $Y en tiempo"</div><div class="task-q">▸ Q1 2028 · PDF personalizado generado automáticamente</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Customer success para top 20% por revenue: QBR (quarterly business review) por llamada</div><div class="task-q">▸ Q3 2028 → continuo · cuentas >$800/mes</div></div></div>
+      <div class="task-item"><span class="task-num">11</span><div><div class="task-text">Plan de afiliados formal entre verticales con comisiones automáticas</div><div class="task-q">▸ Q3–Q4 2028 · plataforma: Rewardful o FirstPromoter</div></div></div>
+      <div class="task-item"><span class="task-num">12</span><div><div class="task-text">Executive Business Review semestral para cuentas Enterprise (>$1,500/mes)</div><div class="task-q">▸ Q1 2029 → semestral · presencial o por video</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T7 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t7);"></div>
+    <div class="tactic-emoji">📣</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T7 — Relaciones Públicas y Construcción de Autoridad</div>
+      <div class="tactic-kpi">KPI: menciones en medios · backlinks de autoridad · apariciones en podcasts · casos de éxito publicados</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Atracción</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">La PR de bajo presupuesto funciona cuando el fundador es la cara de la empresa y tiene opiniones concretas sobre fiscalidad mexicana. Un artículo en Forbes MX o una aparición en un podcast de 10K oyentes genera más leads calificados que $30K de ads.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">LinkedIn personal del fundador: 3 posts/semana sobre fiscalidad PYME, casos reales, opiniones SAT</div><div class="task-q">▸ Q3 2026 → continuo · objetivo: 5K seguidores en Q2 2027</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Publicar 2 casos de éxito/trimestre: empresa real, problema concreto, resultado medible</div><div class="task-q">▸ Q1 2027 → continuo · formato: 600 palabras + métricas</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">Pitch a medios: Forbes MX, El Economista, Expansión — ángulo "fintech fiscal para PYME"</div><div class="task-q">▸ Q2–Q3 2027 · preparar 3 ángulos de noticia distintos</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Participar en podcasts de emprendimiento MX: Cracks, Codeando, VC en Español</div><div class="task-q">▸ Q2 2027 → continuo · 1 aparición/trimestre mínimo</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">Organizar webinar gratuito: "Fiscalidad real para conductores Uber/DiDi en 2027"</div><div class="task-q">▸ Q3 2027 · meta: 300 asistentes · capturar 200 leads</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Press release oficial del lanzamiento de Compass Conductor v1.0</div><div class="task-q">▸ Q4 2027 · distribuir via PRNewswire MX + pitch directo a tech journalists</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Hablar en evento de despachos contables o cámaras de comercio: "La PYME digital en 2028"</div><div class="task-q">▸ Q1 2028 · posicionamiento para Tier 1 de verticales</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Nominación y postulación a "Mejor Herramienta Fiscal/Fintech PYME México"</div><div class="task-q">▸ Q2–Q3 2028 · Premios AMITI, Endeavor, Fintech México</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Stand o conferencia en ExpoFranquicia México 2029</div><div class="task-q">▸ Q1 2029 · previo al lanzamiento Franquiciatario</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Publicar "Reporte Anual: Estado de las Finanzas PYME MX 2029" con datos propios</div><div class="task-q">▸ Q1 2029 · PR de autoridad + material de ventas</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- T8 -->
+<div class="tactic-card">
+  <div class="tactic-header">
+    <div class="tactic-color-bar" style="background:var(--t8);"></div>
+    <div class="tactic-emoji">💲</div>
+    <div class="tactic-meta">
+      <div class="tactic-name">T8 — Pricing, Empaquetado y Experimentos Comerciales</div>
+      <div class="tactic-kpi">KPI: ARPU promedio · % clientes en plan anual · conversión A/B tests · revenue por bundle</div>
+    </div>
+    <div style="font-size:.65rem;color:var(--dim);white-space:nowrap;">Pilar: Conversión · Expansión</div>
+  </div>
+  <div class="tactic-body">
+    <div class="tactic-objetivo">El precio correcto no es el más bajo — es el que maximiza simultáneamente la conversión y el LTV. Cada vertical necesita su propio experimento de pricing antes de escalar, y los bundles entre verticales son la herramienta más poderosa para aumentar ARPU sin incrementar el CAC.</div>
+    <div class="tasks-grid">
+      <div class="task-item"><span class="task-num">01</span><div><div class="task-text">Definir y publicar estructura de tiers por producto con tabla comparativa clara</div><div class="task-q">▸ Q3 2026 · Empresarial: 3 tiers ($299/$499/$799) · Personal: 2 tiers ($99/$199)</div></div></div>
+      <div class="task-item"><span class="task-num">02</span><div><div class="task-text">Lanzar plan anual con descuento 2 meses gratis para todos los productos activos</div><div class="task-q">▸ Q1 2027 · objetivo: 25% de nuevos clientes eligen anual</div></div></div>
+      <div class="task-item"><span class="task-num">03</span><div><div class="task-text">A/B test headlines y CTAs en landing pages (herramienta: VWO o Google Optimize)</div><div class="task-q">▸ Q1 2027 → continuo · ciclos de 30 días, 1 variable a la vez</div></div></div>
+      <div class="task-item"><span class="task-num">04</span><div><div class="task-text">Crear bundle "Combo Familia+Empresa": Empresarial + Personal con 15% descuento combinado</div><div class="task-q">▸ Q2 2027 · target: socios PYME que también quieren control personal</div></div></div>
+      <div class="task-item"><span class="task-num">05</span><div><div class="task-text">A/B test precio Conductor: $149 vs $179 vs $199 — medir conversión trial→pago</div><div class="task-q">▸ Q4 2027–Q1 2028 · sample mínimo: 100 trials por variante</div></div></div>
+      <div class="task-item"><span class="task-num">06</span><div><div class="task-text">Bundle Conductor + Freelance: precio especial $299 (ahorro $49/mes)</div><div class="task-q">▸ Q1 2028 · para conductores con actividad freelance complementaria</div></div></div>
+      <div class="task-item"><span class="task-num">07</span><div><div class="task-text">Revisión anual de pricing: ajuste por inflación + benchmarking vs. competidores</div><div class="task-q">▸ Q1 2028 · Q1 2029 · Q1 2030 · incremento máximo 12% anual</div></div></div>
+      <div class="task-item"><span class="task-num">08</span><div><div class="task-text">Enterprise pricing Empresarial: >50 colaboradores → precio personalizado + SLA dedicado</div><div class="task-q">▸ Q2–Q3 2028 · ticket promedio objetivo: $1,800 MXN/mes</div></div></div>
+      <div class="task-item"><span class="task-num">09</span><div><div class="task-text">Evaluar modelo freemium básico para generación de leads (sin conexión bancaria ni CFDI)</div><div class="task-q">▸ Q1–Q2 2029 · solo si churn supera 3% o CAC supera $1,200</div></div></div>
+      <div class="task-item"><span class="task-num">10</span><div><div class="task-text">Definir pricing API/B2B: $0.05–$0.25 por llamada + tier mensual para fintechs</div><div class="task-q">▸ Q2 2029 · publicar en developer portal</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- §10 MILESTONES STRIP -->
+<div class="section">
+  <div class="section-label">§ 10 — Milestones Comerciales</div>
+  <div class="section-title">Los 8 hitos que definen el éxito de la estrategia</div>
+  <div class="section-sub">Cada milestone debe ser verificable — si los KPIs de entrada no se cumplen, se activan palancas de contingencia antes de declararlo alcanzado</div>
+
+  <div class="milestone-strip">
+    <div class="ms-card" style="border-color:#2563eb;background:#eff6ff;">
+      <div class="ms-period">Q4 2026 — M1</div>
+      <div class="ms-val" style="color:#2563eb;">$138K MRR</div>
+      <div class="ms-label">Personal α lanzado<br>100 familias piloto<br>Empresarial base sólida</div>
+    </div>
+    <div class="ms-card" style="border-color:#7c3aed;background:#f5f3ff;">
+      <div class="ms-period">Q2 2027 — M2</div>
+      <div class="ms-val" style="color:#7c3aed;">$237K MRR</div>
+      <div class="ms-label">Personal público<br>500 familias suscritas<br>50 conductores beta</div>
+    </div>
+    <div class="ms-card" style="border-color:#dc2626;background:#fff5f5;">
+      <div class="ms-period">Q4 2027 — M3</div>
+      <div class="ms-val" style="color:#dc2626;">$370K MRR</div>
+      <div class="ms-label">Conductor v1.0<br>100 conductores<br>$19.9K MRR Conductor</div>
+    </div>
+    <div class="ms-card" style="border-color:#ea580c;background:#fff7ed;">
+      <div class="ms-period">Q2 2028 — M4</div>
+      <div class="ms-val" style="color:#ea580c;">$582K MRR</div>
+      <div class="ms-label">Freelance + Clínica<br>$97K MRR incremental<br>5 productos activos</div>
+    </div>
+  </div>
+  <div class="milestone-strip" style="margin-top:.75rem;margin-bottom:0;">
+    <div class="ms-card" style="border-color:#0d9488;background:#f0fdfa;">
+      <div class="ms-period">Q4 2028 — M5</div>
+      <div class="ms-val" style="color:#0d9488;">$988K MRR</div>
+      <div class="ms-label">Educativo lanzado<br>6 productos activos<br>Margen bruto &gt;92%</div>
+    </div>
+    <div class="ms-card" style="border-color:#c8a84b;background:#fffbeb;">
+      <div class="ms-period">Q2 2029 — M6</div>
+      <div class="ms-val" style="color:#c8a84b;">$1.54M MRR</div>
+      <div class="ms-label">Tier 2 lanzado<br>6,000+ clientes<br>Equipo de 12</div>
+    </div>
+    <div class="ms-card" style="border-color:#475569;background:#f8fafc;">
+      <div class="ms-period">Q4 2029 — M7</div>
+      <div class="ms-val" style="color:#475569;">$2.15M MRR</div>
+      <div class="ms-label">Pre-Serie A<br>NRR &gt;110%<br>LTV/CAC &gt;30×</div>
+    </div>
+    <div class="ms-card" style="border-color:#1a2b4a;background:#f0f2f8;">
+      <div class="ms-period">Q2 2030 — M8</div>
+      <div class="ms-val" style="color:#1a2b4a;">$2.73M MRR</div>
+      <div class="ms-label">API B2B activa<br>8,500+ clientes<br>$32M ARR</div>
+    </div>
+  </div>
+</div>
+
+<!-- §11 ROADMAP GANTT -->
+<div class="section">
+  <div class="section-label">§ 11 — Roadmap de la Estrategia Comercial</div>
+  <div class="section-title">¿Qué hacer y para cuándo? — Gantt por táctica</div>
+  <div class="section-sub">16 trimestres · Q3 2026 → Q2 2030 · barras de color por táctica · líneas punteadas = milestones de MRR</div>
+  <div id="gantt-wrap"><div id="gantt-container"></div></div>
+  <div class="gantt-legend" id="gantt-legend"></div>
+</div>
+
+<!-- §12 CHECKLIST POR MILESTONE -->
+<div class="section">
+  <div class="section-label">§ 12 — Tareas Críticas por Milestone</div>
+  <div class="section-title">Lo que debe estar listo ANTES de cada hito de MRR</div>
+  <div class="section-sub">Si alguna de estas tareas no está completada, el milestone está en riesgo — activar plan de contingencia</div>
+
+  <div class="ms-checklist">
+
+    <div class="ms-check-card" style="border-top-color:#2563eb;">
+      <div class="msc-head">M1 — Q4 2026 · $138K MRR</div>
+      <div class="msc-mrr">Compass Personal α lanzado · 100 familias piloto</div>
+      <div class="msc-item"><strong>T1</strong> Brand kit + landing page Personal publicada</div>
+      <div class="msc-item"><strong>T2</strong> Blog activo con 8+ artículos indexados</div>
+      <div class="msc-item"><strong>T2</strong> Canal YouTube con 4+ videos publicados</div>
+      <div class="msc-item"><strong>T4</strong> Programa referidos para despachos contables activo</div>
+      <div class="msc-item"><strong>T5</strong> Free trial 30 días + onboarding email configurado</div>
+      <div class="msc-item"><strong>T5</strong> Demo grabada Empresarial publicada en landing</div>
+      <div class="msc-item"><strong>T6</strong> NPS survey mensual configurado</div>
+      <div class="msc-item"><strong>T8</strong> Estructura de tiers y precios publicada en sitio</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#7c3aed;">
+      <div class="msc-head">M2 — Q2 2027 · $237K MRR</div>
+      <div class="msc-mrr">Personal público · 500 familias · 50 conductores beta</div>
+      <div class="msc-item"><strong>T2</strong> Newsletter activo con 500+ suscriptores</div>
+      <div class="msc-item"><strong>T2</strong> Lead magnet "Calculadora de referencia de retenciones" generando leads (con disclaimer informativo)</div>
+      <div class="msc-item"><strong>T3</strong> Instagram/TikTok con 1K+ seguidores activos</div>
+      <div class="msc-item"><strong>T3</strong> Participación activa en grupos FB conductores</div>
+      <div class="msc-item"><strong>T4</strong> Convenio con ≥1 Colegio de Contadores activo</div>
+      <div class="msc-item"><strong>T5</strong> Google Ads activo (keywords fiscales alta intención)</div>
+      <div class="msc-item"><strong>T5</strong> Demo grabada Personal publicada</div>
+      <div class="msc-item"><strong>T6</strong> Programa referidos con código personal lanzado</div>
+      <div class="msc-item"><strong>T8</strong> Plan anual (2 meses gratis) disponible para todos</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#dc2626;">
+      <div class="msc-head">M3 — Q4 2027 · $370K MRR</div>
+      <div class="msc-mrr">Conductor v1.0 · 100 conductores · $19.9K MRR Conductor</div>
+      <div class="msc-item"><strong>T1</strong> Landing page Conductor con simulador de ingresos</div>
+      <div class="msc-item"><strong>T2</strong> 5 videos YouTube "¿Cuánto ganas en Uber?" publicados</div>
+      <div class="msc-item"><strong>T2</strong> Lead magnet "Simulador RESICO/Plataformas" activo</div>
+      <div class="msc-item"><strong>T3</strong> Grupo WhatsApp "Conductores Compass" con 500+ miembros</div>
+      <div class="msc-item"><strong>T4</strong> ≥10 talleres mecánicos con QR activo</div>
+      <div class="msc-item"><strong>T4</strong> ≥1 alianza con gasolinera negociada</div>
+      <div class="msc-item"><strong>T5</strong> Demo grabada Conductor publicada</div>
+      <div class="msc-item"><strong>T5</strong> Facebook/IG Ads con audiencias de conductores activas</div>
+      <div class="msc-item"><strong>T7</strong> Press release Conductor distribuido a medios tech MX</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#ea580c;">
+      <div class="msc-head">M4 — Q2 2028 · $582K MRR</div>
+      <div class="msc-mrr">Freelance + Clínica lanzados · 5 productos activos</div>
+      <div class="msc-item"><strong>T1</strong> Landing pages Freelance y Clínica publicadas</div>
+      <div class="msc-item"><strong>T2</strong> Guía PDF "Fiscal Kit Freelance MX" activa como lead magnet</div>
+      <div class="msc-item"><strong>T2</strong> Blog con ≥20 artículos sobre Freelance y Clínica</div>
+      <div class="msc-item"><strong>T3</strong> Grupo WhatsApp "Freelancers Compass" activo</div>
+      <div class="msc-item"><strong>T4</strong> Alianza AMITI activa + convenio Colegio Médico firmado</div>
+      <div class="msc-item"><strong>T5</strong> Demos grabadas Freelance y Clínica publicadas</div>
+      <div class="msc-item"><strong>T6</strong> Cross-sell Conductor→Freelance automático activo</div>
+      <div class="msc-item"><strong>T6</strong> Reporte de valor mensual automático implementado</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#0d9488;">
+      <div class="msc-head">M5 — Q4 2028 · $988K MRR</div>
+      <div class="msc-mrr">6 productos activos · margen bruto &gt;92%</div>
+      <div class="msc-item"><strong>T1</strong> Landing page Educativo publicada</div>
+      <div class="msc-item"><strong>T3</strong> Comunidades tutores y academias activas</div>
+      <div class="msc-item"><strong>T4</strong> Alianza CANACINTRA activa</div>
+      <div class="msc-item"><strong>T4</strong> ≥1 alianza escuela de idiomas / academia firmada</div>
+      <div class="msc-item"><strong>T6</strong> Plan de afiliados formal entre verticales lanzado</div>
+      <div class="msc-item"><strong>T6</strong> Customer success para top 20% revenue activo</div>
+      <div class="msc-item"><strong>T7</strong> Nominación a premio fintech/fiscal enviada</div>
+      <div class="msc-item"><strong>T8</strong> Enterprise pricing Empresarial definido y activo</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#c8a84b;">
+      <div class="msc-head">M6 — Q2 2029 · $1.54M MRR</div>
+      <div class="msc-mrr">Tier 2 lanzado · 6,000+ clientes · equipo 12</div>
+      <div class="msc-item"><strong>T1</strong> Landing pages Contratista, Franquicia, Migrante</div>
+      <div class="msc-item"><strong>T2</strong> Reporte anual "Finanzas PYME MX 2029" publicado</div>
+      <div class="msc-item"><strong>T4</strong> Convenio AMF activo · CMIC firmado</div>
+      <div class="msc-item"><strong>T4</strong> Piloto API con ≥1 fintech en marcha</div>
+      <div class="msc-item"><strong>T6</strong> NRR ecosistema &gt;105% (expansión &gt; churn)</div>
+      <div class="msc-item"><strong>T6</strong> Executive Business Review semestral activo</div>
+      <div class="msc-item"><strong>T7</strong> Stand en ExpoFranquicia realizado</div>
+      <div class="msc-item"><strong>T8</strong> Modelo freemium evaluado (go/no-go decidido)</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#475569;">
+      <div class="msc-head">M7 — Q4 2029 · $2.15M MRR</div>
+      <div class="msc-mrr">Pre-Serie A · NRR &gt;110% · LTV/CAC &gt;30×</div>
+      <div class="msc-item"><strong>T5</strong> CAC promedio ecosistema &lt;$500 MXN</div>
+      <div class="msc-item"><strong>T6</strong> Churn mensual &lt;2% en todos los productos</div>
+      <div class="msc-item"><strong>T6</strong> 30%+ de clientes en plan anual</div>
+      <div class="msc-item"><strong>T7</strong> Data room comercial listo para due diligence Serie A</div>
+      <div class="msc-item"><strong>T7</strong> ≥3 casos de éxito publicados con métricas verificables</div>
+      <div class="msc-item"><strong>T8</strong> API B2B pricing definido · developer portal en beta</div>
+    </div>
+
+    <div class="ms-check-card" style="border-top-color:#1a2b4a;">
+      <div class="msc-head">M8 — Q2 2030 · $2.73M MRR</div>
+      <div class="msc-mrr">API B2B activa · 8,500+ clientes · $32M ARR</div>
+      <div class="msc-item"><strong>T1</strong> Sitio web ecosistema rediseñado para LATAM</div>
+      <div class="msc-item"><strong>T2</strong> Contenido en inglés/portugués para expansión LATAM</div>
+      <div class="msc-item"><strong>T4</strong> ≥3 fintechs usando API Santaglia en producción</div>
+      <div class="msc-item"><strong>T5</strong> Campañas activas en Colombia o Chile</div>
+      <div class="msc-item"><strong>T6</strong> NRR ecosistema &gt;115%</div>
+      <div class="msc-item"><strong>T8</strong> API pricing B2B en producción con SLA documentado</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- §13 KPIs MENSUALES -->
+<div class="section">
+  <div class="section-label">§ 13 — Dashboard de Seguimiento Mensual</div>
+  <div class="section-title">Qué medir cada mes para no desviarse de los milestones</div>
+
+  <div class="kpi-dash">
+    <div class="kpi-box">
+      <div class="kpi-box-title">📡 Atracción</div>
+      <div class="kpi-row"><span class="kpi-metric">Visitas orgánicas/mes</span><span class="kpi-target">+15% m/m</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Leads capturados/mes</span><span class="kpi-target">≥ plan de adquis.</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Suscriptores newsletter</span><span class="kpi-target">+100/mes mínimo</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Views YouTube/mes</span><span class="kpi-target">+20% m/m</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Seguidores sociales activos</span><span class="kpi-target">+5% m/m</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Backlinks nuevos (SEO)</span><span class="kpi-target">≥5/mes</span></div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-box-title">🔄 Conversión</div>
+      <div class="kpi-row"><span class="kpi-metric">Trials iniciados/mes</span><span class="kpi-target">según plan</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Trial → pago (30 días)</span><span class="kpi-target">≥28%</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Demos realizadas/mes</span><span class="kpi-target">≥ pipeline Empr.</span></div>
+      <div class="kpi-row"><span class="kpi-metric">CAC (todos los canales)</span><span class="kpi-target">tendencia ↓</span></div>
+      <div class="kpi-row"><span class="kpi-metric">% nuevos en plan anual</span><span class="kpi-target">≥25%</span></div>
+      <div class="kpi-row"><span class="kpi-metric">ROAS Google + Meta Ads</span><span class="kpi-target">≥3.5×</span></div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-box-title">🔒 Retención y Expansión</div>
+      <div class="kpi-row"><span class="kpi-metric">Churn mensual neto</span><span class="kpi-target">&lt;3% → &lt;2%</span></div>
+      <div class="kpi-row"><span class="kpi-metric">NPS promedio ecosistema</span><span class="kpi-target">≥40 → ≥60</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Net Revenue Retention</span><span class="kpi-target">≥105%</span></div>
+      <div class="kpi-row"><span class="kpi-metric">MRR de expansión (upsell+cross)</span><span class="kpi-target">creciente % del total</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Clientes referidos/mes</span><span class="kpi-target">≥5% de nuevos</span></div>
+      <div class="kpi-row"><span class="kpi-metric">Cuentas en riesgo (sin login 21d)</span><span class="kpi-target">&lt;8% del total</span></div>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:1.25rem;">
+    <div class="callout-title">Cadencia de revisión recomendada</div>
+    <strong>Semanal:</strong> MRR nuevo, trials activos, demos agendadas, churn semanal estimado.<br>
+    <strong>Mensual:</strong> todos los KPIs del dashboard + revisión de tareas del trimestre en curso vs. el milestone siguiente.<br>
+    <strong>Trimestral:</strong> revisión completa de la estrategia — ¿estamos en ritmo para el próximo milestone? Si MRR va &lt;85% del plan, activar palancas: bajar CAC meta, aumentar presupuesto en el canal más eficiente, lanzar oferta especial de conversión.
+  </div>
+</div>
+
+<div style="text-align:center;padding:2rem 0 1rem;font-size:.68rem;color:var(--xs);">
+  Estrategia General Comercial — Ecosistema Santaglia Compass · Versión 1.0 · Mayo 2026<br>
+  Documento estratégico interno — confidencial
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ═══════════════════════════════════════════════
+// GANTT DATA
+// Quarters: Q3'26=0, Q4'26=1, Q1'27=2, Q2'27=3, Q3'27=4, Q4'27=5,
+//           Q1'28=6, Q2'28=7, Q3'28=8, Q4'28=9, Q1'29=10, Q2'29=11,
+//           Q3'29=12, Q4'29=13, Q1'30=14, Q2'30=15
+// Milestones at cols: 1,3,5,7,9,11,13,15
+// ═══════════════════════════════════════════════
+const TOTAL_Q = 16;
+const MILESTONES = {1:'M1 $138K',3:'M2 $237K',5:'M3 $370K',7:'M4 $582K',9:'M5 $988K',11:'M6 $1.54M',13:'M7 $2.15M',15:'M8 $2.73M'};
+const MS_COLORS = {1:'#2563eb',3:'#7c3aed',5:'#dc2626',7:'#ea580c',9:'#0d9488',11:'#c8a84b',13:'#475569',15:'#1a2b4a'};
+const Q_LABELS = ['Q3\'26','Q4\'26','Q1\'27','Q2\'27','Q3\'27','Q4\'27','Q1\'28','Q2\'28','Q3\'28','Q4\'28','Q1\'29','Q2\'29','Q3\'29','Q4\'29','Q1\'30','Q2\'30'];
+
+const TACTICS = [
+  { id:'t1', name:'T1 — Posicionamiento y Marca', color:'#1a2b4a', emoji:'🎯', tasks:[
+    {n:'Brand kit + brand voice ecosistema', s:0, e:0},
+    {n:'Landing page Empresarial (optimizar)', s:0, e:1},
+    {n:'Landing page Compass Personal', s:1, e:1},
+    {n:'Registro de marca IMPI', s:1, e:2},
+    {n:'Landing page Compass Conductor', s:4, e:4},
+    {n:'Landing pages Freelance + Clínica', s:5, e:6},
+    {n:'Landing page Educativo', s:8, e:8},
+    {n:'Landing pages Tier 2 (Contratista, Franquicia, Migrante)', s:9, e:10},
+    {n:'Rediseño sitio web ecosistema (hub LATAM)', s:14, e:15},
+  ]},
+  { id:'t2', name:'T2 — Marketing de Contenidos e Inbound', color:'#2563eb', emoji:'📝', tasks:[
+    {n:'Setup canal YouTube + estrategia editorial', s:0, e:1},
+    {n:'SEO keyword research por vertical', s:0, e:1},
+    {n:'Blog fiscal: 4 artículos/mes', s:1, e:15},
+    {n:'Videos YouTube: 2/mes (Empresarial, Personal)', s:1, e:3},
+    {n:'Lead magnet: Calculadora de retenciones PYME', s:2, e:2},
+    {n:'Newsletter mensual "El Fiscal"', s:2, e:15},
+    {n:'Lead magnet: Simulador ingresos reales Conductor', s:3, e:3},
+    {n:'Videos YouTube: serie Conductor (5 episodios)', s:3, e:5},
+    {n:'Guía PDF: "Fiscal Kit Freelance MX"', s:5, e:5},
+    {n:'Contenido blog/YouTube: Clínica + Freelance', s:5, e:7},
+    {n:'Webinar trimestral en vivo por vertical', s:7, e:15},
+    {n:'Reporte anual "Estado Finanzas PYME MX"', s:10, e:10},
+  ]},
+  { id:'t3', name:'T3 — Comunidades y Redes Sociales', color:'#7c3aed', emoji:'👥', tasks:[
+    {n:'Setup Instagram, TikTok, LinkedIn @compasssantaglia', s:0, e:1},
+    {n:'Posts educativos 3/semana Instagram', s:1, e:15},
+    {n:'TikTok: serie fiscal "¿Sabías que...?" 3×/semana', s:2, e:15},
+    {n:'LinkedIn Empresarial: 2 posts/semana', s:2, e:15},
+    {n:'Infiltración grupos FB conductores (participar)', s:2, e:3},
+    {n:'Crear grupo WhatsApp "Conductores Compass"', s:3, e:3},
+    {n:'Crear grupo WhatsApp "Freelancers Compass MX"', s:5, e:5},
+    {n:'Comunidades FB/WA médicos y profesionistas salud', s:5, e:6},
+    {n:'Comunidades FB/WA tutores y academias', s:8, e:9},
+    {n:'Comunidades FB/WA contratistas y constructores', s:9, e:10},
+    {n:'Comunidades franquiciatarios MX', s:10, e:11},
+  ]},
+  { id:'t4', name:'T4 — Canal de Alianzas Estratégicas', color:'#0d9488', emoji:'🤝', tasks:[
+    {n:'Programa referidos para despachos contables', s:1, e:1},
+    {n:'Convenio 3–5 despachos contables Empresarial', s:1, e:2},
+    {n:'Convenio Colegios de Contadores (IMCP regional)', s:2, e:3},
+    {n:'Alianzas ≥20 talleres mecánicos (QR flyers)', s:3, e:4},
+    {n:'Alianzas gasolineras (descuento cruzado)', s:4, e:5},
+    {n:'Convenio Colegio Médico / CONAMED', s:5, e:6},
+    {n:'Alianza AMITI (freelancers tech)', s:6, e:7},
+    {n:'Alianza CANACINTRA (PYME y contratistas)', s:7, e:8},
+    {n:'Alianzas escuelas idiomas / academias', s:8, e:9},
+    {n:'Convenio AMF — Asociación Mexicana de Franquicias', s:9, e:10},
+    {n:'Alianza CMIC (Cámara Industria Construcción)', s:10, e:11},
+    {n:'Piloto API con 2–3 fintechs o despachos grandes', s:11, e:13},
+  ]},
+  { id:'t5', name:'T5 — Adquisición Directa y Conversión', color:'#ea580c', emoji:'⚡', tasks:[
+    {n:'Free trial 30d + secuencia onboarding 5 emails', s:1, e:1},
+    {n:'Demo grabada Empresarial + Calendly demos en vivo', s:1, e:1},
+    {n:'Página de precios con ROI vs. contador', s:1, e:1},
+    {n:'Chat en vivo sitio web (Tidio)', s:2, e:2},
+    {n:'Demo grabada Compass Personal', s:2, e:2},
+    {n:'A/B test headlines y CTAs en landing pages', s:2, e:15},
+    {n:'Google Ads: keywords fiscales alta intención', s:3, e:15},
+    {n:'Demo grabada Compass Conductor', s:4, e:4},
+    {n:'Facebook/IG Ads: lookalike audiences por vertical', s:4, e:15},
+    {n:'Demos grabadas Freelance y Clínica', s:6, e:6},
+    {n:'Funnel retargeting visitantes no convertidos', s:7, e:15},
+    {n:'Enterprise demos Empresarial (>50 colabs)', s:8, e:15},
+  ]},
+  { id:'t6', name:'T6 — Retención y Expansión', color:'#16a34a', emoji:'🔒', tasks:[
+    {n:'NPS survey mensual automatizado (Typeform)', s:1, e:1},
+    {n:'Plan anual: 2 meses gratis en todos los productos', s:2, e:2},
+    {n:'Check-in mensual proactivo cuentas >$399/mes', s:2, e:2},
+    {n:'Programa referidos con código personal (10%/año)', s:2, e:2},
+    {n:'Upsell automatizado (trigger uso >80% del tier)', s:2, e:3},
+    {n:'Alerta churn: sin login 21d → reactivación', s:3, e:3},
+    {n:'Cross-sell Conductor → Freelance', s:5, e:5},
+    {n:'Cross-sell Empresarial → Personal (empleados)', s:6, e:6},
+    {n:'Reporte valor mensual automático ("te ahorré $X")', s:6, e:6},
+    {n:'Customer success: QBR trimestral top 20%', s:8, e:15},
+    {n:'Plan afiliados formal entre verticales', s:8, e:9},
+    {n:'Executive Business Review semestral (>$1,500/mes)', s:10, e:15},
+  ]},
+  { id:'t7', name:'T7 — Relaciones Públicas y Autoridad', color:'#c8a84b', emoji:'📣', tasks:[
+    {n:'LinkedIn personal fundador: 3 posts/semana', s:0, e:15},
+    {n:'Casos de éxito publicados: 2/trimestre', s:2, e:15},
+    {n:'Pitch medios: Forbes MX, El Economista, Expansión', s:3, e:4},
+    {n:'Participar en podcasts de emprendimiento MX', s:3, e:15},
+    {n:'Webinar "Fiscalidad para conductores MX"', s:4, e:4},
+    {n:'Press release lanzamiento Conductor v1.0', s:5, e:5},
+    {n:'Hablar en evento despachos contables / cámaras', s:6, e:6},
+    {n:'Nominación premio fintech/fiscal PYME MX', s:7, e:8},
+    {n:'Stand / conferencia ExpoFranquicia 2029', s:10, e:10},
+    {n:'Reporte anual "Estado Finanzas PYME MX 2029"', s:10, e:10},
+  ]},
+  { id:'t8', name:'T8 — Pricing, Empaquetado y Experimentos', color:'#475569', emoji:'💲', tasks:[
+    {n:'Definir estructura tiers por producto (precio público)', s:0, e:1},
+    {n:'Plan anual con 2 meses gratis', s:2, e:2},
+    {n:'Bundle "Combo Familia+Empresa" (15% off combinado)', s:3, e:3},
+    {n:'A/B test precio Conductor ($149 vs $179 vs $199)', s:5, e:6},
+    {n:'Bundle Conductor + Freelance ($299, ahorro $49)', s:6, e:6},
+    {n:'Revisión anual de pricing Q1 2028', s:6, e:6},
+    {n:'Enterprise pricing Empresarial >50 colabs', s:7, e:8},
+    {n:'Evaluación modelo freemium básico', s:10, e:11},
+    {n:'Revisión anual pricing Q1 2029', s:10, e:10},
+    {n:'API pricing B2B + developer portal', s:11, e:11},
+    {n:'Revisión anual pricing Q1 2030', s:14, e:14},
+  ]},
+];
+
+// ═══════════════════════════════════════════════
+// GANTT RENDERER
+// ═══════════════════════════════════════════════
+(function buildGantt() {
+  const container = document.getElementById('gantt-container');
+  const NAME_W = 220;
+  const Q_W    = 58;
+  const totalW = NAME_W + Q_W * TOTAL_Q;
+
+  // Build header
+  let hHtml = `<div style="display:flex;border-bottom:2px solid var(--navy);margin-bottom:3px;min-width:${totalW}px;">`;
+  hHtml += `<div style="width:${NAME_W}px;flex-shrink:0;font-size:.6rem;font-weight:700;color:var(--dim);padding:.3rem .4rem;text-transform:uppercase;letter-spacing:.05em;">Táctica / Tarea</div>`;
+  Q_LABELS.forEach((lbl,i) => {
+    const isMsCol = MILESTONES[i] !== undefined;
+    hHtml += `<div style="width:${Q_W}px;flex-shrink:0;text-align:center;font-size:.57rem;font-weight:700;
+      color:${isMsCol?MS_COLORS[i]:'var(--dim)'};padding:.3rem .1rem;
+      border-left:${isMsCol?'2px dashed '+MS_COLORS[i]:'1px solid var(--border)'};">${lbl}</div>`;
+  });
+  hHtml += '</div>';
+
+  // Milestone label row
+  let msHtml = `<div style="display:flex;margin-bottom:6px;min-width:${totalW}px;">`;
+  msHtml += `<div style="width:${NAME_W}px;flex-shrink:0;"></div>`;
+  Q_LABELS.forEach((_,i) => {
+    const ms = MILESTONES[i];
+    const col = MS_COLORS[i] || 'transparent';
+    msHtml += `<div style="width:${Q_W}px;flex-shrink:0;text-align:center;">`;
+    if (ms) msHtml += `<div style="font-size:.52rem;font-weight:700;color:#fff;background:${col};border-radius:3px;padding:.1rem .15rem;white-space:nowrap;overflow:hidden;">${ms}</div>`;
+    msHtml += `</div>`;
+  });
+  msHtml += '</div>';
+
+  let body = '';
+  TACTICS.forEach(tactic => {
+    // Group header
+    body += `<div style="display:flex;align-items:center;background:${tactic.color};border-radius:5px;margin:8px 0 3px;padding:.3rem .5rem;min-width:${totalW}px;">
+      <span style="font-size:.68rem;font-weight:700;color:#fff;flex:1;">${tactic.emoji} ${tactic.name}</span>
+    </div>`;
+
+    tactic.tasks.forEach(task => {
+      body += `<div style="display:flex;align-items:center;min-height:20px;margin-bottom:2px;min-width:${totalW}px;">`;
+      body += `<div style="width:${NAME_W}px;flex-shrink:0;font-size:.62rem;color:var(--text);padding:.1rem .4rem;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${task.n}">${task.n}</div>`;
+      for (let q = 0; q < TOTAL_Q; q++) {
+        const isMsCol = MILESTONES[q] !== undefined;
+        const active  = q >= task.s && q <= task.e;
+        const isFirst = active && q === task.s;
+        const isLast  = active && q === task.e;
+        const isSingle = task.s === task.e;
+        let barStyle = '';
+        if (active) {
+          const r = isSingle ? '4px' : isFirst ? '4px 0 0 4px' : isLast ? '0 4px 4px 0' : '0';
+          barStyle = `background:${tactic.color};border-radius:${r};opacity:.82;margin:3px 1px;height:14px;`;
+        }
+        body += `<div style="width:${Q_W}px;flex-shrink:0;height:20px;position:relative;
+          border-left:${isMsCol?'2px dashed rgba(200,168,75,.4)':'1px solid rgba(0,0,0,.04)'};">
+          ${active ? `<div style="${barStyle}"></div>` : ''}
+        </div>`;
+      }
+      body += '</div>';
+    });
+  });
+
+  container.innerHTML = hHtml + msHtml + body;
+
+  // Legend
+  const legend = document.getElementById('gantt-legend');
+  legend.innerHTML = TACTICS.map(t =>
+    `<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${t.color};margin-right:.3rem;vertical-align:middle;"></span>${t.emoji} ${t.name.split('—')[0].trim()}</span>`
+  ).join('') + `<span style="margin-left:1rem;"><span style="display:inline-block;width:12px;height:0;border-top:2px dashed var(--gold);margin-right:.3rem;vertical-align:middle;"></span>Milestones MRR</span>`;
+})();
+</script>
+
+</body>
+</html>

@@ -73,6 +73,9 @@
       flex-shrink: 0;
     }
     .tb-ing  { background:#e6f7ee; color:var(--green); }
+    .tb-real { background:#e0f2fe; color:#0369a1; }        /* movimiento real de financiero */
+    .tb-sat  { background:#fff0e0; color:#c44000; }        /* retención SAT proyectada */
+    .tb-satp { background:#fde8e8; color:#b91c1c; }        /* retención SAT pagada */
 
     .proy-del-btn { background:none; border:none; cursor:pointer; color:var(--text-xs); font-size:0.78rem; padding:0.1rem 0.3rem; border-radius:2px; }
     .proy-del-btn:hover { color:var(--red); background:#fde8e8; }
@@ -87,6 +90,103 @@
     .empty-proy .ep-icon { font-size:2.4rem; margin-bottom:0.5rem; }
     .empty-proy .ep-msg  { font-size:0.82rem; margin-bottom:0.3rem; color:var(--text-dim); }
     .empty-proy .ep-sub  { font-size:0.7rem; }
+
+    /* ── Dropdown menus (action bar) ── */
+    .proy-dd-wrap { position:relative; display:inline-block; }
+    .proy-dd-menu { display:none; position:absolute; top:calc(100% + 4px); left:0; min-width:220px;
+                    background:#fff; border:1px solid var(--border); border-radius:6px;
+                    box-shadow:0 6px 20px rgba(0,0,0,0.13); z-index:200; padding:0.3rem 0; }
+    .proy-dd-menu.right { left:auto; right:0; }
+    .proy-dd-menu.open  { display:block; }
+    .proy-dd-item { display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 1rem;
+                    font-size:0.73rem; font-family:var(--font); border:none; background:none;
+                    text-align:left; cursor:pointer; color:var(--text); white-space:nowrap; }
+    .proy-dd-item:hover { background:var(--navy-pale); }
+    .proy-dd-item.danger { color:var(--red); }
+    .proy-dd-item.danger:hover { background:#fff0f0; }
+    .proy-dd-sep  { height:1px; background:var(--border); margin:0.25rem 0; }
+    .proy-dd-sub  { font-family:var(--brand); font-size:0.57rem; font-weight:700; color:var(--text-dim);
+                    padding:0.4rem 1rem 0.15rem; text-transform:uppercase; letter-spacing:0.08em; }
+    .proy-dd-inline { display:flex; align-items:center; gap:0.5rem; padding:0.35rem 1rem; }
+    .proy-dd-inline label { cursor:pointer; display:flex; align-items:center; gap:0.4rem; font-size:0.72rem; flex:1; }
+
+    /* ── Verificación automática ── */
+    #verif-badge button {
+      font-family: var(--brand); font-size: 0.7rem; font-weight: 700;
+      padding: 0.22rem 0.55rem; border-radius: 5px; cursor: pointer;
+      border: 1px solid currentColor; background: transparent; transition: opacity .2s;
+    }
+    #verif-badge button:hover { opacity: .8; }
+    #verif-panel {
+      display: none; margin: 0 0 0.75rem; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08); overflow: hidden;
+    }
+    #verif-panel.open { display: block; }
+    .verif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 1rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+    }
+    .verif-title { font-family: var(--brand); font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+    .verif-body  { padding: 0.75rem 1rem; max-height: 340px; overflow-y: auto; }
+    .verif-section-title {
+      font-family: var(--brand); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-dim); margin: 0.5rem 0 0.3rem;
+    }
+    .verif-item {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.6rem;
+      align-items: start; padding: 0.3rem 0; border-bottom: 1px solid #f0f1f5; font-size: 0.72rem;
+    }
+    .verif-item:last-child { border-bottom: none; }
+    .verif-dot  { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .verif-dot.error   { background: var(--red); }
+    .verif-dot.warning { background: #d97706; }
+    .verif-dot.info    { background: var(--text-dim); }
+    .verif-msg  { color: var(--text-main); line-height: 1.4; }
+    .verif-accion { font-size: 0.65rem; color: var(--text-dim); grid-column: 2; margin-top: -2px; }
+    .verif-ok { text-align: center; padding: 1rem; color: var(--green); font-family: var(--brand); font-weight: 700; }
+    .verif-footer { padding: 0.4rem 1rem; background: #f7f8fc; border-top: 1px solid var(--border);
+                    display: flex; align-items: center; gap: 0.75rem; font-size: 0.68rem; color: var(--text-dim); }
+    /* ── Descarte de items de verificación ── */
+    .verif-btns { display: flex; gap: 0.35rem; margin-top: 0.28rem; }
+    .verif-btn {
+      font-size: 0.61rem; padding: 0.12rem 0.4rem; border-radius: 4px; cursor: pointer;
+      border: 1px solid; font-family: inherit; line-height: 1.5; transition: opacity .15s;
+    }
+    .verif-btn-descartar { color: var(--text-dim); border-color: var(--border); background: #f7f8fc; }
+    .verif-btn-descartar:hover { background: #e8eaf0; color: var(--text-main); }
+    .verif-descartados-note {
+      font-size: 0.62rem; color: var(--text-dim); font-style: italic;
+      margin-top: 0.5rem; padding: 0.25rem 0; text-align: center;
+      border-top: 1px dashed #e0e2ec;
+    }
+    .verif-descartados-note button {
+      font-size: 0.62rem; color: var(--navy); background: none; border: none;
+      cursor: pointer; text-decoration: underline; padding: 0;
+    }
+    /* ── Sección colapsable "¿Qué se verifica?" ── */
+    .verif-checks { border-top: 1px dashed #e0e2ec; margin-top: 0.6rem; padding-top: 0.35rem; }
+    .verif-checks-toggle {
+      width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+      font-size: 0.64rem; color: var(--text-dim); display: flex; align-items: center;
+      gap: 0.3rem; padding: 0.15rem 0; font-family: inherit;
+    }
+    .verif-checks-toggle:hover { color: var(--navy); }
+    .vct-arrow { font-size: 0.58rem; transition: transform .2s; display: inline-block; }
+    .verif-checks-toggle.open .vct-arrow { transform: rotate(90deg); }
+    .verif-checks-body { display: none; padding: 0.35rem 0 0.1rem; }
+    .verif-checks-body.open { display: block; }
+    .verif-check-row {
+      display: flex; gap: 0.45rem; align-items: baseline; font-size: 0.66rem;
+      color: var(--text-dim); padding: 0.18rem 0; border-bottom: 1px solid #f4f5fb; line-height: 1.4;
+    }
+    .verif-check-row:last-child { border-bottom: none; }
+    .verif-check-num { font-weight: 700; color: var(--navy); flex-shrink: 0; min-width: 1.1rem; font-size: 0.61rem; }
+    .verif-check-name { font-weight: 600; color: var(--text-main); }
+    .verif-check-badge {
+      display: inline-block; font-size: 0.56rem; font-weight: 700; padding: 0.03rem 0.28rem;
+      border-radius: 3px; background: #eef3fa; color: var(--navy); margin-left: 0.25rem; vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -134,6 +234,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -141,6 +242,7 @@
         <a class="nav-link" href="ayuda.html">Ayuda</a>
       </nav>
       <div class="header-actions">
+        <span id="verif-badge" style="margin-right:0.5rem;"></span>
         <button class="btn-logout" onclick="logout()">Salir</button>
       </div>
     </div>
@@ -149,16 +251,29 @@
   <main>
     <div class="main">
 
+      <!-- ══ PANEL DE AUTO-VERIFICACIÓN ══ -->
+      <div id="verif-panel">
+        <div class="verif-header">
+          <span class="verif-title">🔍 Auto-verificación de Proyección de Saldos</span>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="lanzarVerificacion('manual')">↻ Re-verificar</button>
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="document.getElementById('verif-panel').classList.remove('open')">✕</button>
+          </div>
+        </div>
+        <div class="verif-body" id="verif-body">
+          <div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.75rem;">Ejecutando verificación…</div>
+        </div>
+        <div class="verif-footer" id="verif-footer"></div>
+      </div>
+
       <!-- Page header -->
       <div class="page-header">
         <div>
-          <div class="page-title">Planeación financiera</div>
-          <h1 class="page-heading">Proyección de Saldos</h1>
-          <div class="page-meta" id="proy-meta">Escenario de gastos recurrentes sobre los saldos bancarios actuales</div>
-        </div>
-        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-          <a href="recurrentes.html" class="btn btn-ghost" style="font-size:0.72rem;">← Recurrentes</a>
-          <button class="btn btn-ghost" onclick="limpiarProyeccion()" style="font-size:0.72rem; color:var(--red);">🗑 Limpiar proyección</button>
+          <div class="page-title">Planeación financiera · NIF B-2 — Método Directo (base caja)</div>
+          <h1 class="page-heading">Proyección de Flujo de Efectivo</h1>
+          <div class="page-meta" id="proy-meta">Proyección de cobros y pagos futuros sobre saldos bancarios reales — identifica déficit antes de que ocurra</div>
         </div>
       </div>
 
@@ -168,31 +283,18 @@
         <input type="number" id="proy-tc" value="17.50" min="1" step="0.01"
           style="width:88px; padding:0.2rem 0.5rem; font-size:0.8rem; border:1px solid var(--border); border-radius:2px;"
           oninput="onTCChange()" />
-        <span style="color:var(--text-xs); font-size:0.67rem;">Usar para convertir montos entre MXN y USD al proyectar</span>
+        <span style="color:var(--text-xs); font-size:0.67rem;">Usar para convertir entre MXN y USD</span>
         <div style="width:1px; background:var(--border); align-self:stretch; margin:0 0.75rem;"></div>
         <label style="font-family:var(--brand); font-size:0.63rem; font-weight:700; color:var(--text-dim); white-space:nowrap;">SALDOS AL</label>
         <input type="date" id="proy-cutoff"
           style="padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:2px; font-family:var(--font);"
           oninput="onCutoffChange()"
-          title="Fecha en que se actualizaron los saldos iniciales. Los movimientos proyectados en o antes de esta fecha ya están reflejados en los saldos reales y no se vuelven a descontar." />
-        <button onclick="autoDetectarCorte()" title="Detectar fecha de corte automáticamente desde los movimientos bancarios reales"
-          style="padding:0.2rem 0.55rem; font-size:0.72rem; border:1px solid var(--border); border-radius:2px; background:#f4f6fb; cursor:pointer; font-family:var(--brand); font-weight:600; color:var(--navy); white-space:nowrap;">
-          🔄 Auto
-        </button>
+          title="Fecha de los últimos saldos bancarios reales. Se actualiza automáticamente al importar extractos." />
         <span id="cutoff-info" style="color:var(--text-xs); font-size:0.63rem;"></span>
-        <div style="width:1px; background:var(--border); align-self:stretch; margin:0 0.75rem;"></div>
-        <label style="font-family:var(--brand); font-size:0.63rem; font-weight:700; color:var(--text-dim); white-space:nowrap;" title="Mes desde el cual arranca la proyección. Los meses anteriores se ocultan y puedes eliminarlos.">ARRANQUE</label>
-        <input type="month" id="proy-arranque"
-          style="padding:0.2rem 0.5rem; font-size:0.78rem; border:1px solid var(--border); border-radius:2px; font-family:var(--font); min-width:140px;"
-          oninput="onArranqueChange()"
-          title="Mes de arranque de la proyección. Meses anteriores se colapsan en 'Histórico'." />
-        <button onclick="limpiarAntesDeArranque()"
-          title="Eliminar movimientos proyectados anteriores al mes de arranque"
-          style="padding:0.2rem 0.55rem; font-size:0.72rem; border:1px solid #f0bfbf; border-radius:2px; background:#fff5f5; cursor:pointer; font-family:var(--brand); font-weight:600; color:var(--red); white-space:nowrap;">
-          🗑 Limpiar hist.
-        </button>
         <div class="spacer" style="flex:1;"></div>
         <span id="proy-ult-fecha" style="font-size:0.67rem; color:var(--text-xs);"></span>
+        <!-- ARRANQUE hidden input — controlled from ⚙ dropdown -->
+        <input type="month" id="proy-arranque" style="display:none;" oninput="onArranqueChange()" />
       </div>
 
       <!-- Saldos proyectados KPI -->
@@ -219,17 +321,48 @@
         <button class="btn btn-primary" id="btn-proyectar" onclick="proyectarSiguienteMes()" style="font-size:0.78rem; padding:0.45rem 1rem;">
           📅 Proyectar siguiente mes
         </button>
-        <button class="btn btn-ghost" onclick="abrirMovExtraordinario()" style="font-size:0.72rem;">+ Mov. extraordinario</button>
-        <button class="btn btn-ghost" onclick="abrirTraspaso(false)" style="font-size:0.72rem;">↔ Traspaso</button>
-        <button class="btn btn-ghost" onclick="abrirVentaDivisas(false)" style="font-size:0.72rem;">💱 Venta de divisas</button>
-        <label style="display:flex; align-items:center; gap:0.35rem; font-family:var(--brand); font-size:0.65rem; font-weight:600; color:var(--text-dim); cursor:pointer; user-select:none;" title="Al detectar déficit MXN, vende USD automáticamente para fondear la cuenta y continúa proyectando sin pausar.">
-          <input type="checkbox" id="chk-autofondeo" style="accent-color:var(--navy); width:13px; height:13px;" />
-          AUTO-FONDEO USD→MXN
-        </label>
+
+        <!-- + Agregar dropdown -->
+        <div class="proy-dd-wrap">
+          <button class="btn btn-ghost" onclick="toggleDD('dd-agregar')" style="font-size:0.72rem;">+ Agregar ▾</button>
+          <div class="proy-dd-menu" id="dd-agregar">
+            <button class="proy-dd-item" onclick="abrirMovExtraordinario(); closeAllDD()">+ Mov. extraordinario</button>
+            <button class="proy-dd-item" onclick="abrirTraspaso(false); closeAllDD()">↔ Traspaso entre cuentas</button>
+            <button class="proy-dd-item" onclick="abrirVentaDivisas(false); closeAllDD()">💱 Venta de divisas</button>
+          </div>
+        </div>
+
         <div class="spacer"></div>
-        <button class="btn btn-ghost" id="btn-historial" onclick="toggleHistorico()" style="font-size:0.7rem; color:var(--text-dim);">📦 Mostrar histórico</button>
-        <button class="btn btn-ghost" onclick="expandirTodo(true)"  style="font-size:0.7rem;">⊞ Todo</button>
-        <button class="btn btn-ghost" onclick="expandirTodo(false)" style="font-size:0.7rem;">⊟ Colapsar</button>
+
+        <!-- ⚙ Settings dropdown -->
+        <div class="proy-dd-wrap">
+          <button class="btn btn-ghost" onclick="toggleDD('dd-settings')" title="Opciones" style="font-size:0.88rem; padding:0.38rem 0.7rem; line-height:1;">⚙</button>
+          <div class="proy-dd-menu right" id="dd-settings">
+            <!-- AUTO-FONDEO -->
+            <div class="proy-dd-inline" title="Al detectar déficit MXN, vende USD automáticamente para fondear la cuenta y continúa proyectando sin pausar.">
+              <label>
+                <input type="checkbox" id="chk-autofondeo" style="accent-color:var(--navy); width:13px; height:13px;" />
+                AUTO-FONDEO USD→MXN
+              </label>
+            </div>
+            <div class="proy-dd-sep"></div>
+            <button class="proy-dd-item" onclick="reProyectarMesActual(); closeAllDD()" title="Agrega recurrentes faltantes al mes actual sin borrar lo ya proyectado.">🔄 Completar mes actual</button>
+            <button class="proy-dd-item" onclick="expandirTodo(true);  closeAllDD()">⊞ Expandir todo</button>
+            <button class="proy-dd-item" onclick="expandirTodo(false); closeAllDD()">⊟ Colapsar todo</button>
+            <button class="proy-dd-item" id="btn-historial" onclick="toggleHistorico(); closeAllDD()">📦 Mostrar histórico</button>
+            <div class="proy-dd-sep"></div>
+            <div class="proy-dd-sub">Arranque de proyección</div>
+            <div class="proy-dd-inline">
+              <input type="month" id="proy-arranque-dd"
+                style="font-size:0.72rem; border:1px solid var(--border); border-radius:2px; padding:0.2rem 0.4rem; font-family:var(--font); flex:1;"
+                oninput="syncArranqueDD(this.value)"
+                title="Mes desde el cual arranca la proyección. Los meses anteriores se agrupan en Histórico." />
+              <button onclick="limpiarAntesDeArranque()" style="font-size:0.65rem; padding:0.18rem 0.5rem; border:1px solid #f0bfbf; border-radius:2px; background:#fff5f5; color:var(--red); cursor:pointer; white-space:nowrap;">🗑 Limpiar</button>
+            </div>
+            <div class="proy-dd-sep"></div>
+            <button class="proy-dd-item danger" onclick="limpiarProyeccion(); closeAllDD()">🗑 Limpiar proyección completa</button>
+          </div>
+        </div>
       </div>
 
       <!-- Movements panel -->
@@ -242,14 +375,14 @@
           <table class="proy-table">
             <thead>
               <tr>
-                <th style="min-width:82px;">Fecha</th>
-                <th style="min-width:80px;">Tipo</th>
-                <th style="min-width:180px;">Descripción</th>
-                <th style="min-width:130px;">Concepto</th>
-                <th style="min-width:200px;">Cuenta</th>
-                <th style="min-width:55px; text-align:center;">Mon.</th>
-                <th class="num" style="min-width:90px;">Entradas</th>
-                <th class="num" style="min-width:90px;">Salidas</th>
+                <th style="min-width:82px;" title="Fecha estimada del cobro o pago (AAAA-MM-DD)">Fecha</th>
+                <th style="min-width:80px;" title="Origen del movimiento proyectado — Recurrente: automático de Recurrentes · Manual: extraordinario ingresado · SAT: retención fiscal proyectada · Real: movimiento confirmado de Mov. Bancarios · Traspaso · FX">Origen</th>
+                <th style="min-width:180px;" title="Descripción operativa del cobro o pago esperado">Descripción</th>
+                <th style="min-width:130px;" title="Rubro contable / NIF: clasifica el flujo por naturaleza. NIF B-2: Actividades de Operación (cobros/pagos del giro), Inversión (compra de activos) o Financiamiento (créditos, aportaciones).">Rubro / NIF B-2</th>
+                <th style="min-width:200px;" title="Cuenta bancaria sobre la que impacta el flujo proyectado">Cuenta Bancaria</th>
+                <th style="min-width:55px; text-align:center;" title="Moneda (MXN o USD). Los USD se convierten al TC configurado para mostrar el total en MXN.">Mon.</th>
+                <th class="num" style="min-width:90px;" title="Entradas de efectivo proyectadas (cobros, abonos, ingresos esperados). NIF B-2: flujos positivos de efectivo.">Entradas ↓</th>
+                <th class="num" style="min-width:90px;" title="Salidas de efectivo proyectadas (pagos, cargos, egresos esperados). NIF B-2: flujos negativos de efectivo.">Salidas ↑</th>
                 <th style="width:30px;"></th>
               </tr>
             </thead>
@@ -276,26 +409,30 @@
 
 </div>
 
-<!-- ══ MODAL: Movimiento extraordinario ══ -->
+<!-- ══ MODAL: Movimiento no recurrente (extraordinario) ══ -->
 <div class="modal-backdrop hidden" id="modal-extrao">
   <div class="modal" style="max-width:520px;">
     <div class="modal-header">
-      <span class="modal-title">Movimiento extraordinario</span>
+      <span class="modal-title">Movimiento no recurrente</span>
       <button class="modal-close" onclick="closeModal('modal-extrao')">✕</button>
     </div>
     <div class="modal-body">
+      <div style="background:#f0f4ff;border:1px solid #c5d0f0;border-radius:6px;padding:0.55rem 0.85rem;font-size:0.68rem;color:#374151;margin-bottom:0.85rem;line-height:1.6;">
+        Usa este formulario para cobros o pagos <strong>puntuales que no son recurrentes</strong>: bonificaciones, inversiones, gastos extraordinarios, ingresos atípicos.<br>
+        <span style="color:#6b7280;">NIF B-2 — Método Directo: clasifica el flujo en Operación, Inversión o Financiamiento para análisis correcto.</span>
+      </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem 1rem;">
 
         <div class="form-group" style="grid-column:1/-1;">
           <label class="form-label">Descripción *</label>
-          <input class="form-input" id="ex-desc" type="text" placeholder="Gasto variable, ingreso extraordinario…" />
+          <input class="form-input" id="ex-desc" type="text" placeholder="Equipo de cómputo, bono cliente, pago anticipo…" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Tipo de movimiento *</label>
+          <label class="form-label" title="Flujo de efectivo: Cargo = Salida (pago, egreso) · Abono = Entrada (cobro, ingreso)">Dirección del flujo *</label>
           <select class="form-input" id="ex-mov" onchange="exMovChange()">
-            <option value="Cargo">Cargo (egreso)</option>
-            <option value="Abono">Abono (ingreso)</option>
+            <option value="Cargo">Cargo — Salida de efectivo (pago / egreso)</option>
+            <option value="Abono">Abono — Entrada de efectivo (cobro / ingreso)</option>
           </select>
         </div>
 
@@ -305,14 +442,42 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Concepto</label>
-          <input class="form-input" id="ex-concepto" type="text" placeholder="Honorarios, Servicios…" list="ex-conc-list" />
-          <datalist id="ex-conc-list"></datalist>
+          <label class="form-label" title="Rubro contable NIF/SAT. Ej: 601 Gastos de Adm., 613 Activo Fijo, 401 Ingresos. Útil para pólizas y Contabilidad Electrónica.">Rubro Contable / NIF–SAT</label>
+          <input class="form-input" id="ex-concepto" type="text" placeholder="601 Gastos Adm. · 613 Activo Fijo · 401 Ingresos…" list="ex-conc-list" />
+          <datalist id="ex-conc-list">
+            <option value="401 Ingresos por Servicios Prestados">
+            <option value="403 Anticipos de Clientes">
+            <option value="501 Costo de lo Vendido / Costo de Servicios">
+            <option value="511 Sueldos, Salarios y Prestaciones">
+            <option value="513 Honorarios y Servicios Profesionales">
+            <option value="601 Gastos de Administración: Por Clasificar">
+            <option value="601 Gastos de Administración: Renta de Oficina / Local">
+            <option value="601 Gastos de Administración: Seguros y Fianzas">
+            <option value="601 Gastos de Comunicación: Internet y Telefonía">
+            <option value="603 Gastos de Representación: Alimentos y Entretenimiento">
+            <option value="603 Gastos de Representación: Viajes y Hospedaje">
+            <option value="613 Activo Fijo: Equipo de Cómputo — ⚠ Verificar con contador">
+            <option value="613 Activo Fijo: Mobiliario y Equipo de Oficina">
+            <option value="613 Activo Fijo: Vehículos">
+            <option value="701 Gastos de Venta: Publicidad y Mercadotecnia">
+            <option value="801 ISR — Pago Provisional">
+            <option value="801 IVA — Pago / Complemento">
+            <option value="901 Gastos Financieros: Comisiones Bancarias">
+          </datalist>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Cuenta Contable</label>
-          <input class="form-input" id="ex-cc" type="text" placeholder="Cuenta contable…" list="ex-cc-list" />
+          <label class="form-label" title="Categoría NIF B-2: Operación = giro normal del negocio · Inversión = compra/venta de activos · Financiamiento = créditos, aportaciones de capital">Naturaleza NIF B-2</label>
+          <select class="form-input" id="ex-naturaleza">
+            <option value="Operación">Operación — giro normal del negocio</option>
+            <option value="Inversión">Inversión — compra de activos / equipos</option>
+            <option value="Financiamiento">Financiamiento — créditos / capital</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" title="Cuenta contable para pólizas (SAT Art. 28 CFF)">Cuenta Contable / NIF</label>
+          <input class="form-input" id="ex-cc" type="text" placeholder="601 Gastos Adm. · 613 Activo Fijo…" list="ex-cc-list" />
           <datalist id="ex-cc-list"></datalist>
         </div>
 
@@ -335,14 +500,14 @@
         </div>
 
         <div class="form-group" style="grid-column:1/-1;">
-          <label class="form-label">Notas</label>
-          <input class="form-input" id="ex-notas" type="text" placeholder="Información adicional…" />
+          <label class="form-label" title="Observaciones, RFC contraparte, número de CFDI o referencia bancaria">Notas / RFC / UUID CFDI</label>
+          <input class="form-input" id="ex-notas" type="text" placeholder="RFC contraparte, UUID del CFDI, referencia bancaria…" />
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-extrao')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarExtrao()">Agregar</button>
+      <button class="btn btn-primary" onclick="guardarExtrao()">Agregar movimiento</button>
     </div>
   </div>
 </div>
@@ -496,12 +661,198 @@ function loadProy()     { return loadRegistry(KEY_PROY); }
 function saveProy(data) { saveRegistry(KEY_PROY, data); }
 function loadRecs()     { return loadRegistry(KEY_REC).filter(r => r.activo).sort((a,b)=>(a.diaEstimado||1)-(b.diaEstimado||1)); }
 function loadSaldosBase() {
-  // Returns { cuenta: { saldo, moneda, tipo } }
+  /* Returns { cuenta: { saldo, moneda, tipo } }
+   *
+   * NOTAS DE DISEÑO (roadmap):
+   *
+   * 1. ESTADO DE CUENTA FIN DE MES ANTERIOR:
+   *    Si el saldo base viene del extracto del mes anterior, el motor necesita
+   *    proyectar todos los recurrentes del mes actual Y absorber los movimientos
+   *    reales ya capturados (stgl_mov_manual) entre la fecha del extracto y el cutoff.
+   *    Actualmente financiero.html llama a ajustarSaldoCuenta() al guardar cada
+   *    movimiento, por lo que stgl_saldos ya refleja los reales — pero esos movimientos
+   *    NO son visibles en la tabla de proyectados (solo en financiero).
+   *    TODO: merge de stgl_mov_manual (fecha entre fechaBase..cutoff) en la vista de
+   *    proyectados como filas "✓ Realizado", sin doble contabilidad.
+   *
+   * 2. ARCHIVO CON FECHA POSTERIOR AL ESTADO DE CUENTA:
+   *    Si se importa un extracto bancario con fecha posterior al saldo base manual,
+   *    el sistema debería detectarlo (fecha_extracto > fechaBase de la cuenta),
+   *    tomar el saldo del extracto como nueva base, actualizar stgl_saldos y notificar:
+   *    "Se actualizó el saldo de [cuenta] con la fecha del archivo importado.
+   *    El saldo anterior ya no aplica."
+   *    TODO: en el importador de Excel de financiero.html, detectar y ofrecer override.
+   */
   const out = {};
   loadRegistry(KEY_SAL).filter(s => !s.cancelada).forEach(s => {
     out[s.cuenta] = { saldo: parseFlt(s.saldo), moneda: s.moneda||'MXN', tipo: s.tipo||'Cuenta' };
   });
   return out;
+}
+
+/* ── Carga movimientos reales de financiero (stgl_mov_excel + stgl_mov_manual)
+   y los normaliza al esquema de proyectados para visualización.
+   NO afecta calcSaldosProyectados — stgl_saldos ya los incluye vía ajustarSaldoCuenta. ── */
+function loadMovsReales(arranque) {
+  let excel = [];
+  try { excel = JSON.parse(localStorage.getItem('stgl_mov_excel') || '[]'); } catch {}
+  let manual = [];
+  try { manual = loadRegistry('stgl_mov_manual'); } catch {}
+  // Deduplicar: manual prevalece sobre excel por id
+  const manualIds = new Set(manual.map(r => r.id));
+  const all = [...excel.filter(r => !manualIds.has(r.id)), ...manual];
+
+  return all
+    .filter(r => {
+      const f = (r.fecha || r.Fecha || '').substring(0, 10);
+      if (!f) return false;
+      // Solo desde el mes de arranque en adelante
+      if (arranque && f.substring(0, 7) < arranque) return false;
+      return true;
+    })
+    .map(r => ({
+      id:          r.id || r.uuid || '',
+      fecha:       (r.fecha || r.Fecha || '').substring(0, 10),
+      tipo:        'Real',
+      descripcion: r.desc || r.Descripcion || r.descripcion || '—',
+      concepto:    r.concepto || r.Concepto || '',
+      cuenta:      r.cuenta || r.Cuenta || '',
+      moneda:      r.moneda || 'MXN',
+      entrada:     parseFloat(r.entradas || 0) || 0,
+      salida:      parseFloat(r.salidas  || 0) || 0,
+      _esReal:     true,
+      _tipoOrig:   r.tipo  || '',
+      _movOrig:    r.mov   || '',   // 'Egresos' | 'Ingresos' | 'Traspaso'
+      _traspasoId: r.traspasoId || null,
+    }))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RETENCIONES SAT EN LA PROYECCIÓN
+   Lee stgl_retenciones + stgl_retenciones_extra + datos de nómina
+   y genera un egreso proyectado por el ISR+IVA total del mes,
+   con vencimiento el día 17 del mes siguiente (fecha límite SAT).
+   Si el pago ya fue registrado se muestra como "Real·SAT".
+══════════════════════════════════════════════════════════════ */
+const _MES_MAP_RET = {Ene:1,Jan:1,Feb:2,Mar:3,Abr:4,Apr:4,May:5,Jun:6,Jul:7,Ago:8,Aug:8,Sep:9,Oct:10,Nov:11,Dic:12,Dec:12};
+const _MES_ABR_RET = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function loadRetencionesProy(arranque) {
+  // ── Cargar fuentes de datos ──────────────────────────────────
+  let retData = [], extraData = {}, asimData = [], honData = [];
+  try { retData  = loadRegistry('stgl_retenciones'); }          catch {}
+  try { extraData = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}'); } catch {}
+  try { asimData = loadRegistry('stgl_asimilables'); }          catch {}
+  try { honData  = loadRegistry('stgl_honorarios'); }           catch {}
+
+  // ── Cuenta de pago al SAT ──────────────────────────────────
+  // Usa stgl_config.cuentaSAT si está configurado;
+  // si no, usa la primera cuenta MXN no tarjeta de stgl_saldos.
+  let cuentaSAT = 'BBVA MXN';
+  try {
+    const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+    if (cfg.cuentaSAT) {
+      cuentaSAT = cfg.cuentaSAT;
+    } else {
+      const base = loadSaldosBase();
+      const mxnCuenta = Object.entries(base)
+        .find(([, v]) => v.moneda === 'MXN' && v.tipo !== 'tarjeta_credito');
+      if (mxnCuenta) cuentaSAT = mxnCuenta[0];
+    }
+  } catch {}
+
+  // ── Índice de retenciones importadas por YYYY-MM ────────────
+  const monthMap = {};
+  retData.forEach(r => {
+    const año = r.año || Number((r.id || '').split('-')[0]);
+    const mes = r.mes || (r.id ? parseInt(r.id.split('-')[1]) : null);
+    if (año && mes) monthMap[`${año}-${String(mes).padStart(2,'0')}`] = r;
+  });
+
+  // ── Función auxiliar: calcular retención viva desde nómina ──
+  const calcNomina = (year, mes) => {
+    const matchMes = (mf) => {
+      if (!mf) return false;
+      const [m, y] = mf.split('-');
+      const mIdx = _MES_MAP_RET[m];
+      const yr   = parseInt(y) < 50 ? 2000 + parseInt(y) : 1900 + parseInt(y);
+      return mIdx === mes && yr === year;
+    };
+    const asimR   = asimData.filter(a => matchMes(a.mesFiscal))
+                            .reduce((s,a) => s + (parseFloat(a.subtotalRet) || 0), 0);
+    const isrHonR = honData.filter(h => matchMes(h.mesFiscal))
+                           .reduce((s,h) => s + (parseFloat(h.retIsr) || 0), 0);
+    const ivaHonR = honData.filter(h => matchMes(h.mesFiscal))
+                           .reduce((s,h) => s + (parseFloat(h.retIva) || 0), 0);
+    return { asimR, isrHonR, ivaHonR };
+  };
+
+  const result = [];
+  const today  = new Date();
+  // Escanear desde 6 meses atrás hasta 12 meses adelante para capturar atrasados y próximos
+  for (let offset = -6; offset <= 12; offset++) {
+    const d   = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    const year = d.getFullYear();
+    const mes  = d.getMonth() + 1; // 1-indexed
+    const key  = `${year}-${String(mes).padStart(2,'0')}`;
+
+    const r  = monthMap[key] || {};
+    const ex = extraData[key] || {};
+
+    const nom = calcNomina(year, mes);
+
+    // Retenido: override manual > cálculo nómina > importado Excel
+    const asimR   = ex.overrideAsimR   !== undefined ? parseFloat(ex.overrideAsimR)   || 0
+                  : (nom.asimR   || parseFloat(r.retenidoAsim   || 0));
+    const isrHonR = ex.overrideIsrHonR !== undefined ? parseFloat(ex.overrideIsrHonR) || 0
+                  : (nom.isrHonR || parseFloat(r.retenidoIsrHon || 0));
+    const ivaHonR = ex.overrideIvaHonR !== undefined ? parseFloat(ex.overrideIvaHonR) || 0
+                  : (nom.ivaHonR || parseFloat(r.retenidoIvaHon || 0));
+    const isrPm   = ex.isrPm !== undefined ? parseFloat(ex.isrPm) || 0
+                  : parseFloat(r.retenidoIsrPm || 0);
+    const isrArr  = parseFloat(r.retenidoIsrArr || 0);
+    const ivaArr  = parseFloat(r.retenidoIvaArr || 0);
+
+    const totalRet = asimR + isrHonR + ivaHonR + isrPm + isrArr + ivaArr;
+    if (totalRet <= 0) continue; // mes sin retención — omitir
+
+    // ── Fecha límite: día 17 del mes siguiente ──
+    const dueM  = mes === 12 ? 1 : mes + 1;
+    const dueY  = mes === 12 ? year + 1 : year;
+    const fecha = `${dueY}-${String(dueM).padStart(2,'0')}-17`;
+
+    // Filtrar por arranque
+    if (arranque && fecha.substring(0, 7) < arranque) continue;
+
+    // ── ¿Ya pagado? ──
+    const acuseSum   = (parseFloat(ex.acuseAsim) || 0) + (parseFloat(ex.acuseHon) || 0)
+                     + (parseFloat(ex.acuseArr) || 0);
+    const acuseTotal = parseFloat(ex.acuseTotal) || (acuseSum > 0 ? acuseSum : 0)
+                     || (parseFloat(r.pagadoAsim || 0) + parseFloat(r.pagadoIsrHon || 0)
+                       + parseFloat(r.pagadoIvaHon || 0));
+    const fechaPago = ex.fechaPagoReal || r.fechaPago || '';
+    const isPaid    = !!(fechaPago || acuseTotal > 0);
+
+    result.push({
+      id:           `sat_ret_${key}`,
+      fecha,
+      tipo:         isPaid ? 'Real' : 'SAT',
+      descripcion:  `ISR + IVA SAT — ${_MES_ABR_RET[mes-1]}-${String(year).slice(2)}`,
+      concepto:     'Impuestos / SAT',
+      cuenta:       cuentaSAT,
+      moneda:       'MXN',
+      entrada:      0,
+      salida:       isPaid ? (acuseTotal || totalRet) : totalRet,
+      _esSAT:       true,
+      _isPaid:      isPaid,
+      _fechaPago:   fechaPago,
+      _periodoRet:  key,
+      _totalRet:    totalRet,
+    });
+  }
+
+  return result;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -550,6 +901,32 @@ function toggleHistorico() {
   renderTabla();
 }
 
+/* ── Action-bar dropdown helpers ── */
+function toggleDD(id) {
+  const menu = document.getElementById(id);
+  if (!menu) return;
+  const wasOpen = menu.classList.contains('open');
+  closeAllDD();
+  if (!wasOpen) menu.classList.add('open');
+}
+function closeAllDD() {
+  document.querySelectorAll('.proy-dd-menu').forEach(m => m.classList.remove('open'));
+}
+// Close on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.proy-dd-wrap')) closeAllDD();
+});
+
+/* ── Sync arranque from dropdown input → hidden input ── */
+function syncArranqueDD(val) {
+  const hidden = document.getElementById('proy-arranque');
+  if (hidden) hidden.value = val;
+  saveArranque(val);
+  __pendingProj = null;
+  renderAll();
+  updateBtnLabel();
+}
+
 function limpiarRealizados() {
   const globalCut = loadCutoff();
   if (!globalCut) { toast('No hay fecha de corte configurada', 'info'); return; }
@@ -592,10 +969,16 @@ function loadCutoffCta() {
   catch(e) { return {}; }
 }
 
-// Returns the effective cutoff for a given account (per-account if available, else global)
+// Returns the effective cutoff for a given account.
+// Uses MAX(per-account, global) so the global cutoff acts as a floor:
+// if the user manually set a global date more recent than the account's last extract,
+// everything before that global date is treated as already realized.
 function cutoffPara(cuenta) {
-  const ctas = loadCutoffCta();
-  return ctas[cuenta] || loadCutoff() || '';
+  const ctas    = loadCutoffCta();
+  const perCta  = ctas[cuenta] || '';
+  const global  = loadCutoff()  || '';
+  // Return whichever is later — global overrides per-account when it's more recent
+  return (perCta > global) ? perCta : global;
 }
 
 function onCutoffChange() {
@@ -671,28 +1054,75 @@ function autoDetectarCorte() {
 
 function calcSaldosProyectados() {
   const saldos = loadSaldosBase();
-  const movs   = loadProy().sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+  // Excluir RetencionesSAT del store proyectados — proyectados.html las calcula
+  // dinámicamente con loadRetencionesProy(), por lo que incluirlas aquí las duplicaría.
+  const movs   = loadProy().filter(m => m.tipo !== 'RetencionesSAT')
+                           .sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
   // Cache cutoff data once — avoid repeated JSON.parse per movement
   const cutoffCtaMap = loadCutoffCta();
   const globalCutoff = loadCutoff();
-  const cutoffFast   = cta => cutoffCtaMap[cta] || globalCutoff || '';
+  // MAX(per-cuenta, global): el global actúa como piso mínimo para todas las cuentas
+  const cutoffFast   = cta => { const p = cutoffCtaMap[cta] || ''; return p > globalCutoff ? p : globalCutoff || ''; };
+
+  // Adelanto/retraso: si un movimiento proyectado está cubierto por un mov real
+  // (pago adelantado/atrasado), no volver a restarlo — el saldo base ya lo refleja.
+  const _reals4calc  = loadRealMovsByAccount();
+  const _recs4calc   = loadRecs();
+  const _coverCache  = new Map(); // mesKey → coverSet
+  const getCoverSet  = mesKey => {
+    if (!_coverCache.has(mesKey)) {
+      const [cy, cm] = mesKey.split('-').map(Number);
+      if (!isNaN(cy) && !isNaN(cm)) {
+        _coverCache.set(mesKey, buildCoverageSet(
+          _recs4calc, _reals4calc, cy, cm - 1, globalCutoff, cutoffCtaMap
+        ));
+      } else {
+        _coverCache.set(mesKey, new Set());
+      }
+    }
+    return _coverCache.get(mesKey);
+  };
 
   movs.forEach(m => {
     const f = m.fecha || '';
+    if (!f) return;
     // Skip if already realized for the primary account (use per-account cutoff or global)
     const corteCta  = cutoffFast(m.cuenta);
     const corteDest = m.cuentaDest ? cutoffFast(m.cuentaDest) : '';
-    const yaRealizadoOrigen = corteCta  && f && f <= corteCta;
-    const yaRealizadoDest   = corteDest && f && f <= corteDest;
+    const yaRealizadoOrigen = corteCta  && f <= corteCta;
+    const yaRealizadoDest   = corteDest && f <= corteDest;
 
-    if (saldos[m.cuenta] && !yaRealizadoOrigen) {
+    // Skip if this projected entry is covered by a real movement (adelanto/retraso):
+    // the real payment is already reflected in the base saldo — subtracting it again
+    // would artificially deflate the projected balance and trigger false deficits.
+    const mesKey = f.substring(0, 7);
+    const cubiertoPorReal = m.recurrenteId
+      ? getCoverSet(mesKey).has(m.recurrenteId + '|' + f)
+      : false;
+
+    if (saldos[m.cuenta] && !yaRealizadoOrigen && !cubiertoPorReal) {
       saldos[m.cuenta].saldo -= parseFlt(m.salida);
       saldos[m.cuenta].saldo += parseFlt(m.entrada);
     }
-    if (m.cuentaDest && saldos[m.cuentaDest] && !yaRealizadoDest) {
+    if (m.cuentaDest && saldos[m.cuentaDest] && !yaRealizadoDest && !cubiertoPorReal) {
       saldos[m.cuentaDest].saldo += parseFlt(m.entradaDest);
     }
   });
+
+  // ── Retenciones SAT: descontar egresos futuros pendientes de pago ──
+  // Se incluyen aquí para que el KPI de saldos proyectados refleje
+  // el compromiso fiscal real, sin que el usuario tenga que crear recurrentes.
+  loadRetencionesProy(null).forEach(sat => {
+    if (sat._isPaid) return;               // ya pagado — en saldo base vía financiero
+    const f     = sat.fecha || '';
+    if (!f) return;
+    const corte = cutoffFast(sat.cuenta);
+    if (corte && f <= corte) return;       // dentro del corte — ya contabilizado
+    if (saldos[sat.cuenta]) {
+      saldos[sat.cuenta].saldo -= sat.salida;
+    }
+  });
+
   return saldos;
 }
 
@@ -759,6 +1189,12 @@ function fechasPorMes(r, year, month) {
   const dia = Math.min(r.diaEstimado || 1, 28);
   const pad = n => String(Math.min(n, 28)).padStart(2, '0');
   const pfx = `${year}-${String(mo1).padStart(2, '0')}-`;
+
+  /* mesesPago aplica a TODAS las periodicidades cuando está configurado.
+     Ej: nómina asimilable solo en meses impares [1,3,5,7,9,11]. */
+  const mesesPago = r.mesesPago || [];
+  if (mesesPago.length > 0 && !mesesPago.includes(mo1)) return [];
+
   /* Ajuste a día hábil según dirección */
   const hab = r.ajustarDiaHabil;
   const ajustar = d =>
@@ -784,15 +1220,119 @@ function fechasPorMes(r, year, month) {
     return [ ajustar(pfx + pad(dia)), ajustar(pfx + pad(Math.min(dia + 15, 28))) ];
   }
   if (per === 'Mensual') return [ ajustar(pfx + pad(dia)) ];
-  // Bimestral / Trimestral / Semestral / Anual — only on specified months
-  const mesesPago = r.mesesPago || [];
-  return mesesPago.includes(mo1) ? [ ajustar(pfx + pad(dia)) ] : [];
+  // Bimestral / Trimestral / Semestral / Anual — only on specified months (mesesPago already checked above)
+  return [ ajustar(pfx + pad(dia)) ];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ADELANTO / RETRASO COVERAGE DETECTION
+   Si un pago recurrente se adelantó o atrasó ±N días respecto a
+   su fecha programada, lo detectamos comparando los movimientos
+   reales (extracto bancario) con las fechas esperadas.
+══════════════════════════════════════════════════════════════ */
+const COVER_WINDOW_BEFORE = 4;   // días ANTES de la fecha programada que acepta como adelanto
+const COVER_WINDOW_AFTER  = 2;   // días DESPUÉS de la fecha programada que acepta como retraso
+const COVER_AMOUNT_TOL    = 0.08; // 8 % de tolerancia en el monto para hacer el match
+
+/** Carga movimientos reales (excel + manual) indexados por cuenta. */
+function loadRealMovsByAccount() {
+  let excel = [], manual = [];
+  try { excel = JSON.parse(localStorage.getItem('stgl_mov_excel') || '[]'); } catch {}
+  try { manual = loadRegistry('stgl_mov_manual'); } catch {}
+  const manualIds = new Set(manual.map(r => r.id));
+  const all = [...excel.filter(r => !manualIds.has(r.id)), ...manual];
+
+  const byAccount = {};
+  all.forEach(m => {
+    const cta = m.cuenta || m.Cuenta || '';
+    const f   = (m.fecha || m.Fecha || '').substring(0, 10);
+    if (!f) return;
+    // Movimientos con cuenta van a su bucket normal.
+    // Movimientos sin cuenta (ej. de nómina importada sin banco asignado) van a '_sin_cuenta'
+    // como red de seguridad para el detector de adelanto/retraso.
+    const bucket = cta || '_sin_cuenta';
+    if (!byAccount[bucket]) byAccount[bucket] = [];
+    byAccount[bucket].push({
+      fecha:   f,
+      salida:  parseFloat(m.salidas  || 0) || 0,
+      entrada: parseFloat(m.entradas || 0) || 0,
+      _cta:    cta,   // cuenta original ('' para los sin cuenta)
+    });
+  });
+  return byAccount;
+}
+
+/**
+ * Construye un Set de claves "recId|YYYY-MM-DD" cuyas ocurrencias están
+ * cubiertas por movimientos reales (adelanto o retraso dentro de la ventana).
+ * Cada movimiento real sólo puede cubrir UNA ocurrencia de UNA recurrente.
+ *
+ * @param {Array}  recs            - arreglo de recurrentes activos
+ * @param {Object} realsByAccount  - resultado de loadRealMovsByAccount()
+ * @param {number} year            - año a evaluar
+ * @param {number} month           - mes (0-indexed) a evaluar
+ * @param {string} [corteGlobal]   - fecha de corte global (omitir movimientos dentro del corte)
+ * @param {Object} [corteMap]      - mapa de cortes por cuenta
+ */
+function buildCoverageSet(recs, realsByAccount, year, month, corteGlobal, corteMap) {
+  const covered  = new Set();
+  const usedReal = new Set(); // "cta|fecha|amount" para no usar el mismo mov dos veces
+  const cutoffFn = cta => {
+    const p = (corteMap && corteMap[cta]) || '';
+    return p > (corteGlobal || '') ? p : (corteGlobal || '');
+  };
+
+  // Construir lista plana de (recurrente, fechaProgramada) ordenada por fecha
+  const scheduled = [];
+  recs.forEach(r => {
+    fechasPorMes(r, year, month).forEach(fecha => {
+      const corte = cutoffFn(r.cuenta);
+      if (corte && fecha <= corte) return; // ya cubierto por el corte normal → ignorar
+      scheduled.push({ r, fecha });
+    });
+  });
+  scheduled.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  scheduled.forEach(({ r, fecha }) => {
+    // Candidatos: primero los movimientos de la cuenta exacta del recurrente,
+    // luego los sin cuenta asignada (fallback para nómina importada desde nomina.html)
+    const movsCuenta    = realsByAccount[r.cuenta] || [];
+    const movsSinCuenta = realsByAccount['_sin_cuenta'] || [];
+    const todosMovs     = movsCuenta.length ? movsCuenta : movsSinCuenta;
+
+    const monto = parseFlt(r.importe);
+    if (!monto) return;
+    const schedDate = new Date(fecha + 'T00:00:00');
+
+    for (const m of todosMovs) {
+      const realDate = new Date(m.fecha + 'T00:00:00');
+      // diff positivo → mov real ANTES de la fecha programada (adelanto)
+      // diff negativo → mov real DESPUÉS de la fecha programada (retraso)
+      const diff = Math.round((schedDate - realDate) / 86400000);
+      if (diff < -COVER_WINDOW_AFTER || diff > COVER_WINDOW_BEFORE) continue;
+
+      const amount = r.tipo === 'Egreso' ? m.salida : m.entrada;
+      if (!amount) continue;
+      if (Math.abs(amount - monto) / Math.max(monto, 1) > COVER_AMOUNT_TOL) continue;
+
+      // La clave incluye la cuenta real del movimiento (o '_sin_cuenta') para evitar reuso
+      const realKey = `${m._cta || '_sin_cuenta'}|${m.fecha}|${amount}`;
+      if (usedReal.has(realKey)) continue; // ya fue usado para otra recurrente
+
+      // ¡Match! Marcar como cubierto
+      covered.add(r.id + '|' + fecha);
+      usedReal.add(realKey);
+      break;
+    }
+  });
+
+  return covered;
 }
 
 /* ══════════════════════════════════════════════════════════════
    NEXT MONTH COMPUTATION
 ══════════════════════════════════════════════════════════════ */
-function _mesCompleto(movs, recs, y, m, _cutoffCache) {
+function _mesCompleto(movs, recs, y, m, _cutoffCache, _realsByAccount) {
   // Returns true if every active recurrente has all its future occurrences saved for year y, month m
   const prefix = `${y}-${String(m + 1).padStart(2, '0')}`;
   const keys   = new Set(
@@ -803,11 +1343,21 @@ function _mesCompleto(movs, recs, y, m, _cutoffCache) {
   // Allow caller to pass a pre-loaded cutoff cache to avoid repeated JSON.parse
   const cutoffMap = _cutoffCache || loadCutoffCta();
   const globalCut = loadCutoff();
-  const cutoffFast = cta => cutoffMap[cta] || globalCut || '';
+  // MAX(per-cuenta, global): el global actúa como piso mínimo
+  const cutoffFast = cta => { const p = cutoffMap[cta] || ''; return p > globalCut ? p : globalCut || ''; };
+
+  // Coverage set: recurrente occurrences covered by real movements (adelanto/retraso)
+  const coverSet = _realsByAccount
+    ? buildCoverageSet(recs, _realsByAccount, y, m, globalCut, cutoffMap)
+    : new Set();
 
   return recs.every(r => {
     const corte = cutoffFast(r.cuenta);
-    const dates = fechasPorMes(r, y, m).filter(f => !corte || f > corte);
+    const dates = fechasPorMes(r, y, m).filter(f => {
+      if (corte && f <= corte) return false;      // cubierto por corte normal
+      if (coverSet.has(r.id + '|' + f)) return false; // cubierto por mov real (adelanto/retraso)
+      return true;
+    });
     return dates.length === 0 || dates.every(f => keys.has(r.id + '|' + f));
   });
 }
@@ -842,10 +1392,11 @@ function getNextProjectTarget() {
   }
 
   // Scan from arranque to maxM, find first incomplete month
-  const _cutoffCache = loadCutoffCta();
+  const _cutoffCache    = loadCutoffCta();
+  const _realsByAccount = loadRealMovsByAccount(); // for adelanto/retraso coverage
   let scanY = arrY, scanM = arrM;
   for (let guard = 0; guard < 120; guard++) {
-    if (!_mesCompleto(movs, recs, scanY, scanM, _cutoffCache)) {
+    if (!_mesCompleto(movs, recs, scanY, scanM, _cutoffCache, _realsByAccount)) {
       return { year: scanY, month: scanM, fromIdx: 0 };
     }
     if (scanY === maxY && scanM === maxM) break;
@@ -888,6 +1439,13 @@ function proyectarSiguienteMes() {
       .map(m => m.recurrenteId + '|' + m.fecha)
   );
 
+  // Adelanto/retraso: build coverage set for this month from real movements
+  const _realsByAccountProy = loadRealMovsByAccount();
+  const _cutoffMapProy      = loadCutoffCta();
+  const coverSetProy = buildCoverageSet(
+    recs, _realsByAccountProy, year, month, cutoff, _cutoffMapProy
+  );
+
   const newMovs   = [];
   let   deficit   = null;
   let   pauseIdx  = -1;
@@ -909,6 +1467,7 @@ function proyectarSiguienteMes() {
       if (yaProyKeys.has(compositeKey)) continue;                    // already projected
       const corteEfectivo = cutoffPara(r.cuenta) || cutoff || '';
       if (corteEfectivo && fecha <= corteEfectivo) continue;       // already realized — in real balance
+      if (coverSetProy.has(compositeKey)) continue;                // cubierto por adelanto/retraso real
 
       if (r.tipo === 'Egreso') {
         // Convert monto to cuenta's currency if needed
@@ -934,17 +1493,17 @@ function proyectarSiguienteMes() {
               const disponible2 = cta.saldo - saldoMin;
               if (disponible2 < salida) {
                 // Still not enough even after fondeo (e.g. limit only covers part)
-                deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante: salida - cta.saldo, rec: r };
+                deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante: salida - cta.saldo, rec: r, fecha };
                 pauseIdx = i;
                 break outer;
               }
             } else {
-              deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante, rec: r };
+              deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante, rec: r, fecha };
               pauseIdx = i;
               break outer;
             }
           } else {
-            deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante, rec: r };
+            deficit  = { cuenta: r.cuenta, monedaCta: cta.moneda, faltante, rec: r, fecha };
             pauseIdx = i;
             break outer;
           }
@@ -1198,11 +1757,15 @@ function showDeficit(d, year, month) {
   const body  = document.getElementById('deficit-body');
   const fmtAmt = d.monedaCta === 'USD' ? fmtUSD(d.faltante) : fmtMXN(d.faltante);
   const fmtRec = fmtCur(parseFlt(d.rec.importe), d.rec.moneda);
+  // Mostrar la fecha real del movimiento que falló (no diaEstimado, que siempre es 1 para Semanal)
+  const fechaLabel = d.fecha
+    ? (() => { const [y,m,dd] = d.fecha.split('-'); return `${dd}/${m}/${y}`; })()
+    : `día ${d.rec.diaEstimado||'?'} de ${MESES_LARGO[month]} ${year}`;
   body.innerHTML = `
     <strong>Cuenta:</strong> ${escH(d.cuenta)}
     &nbsp;|&nbsp;<strong>Faltante:</strong> <span style="color:var(--red); font-weight:700;">${escH(fmtAmt)}</span>
     <br>Próximo movimiento pendiente: <em>${escH(d.rec.descripcion)}</em>
-    (${escH(fmtRec)} · día ${d.rec.diaEstimado||'?'} de ${escH(MESES_LARGO[month])} ${year})
+    (${escH(fmtRec)} · ${escH(fechaLabel)})
     <br><span style="font-size:0.7rem; color:#a07000;">Agrega un traspaso o venta de divisas para fondear la cuenta, o usa "Ignorar y continuar" para saltar este movimiento.</span>`;
   panel.classList.add('visible');
   panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
@@ -1232,6 +1795,17 @@ function updateBtnLabel() {
     btn.textContent = `📅 Proyectar ${MESES_LARGO[t.month]} ${t.year}`;
     btn.style.background = '';
   }
+}
+
+/* Fuerza la proyección del mes actual desde el principio (fromIdx=0).
+   Útil cuando se agregan recurrentes nuevos después de haber proyectado. */
+function reProyectarMesActual() {
+  const t = getNextProjectTarget();
+  __pendingProj = { year: t.year, month: t.month, fromIdx: 0 };
+  __deficitData = null;
+  hideDeficit();
+  updateBtnLabel();
+  proyectarSiguienteMes();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1330,7 +1904,9 @@ function badgeFor(m) {
 }
 
 function renderTabla() {
-  const movs  = loadProy().sort((a,b) => {
+  // Excluir RetencionesSAT guardadas por nomina.html — proyectados.html las genera
+  // dinámicamente con loadRetencionesProy(). Incluirlas aquí las duplicaría.
+  const movs  = loadProy().filter(m => m.tipo !== 'RetencionesSAT').sort((a,b) => {
     const c = (a.fecha||'').localeCompare(b.fecha||'');
     return c !== 0 ? c : (a._ts||0) - (b._ts||0);
   });
@@ -1338,24 +1914,31 @@ function renderTabla() {
   const tfoot = document.getElementById('proy-tfoot');
   const lbl   = document.getElementById('proy-count-label');
 
-  lbl.textContent = movs.length
-    ? movs.length + ' movimiento' + (movs.length!==1?'s':'')
-    : '';
-
   // Separate active movements (>= arranque) vs historical (< arranque)
   const arranque = loadArranque(); // YYYY-MM
+  const _gCut    = loadCutoff();
+  const _isDoneM = m => { const c = cutoffPara(m.cuenta) || _gCut || ''; return !!(c && m.fecha && m.fecha <= c); };
 
-  // All visible movements: all if mostrarHistorico, or only >= arranque
   const movsActivos   = movs.filter(m => !m.fecha || !arranque || m.fecha.substring(0,7) >= arranque);
-  const movsHistorico = movs.filter(m => m.fecha && arranque && m.fecha.substring(0,7) < arranque);
+  const movsHistorico = movs.filter(m =>  m.fecha && arranque && m.fecha.substring(0,7) <  arranque);
 
-  // Within the active period, split: already-realized (date ≤ cutoff) vs. truly future
-  const _gCut   = loadCutoff();
-  const _isDone = m => { const c = cutoffPara(m.cuenta) || _gCut || ''; return !!(c && m.fecha && m.fecha <= c); };
-  const movsDone   = movsActivos.filter(m =>  _isDone(m));
-  const movsFuture = movsActivos.filter(m => !_isDone(m));
+  // Real movements from financiero (normalized, display-only — already in stgl_saldos)
+  const reales = loadMovsReales(arranque);
 
-  if (!movsFuture.length && !movsDone.length && !movsHistorico.length) {
+  // Retenciones SAT (proyectadas o pagadas) — fuente fiscal automática
+  const satMovs = loadRetencionesProy(arranque);
+
+  lbl.textContent = (movsActivos.length + reales.length + satMovs.length)
+    ? (movsActivos.length + reales.length + satMovs.length) + ' movimiento'
+      + ((movsActivos.length + reales.length + satMovs.length) !== 1 ? 's' : '')
+      + (reales.length ? ` (${reales.length} reales)` : '')
+      + (satMovs.length ? ` · ${satMovs.length} SAT` : '')
+    : '';
+
+  const movsDone   = movsActivos.filter(m =>  _isDoneM(m));
+  const movsFuture = movsActivos.filter(m => !_isDoneM(m));
+
+  if (!movsFuture.length && !movsDone.length && !movsHistorico.length && !reales.length) {
     tbody.innerHTML = `<tr><td colspan="9">
       <div class="empty-proy">
         <div class="ep-icon">📅</div>
@@ -1368,70 +1951,161 @@ function renderTabla() {
     return;
   }
 
+  /* ── Render one month accordion containing both projected and real movements ── */
   const renderMonthRows = (mesKey, rows, isHistorico) => {
     const [y, mo] = mesKey.split('-').map(Number);
     const label   = MESES_LARGO[mo-1] + ' ' + y;
     const open    = !__proyClosed.has(mesKey);
-    let totEnt = 0, totSal = 0;
-    rows.forEach(m => { totEnt += parseFlt(m.entrada); totSal += parseFlt(m.salida); });
+
+    // Separate real vs projected vs SAT for header stats
+    let totEntProy = 0, totSalProy = 0, totEntReal = 0, totSalReal = 0, cntReal = 0, cntSAT = 0;
+    rows.forEach(m => {
+      if (m._esSAT) {
+        totSalProy += m.salida; // SAT cuenta como proyectado pendiente
+        cntSAT++;
+      } else if (m._esReal) {
+        totEntReal += m.entrada;
+        totSalReal += m.salida;
+        cntReal++;
+      } else {
+        totEntProy += parseFlt(m.cuentaDest ? m.entradaDest : m.entrada);
+        totSalProy += parseFlt(m.salida);
+      }
+    });
+    const totEnt = totEntProy + totEntReal;
+    const totSal = totSalProy + totSalReal;
+
     const dimStyle  = isHistorico ? ' style="opacity:0.55;"' : '';
     const histMark  = isHistorico ? '<span style="font-size:0.6rem;color:#8a9ab5;margin-left:0.35rem;font-family:var(--brand);font-weight:600;">HIST.</span>' : '';
     const chevClass = open ? 'open' : '';
+    const realMark  = cntReal ? `<span style="font-family:var(--brand);font-size:0.58rem;font-weight:700;padding:0.05rem 0.3rem;border-radius:2px;background:#e0f2fe;color:#0369a1;margin-left:0.5rem;">${cntReal} real${cntReal!==1?'es':''}</span>` : '';
+    const satMark   = cntSAT  ? `<span style="font-family:var(--brand);font-size:0.58rem;font-weight:700;padding:0.05rem 0.3rem;border-radius:2px;background:#fff0e0;color:#c44000;margin-left:0.35rem;" title="Retenciones SAT pendientes de pago">🏛 SAT</span>` : '';
+
     let rowHtml = `<tr class="proy-month-hdr" onclick="toggleProyMes('${mesKey}')">
       <td colspan="9"${dimStyle}>
         <span class="proy-month-chevron ${chevClass}">▶</span>
-        <span class="proy-month-title">${label}${histMark}</span>
+        <span class="proy-month-title">${label}${histMark}</span>${realMark}${satMark}
         <span class="proy-month-stat g">+${fmtMXN(totEnt)}</span>
         <span class="proy-month-stat r">−${fmtMXN(totSal)}</span>
         <span style="font-family:var(--brand); font-size:0.65rem; color:var(--text-xs); margin-left:0.75rem;">${rows.length} mov.</span>
       </td>
     </tr>`;
+
     if (open) {
       const _cubiertos = JSON.parse(localStorage.getItem('stgl_recurrentes_cubiertos') || '{}');
       rows.forEach(m => {
-        const [bc, bl] = badgeFor(m);
-        const isDone   = (() => { const c = cutoffPara(m.cuenta) || loadCutoff(); return c && m.fecha && m.fecha <= c; })();
-        const cuentaCell = m.cuentaDest
-          ? `${escH(m.cuenta)}<span class="cuenta-arrow">→</span>${escH(m.cuentaDest)}`
-          : escH(m.cuenta||'—');
-        const entStr = parseFlt(m.entrada) ? `<span style="color:var(--green); font-weight:600;">${fmtMXN(parseFlt(m.entrada))}</span>` : '';
-        const salStr = parseFlt(m.salida)  ? `<span style="color:var(--red);">${fmtMXN(parseFlt(m.salida))}</span>` : '';
-        const tcNote = m.tc ? `<span style="font-size:0.6rem; color:var(--text-xs);"> TC${fmtNum(m.tc,2)}</span>` : '';
+        const tcNote   = m.tc ? `<span style="font-size:0.6rem; color:var(--text-xs);"> TC${fmtNum(m.tc,2)}</span>` : '';
+        const rowBg    = isHistorico ? ' style="opacity:0.55;"' : '';
+        const isDone   = _isDoneM(m);
+        const doneCls  = isDone ? 'proy-row-done' : '';
 
-        // Reconciliación: ¿está cubierto por cobro real de facturación?
-        const mesKey    = (m.fecha || '').substring(0, 7);
-        const cubKey    = m.recurrenteId ? `${m.recurrenteId}|${mesKey}` : null;
-        const cubInfo   = cubKey ? _cubiertos[cubKey] : null;
-        const cubBadge  = cubInfo
-          ? `<span title="Cobrado el ${cubInfo.fecha} · ${cubInfo.clienteRef}" onclick="event.stopPropagation();desmarcarCubierto('${m.recurrenteId}','${mesKey}')"
-               style="cursor:pointer;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:0.58rem;padding:0.1rem 0.35rem;font-family:var(--brand);font-weight:700;margin-left:0.4rem;">✓ COBRADO</span>`
-          : (m.recurrenteId && parseFlt(m.entrada) > 0
-              ? `<span title="Marcar manualmente como cobrado" onclick="event.stopPropagation();marcarCubiertoManual('${m.recurrenteId}','${mesKey}','${escH(m.descripcion)}')"
-                   style="cursor:pointer;color:var(--text-xs);font-size:0.58rem;margin-left:0.4rem;">⬜</span>`
-              : '');
-        const rowBg    = cubInfo ? ' style="background:#f0fdf4;"' : (isHistorico ? ' style="opacity:0.55;"' : '');
-        const descCell = `<span style="font-weight:500;">${escH(m.descripcion||'—')}</span>${cubBadge}`;
+        if (m._esSAT) {
+          // ── Retención SAT (proyectada o pagada) ──
+          const salStr = m.salida ? `<span style="color:var(--red); font-weight:600;">${fmtMXN(m.salida)}</span>` : '';
+          const bc     = m._isPaid ? 'tb-satp' : 'tb-sat';
+          const bl     = m._isPaid ? '✓ SAT Pagado' : '🏛 SAT';
+          const satTip = m._isPaid
+            ? `Retención SAT pagada el ${m._fechaPago || '—'}. Período: ${m._periodoRet}`
+            : `Retención SAT pendiente de pago — vence el 17. Ver Retenciones para confirmar importe exacto.`;
+          const linkRet= `<a href="retenciones.html" onclick="event.stopPropagation()" style="font-size:0.58rem;color:#c44000;text-decoration:none;margin-left:0.5rem;" title="Ir a Retenciones">→ Ver detalle</a>`;
+          rowHtml += `<tr class="${m._isPaid ? 'proy-row-done' : ''}" style="${isHistorico?'opacity:0.55;':''}background:${m._isPaid?'#fff8f8':'#fff7ee'};">
+            <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
+            <td><span class="tipo-badge ${bc}" title="${satTip}">${bl}</span></td>
+            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${satTip}">
+              <span style="font-weight:600;">${escH(m.descripcion||'—')}</span>${m._isPaid ? '' : linkRet}
+            </td>
+            <td style="font-size:0.68rem; color:var(--text-dim);">Impuestos / SAT</td>
+            <td style="font-size:0.68rem; white-space:nowrap;">${escH(m.cuenta||'—')}</td>
+            <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:var(--navy);">MXN</td>
+            <td class="num"></td>
+            <td class="num">${salStr}</td>
+            <td style="text-align:center; font-size:0.58rem; color:var(--text-xs);" title="${satTip}">🏛</td>
+          </tr>`;
 
-        rowHtml += `<tr class="${isDone ? 'proy-row-done' : ''}"${rowBg}>
-          <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
-          <td><span class="tipo-badge ${bc}">${bl}</span></td>
-          <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escH(m.descripcion)}">${descCell}</td>
-          <td style="font-size:0.68rem; color:var(--text-dim);">${escH(m.concepto||'—')}</td>
-          <td style="font-size:0.68rem; white-space:nowrap;">${cuentaCell}${tcNote}</td>
-          <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${m.moneda==='USD'?'#1a6fbf':'var(--navy)'};">${m.moneda||'MXN'}</td>
-          <td class="num">${entStr}</td>
-          <td class="num">${salStr}</td>
-          <td style="text-align:center;">
-            <button class="proy-del-btn" onclick="eliminarMov('${escH(m.id)}')" title="Eliminar">✕</button>
-          </td>
-        </tr>`;
+        } else if (m._esReal) {
+          // ── Movimiento real de financiero (display-only, sin botón eliminar) ──
+          const entStr = m.entrada ? `<span style="color:var(--green); font-weight:600;">${fmtMXN(m.entrada)}</span>` : '';
+          const salStr = m.salida  ? `<span style="color:var(--red);">${fmtMXN(m.salida)}</span>` : '';
+          const tipoTitle = m._tipoOrig ? ` title="${escH(m._tipoOrig)}"` : '';
+          // For "Ingresos" real movement: highlight as income (no done dimming even within cutoff — it's confirmed real)
+          const realRowCls = m._movOrig === 'Ingresos' ? '' : doneCls;
+          rowHtml += `<tr class="${realRowCls}"${rowBg}>
+            <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
+            <td><span class="tipo-badge tb-real"${tipoTitle}>Real</span></td>
+            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escH(m.descripcion)}">${escH(m.descripcion||'—')}</td>
+            <td style="font-size:0.68rem; color:var(--text-dim);">${escH(m.concepto||'—')}</td>
+            <td style="font-size:0.68rem; white-space:nowrap;">${escH(m.cuenta||'—')}</td>
+            <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${m.moneda==='USD'?'#1a6fbf':'var(--navy)'};">${m.moneda||'MXN'}</td>
+            <td class="num">${entStr}</td>
+            <td class="num">${salStr}</td>
+            <td style="text-align:center; font-size:0.58rem; color:var(--text-xs);" title="Movimiento real importado de Financiero">📥</td>
+          </tr>`;
+
+        } else if (m.cuentaDest) {
+          // ── Traspaso proyectado: dos filas ──
+          const delBtn = `<button class="proy-del-btn" onclick="eliminarMov('${escH(m.id)}')" title="Eliminar">✕</button>`;
+          const salVal = parseFlt(m.salida);
+          rowHtml += `<tr class="${doneCls}"${rowBg}>
+            <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
+            <td><span class="tipo-badge tb-trp">Traspaso</span></td>
+            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escH(m.descripcion)}">${escH(m.descripcion||'—')}</td>
+            <td style="font-size:0.68rem; color:var(--text-dim);">${escH(m.concepto||'Traspaso')}</td>
+            <td style="font-size:0.68rem; white-space:nowrap; font-weight:600;">${escH(m.cuenta||'—')}${tcNote}</td>
+            <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${m.moneda==='USD'?'#1a6fbf':'var(--navy)'};">${m.moneda||'MXN'}</td>
+            <td class="num"></td>
+            <td class="num">${salVal?`<span style="color:var(--red);">${fmtMXN(salVal)}</span>`:''}</td>
+            <td style="text-align:center;">${delBtn}</td>
+          </tr>`;
+          const entVal     = parseFlt(m.entradaDest);
+          const isDoneDest = (() => { const c = cutoffPara(m.cuentaDest) || loadCutoff(); return c && m.fecha && m.fecha <= c; })();
+          rowHtml += `<tr class="${isDoneDest ? 'proy-row-done' : ''}"${rowBg}>
+            <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
+            <td><span class="tipo-badge tb-trp">Traspaso</span></td>
+            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escH(m.descripcion)}">${escH(m.descripcion||'—')} <span style="font-size:0.62rem;color:var(--text-xs);">(acreditamiento)</span></td>
+            <td style="font-size:0.68rem; color:var(--text-dim);">${escH(m.concepto||'Traspaso')}</td>
+            <td style="font-size:0.68rem; white-space:nowrap; font-weight:600;">${escH(m.cuentaDest)}${tcNote}</td>
+            <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${(m.monedaDest||m.moneda)==='USD'?'#1a6fbf':'var(--navy)'};">${m.monedaDest||m.moneda||'MXN'}</td>
+            <td class="num">${entVal?`<span style="color:var(--green); font-weight:600;">${fmtMXN(entVal)}</span>`:''}</td>
+            <td class="num"></td>
+            <td style="text-align:center;"></td>
+          </tr>`;
+
+        } else {
+          // ── Movimiento proyectado normal (egreso, ingreso, recurrente) ──
+          const [bc, bl] = badgeFor(m);
+          const delBtn   = `<button class="proy-del-btn" onclick="eliminarMov('${escH(m.id)}')" title="Eliminar">✕</button>`;
+          const mKey     = (m.fecha || '').substring(0, 7);
+          const cubKey   = m.recurrenteId ? `${m.recurrenteId}|${mKey}` : null;
+          const cubInfo  = cubKey ? _cubiertos[cubKey] : null;
+          const cubBadge = cubInfo
+            ? `<span title="Cobrado el ${cubInfo.fecha} · ${cubInfo.clienteRef}" onclick="event.stopPropagation();desmarcarCubierto('${m.recurrenteId}','${mKey}')"
+                 style="cursor:pointer;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:0.58rem;padding:0.1rem 0.35rem;font-family:var(--brand);font-weight:700;margin-left:0.4rem;">✓ COBRADO</span>`
+            : (m.recurrenteId && parseFlt(m.entrada) > 0
+                ? `<span title="Marcar manualmente como cobrado" onclick="event.stopPropagation();marcarCubiertoManual('${m.recurrenteId}','${mKey}','${escH(m.descripcion)}')"
+                     style="cursor:pointer;color:var(--text-xs);font-size:0.58rem;margin-left:0.4rem;">⬜</span>`
+                : '');
+          const rowBg2 = cubInfo ? ' style="background:#f0fdf4;"' : rowBg;
+          const entStr = parseFlt(m.entrada) ? `<span style="color:var(--green); font-weight:600;">${fmtMXN(parseFlt(m.entrada))}</span>` : '';
+          const salStr = parseFlt(m.salida)  ? `<span style="color:var(--red);">${fmtMXN(parseFlt(m.salida))}</span>` : '';
+          rowHtml += `<tr class="${doneCls}"${rowBg2}>
+            <td style="font-size:0.69rem; color:var(--text-xs); white-space:nowrap;">${escH(m.fecha||'—')}</td>
+            <td><span class="tipo-badge ${bc}">${bl}</span></td>
+            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escH(m.descripcion)}"><span style="font-weight:500;">${escH(m.descripcion||'—')}</span>${cubBadge}</td>
+            <td style="font-size:0.68rem; color:var(--text-dim);">${escH(m.concepto||'—')}</td>
+            <td style="font-size:0.68rem; white-space:nowrap;">${escH(m.cuenta||'—')}${tcNote}</td>
+            <td style="text-align:center; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${m.moneda==='USD'?'#1a6fbf':'var(--navy)'};">${m.moneda||'MXN'}</td>
+            <td class="num">${entStr}</td>
+            <td class="num">${salStr}</td>
+            <td style="text-align:center;">${delBtn}</td>
+          </tr>`;
+        }
       });
     }
-    return { rowHtml, totEnt, totSal };
+    return { rowHtml, totEntProy, totSalProy, totEntReal, totSalReal };
   };
 
   let html = '';
-  let grandEnt = 0, grandSal = 0;
+  let grandEntProy = 0, grandSalProy = 0; // Only projected future (for footer total)
 
   // ── Historical section (pre-arranque) ─────────────────────
   if (movsHistorico.length > 0) {
@@ -1442,7 +2116,6 @@ function renderTabla() {
         if (!byMonthHist[k]) byMonthHist[k] = [];
         byMonthHist[k].push(m);
       });
-      // Dimmed header to separate historical from active
       html += `<tr style="background:#f5f6fa;">
         <td colspan="9" style="padding:0.3rem 0.75rem; font-family:var(--brand); font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8a9ab5;">
           ── Histórico (anterior a ${arranque}) · ${movsHistorico.length} mov. ──
@@ -1450,13 +2123,11 @@ function renderTabla() {
         </td>
       </tr>`;
       Object.keys(byMonthHist).sort().forEach(mes => {
-        const { rowHtml, totEnt, totSal } = renderMonthRows(mes, byMonthHist[mes], true);
+        const { rowHtml } = renderMonthRows(mes, byMonthHist[mes], true);
         html += rowHtml;
-        grandEnt += totEnt; grandSal += totSal;
       });
       html += `<tr style="background:#f5f6fa;"><td colspan="9" style="padding:0.2rem 0.75rem; font-family:var(--brand); font-size:0.58rem; color:#8a9ab5; border-bottom:2px solid var(--border);">── Fin del histórico ──</td></tr>`;
     } else {
-      // Show collapsed summary banner
       const meses = [...new Set(movsHistorico.map(m => (m.fecha||'').substring(0,7)))].sort();
       const primero = meses[0], ultimo = meses[meses.length-1];
       html += `<tr style="background:#f5f6fa; cursor:pointer;" onclick="toggleHistorico()" title="Clic para mostrar el histórico">
@@ -1469,35 +2140,85 @@ function renderTabla() {
     }
   }
 
-  // ── Realizados dentro del período activo (fecha ≤ corte, ya en saldo real) ──
+  // ── Build unified byMonth ────────────────────────────────────────────
+  // Regla: ≤ corte → solo filas Reales (financiero); > corte → solo proyectados
+  // Los movimientos proyectados ya realizados (movsDone) NO van al acordeón:
+  // su contenido está representado por las filas "Real" del mismo período.
+
+  // Adelanto/retraso: filtrar proyectados cubiertos por movimientos reales
+  // para evitar mostrar ambos (real May-6 + proyectado May-7) en el mismo mes.
+  const _recs4cover    = loadRecs();
+  const _reals4cover   = loadRealMovsByAccount();
+  const _cutoffMap4cov = loadCutoffCta();
+  // Construir coverage set para TODOS los meses activos en movsFuture
+  const _activeMonths = [...new Set(movsFuture.map(m => (m.fecha||'').substring(0,7)).filter(Boolean))];
+  const _coverDisplaySet = new Set();
+  _activeMonths.forEach(ym => {
+    const [cy, cm] = ym.split('-').map(Number);
+    const cs = buildCoverageSet(_recs4cover, _reals4cover, cy, cm - 1, _gCut, _cutoffMap4cov);
+    cs.forEach(k => _coverDisplaySet.add(k));
+  });
+  // movsFuture sin los proyectados cubiertos por adelantos/retrasos reales
+  const movsFutureVisible = movsFuture.filter(m => {
+    if (!m.recurrenteId || !m.fecha) return true; // sin recurrenteId → siempre mostrar
+    return !_coverDisplaySet.has(m.recurrenteId + '|' + m.fecha);
+  });
+
+  const byMonth = {};
+  const addToMonth = m => {
+    const k = (m.fecha||'').substring(0,7);
+    if (!k || (arranque && k < arranque)) return;
+    if (!byMonth[k]) byMonth[k] = [];
+    byMonth[k].push(m);
+  };
+  movsFutureVisible.forEach(addToMonth); // proyectados pendientes (> corte, no cubiertos)
+  reales.forEach(addToMonth);            // movimientos reales (≤ y > corte — todos desde arranque)
+
+  // Retenciones SAT: siempre se incluyen en byMonth (ya pagadas como "Real·SAT", pendientes como "SAT")
+  // Las pagadas se muestran junto a los reales del período; las pendientes junto a proyectados.
+  // Si ya existe una retención SAT pagada en stgl_mov_excel con descripción similar,
+  // la versión SAT puede convivir — el usuario distingue por el badge 🏛.
+  satMovs.forEach(addToMonth);
+
+  // Ordenar dentro de cada mes: fecha → SAT primero en día 17 (para visibilidad) → reales → proyectados → _ts
+  Object.keys(byMonth).forEach(k =>
+    byMonth[k].sort((a,b) => {
+      const df = (a.fecha||'').localeCompare(b.fecha||'');
+      if (df !== 0) return df;
+      // En el mismo día: SAT primero, luego reales, luego proyectados
+      if (a._esSAT !== b._esSAT) return a._esSAT ? -1 : 1;
+      if (a._esReal !== b._esReal) return a._esReal ? -1 : 1;
+      return (a._ts||0) - (b._ts||0);
+    })
+  );
+
+  // ── Banner: projected movements already done (cutoff info) ──
   if (movsDone.length > 0) {
     let doneSal = 0, doneEnt = 0;
-    movsDone.forEach(m => { doneSal += parseFlt(m.salida); doneEnt += parseFlt(m.entrada); });
+    movsDone.forEach(m => {
+      doneSal += parseFlt(m.salida);
+      doneEnt += parseFlt(m.cuentaDest ? m.entradaDest : m.entrada);
+    });
     html += `<tr style="background:#f0fdf4;">
-      <td colspan="9" style="padding:0.38rem 0.85rem; font-family:var(--brand); font-size:0.63rem; color:#16a34a; font-weight:600; border-bottom:1px dashed #bbf7d0;">
-        ✓ ${movsDone.length} movimiento${movsDone.length!==1?'s':''} ya realizados (corte: ${_gCut||'—'})
-        · entradas <span style="color:var(--green)">${fmtMXN(doneEnt)}</span>
-        · salidas <span style="color:var(--red)">${fmtMXN(doneSal)}</span>
-        · <em>ya incluidos en el saldo real — no se descuentan dos veces</em>
+      <td colspan="9" style="padding:0.32rem 0.85rem; font-family:var(--brand); font-size:0.62rem; color:#16a34a; font-weight:600; border-bottom:1px dashed #bbf7d0;">
+        ✓ ${movsDone.length} recurrente${movsDone.length!==1?'s':''} proyectado${movsDone.length!==1?'s':''} ya realizados (corte: ${_gCut||'—'}) · reemplazados por filas <span style="background:#e0f2fe;color:#0369a1;padding:0 0.2rem;border-radius:2px;font-size:0.58rem;">Real</span> de financiero en el acordeón
         <button onclick="limpiarRealizados()" style="margin-left:1rem;font-size:0.58rem;padding:0.1rem 0.4rem;border:1px solid #bbf7d0;border-radius:2px;background:#fff;color:#16a34a;cursor:pointer;font-family:var(--brand);font-weight:700;">🗑 Limpiar</button>
       </td>
     </tr>`;
   }
 
-  // ── Movimientos futuros proyectados (fecha > corte) ──────
-  if (movsFuture.length > 0) {
-    const byMonth = {};
-    movsFuture.forEach(m => {
-      const k = (m.fecha||'').substring(0,7);
-      if (!byMonth[k]) byMonth[k] = [];
-      byMonth[k].push(m);
-    });
+  // ── Render all unified months (projected + real) ──
+  if (Object.keys(byMonth).length > 0) {
     Object.keys(byMonth).sort().forEach(mes => {
-      const { rowHtml, totEnt, totSal } = renderMonthRows(mes, byMonth[mes], false);
+      const { rowHtml, totEntProy, totSalProy } = renderMonthRows(mes, byMonth[mes], false);
       html += rowHtml;
-      grandEnt += totEnt; grandSal += totSal;
+      // Grand total: projected FUTURE movements + SAT pendientes (avoid double-count with stgl_saldos)
+      byMonth[mes].filter(m => !m._esReal && !_isDoneM(m)).forEach(m => {
+        grandEntProy += parseFlt(m.cuentaDest ? m.entradaDest : m.entrada);
+        grandSalProy += parseFlt(m.salida);
+      });
     });
-  } else if (!movsDone.length && movsHistorico.length > 0) {
+  } else if (!movsHistorico.length) {
     html += `<tr><td colspan="9" style="padding:1.5rem; text-align:center; color:var(--text-xs); font-family:var(--brand); font-size:0.7rem;">
       Sin proyección desde ${arranque} · Haz clic en <strong>"Proyectar siguiente mes"</strong>
     </td></tr>`;
@@ -1505,17 +2226,17 @@ function renderTabla() {
 
   tbody.innerHTML = html;
 
-  const grandBal = grandEnt - grandSal;
   tfoot.innerHTML = `<tr>
-    <td colspan="6" style="letter-spacing:0.05em; text-transform:uppercase;">Total proyectado (${arranque} en adelante)</td>
-    <td class="num" style="color:var(--green);">+${fmtMXN(grandEnt)}</td>
-    <td class="num" style="color:var(--red);">−${fmtMXN(grandSal)}</td>
+    <td colspan="6" style="letter-spacing:0.05em; text-transform:uppercase;">Total proyectado pendiente (${arranque} en adelante, después del corte)</td>
+    <td class="num" style="color:var(--green);">+${fmtMXN(grandEntProy)}</td>
+    <td class="num" style="color:var(--red);">−${fmtMXN(grandSalProy)}</td>
     <td></td>
   </tr>`;
 
-  // Last date label (from active months)
-  const lastFecha = movsActivos.length
-    ? movsActivos.reduce((a, b) => ((b.fecha||'') > (a.fecha||'') ? b : a)).fecha
+  // Last date label (from active + real months)
+  const allActive = [...movsActivos, ...reales];
+  const lastFecha = allActive.length
+    ? allActive.reduce((a, b) => ((b.fecha||'') > (a.fecha||'') ? b : a)).fecha
     : (movs[movs.length-1]?.fecha || '');
   document.getElementById('proy-ult-fecha').textContent = lastFecha
     ? `Proyección hasta: ${lastFecha}` : '';
@@ -1618,7 +2339,8 @@ function guardarExtrao() {
   if (!cuenta){ toast('Selecciona una cuenta','error'); return; }
   if (monto<=0){ toast('El importe debe ser mayor a 0','error'); return; }
 
-  const moneda = document.getElementById('ex-moneda').value;
+  const moneda     = document.getElementById('ex-moneda').value;
+  const naturaleza = document.getElementById('ex-naturaleza')?.value || 'Operación';
   const rec = {
     id:          genId('proy'),
     fecha,
@@ -1629,6 +2351,7 @@ function guardarExtrao() {
     cuenta,
     cuentaDest:  '',
     moneda,
+    naturaleza,           // NIF B-2: Operación | Inversión | Financiamiento
     entrada:     mov === 'Abono' ? monto : 0,
     salida:      mov === 'Cargo' ? monto : 0,
     entradaDest: 0,
@@ -1638,7 +2361,7 @@ function guardarExtrao() {
   };
   saveProy([...loadProy(), rec]);
   closeModal('modal-extrao');
-  toast('Movimiento extraordinario agregado','success');
+  toast('Movimiento no recurrente agregado','success');
   renderAll();
 }
 
@@ -1814,7 +2537,43 @@ function guardarVentaDivisas() {
 /* ══════════════════════════════════════════════════════════════
    RENDER ALL
 ══════════════════════════════════════════════════════════════ */
+/* Limpia __pendingProj si:
+   a) El corte avanzó y el movimiento que causó el déficit ya es "realizado", o
+   b) El mes pausado está completo con los cortes actuales. */
+function _validarPendingProj() {
+  if (!__pendingProj) return;
+  const { year, month } = __pendingProj;
+  const globalCut = loadCutoff();
+
+  // a) Si el déficit tenía fecha y esa fecha ya quedó dentro del cutoff → limpiar
+  if (__deficitData?.fecha && globalCut && __deficitData.fecha <= globalCut) {
+    __pendingProj = null;
+    __deficitData = null;
+    hideDeficit();
+    return;
+  }
+
+  // b) Cutoff supera el último día del mes → todo el mes realizado
+  const lastDayStr = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+  if (globalCut && globalCut >= lastDayStr) {
+    __pendingProj = null;
+    __deficitData = null;
+    hideDeficit();
+    return;
+  }
+
+  // c) El mes ya está completo (todas las fechas futuras proyectadas)
+  const recs = loadRecs();
+  const movs = loadProy();
+  if (_mesCompleto(movs, recs, year, month)) {
+    __pendingProj = null;
+    __deficitData = null;
+    hideDeficit();
+  }
+}
+
 function renderAll() {
+  _validarPendingProj();
   renderSaldosKPI();
   renderTabla();
 }
@@ -1822,11 +2581,75 @@ function renderAll() {
 /* ══════════════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   AUTO-SYNC AL ABRIR LA PÁGINA
+   Detecta el corte actualizado desde los movimientos bancarios
+   reales y actualiza la fecha silenciosamente si encontró datos
+   más recientes que el corte guardado. El usuario no necesita
+   hacer clic en "Auto" cada vez que importa un extracto.
+══════════════════════════════════════════════════════════════ */
+function autoSyncCorte() {
+  let globalLatest = '';
+  const porCuenta  = {};
+  const procesar   = movs => movs.forEach(m => {
+    const f   = (m.fecha || m.Fecha || '').substring(0, 10);
+    const cta = m.cuenta || m.Cuenta || '';
+    if (!f) return;
+    if (f > (globalLatest || '')) globalLatest = f;
+    if (cta && f > (porCuenta[cta] || '')) porCuenta[cta] = f;
+  });
+  try {
+    procesar(JSON.parse(localStorage.getItem('stgl_mov_excel') || '[]'));
+    procesar(loadRegistry('stgl_mov_manual'));
+  } catch {}
+
+  if (!globalLatest) return false; // sin datos reales todavía
+  const currentGlobal = loadCutoff();
+  if (globalLatest <= currentGlobal) return false; // ya está al corriente
+
+  // El extracto tiene movimientos más recientes — actualizar sin molestar al usuario
+  saveCutoff(globalLatest);
+  localStorage.setItem(KEY_CUTOFF_CTA, JSON.stringify(porCuenta));
+  const el = document.getElementById('proy-cutoff');
+  if (el) el.value = globalLatest;
+  actualizarCutoffInfo(globalLatest, porCuenta);
+  return true; // indica que el corte cambió → re-renderizar
+}
+
 __tcProy = parseFlt(document.getElementById('proy-tc').value) || 17.50;
+
+// Limpieza única: eliminar entradas RetencionesSAT guardadas por nomina.html en
+// stgl_mov_proyectados. Proyectados las calcula dinámicamente con loadRetencionesProy(),
+// por lo que tenerlas en el store las duplicaría en saldos y en la tabla.
+try {
+  const _proy = loadProy();
+  const _proySinSAT = _proy.filter(m => m.tipo !== 'RetencionesSAT');
+  if (_proySinSAT.length < _proy.length) {
+    saveProy(_proySinSAT);
+  }
+} catch(e) {}
+
+// Auto-collapse months older than the previous full month so the table opens clean
+try {
+  const _today   = new Date();
+  const _prevM   = new Date(_today.getFullYear(), _today.getMonth() - 1, 1);
+  const _prevKey = `${_prevM.getFullYear()}-${String(_prevM.getMonth()+1).padStart(2,'0')}`;
+  const _allKeys = [...new Set(
+    loadProy().map(m => (m.fecha || '').substring(0, 7)).filter(Boolean)
+  )];
+  _allKeys.forEach(k => { if (k < _prevKey) __proyClosed.add(k); });
+} catch(e) {}
+
 // Defer heavy computation so the spinner paints before JS blocks the thread
 requestAnimationFrame(() => setTimeout(() => {
+  const corteActualizado = autoSyncCorte(); // sync silencioso antes del primer render
   renderAll();
   updateBtnLabel();
+  if (corteActualizado) {
+    // Notificación discreta: el corte fue avanzado automáticamente
+    const cut = loadCutoff();
+    toast(`Corte actualizado automáticamente: ${cut}`, 'info');
+  }
 }, 0));
 
 // Restore TC from financiero if available
@@ -1848,11 +2671,402 @@ try {
   actualizarCutoffInfo(stored, loadCutoffCta());
 } catch(e){}
 
-// Restore arranque (start month)
+// Restore arranque (start month) — both the hidden input and the dropdown input
 try {
-  const arrInput = document.getElementById('proy-arranque');
-  if (arrInput) arrInput.value = loadArranque();
+  const arr = loadArranque();
+  const arrHidden = document.getElementById('proy-arranque');
+  if (arrHidden) arrHidden.value = arr;
+  const arrDD = document.getElementById('proy-arranque-dd');
+  if (arrDD) arrDD.value = arr;
 } catch(e){}
+
+// ── Cross-tab sync ─────────────────────────────────────────────────────────────
+// Cuando nomina.html (u otra pestaña) importa CFDIs y actualiza stgl_mov_manual,
+// recalculamos el corte y re-renderizamos sin que el usuario tenga que recargar.
+window.addEventListener('storage', e => {
+  const clavesSensibles = new Set([
+    'stgl_mov_manual', 'stgl_mov_excel',
+    'stgl_proy_cutoff', 'stgl_proy_cutoff_cta',
+    'stgl_recurrentes', 'stgl_asimilables', 'stgl_honorarios',
+  ]);
+  if (!clavesSensibles.has(e.key)) return;
+
+  const corteAvanzado = autoSyncCorte();
+  renderAll();
+  updateBtnLabel();
+
+  const fuente = {
+    stgl_mov_manual:     'Movimientos reales actualizados',
+    stgl_mov_excel:      'Extracto bancario actualizado',
+    stgl_proy_cutoff:    'Corte actualizado',
+    stgl_recurrentes:    'Recurrentes actualizados',
+    stgl_asimilables:    'Nómina importada',
+    stgl_honorarios:     'Honorarios importados',
+  }[e.key] || 'Datos actualizados';
+
+  toast(`🔄 ${fuente} — proyección recalculada`, 'info', 3500);
+  // Re-verificar cuando llegan datos externos
+  setTimeout(() => {
+    try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+  }, 500);
+});
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-VERIFICACIÓN — Proyección de Saldos
+   Checks: RetencionesSAT duplicadas, corte sin actualizar,
+   movimientos pasados no realizados (con desfase ±7 días),
+   saldo negativo proyectado, recurrentes sin cubrir.
+══════════════════════════════════════════════════════════════ */
+const KEY_VERIF_LOG           = 'stgl_verificacion_log_proyectados';
+const KEY_VERIF_DISMISSED_PROY = 'stgl_verificacion_dismissed_proy';
+const VENTANA_DESFASE_PROY    = 7;
+
+/* ── Descarte persistente de items de verificación ── */
+function getDescartados() {
+  try { return new Set(JSON.parse(localStorage.getItem(KEY_VERIF_DISMISSED_PROY) || '[]')); }
+  catch { return new Set(); }
+}
+function saveDescartados(s) {
+  localStorage.setItem(KEY_VERIF_DISMISSED_PROY, JSON.stringify([...s]));
+}
+/* Fingerprint estable — usa key cuando está disponible */
+function itemFingerprint(it) {
+  if (it.key) return it.key;
+  return ((it.msg || '') + '|' + (it.fecha || '')).replace(/\s{2,}/g, ' ').trim();
+}
+function filtrarDescartados(res) {
+  if (!res) return res;
+  const desc = getDescartados();
+  if (!desc.size) return res;
+  const isDesc = it => {
+    if (desc.has(itemFingerprint(it))) return true;
+    if (it.key) {
+      const legacy = ((it.msg || '') + '|' + (it.fecha || '')).replace(/\s{2,}/g, ' ').trim();
+      if (desc.has(legacy)) return true;
+    }
+    return false;
+  };
+  const f = arr => arr.filter(it => !isDesc(it));
+  return { ...res, errores: f(res.errores), alertas: f(res.alertas), info: f(res.info) };
+}
+function descartarVerifItem(fp) {
+  const s = getDescartados(); s.add(fp); saveDescartados(s);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+function restaurarDescartados() {
+  localStorage.removeItem(KEY_VERIF_DISMISSED_PROY);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+
+/* Días entre dos fechas ISO (positivo → f2 después de f1) */
+function _diasEntre(f1, f2) {
+  const d1 = new Date(((f1||'').substring(0,10))+'T12:00:00');
+  const d2 = new Date(((f2||'').substring(0,10))+'T12:00:00');
+  if (isNaN(d1)||isNaN(d2)) return Infinity;
+  return Math.round((d2 - d1) / 86400000);
+}
+
+/* Carga todos los movimientos reales (excel + manual) en array plano */
+function _loadRealesPlano() {
+  let excel = [], manual = [];
+  try { excel  = JSON.parse(localStorage.getItem('stgl_mov_excel') || '[]'); } catch {}
+  try { manual = loadRegistry('stgl_mov_manual'); } catch {}
+  const manualIds = new Set(manual.map(r => r.id));
+  return [...excel.filter(r => !manualIds.has(r.id)), ...manual];
+}
+
+/**
+ * Para un movimiento proyectado (con monto y fecha), busca el movimiento
+ * real más cercano en ±ventana días con tolerancia de monto del 8%.
+ * Devuelve { fecha, delta, dir } o null.
+ */
+function _buscarRealCercano(reales, fechaRef, monto, esEgreso, ventana) {
+  ventana = ventana || VENTANA_DESFASE_PROY;
+  let mejor = null, mejorDelta = Infinity;
+  reales.forEach(r => {
+    const f   = (r.fecha || r.Fecha || '').substring(0, 10);
+    const amt = esEgreso
+      ? (parseFloat(r.salidas  || r.salida  || 0))
+      : (parseFloat(r.entradas || r.entrada || 0));
+    if (!f || !amt) return;
+    const delta = Math.abs(_diasEntre(fechaRef, f));
+    const montoOk = monto > 0
+      ? Math.abs(amt - monto) / Math.max(monto, 1) <= COVER_AMOUNT_TOL
+      : true;
+    if (delta > 0 && delta <= ventana && montoOk && delta < mejorDelta) {
+      mejorDelta = delta;
+      mejor = { fecha: f, delta, dir: _diasEntre(fechaRef, f) > 0 ? 'después' : 'antes' };
+    }
+  });
+  return mejor;
+}
+
+function ejecutarVerificacion(trigger) {
+  trigger = trigger || 'auto';
+  const errores = [], alertas = [], info = [];
+  const hoy = new Date();
+  const hoyISO = hoy.toISOString().split('T')[0];
+
+  /* ── 1. Entradas RetencionesSAT stale en stgl_mov_proyectados ──
+     Estas ya no deben existir; deben haberse purgado al cargar.   */
+  const stale = loadProy().filter(m => m.tipo === 'RetencionesSAT');
+  if (stale.length > 0) {
+    errores.push({
+      tipo:   'DATOS_DUPLICADOS', modulo: 'Proyectados',
+      key:    'DATOS_DUPLICADOS|stale',
+      msg:    `${stale.length} entrada${stale.length!==1?'s':''} RetencionesSAT encontradas en stgl_mov_proyectados (generan doble-conteo)`,
+      accion: 'Recarga la página — se limpian automáticamente al inicializar',
+    });
+  }
+
+  /* ── 2. Fecha de corte sin actualizar (>30 días) ── */
+  const cutoff = loadCutoff();
+  if (!cutoff) {
+    alertas.push({
+      tipo:   'CORTE_INDEFINIDO', modulo: 'Proyectados',
+      key:    'CORTE_INDEFINIDO',
+      msg:    'Fecha de corte no definida — los saldos base pueden no reflejar la realidad',
+      accion: 'Importa un extracto bancario desde Financiero o define el corte manualmente',
+    });
+  } else {
+    const diasDesdeCorte = Math.round((hoy - new Date(cutoff)) / 86400000);
+    if (diasDesdeCorte > 30) {
+      alertas.push({
+        tipo:   'CORTE_DESACTUALIZADO', modulo: 'Proyectados',
+        key:    `CORTE_DESACTUALIZADO|${cutoff}`,
+        fecha:  cutoff,
+        msg:    `Corte ${cutoff} — hace ${diasDesdeCorte} días sin actualizar saldos base`,
+        accion: 'Importa el extracto bancario más reciente desde Financiero',
+      });
+    }
+  }
+
+  /* ── 3. Proyectados pasados: distinguir desfase de fecha vs realmente faltante ──
+     Para cada proyectado pasado sin marcar como realizado, busca en los
+     movimientos reales (excel + manual) uno cercano con monto similar (±8%).
+     Si lo encuentra → alerta de desfase con la fecha real.
+     Si no existe nada en ±VENTANA_DESFASE_PROY días → reporte de pendiente. */
+  const pasados = loadProy()
+    .filter(m => m.tipo !== 'RetencionesSAT' && !m.realizado && m.fecha && m.fecha < hoyISO);
+
+  if (pasados.length > 0) {
+    const realesPlano = _loadRealesPlano();
+    let sinCubrir = 0;
+
+    pasados.forEach(m => {
+      const monto    = parseFloat(m.salida || m.entrada || 0);
+      const esEgreso = (parseFloat(m.salida || 0)) > 0;
+      const cercano  = _buscarRealCercano(realesPlano, m.fecha, monto, esEgreso);
+
+      if (cercano) {
+        alertas.push({
+          tipo:   'DESFASE_FECHA', modulo: 'Proyectados',
+          key:    `DESFASE_FECHA|${m.fecha}|${m.id||m.descripcion||'?'}`,
+          fecha:  m.fecha,
+          msg:    `"${m.descripcion||'?'}" (prog. ${m.fecha}): posible desfase — movimiento real el ${cercano.fecha} (${cercano.delta} día${cercano.delta!==1?'s':''} ${cercano.dir})`,
+          accion: 'Confirmar que el movimiento real del '+cercano.fecha+' corresponde a este proyectado; si es correcto, marcar como realizado o descartar',
+        });
+      } else {
+        sinCubrir++;
+      }
+    });
+
+    if (sinCubrir > 0) {
+      info.push({
+        tipo:   'MOV_PASADO_PENDIENTE', modulo: 'Proyectados',
+        key:    'MOV_PASADO_PENDIENTE',
+        msg:    `${sinCubrir} movimiento${sinCubrir!==1?'s':''} proyectado${sinCubrir!==1?'s':''} pasado${sinCubrir!==1?'s':''} sin movimiento real confirmado (ni en ±${VENTANA_DESFASE_PROY} días)`,
+        accion: 'Marca los movimientos como realizados o elimínalos si ya están en el extracto bancario',
+      });
+    }
+  }
+
+  /* ── 4. Saldo proyectado negativo en alguna cuenta ── */
+  try {
+    const saldosKPI = document.querySelectorAll('.proy-sal-val.red');
+    if (saldosKPI.length > 0) {
+      info.push({
+        tipo:   'SALDO_NEGATIVO', modulo: 'Proyectados',
+        key:    'SALDO_NEGATIVO',
+        msg:    `Se detecta saldo proyectado negativo en ${saldosKPI.length} cuenta${saldosKPI.length!==1?'s':''}`,
+        accion: 'Revisa el panel de déficit y ajusta la proyección o programa traspasos',
+      });
+    }
+  } catch {}
+
+  /* ── 5. Sin movimientos recurrentes definidos ── */
+  const recurrentes = loadRegistry(KEY_REC).filter(r => !r.cancelado);
+  if (!recurrentes.length) {
+    info.push({
+      tipo:   'SIN_RECURRENTES', modulo: 'Proyectados',
+      key:    'SIN_RECURRENTES',
+      msg:    'No hay gastos recurrentes configurados — la proyección puede subestimar egresos',
+      accion: 'Agrega recurrentes desde el módulo Finanzas → Recurrentes',
+    });
+  }
+
+  const resultado = {
+    fecha: new Date().toISOString(), trigger, errores, alertas, info,
+    ok:    !errores.length && !alertas.length,
+    total: errores.length + alertas.length + info.length,
+  };
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    logs.unshift(resultado);
+    localStorage.setItem(KEY_VERIF_LOG, JSON.stringify(logs.slice(0, 30)));
+  } catch {}
+  return resultado;
+}
+
+function cargarUltimaVerificacion() {
+  try { return JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]')[0] || null; } catch { return null; }
+}
+
+function lanzarVerificacion(trigger) {
+  const resultado = ejecutarVerificacion(trigger || 'manual');
+  renderVerificacionBadge(resultado);
+  renderVerificacionPanel(resultado);
+  document.getElementById('verif-panel').classList.add('open');
+}
+
+function toggleVerifPanel() {
+  const panel = document.getElementById('verif-panel');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+  } else {
+    const last = cargarUltimaVerificacion();
+    if (last) renderVerificacionPanel(last);
+    panel.classList.add('open');
+  }
+}
+
+function renderVerificacionBadge(resultado) {
+  const el = document.getElementById('verif-badge');
+  if (!el) return;
+  if (!resultado) {
+    el.innerHTML = `<button onclick="lanzarVerificacion('manual')"
+        style="color:var(--text-dim);border-color:var(--border);">🔍 Verificar</button>`;
+    return;
+  }
+  const { errores, alertas } = resultado;
+  const color = errores.length ? 'var(--red)' : alertas.length ? '#c8801b' : 'var(--green)';
+  const bg    = errores.length ? '#fff5f5'    : alertas.length ? '#fffbeb'  : '#f0fdf4';
+  const icon  = errores.length ? '⚠'          : alertas.length ? '🔔'       : '✓';
+  const label = errores.length ? `${errores.length} error${errores.length>1?'es':''}`
+              : alertas.length ? `${alertas.length} alerta${alertas.length>1?'s':''}`
+              : 'Datos OK';
+  el.innerHTML = `<button onclick="toggleVerifPanel()"
+      style="color:${color};border-color:${color};background:${bg};"
+      title="Ver log de verificación">${icon} ${label}</button>`;
+}
+
+function _renderChecksSection() {
+  const id = 'verif-checks-proy';
+  return `<div class="verif-checks">
+    <button class="verif-checks-toggle" onclick="
+      const b=document.getElementById('${id}');
+      b.classList.toggle('open');
+      this.classList.toggle('open');">
+      <span class="vct-arrow">▶</span> ¿Qué se verifica en este módulo?
+    </button>
+    <div class="verif-checks-body" id="${id}">
+      <div class="verif-check-row">
+        <span class="verif-check-num">1</span>
+        <span><span class="verif-check-name">Entradas obsoletas</span> — Detecta si existen registros RetencionesSAT en stgl_mov_proyectados que ya no deben existir (generan doble-conteo).<span class="verif-check-badge">ERROR</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">2</span>
+        <span><span class="verif-check-name">Fecha de corte</span> — Verifica que la fecha de corte bancario esté definida y sea reciente (≤30 días). Sin corte, los saldos base no reflejan la realidad.<span class="verif-check-badge">ALERTA</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">3</span>
+        <span><span class="verif-check-name">Desfase vs. pendiente</span> — Para cada proyectado pasado sin marcar como realizado, busca un movimiento real cercano (±${VENTANA_DESFASE_PROY} días, ±8% monto). Si lo encuentra → desfase de fecha; si no existe → pendiente.<span class="verif-check-badge">ALERTA / INFO</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">4</span>
+        <span><span class="verif-check-name">Saldo negativo proyectado</span> — Detecta si alguna cuenta tiene saldo proyectado negativo (excluye tarjetas de crédito).<span class="verif-check-badge">INFO</span></span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">5</span>
+        <span><span class="verif-check-name">Recurrentes configurados</span> — Verifica que existan gastos recurrentes activos; sin ellos, la proyección puede subestimar egresos futuros.<span class="verif-check-badge">INFO</span></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderVerificacionPanel(resultado) {
+  const body   = document.getElementById('verif-body');
+  const footer = document.getElementById('verif-footer');
+  if (!body) return;
+  // Filtrar descartados antes de renderizar
+  const res = filtrarDescartados(resultado);
+  const totalOriginal = resultado.errores.length + resultado.alertas.length + resultado.info.length;
+  const totalFiltrado = res.errores.length + res.alertas.length + res.info.length;
+  const nDescartados  = totalOriginal - totalFiltrado;
+  const { errores, alertas, info, fecha, trigger, ok } = res;
+  const triggerLabel = {load:'carga de página',import:'importación',save:'guardado',manual:'manual',auto:'automático'}[trigger] || trigger;
+  const ts = new Date(fecha).toLocaleString('es-MX', {dateStyle:'short', timeStyle:'short'});
+  const renderItems = (items, cls) => items.map(it => {
+    const fp = itemFingerprint(it).replace(/'/g, "\\'");
+    return `<div class="verif-item">
+      <div class="verif-dot ${cls}"></div>
+      <div style="flex:1">
+        <div class="verif-msg">${it.msg}</div>
+        ${it.accion ? `<div class="verif-accion">→ ${it.accion}</div>` : ''}
+        <div class="verif-btns">
+          <button class="verif-btn verif-btn-descartar" onclick="descartarVerifItem('${fp}')">✕ Descartar</button>
+        </div>
+      </div>
+      ${it.fecha ? `<div style="font-size:0.63rem;color:var(--text-xs);white-space:nowrap;">${it.fecha}</div>` : '<div></div>'}
+    </div>`;
+  }).join('');
+  let html = '';
+  if (!errores.length && !alertas.length && !info.length) {
+    html = `<div class="verif-ok">✓ La proyección está íntegra y sin inconsistencias</div>`;
+  } else {
+    if (errores.length) { html += `<div class="verif-section-title">🔴 Errores — acción requerida (${errores.length})</div>`; html += renderItems(errores, 'error'); }
+    if (alertas.length) { html += `<div class="verif-section-title">🟡 Alertas — revisar (${alertas.length})</div>`; html += renderItems(alertas, 'warning'); }
+    if (info.length)    { html += `<div class="verif-section-title">ℹ️ Información (${info.length})</div>`; html += renderItems(info, 'info'); }
+  }
+  if (nDescartados > 0) {
+    html += `<div class="verif-descartados-note">
+      ${nDescartados} elemento${nDescartados!==1?'s':''} descartado${nDescartados!==1?'s':''} oculto${nDescartados!==1?'s':''} —
+      <button class="verif-btn" onclick="restaurarDescartados()" style="display:inline;padding:0;border:none;background:none;color:var(--navy);font-size:0.64rem;cursor:pointer;font-weight:600;">restaurar todos</button>
+    </div>`;
+  }
+  html += _renderChecksSection();
+  body.innerHTML = html;
+  footer.innerHTML = `<span>Última verificación: ${ts} · disparador: ${triggerLabel}</span>
+    <span style="margin-left:auto;font-size:0.63rem;">${resultado.errores.length} error${resultado.errores.length!==1?'es':''} · ${resultado.alertas.length} alerta${resultado.alertas.length!==1?'s':''} · ${resultado.info.length} info</span>`;
+}
+
+/* ── Init badge desde última verificación guardada ── */
+renderVerificacionBadge(cargarUltimaVerificacion());
+
+/* ── Auto-verificación al cargar (diferida para no bloquear el render) ── */
+setTimeout(() => {
+  try {
+    const res = ejecutarVerificacion('load');
+    renderVerificacionBadge(res);
+    if (res.errores.length > 0) {
+      renderVerificacionPanel(res);
+      document.getElementById('verif-panel').classList.add('open');
+    }
+  } catch(e) { console.warn('verif:', e); }
+}, 1200); // más largo — espera a que renderAll() termine
+
+/* ── Periódica cada 5 min ── */
+setInterval(() => {
+  try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+}, 5 * 60 * 1000);
 </script>
 </body>
 </html>
