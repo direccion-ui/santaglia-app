@@ -206,10 +206,152 @@
     .anom-detalle { font-size: 0.67rem; color: var(--text-dim); margin-top: 0.1rem; }
     .anom-ok { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.74rem; font-family: var(--brand); color: var(--green); font-weight: 700; }
 
+    /* ── Calendario fiscal ── */
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; align-items: start;
+      margin-bottom: 1.25rem;
+    }
+    .cal-card {
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 0.7rem 0.8rem; background: var(--bg-white);
+      display: flex; flex-direction: column; gap: 0.25rem;
+      transition: box-shadow 0.15s;
+    }
+    .cal-card:hover { box-shadow: 0 2px 10px rgba(26,45,128,0.1); }
+    .cal-card.cal-vencido   { border-color: #fca5a5; background: #fff5f5; }
+    .cal-card.cal-proximo   { border-color: #fcd34d; background: #fffbeb; }
+    .cal-card.cal-pagado    { border-color: #bbf7d0; background: #f0faf5; }
+    .cal-card.cal-tardio    { border-color: #fdba74; background: #fff7ed; }
+    .cal-card.cal-futuro    { border-color: var(--border); background: #f8f9fc; opacity: 0.7; }
+    .cal-card.cal-sin-ret   { border-color: var(--border); background: #f8f9fc; opacity: 0.5; }
+    /* Mini-card: mes sin retención y accionable en >30 días — fila compacta */
+    .cal-mini {
+      border: 1px solid #e5e7eb; border-radius: 5px; padding: 0.28rem 0.65rem;
+      font-size: 0.63rem; color: var(--text-xs); background: #f9fafb;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .cal-mini-mes { font-family: var(--brand); font-weight: 700; font-size: 0.65rem; color: #9ca3af; min-width: 26px; }
+    .cal-mini-vence { color: #94a3b8; }
+    .cal-mini-sep { color: #d1d5db; }
+    .cal-mes {
+      font-family: var(--brand); font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy);
+    }
+    .cal-vence {
+      font-size: 0.62rem; color: var(--text-dim); margin-bottom: 0.15rem;
+    }
+    .cal-amount {
+      font-family: 'Courier New', monospace; font-size: 0.8rem;
+      font-weight: 700; color: var(--text);
+    }
+    .cal-amount.zero { color: var(--text-xs); font-weight: 400; font-style: italic; }
+    .cal-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.58rem; font-weight: 700; font-family: var(--brand);
+      letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 0.15rem 0.45rem; border-radius: 3px; margin-top: 0.1rem;
+      width: fit-content;
+    }
+    .cal-badge.vencido { background: #fee2e2; color: #991b1b; }
+    .cal-badge.proximo { background: #fef3c7; color: #92400e; }
+    .cal-badge.pagado  { background: #dcfce7; color: #166534; }
+    .cal-badge.tardio  { background: #ffedd5; color: #9a3412; }
+    .cal-badge.futuro  { background: #e8ecf8; color: var(--navy); }
+    .cal-badge.sin-ret { background: #f1f5f9; color: #94a3b8; }
+    .cal-dias {
+      font-size: 0.62rem; color: var(--text-xs); margin-top: 0.1rem;
+    }
+    @media (max-width: 900px) { .cal-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 600px) { .cal-grid { grid-template-columns: repeat(2, 1fr); } }
+
     /* ── Anomaly dot on row ── */
     .anom-dot { font-size: 0.55rem; margin-left: 3px; cursor: help; vertical-align: middle; }
     .anom-dot-error { color: var(--red); }
     .anom-dot-warn  { color: #d97706; }
+    .anom-dot-leida { color: #9ca3af; font-size: 0.55rem; margin-left: 3px; cursor: help; vertical-align: middle; }
+    .anom-dismiss { margin-left: auto; background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 3px; flex-shrink: 0; line-height: 1; }
+    .anom-dismiss:hover { background: #fde68a; color: #92400e; }
+    .anom-item-dismissed-strip { padding: 0.4rem 1rem; font-size: 0.65rem; color: #78716c; display: flex; align-items: center; gap: 0.5rem; border-top: 1px solid #fde68a; background: rgba(255,255,255,0.5); }
+    .badge-diff  { display:inline-block; background:#fff7ed; color:#9a3412; border:1px solid #fdba74; font-size:0.58rem; padding:0.08rem 0.32rem; border-radius:3px; font-weight:700; margin-left:3px; vertical-align:middle; }
+    .badge-compl { display:inline-block; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:0.58rem; padding:0.08rem 0.32rem; border-radius:3px; font-weight:700; margin-left:3px; vertical-align:middle; }
+    .historia-row td { background: linear-gradient(to right, #f5f7ff, #fafbff); padding: 0 !important; border-bottom: 2px solid #e8ecf8; }
+    .historia-timeline { padding: 0.6rem 1.5rem 0.5rem 2.5rem; display: flex; flex-direction: column; gap: 0.22rem; border-left: 3px solid #c7d0ef; margin-left: 0.8rem; }
+    .ht-item { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.67rem; }
+    .ht-icon { font-size: 0.75rem; width: 14px; text-align: center; flex-shrink: 0; margin-top: 0.05rem; }
+    .ht-date { font-family: monospace; color: var(--text-dim); min-width: 82px; flex-shrink: 0; font-size: 0.63rem; margin-top: 0.08rem; }
+    .ht-text { flex: 1; line-height: 1.4; }
+    .ht-sub { font-size: 0.61rem; color: var(--text-xs); font-family: monospace; margin-top: 0.1rem; }
+    .ht-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; padding-top: 0.3rem; border-top: 1px dashed #c7d0ef; }
+    .btn-ht { font-size: 0.6rem; padding: 0.18rem 0.5rem; background: #f0f4ff; color: #1a1a2e; border: 1px solid #c7d0ef; border-radius: 3px; cursor: pointer; font-weight: 600; }
+    .btn-ht:hover { background: #e0e8ff; }
+    .btn-ht-warn { background: #fff7ed !important; color: #9a3412 !important; border-color: #fdba74 !important; }
+    .btn-ht-warn:hover { background: #ffedd5 !important; }
+
+    /* ── Process step indicator (calendario cards + historia row) ── */
+    .cal-proc { display:flex; align-items:center; gap:3px; margin-top:4px; flex-wrap:nowrap; }
+    .cp-step  { font-size:0.52rem; font-weight:700; border-radius:2px; padding:1px 4px; white-space:nowrap; }
+    .cp-done  { background:#dcfce7; color:#166534; }
+    .cp-next  { background:#fefce8; color:#b45309; border:1px solid #fcd34d; }
+    .cp-pend  { background:#f1f5f9; color:#94a3b8; }
+    .cp-sep   { color:#d1d5db; font-size:0.6rem; }
+    /* Process header inside historia row */
+    .proc-header { padding:0.55rem 1.5rem 0.4rem 1.5rem; border-bottom:1px dashed #c7d0ef; margin-bottom:0.1rem; }
+    .proc-steps  { display:flex; align-items:center; gap:0; margin-bottom:0.45rem; }
+    .proc-step   { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:72px; }
+    .proc-conn   { flex:1; height:2px; background:#e5e7eb; margin: 0 2px; min-width:16px; }
+    .proc-conn.pc-done { background:#86efac; }
+    .proc-conn.pc-part { background:#fcd34d; }
+    .ps-circle   { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; flex-shrink:0; }
+    .ps-done .ps-circle  { background:#22c55e; color:#fff; }
+    .ps-next .ps-circle  { background:#fef3c7; color:#92400e; border:2px solid #fcd34d; }
+    .ps-pend .ps-circle  { background:#f1f5f9; color:#9ca3af; border:2px solid #e5e7eb; }
+    .ps-label { font-size:0.58rem; font-weight:700; color:var(--text-dim); text-align:center; line-height:1.2; }
+    .ps-done .ps-label { color:#16a34a; }
+    .ps-next .ps-label { color:#92400e; }
+    .ps-amt   { font-size:0.55rem; color:var(--text-xs); font-family:monospace; text-align:center; }
+    .proc-next-action { font-size:0.68rem; border-radius:5px; padding:0.3rem 0.65rem; line-height:1.4; }
+    .pna-ok   { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+    .pna-warn { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
+    .pna-next { background:#f0f4ff; color:var(--navy); border:1px solid #c7d0ef; }
+    .pna-info { background:var(--navy-pale); color:var(--text-dim); border:1px solid var(--border); }
+
+    /* ── Verificación automática ── */
+    #verif-badge button {
+      font-family: var(--brand); font-size: 0.7rem; font-weight: 700;
+      padding: 0.22rem 0.55rem; border-radius: 5px; cursor: pointer;
+      border: 1px solid currentColor; background: transparent; transition: opacity .2s;
+    }
+    #verif-badge button:hover { opacity: .8; }
+    #verif-panel {
+      display: none; margin: 0 0 0.75rem; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08); overflow: hidden;
+    }
+    #verif-panel.open { display: block; }
+    .verif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 1rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+    }
+    .verif-title { font-family: var(--brand); font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+    .verif-body  { padding: 0.75rem 1rem; max-height: 340px; overflow-y: auto; }
+    .verif-section-title {
+      font-family: var(--brand); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-dim); margin: 0.5rem 0 0.3rem;
+    }
+    .verif-item {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.6rem;
+      align-items: start; padding: 0.3rem 0; border-bottom: 1px solid #f0f1f5; font-size: 0.72rem;
+    }
+    .verif-item:last-child { border-bottom: none; }
+    .verif-dot  { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .verif-dot.error   { background: var(--red); }
+    .verif-dot.warning { background: #d97706; }
+    .verif-dot.info    { background: var(--text-dim); }
+    .verif-msg  { color: var(--text-main); line-height: 1.4; }
+    .verif-accion { font-size: 0.65rem; color: var(--text-dim); grid-column: 2; margin-top: -2px; }
+    .verif-ok { text-align: center; padding: 1rem; color: var(--green); font-family: var(--brand); font-weight: 700; }
+    .verif-footer { padding: 0.4rem 1rem; background: #f7f8fc; border-top: 1px solid var(--border);
+                    display: flex; align-items: center; gap: 0.75rem; font-size: 0.68rem; color: var(--text-dim); }
   </style>
 </head>
 <body>
@@ -256,6 +398,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -263,6 +406,7 @@
         <a class="nav-link" href="ayuda.html">Ayuda</a>
       </nav>
       <div class="header-actions">
+        <span id="verif-badge" style="margin-right:0.5rem;"></span>
         <button class="btn-logout" onclick="logout()">Salir</button>
       </div>
     </div>
@@ -270,6 +414,23 @@
 
   <main>
     <div class="main">
+
+      <!-- ══ PANEL DE AUTO-VERIFICACIÓN ══ -->
+      <div id="verif-panel">
+        <div class="verif-header">
+          <span class="verif-title">🔍 Auto-verificación de Retenciones SAT</span>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="lanzarVerificacion('manual')">↻ Re-verificar</button>
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="document.getElementById('verif-panel').classList.remove('open')">✕</button>
+          </div>
+        </div>
+        <div class="verif-body" id="verif-body">
+          <div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.75rem;">Ejecutando verificación…</div>
+        </div>
+        <div class="verif-footer" id="verif-footer"></div>
+      </div>
 
       <!-- Page header -->
       <div class="page-header">
@@ -282,6 +443,7 @@
           <button class="btn btn-ghost" onclick="importarRetenciones()">↑ Importar histórico Excel</button>
           <button class="btn btn-primary" onclick="importarPagosSAT()">↑ Importar pagos SAT (Excel)</button>
           <button class="btn btn-ghost" onclick="abrirImportBulkPdf()">↑ Previos / LCs (PDFs)</button>
+          <button class="btn btn-primary" style="background:linear-gradient(135deg,#1a1a2e,#2a3a6e);" onclick="abrirImportReciboBBVA()">🏦 Recibo Bancario (PDF)</button>
         </div>
       </div>
 
@@ -341,6 +503,21 @@
         </div>
       </div>
 
+      <!-- Calendario fiscal -->
+      <div style="margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-family:var(--brand);font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">
+          📅 Calendario fiscal — vencimientos día 17
+        </div>
+        <div style="font-size:0.62rem;color:var(--text-xs);display:flex;gap:0.75rem;align-items:center;">
+          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#fee2e2;display:inline-block;border:1px solid #fca5a5;"></span>Vencido</span>
+          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#fef3c7;display:inline-block;border:1px solid #fcd34d;"></span>Por vencer</span>
+          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#dcfce7;display:inline-block;border:1px solid #bbf7d0;"></span>Pagado</span>
+          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#ffedd5;display:inline-block;border:1px solid #fdba74;"></span>Pago tardío</span>
+          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#e8ecf8;display:inline-block;border:1px solid #c7d0ef;"></span>Sin vencer</span>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-fiscal"></div>
+
       <!-- Anomaly / compliance panel -->
       <div class="anom-panel" id="anomalia-panel" style="display:none;"></div>
 
@@ -385,105 +562,153 @@
 
 <!-- ══ MODAL: Editar mes de retenciones ══ -->
 <div class="modal-backdrop hidden" id="modal-editar">
-  <div class="modal" style="max-width:700px; max-height:92vh; overflow-y:auto;">
+  <div class="modal" style="max-width:720px; max-height:92vh; overflow-y:auto;">
     <div class="modal-header">
       <span class="modal-title" id="edit-titulo">Editar retención — Ene-26</span>
       <button class="modal-close" onclick="closeModal('modal-editar')">✕</button>
     </div>
     <div class="modal-body">
 
-      <!-- Sección: Retenido -->
+      <!-- ① Retenciones calculadas del mes -->
       <div class="modal-section">
-        <div class="modal-section-title">⟳ Montos retenidos del mes</div>
+        <div class="modal-section-title">
+          ① Retenciones del mes
+          <span style="font-size:0.6rem; font-weight:400; color:var(--text-xs); text-transform:none; letter-spacing:0; margin-left:0.5rem;">Pre-llenadas de Nómina · edita solo si necesitas corregir</span>
+        </div>
         <div class="modal-grid-3">
           <div class="form-group">
-            <label class="form-label">Asimilables — ISR Retenido</label>
-            <input class="form-input" id="edit-asimR" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label class="form-label">ISR Asimilables</label>
+            <input class="form-input" id="edit-asimR" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
             <div class="hint-calc" id="edit-asimR-hint"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">ISR Honorarios — Retenido</label>
-            <input class="form-input" id="edit-isrHonR" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label class="form-label">ISR Honorarios</label>
+            <input class="form-input" id="edit-isrHonR" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
             <div class="hint-calc" id="edit-isrHonR-hint"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">IVA Honorarios — Retenido</label>
-            <input class="form-input" id="edit-ivaHonR" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label class="form-label">IVA Honorarios</label>
+            <input class="form-input" id="edit-ivaHonR" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
             <div class="hint-calc" id="edit-ivaHonR-hint"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">ISR PM — Pago Provisional ISR Personas Morales</label>
-            <input class="form-input" id="edit-isrPm" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label class="form-label">ISR PM</label>
+            <input class="form-input" id="edit-isrPm" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
           </div>
           <div class="form-group" style="grid-column:span 2; display:flex; align-items:flex-end;">
             <div style="background:var(--navy-pale); border-radius:var(--radius); padding:0.6rem 1rem; font-family:var(--brand); font-size:0.78rem; color:var(--navy); font-weight:700; width:100%;">
-              Total Retenido: <span id="edit-total-ret">$0.00</span>
+              Total a declarar: <span id="edit-total-ret">$0.00</span>
             </div>
           </div>
         </div>
-        <p style="font-size:0.68rem; color:var(--text-xs); margin-top:0.5rem; font-style:italic;">
-          Los campos vacíos usan el valor calculado automáticamente de Nómina (Asimilables + Honorarios). Ingresa un valor solo si necesitas corregirlo.
-        </p>
       </div>
 
-      <!-- Sección: Pagado / Acuses -->
+      <!-- ② Importar acuses SAT desde PDF -->
       <div class="modal-section">
-        <div class="modal-section-title">✓ Pago y acuses SAT</div>
-        <div class="modal-grid-2">
-          <div class="form-group">
-            <label class="form-label">Fecha de pago real</label>
-            <input class="form-input" id="edit-fechaPago" type="date" />
+        <div class="modal-section-title">
+          ② Importar acuses SAT
+          <span style="font-size:0.6rem; font-weight:400; color:var(--text-xs); text-transform:none; letter-spacing:0; margin-left:0.5rem;">Sube los PDFs del SAT — el sistema extrae automáticamente el importe y la línea de captura</span>
+        </div>
+        <!-- Drop zones compactas -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.85rem;">
+          <div class="pdf-zone" id="edit-pz-1"
+               onclick="document.getElementById('edit-pf-1').click()"
+               ondragover="event.preventDefault()" ondrop="_editPdfDrop(event,1)">
+            <input type="file" id="edit-pf-1" accept=".pdf" style="display:none;" onchange="procesarEditPdf(this.files[0],1)" />
+            <div class="pdf-zone-label" style="font-size:0.65rem;">📄 PDF 1</div>
+            <div class="pdf-zone-sub">Asim + IVA + ISR PM</div>
+            <div class="pdf-result" id="edit-pr-1" style="font-size:0.64rem; margin-top:0.2rem;"></div>
           </div>
-          <div class="form-group" style="display:flex; align-items:flex-end;">
-            <div style="background:#f0faf5; border-radius:var(--radius); padding:0.6rem 1rem; font-family:var(--brand); font-size:0.78rem; color:var(--green); font-weight:700; width:100%;">
-              Total Acuses: <span id="edit-total-acuse">$0.00</span>
+          <div class="pdf-zone" id="edit-pz-2"
+               onclick="document.getElementById('edit-pf-2').click()"
+               ondragover="event.preventDefault()" ondrop="_editPdfDrop(event,2)">
+            <input type="file" id="edit-pf-2" accept=".pdf" style="display:none;" onchange="procesarEditPdf(this.files[0],2)" />
+            <div class="pdf-zone-label" style="font-size:0.65rem;">📄 PDF 2</div>
+            <div class="pdf-zone-sub">ISR Honorarios</div>
+            <div class="pdf-result" id="edit-pr-2" style="font-size:0.64rem; margin-top:0.2rem;"></div>
+          </div>
+          <div class="pdf-zone" id="edit-pz-3"
+               onclick="document.getElementById('edit-pf-3').click()"
+               ondragover="event.preventDefault()" ondrop="_editPdfDrop(event,3)">
+            <input type="file" id="edit-pf-3" accept=".pdf" style="display:none;" onchange="procesarEditPdf(this.files[0],3)" />
+            <div class="pdf-zone-label" style="font-size:0.65rem;">📄 PDF 3</div>
+            <div class="pdf-zone-sub">Arrendamiento (opcional)</div>
+            <div class="pdf-result" id="edit-pr-3" style="font-size:0.64rem; margin-top:0.2rem;"></div>
+          </div>
+        </div>
+        <!-- Líneas de captura (auto-llenadas por PDF) -->
+        <div style="font-family:var(--brand); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.4rem;">Líneas de captura <span style="font-weight:400; text-transform:none; letter-spacing:0;">(se llenan automáticamente al importar PDFs)</span></div>
+        <div class="modal-grid-3">
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.6rem;">LC 1 — Asim + IVA + ISR PM</label>
+            <div style="display:flex; gap:0.3rem; align-items:center;">
+              <input class="form-input" id="edit-lc1" type="text" placeholder="18–25 dígitos" style="font-family:monospace; font-size:0.72rem; flex:1;" />
+              <button type="button" onclick="document.getElementById('edit-lc1').value=''" title="Borrar línea de captura 1"
+                style="flex-shrink:0;padding:0.22rem 0.45rem;font-size:0.7rem;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-xs);line-height:1;">✕</button>
             </div>
           </div>
           <div class="form-group">
+            <label class="form-label" style="font-size:0.6rem;">LC 2 — ISR Honorarios</label>
+            <div style="display:flex; gap:0.3rem; align-items:center;">
+              <input class="form-input" id="edit-lc2" type="text" placeholder="18–25 dígitos" style="font-family:monospace; font-size:0.72rem; flex:1;" />
+              <button type="button" onclick="document.getElementById('edit-lc2').value=''" title="Borrar línea de captura 2"
+                style="flex-shrink:0;padding:0.22rem 0.45rem;font-size:0.7rem;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-xs);line-height:1;">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.6rem;">LC 3 — Arrendamiento</label>
+            <div style="display:flex; gap:0.3rem; align-items:center;">
+              <input class="form-input" id="edit-lc3" type="text" placeholder="18–25 dígitos" style="font-family:monospace; font-size:0.72rem; flex:1;" />
+              <button type="button" onclick="document.getElementById('edit-lc3').value='';document.getElementById('edit-acuseArr').value=''" title="Borrar línea de captura 3 y acuse arrendamiento"
+                style="flex-shrink:0;padding:0.22rem 0.45rem;font-size:0.7rem;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-xs);line-height:1;">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Confirmar pago -->
+      <div class="modal-section">
+        <div class="modal-section-title">
+          ③ Confirmar pago
+          <span style="font-size:0.6rem; font-weight:400; color:var(--text-xs); text-transform:none; letter-spacing:0; margin-left:0.5rem;">Los importes se llenan del PDF · solo confirma la fecha efectiva</span>
+        </div>
+        <div class="modal-grid-2" style="margin-bottom:0.75rem;">
+          <div class="form-group">
             <label class="form-label">Acuse 1 — Asim + IVA + ISR PM</label>
             <input class="form-input" id="edit-acuseAsim" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
-            <div class="hint-calc">Importe del primer acuse SAT</div>
+            <div class="hint-calc">Importe del acuse SAT · declaración 1</div>
           </div>
           <div class="form-group">
             <label class="form-label">Acuse 2 — ISR Honorarios</label>
             <input class="form-input" id="edit-acuseHon" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
-            <div class="hint-calc">Importe del segundo acuse SAT</div>
+            <div class="hint-calc">Importe del acuse SAT · declaración 2</div>
           </div>
           <div class="form-group">
             <label class="form-label">Acuse 3 — Arrendamiento (si aplica)</label>
             <input class="form-input" id="edit-acuseArr" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcEditTotals()" />
           </div>
           <div class="form-group">
-            <label class="form-label">Fecha del acuse / línea de captura</label>
+            <label class="form-label">Fecha límite del acuse SAT</label>
             <input class="form-input" id="edit-acuseFecha" type="date" />
           </div>
         </div>
-      </div>
-
-      <!-- Sección: Líneas de captura -->
-      <div class="modal-section">
-        <div class="modal-section-title" style="justify-content:space-between;">
-          <span>📄 Líneas de captura</span>
-          <button class="btn btn-ghost" style="font-size:0.68rem; padding:0.2rem 0.6rem;"
-            onclick="abrirPdfImport()">↑ Importar desde PDF</button>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:0.5rem;">
-          <div class="form-group">
-            <label class="form-label">Línea de captura 1 (Asim + IVA + ISR PM)</label>
-            <input class="form-input" id="edit-lc1" type="text" placeholder="Número de referencia (18-25 dígitos)" style="font-family:monospace;" />
+        <!-- Fecha de pago efectiva + total -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem 1rem; align-items:flex-end;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="color:var(--navy); font-weight:700; font-size:0.72rem;">
+              📅 Fecha de pago real <span style="color:var(--red); font-weight:700;">*</span>
+            </label>
+            <input class="form-input" id="edit-fechaPago" type="date"
+              style="border-color:var(--navy); font-size:0.85rem;" />
+            <div class="hint-calc">Fecha en que realizaste el pago bancario</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Línea de captura 2 (ISR Honorarios)</label>
-            <input class="form-input" id="edit-lc2" type="text" placeholder="Número de referencia (18-25 dígitos)" style="font-family:monospace;" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Línea de captura 3 (Arrendamiento, opcional)</label>
-            <input class="form-input" id="edit-lc3" type="text" placeholder="Número de referencia (18-25 dígitos)" style="font-family:monospace;" />
+          <div style="background:#f0faf5; border-radius:var(--radius); padding:0.6rem 1rem; font-family:var(--brand); font-size:0.82rem; color:var(--green); font-weight:700;">
+            Total pagado: <span id="edit-total-acuse">$0.00</span>
           </div>
         </div>
       </div>
 
-      <!-- Sección: Notas -->
+      <!-- Notas -->
       <div class="form-group">
         <label class="form-label">Notas / observaciones</label>
         <textarea class="form-input" id="edit-notas" rows="2" placeholder="Cuenta bancaria utilizada, observaciones del pago…"></textarea>
@@ -543,6 +768,133 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-pdf')">Cerrar</button>
       <button class="btn btn-primary" id="pdf-aplicar-btn" onclick="aplicarPdfs()" style="display:none;">Aplicar datos extraídos</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Importar Recibo Bancario BBVA — Pago de Contribuciones ══ -->
+<div class="modal-backdrop hidden" id="modal-bbva-recibo">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <span class="modal-title">🏦 Recibo Bancario BBVA — Pago de Contribuciones</span>
+      <button class="modal-close" onclick="closeModal('modal-bbva-recibo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:1rem;">
+        Sube los <strong>Recibos Bancarios de Pago de Contribuciones</strong> descargados de BBVA.MX.
+        El sistema detecta el período desde la Línea de Captura y registra el pago como <strong>verificado bancariamente 🔐</strong>.
+      </p>
+
+      <div class="pdf-zone" id="bbva-zone-1" onclick="document.getElementById('bbva-file-1').click()">
+        <input type="file" id="bbva-file-1" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],1)" />
+        <div class="pdf-zone-label">Recibo 1 — Asim + IVA + ISR PM</div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
+        <div class="pdf-result" id="bbva-result-1"></div>
+      </div>
+
+      <div class="pdf-zone" id="bbva-zone-2" onclick="document.getElementById('bbva-file-2').click()">
+        <input type="file" id="bbva-file-2" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],2)" />
+        <div class="pdf-zone-label">Recibo 2 — ISR Honorarios</div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
+        <div class="pdf-result" id="bbva-result-2"></div>
+      </div>
+
+      <div class="pdf-zone" id="bbva-zone-3" onclick="document.getElementById('bbva-file-3').click()">
+        <input type="file" id="bbva-file-3" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],3)" />
+        <div class="pdf-zone-label">Recibo 3 — Arrendamiento (opcional)</div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
+        <div class="pdf-result" id="bbva-result-3"></div>
+      </div>
+
+      <div id="bbva-preview" style="margin-top:1rem; display:none;"></div>
+
+      <div style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-dim); background:var(--navy-pale); border-radius:var(--radius); padding:0.5rem 0.85rem;">
+        🔐 Núm. Operación, Llave de Pago y Certificación quedan guardados como verificación bancaria.
+        El importe del recibo BBVA reemplaza el acuse SAT como monto pagado oficial.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bbva-recibo')">Cerrar</button>
+      <button class="btn btn-primary" id="bbva-apply-btn" onclick="aplicarRecibosBBVA()" style="display:none;">🏦 Confirmar pago bancario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Declaración Complementaria ══ -->
+<div class="modal-backdrop hidden" id="modal-complementaria">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">📋 Declaración Complementaria</span>
+      <button class="modal-close" onclick="closeModal('modal-complementaria')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:0.6rem 0.8rem;margin-bottom:1rem;font-size:0.68rem;color:#78350f;">
+        <strong>⚠️ Declaración complementaria</strong> — Se emite cuando hubo un pago incompleto o erróneo en la declaración original. El importe puede incluir actualizaciones, recargos y multas según la fecha de presentación.
+      </div>
+      <input type="hidden" id="compl-key" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+        <div class="form-group">
+          <label class="form-label">Período</label>
+          <input class="form-input" id="compl-periodo" readonly style="background:#f3f4f6;color:var(--text-dim);" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Concepto</label>
+          <select class="form-input" id="compl-concepto">
+            <option value="asim">Asimilables + IVA Honorarios</option>
+            <option value="hon">ISR Honorarios</option>
+            <option value="pm">ISR PM / Arrendamiento</option>
+            <option value="otro">Otro (ver notas)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+        <div class="form-group">
+          <label class="form-label">Importe neto pagado</label>
+          <input type="number" class="form-input" id="compl-importe" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recargos incluidos</label>
+          <input type="number" class="form-input" id="compl-recargos" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Multas incluidas</label>
+          <input type="number" class="form-input" id="compl-multas" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+        <div class="form-group">
+          <label class="form-label">Fecha de pago</label>
+          <input type="date" class="form-input" id="compl-fecha" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Banco</label>
+          <select class="form-input" id="compl-banco">
+            <option>BBVA</option><option>Scotiabank</option><option>Banamex</option>
+            <option>Banorte</option><option>HSBC</option><option>Santander</option><option>Otro</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+        <div class="form-group">
+          <label class="form-label">Línea de Captura (nueva)</label>
+          <input class="form-input" id="compl-lc" placeholder="Ej. 0626 XXXX..." style="font-family:monospace;font-size:0.75rem;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Núm. Operación</label>
+          <input class="form-input" id="compl-op" placeholder="Folio bancario" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem;">
+        <label class="form-label">Notas / instrucción del contador</label>
+        <textarea class="form-input" id="compl-notas" rows="2" placeholder="Ej. El contador aclaró que la diferencia corresponde a CFDI cancelado en marzo..."></textarea>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:0.6rem 0.8rem;font-size:0.68rem;color:#166534;">
+        💡 Esta entrada quedará registrada en la historia fiscal del período para fines de auditoría y trazabilidad.
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:0.5rem;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-complementaria')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarComplementaria()">💾 Guardar complementaria</button>
     </div>
   </div>
 </div>
@@ -669,6 +1021,7 @@
 <div id="toasts" class="toast-container"></div>
 
 <script src="js/app.js"></script>
+<script src="js/telegram.js"></script>
 <script>
 
 /* ── Disclaimer SAT toggle ── */
@@ -690,6 +1043,7 @@ if (typeof pdfjsLib !== 'undefined') {
 
 const KEY_RET   = 'stgl_retenciones';
 const KEY_EXTRA = 'stgl_retenciones_extra';
+const KEY_ALERTAS_LEIDAS = 'stgl_alertas_leidas';
 const KEY_ASIM  = 'stgl_asimilables';
 const KEY_HON   = 'stgl_honorarios';
 
@@ -830,6 +1184,27 @@ function calcVencimiento(year, mes) {
   return { limite, limDate, diasAtraso, diasRestantes, isPast: diasAtraso > 0 };
 }
 
+/* ── Alertas descartadas ── */
+function _loadAlertasLeidas() {
+  try { return new Set(JSON.parse(localStorage.getItem(KEY_ALERTAS_LEIDAS)||'[]')); }
+  catch { return new Set(); }
+}
+function _saveAlertasLeidas(s) {
+  localStorage.setItem(KEY_ALERTAS_LEIDAS, JSON.stringify([...s]));
+}
+function _alertId(year, m, tipo) {
+  return `${year}-${String(m).padStart(2,'0')}-${tipo}`;
+}
+function descartarAlerta(id) {
+  const s = _loadAlertasLeidas(); s.add(id); _saveAlertasLeidas(s);
+  renderTable();
+}
+function restaurarAlertasAnio(year) {
+  const s = _loadAlertasLeidas();
+  [...s].filter(k => k.startsWith(`${year}-`)).forEach(k => s.delete(k));
+  _saveAlertasLeidas(s); renderTable();
+}
+
 /**
  * Detecta anomalías en un mes de retención.
  * row: { m, totalRet, totalPag, diff, fechaPago, ivaHonR, isrHonR, asimR, venc }
@@ -846,6 +1221,7 @@ function detectarAnomalias(row) {
   if (totalRet > 0 && totalPag === 0 && !fechaPago && venc.isPast) {
     const d = venc.diasAtraso;
     alertas.push({
+      id: _alertId(selectedYear, m, 'vencido'),
       tipo: 'vencido', severidad: 'error',
       mensaje: `Pago vencido — ${d} día${d!==1?'s':''} de atraso`,
       detalle: `Fecha límite SAT: ${venc.limite}. El SAT puede generar recargos (${(d*0.00192*100).toFixed(2)}% est.) y actualización por inflación.`
@@ -856,6 +1232,7 @@ function detectarAnomalias(row) {
   if (totalRet > 0 && totalPag === 0 && !fechaPago && !venc.isPast && venc.diasRestantes <= 7) {
     const d = venc.diasRestantes;
     alertas.push({
+      id: _alertId(selectedYear, m, 'proximo'),
       tipo: 'proximo', severidad: 'warn',
       mensaje: `Vence en ${d} día${d!==1?'s':''}`,
       detalle: `Fecha límite de pago SAT: ${venc.limite}`
@@ -866,6 +1243,7 @@ function detectarAnomalias(row) {
   if (totalRet > 0 && totalPag > 0 && Math.abs(diff) / totalRet > 0.05) {
     const pct = (Math.abs(diff) / totalRet * 100).toFixed(1);
     alertas.push({
+      id: _alertId(selectedYear, m, diff > 0 ? 'underpaid' : 'overpaid'),
       tipo: diff > 0 ? 'underpaid' : 'overpaid',
       severidad: diff > 0 ? 'warn' : 'error',
       mensaje: diff > 0
@@ -878,6 +1256,7 @@ function detectarAnomalias(row) {
   // 4. IVA de honorarios faltante cuando hay ISR de honorarios
   if (isrHonR > 0 && ivaHonR === 0) {
     alertas.push({
+      id: _alertId(selectedYear, m, 'iva-faltante'),
       tipo: 'iva-faltante', severidad: 'warn',
       mensaje: 'IVA de honorarios no registrado',
       detalle: `Hay ISR honorarios ($${fmtNum(isrHonR)}) pero no IVA retenido. Verifica CFDIs: los honorarios causarían IVA al 16% si el monto facturado lo genera.`
@@ -890,6 +1269,7 @@ function detectarAnomalias(row) {
     if (payDate > venc.limDate) {
       const d = Math.round((payDate - venc.limDate) / 86400000);
       alertas.push({
+        id: _alertId(selectedYear, m, 'tardio'),
         tipo: 'tardio', severidad: 'warn',
         mensaje: `Pago extemporáneo — ${d} día${d!==1?'s':''} después del límite`,
         detalle: `Límite: ${venc.limite} · Pago: ${fechaPago}. Posibles recargos y actualización no reflejados en los acuses.`
@@ -907,15 +1287,34 @@ function renderAnomaliaPanel(allRows) {
   const panelEl = document.getElementById('anomalia-panel');
   if (!panelEl) return;
 
+  const _leidas = _loadAlertasLeidas();
+
   const todasAlertas = [];
+  let dismissedCount = 0;
   allRows.forEach(row => {
     if (!row.alertasRow) return;
-    row.alertasRow.forEach(a => todasAlertas.push({ ...a, mesLabel: row.mesLabel }));
+    row.alertasRow.forEach(a => {
+      if (_leidas.has(a.id)) {
+        dismissedCount++;
+      } else {
+        todasAlertas.push({ ...a, mesLabel: row.mesLabel });
+      }
+    });
   });
 
-  if (!todasAlertas.length) {
+  const totalAlertas = todasAlertas.length + dismissedCount;
+
+  if (totalAlertas === 0) {
     panelEl.className = 'anom-panel anom-panel-ok';
     panelEl.innerHTML = `<div class="anom-ok"><span>✓</span><span>Sin anomalías de cumplimiento detectadas para ${selectedYear} — todo en orden</span></div>`;
+    panelEl.style.display = '';
+    return;
+  }
+
+  // All alerts dismissed — show "todo revisado" state
+  if (todasAlertas.length === 0 && dismissedCount > 0) {
+    panelEl.className = 'anom-panel anom-panel-ok';
+    panelEl.innerHTML = `<div class="anom-ok"><span>✓</span><span>Todas las alertas de ${selectedYear} han sido revisadas y descartadas · <button onclick="restaurarAlertasAnio(${selectedYear})" style="background:none;border:none;color:#166534;cursor:pointer;font-size:0.65rem;text-decoration:underline;padding:0;font-weight:700;">Restaurar</button></span></div>`;
     panelEl.style.display = '';
     return;
   }
@@ -926,23 +1325,37 @@ function renderAnomaliaPanel(allRows) {
 
   const listOpen = __anomPanelOpen ? '' : 'hidden';
 
+  const tgBtn = (typeof tg_isConfigured === 'function' && tg_isConfigured())
+    ? `<button onclick="tgEnviarAlertasRetenciones()" id="tg-anom-btn"
+         style="margin-left:auto;padding:0.28rem 0.7rem;background:#0088cc;color:#fff;border:none;border-radius:4px;font-size:0.62rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.3rem;white-space:nowrap;">
+         ✈️ Enviar a Telegram
+       </button>`
+    : '';
+
+  const dismissedStrip = dismissedCount > 0
+    ? `<div class="anom-item-dismissed-strip">✓ ${dismissedCount} alerta${dismissedCount!==1?'s':''} descartada${dismissedCount!==1?'s':''} · <button onclick="restaurarAlertasAnio(${selectedYear})" style="background:none;border:none;color:#9a3412;cursor:pointer;font-size:0.65rem;text-decoration:underline;padding:0;">Restaurar todas</button></div>`
+    : '';
+
   panelEl.innerHTML = `
     <div class="anom-header">
       <span class="anom-header-icon">${errores.length ? '🔴' : '⚠️'}</span>
       <span class="anom-header-title">${todasAlertas.length} alerta${todasAlertas.length!==1?'s':''} de cumplimiento detectada${todasAlertas.length!==1?'s':''} en ${selectedYear}</span>
       ${errores.length ? `<span class="anom-count error">${errores.length} crítica${errores.length!==1?'s':''}</span>` : ''}
       ${warns.length   ? `<span class="anom-count warn">${warns.length} advertencia${warns.length!==1?'s':''}</span>` : ''}
+      ${tgBtn}
       <button class="anom-toggle" onclick="toggleAnomPanel()">${__anomPanelOpen?'Ocultar ▴':'Ver detalle ▾'}</button>
     </div>
     <div class="anom-list ${listOpen}" id="anom-list">
       ${todasAlertas.map(a => `
-        <div class="anom-item anom-${a.severidad}">
+        <div class="anom-item anom-${a.severidad}" style="display:flex;align-items:flex-start;gap:0.5rem;">
           <span class="anom-sev-icon">${a.severidad==='error'?'🔴':'⚠️'}</span>
-          <div>
+          <div style="flex:1;">
             <strong>${escH(a.mesLabel)}:</strong> ${escH(a.mensaje)}
             <div class="anom-detalle">${escH(a.detalle)}</div>
           </div>
+          <button class="anom-dismiss" onclick="descartarAlerta('${escH(a.id||'')}')" title="Marcar como revisado y descartar">✕</button>
         </div>`).join('')}
+      ${dismissedStrip}
       <div style="padding:0.55rem 1rem; border-top:1px solid #fde68a; background:rgba(255,255,255,0.6); font-size:0.65rem; color:#78716c; font-style:italic; line-height:1.5;">
         ⚖️ <strong style="color:#57534e;">Aviso:</strong> Estas alertas son indicadores informativos basados en los CFDIs importados. No incluyen recargos, actualizaciones ni multas del SAT. El criterio de la autoridad puede diferir — consulte a su asesor fiscal ante cualquier discrepancia.
       </div>
@@ -958,12 +1371,141 @@ function toggleAnomPanel() {
   if (btn)  btn.textContent = __anomPanelOpen ? 'Ocultar ▴' : 'Ver detalle ▾';
 }
 
+/* ══════════════════════════════════════
+   COMPLIANCE PROCESS STEPS HELPER
+══════════════════════════════════════ */
+/**
+ * Calcula el estado de los 3 pasos del proceso de cumplimiento fiscal para un mes.
+ * @returns {step1, step2, step3, acuseTotal, diffAcuse, diffBanco, hasDiffAcuse, hasDiffBanco}
+ */
+function _pasosProceso(row) {
+  const { totalRet, totalPag, diff, ex, isAutoCalc, r } = row;
+  const step1 = totalRet > 0;                                          // CFDIs / nómina
+  const step2 = !!(ex.lineaCaptura1 || ex.lineaCaptura2               // LC importada
+               || (ex.acuseTotal > 0));                                // o acuse SAT
+  const step3 = !!ex.pagoBancarioConfirmado;                           // banco confirmado
+  const acuseTotal  = ex.acuseTotal || 0;
+  const diffAcuse   = totalRet - acuseTotal;                           // diff declarado vs retenido
+  const diffBanco   = diff;                                            // diff pagado vs retenido
+  const hasDiffAcuse = step2 && acuseTotal > 0 && Math.abs(diffAcuse) > 10;
+  const hasDiffBanco = step3 && Math.abs(diffBanco) > 10;
+  return { step1, step2, step3, acuseTotal, diffAcuse, diffBanco, hasDiffAcuse, hasDiffBanco };
+}
+
+/* ══════════════════════════════════════
+   RENDER CALENDARIO FISCAL
+══════════════════════════════════════ */
+const MES_CORTO = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+const MES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function renderCalendario(rows) {
+  const el = document.getElementById('cal-fiscal');
+  if (!el) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  el.innerHTML = rows.map(row => {
+    const { m, totalRet, totalPag, fechaPago, venc, ex: rowEx } = row;
+
+    // Fecha de alerta día 14
+    const limDate  = venc.limDate; // día 17 del mes siguiente
+    const alertDate = new Date(limDate); alertDate.setDate(14);
+
+    const fmt = n => '$' + n.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+    // Nombre del mes de vencimiento (mes siguiente)
+    let vencMes = m; // 1-indexed, vence en mes m+1
+    let vencYear = selectedYear;
+    if (vencMes === 12) { vencMes = 1; vencYear++; } else { vencMes++; }
+    const venceLabel = `17 ${MES_CORTO[vencMes-1]} ${vencYear}`;
+
+    // ── Mini-card: mes sin retención y no accionable en los próximos 30 días ──
+    if (totalRet === 0 && (venc.isPast || venc.diasRestantes > 30)) {
+      return `<div class="cal-mini" title="Sin retención registrada — Vence ${venceLabel}">
+        <span class="cal-mini-mes">${MES_CORTO[m-1]}</span>
+        <span class="cal-mini-sep">·</span>
+        <span class="cal-mini-vence">sin retención · vence <strong style="color:#9ca3af;">${venceLabel}</strong></span>
+      </div>`;
+    }
+
+    // Estado y clase
+    let cls, badgeCls, badgeText, diasLabel = '';
+
+    if (totalRet === 0) {
+      // Sin retención, pero vence pronto (≤30 días) — mostrar tarjeta completa
+      cls = 'cal-sin-ret'; badgeCls = 'sin-ret'; badgeText = '— Sin retención';
+    } else if (totalPag > 0 && fechaPago) {
+      // Pagado — ¿a tiempo o tardío?
+      const payDate = new Date(fechaPago + 'T00:00:00');
+      if (payDate <= limDate) {
+        cls = 'cal-pagado'; badgeCls = 'pagado'; badgeText = '✓ Pagado';
+      } else {
+        const d = Math.round((payDate - limDate) / 86400000);
+        cls = 'cal-tardio'; badgeCls = 'tardio';
+        badgeText = `⚠ Pago tardío +${d}d`;
+      }
+    } else if (!venc.isPast) {
+      // Aún no vence
+      const diasFaltan = venc.diasRestantes;
+      if (diasFaltan <= 7) {
+        // Próximo a vencer
+        cls = 'cal-proximo'; badgeCls = 'proximo';
+        badgeText = `⚡ Vence en ${diasFaltan}d`;
+        diasLabel = today >= alertDate
+          ? '🔔 Alerta día 14 activa'
+          : `Alerta día 14: ${alertDate.getDate()} ${MES_CORTO[alertDate.getMonth()]}`;
+      } else {
+        cls = 'cal-futuro'; badgeCls = 'futuro';
+        badgeText = `Vence ${venceLabel}`;
+        diasLabel = `Faltan ${diasFaltan} días`;
+      }
+    } else {
+      // Vencido sin pagar
+      const d = venc.diasAtraso;
+      cls = 'cal-vencido'; badgeCls = 'vencido';
+      badgeText = `🔴 Vencido ${d}d`;
+      diasLabel = `Desde ${venc.limite}`;
+    }
+
+    const amountHtml = totalRet === 0
+      ? `<div class="cal-amount zero">sin movimiento</div>`
+      : `<div class="cal-amount">${fmt(totalRet)}</div>`;
+
+    // ── Process progress bar (only for months with retenciones data) ──
+    let calProcHtml = '';
+    if (totalRet > 0) {
+      const pp = _pasosProceso(row);
+      calProcHtml = `<div class="cal-proc">
+        <span class="cp-step ${pp.step1?'cp-done':'cp-pend'}">① CFDIs</span>
+        <span class="cp-sep">›</span>
+        <span class="cp-step ${pp.step2?'cp-done':pp.step1?'cp-next':'cp-pend'}">② LCs</span>
+        <span class="cp-sep">›</span>
+        <span class="cp-step ${pp.step3?'cp-done':pp.step2?'cp-next':'cp-pend'}">③ Banco</span>
+        ${pp.step3 && pp.hasDiffBanco ? '<span style="color:#dc2626;font-size:0.5rem;font-weight:700;"> ⚠</span>' : ''}
+        ${pp.step3 && !pp.hasDiffBanco ? '<span style="font-size:0.6rem;">✓</span>' : ''}
+      </div>`;
+    }
+
+    return `
+      <div class="cal-card ${cls}" title="Retención ${MES_NOMBRES[m-1]} ${selectedYear} — Vence ${venceLabel}">
+        <div class="cal-mes">${MES_CORTO[m-1]} <span style="font-weight:400;opacity:0.6;font-size:0.62rem;">${selectedYear}</span></div>
+        <div class="cal-vence">Vence ${venceLabel}</div>
+        ${amountHtml}
+        <div class="cal-badge ${badgeCls}">${badgeText}</div>
+        ${diasLabel ? `<div class="cal-dias">${diasLabel}</div>` : ''}
+        ${rowEx?.pagoBancarioConfirmado ? `<div style="font-size:0.6rem;color:#1d4ed8;font-weight:700;margin-top:2px;letter-spacing:0.04em;">🏦 Verif. banco</div>` : ''}
+        ${calProcHtml}
+      </div>`;
+  }).join('');
+}
+
 /* ══════════════════════════════
    RENDER TABLE
 ══════════════════════════════ */
 function renderTable() {
   const all   = loadRegistry(KEY_RET);
   const extra = loadExtraObj();
+  const __leidas = _loadAlertasLeidas();
 
   // Build month map for selected year (from Excel import)
   const monthMap = {};
@@ -1082,12 +1624,14 @@ function renderTable() {
 
     // Anomaly detection for this row
     const alertasRow = detectarAnomalias({ m, totalRet, totalPag, diff, fechaPago, ivaHonR, isrHonR, asimR, venc });
+    const alertasNoLeidas = alertasRow.filter(a => !__leidas.has(a.id));
+    const alertasLeidas   = alertasRow.filter(a =>  __leidas.has(a.id));
 
     rows.push({ key, m, mesLabel, asimR, asimP, isrHonR, isrHonP, ivaHonR, ivaHonP,
                 isrPm, isrPmRaw, totalRet, totalPag, diff, fechaPago,
                 estadoBadge, estadoLabel, estadoTitle, dirty, dirtyPm, dirtyFp,
                 hasOverride, isAutoCalc, hasAcuse, acuseTotal, acuseFecha, ex, r,
-                venc, alertasRow });
+                venc, alertasRow, alertasNoLeidas, alertasLeidas });
   }
 
   // KPIs
@@ -1098,6 +1642,16 @@ function renderTable() {
   document.getElementById('kpi-pagado-pct').textContent  = totRetenido>0?(totPagado/totRetenido*100).toFixed(1)+'% del total':'';
   document.getElementById('ret-meta').textContent        = `Año ${selectedYear}`;
 
+  // Timeline item builder (used in historia row)
+  function _htItem(icon, dateStr, textHtml, subHtml) {
+    subHtml = subHtml || '';
+    return `<div class="ht-item">
+      <span class="ht-icon">${icon}</span>
+      <span class="ht-date">${dateStr||''}</span>
+      <div class="ht-text">${textHtml}${subHtml?`<div class="ht-sub">${subHtml}</div>`:''}</div>
+    </div>`;
+  }
+
   // Tbody
   document.getElementById('ret-tbody').innerHTML = rows.map(row => {
     const autoTag = row.isAutoCalc
@@ -1106,6 +1660,26 @@ function renderTable() {
     const ovTag = row.hasOverride
       ? '<span style="font-size:0.58rem; color:#e67e22; margin-left:3px;" title="Con override manual">✎</span>'
       : '';
+
+    // Feature 2: diff and complementaria badges
+    const diffBadge = (row.diff > row.totalRet * 0.03 && row.diff > 100)
+      ? `<span class="badge-diff" title="Diferencia sin cubrir: $${fmtNum(row.diff)}">Δ $${fmtNum(row.diff)}</span>` : '';
+    const complBadge = row.ex.complementarias?.length
+      ? `<span class="badge-compl" title="${row.ex.complementarias.length} declaración${row.ex.complementarias.length>1?'es':''} complementaria${row.ex.complementarias.length>1?'s':''}">+ compl.</span>` : '';
+
+    // Feature 2: enhance estadoLabel for late+diff
+    let estadoLabelFinal = row.estadoLabel;
+    if (row.estadoLabel === 'Pagado tard.' && row.diff > row.totalRet * 0.03 && row.diff > 100) {
+      estadoLabelFinal = 'Tardío + Δ';
+    }
+
+    // Feature 1: dot logic using alertasNoLeidas / alertasLeidas
+    let anomDotHtml = '';
+    if (row.alertasNoLeidas.length > 0) {
+      anomDotHtml = `<span class="anom-dot anom-dot-${row.alertasNoLeidas[0].severidad}" title="${row.alertasNoLeidas.map(a=>a.mensaje).join(' · ')}">●</span>`;
+    } else if (row.alertasLeidas.length > 0) {
+      anomDotHtml = `<span class="anom-dot anom-dot-leida" title="Alertas revisadas">●</span>`;
+    }
 
     const main = `
     <tr data-key="${row.key}" class="${row.dirty?'row-dirty':''}">
@@ -1134,30 +1708,175 @@ function renderTable() {
           onchange="markDirty('${row.key}','fechaPagoReal',this.value)" />
       </td>
       <td class="center">
-        <span class="badge ${row.estadoBadge}" title="${row.estadoTitle||''}">${row.estadoLabel}</span>${row.alertasRow.length ? `<span class="anom-dot anom-dot-${row.alertasRow[0].severidad}" title="${row.alertasRow.map(a=>a.mensaje).join(' · ')}">●</span>` : ''}
+        <span class="badge ${row.estadoBadge}" title="${row.estadoTitle||''}">${estadoLabelFinal}</span>${anomDotHtml}${diffBadge}${complBadge}
       </td>
       <td class="center">
         <button class="edit-row" onclick="abrirEditar('${row.key}')" title="Editar datos del mes">✏️</button>
       </td>
     </tr>`;
 
-    const acuse = row.hasAcuse ? `
-    <tr class="acuse-row">
-      <td colspan="14" style="padding-left:1.5rem;">
-        <span style="font-family:var(--brand); font-weight:700; font-size:0.65rem; color:var(--navy); margin-right:0.5rem;">Acuses SAT:</span>
-        ${row.acuseTotal>0 ? 'Total: <strong>$'+fmtNum(row.acuseTotal)+'</strong>' : ''}
-        ${row.acuseFecha  ? ' · F.Pago: <strong>'+row.acuseFecha+'</strong>' : ''}
-        ${row.ex.lineaCaptura1 ? ' · LC1: <span style="font-family:monospace;">'+row.ex.lineaCaptura1+'</span>' : ''}
-        ${row.ex.lineaCaptura2 ? ' · LC2: <span style="font-family:monospace;">'+row.ex.lineaCaptura2+'</span>' : ''}
-        ${row.ex.notas ? ' · '+row.ex.notas : ''}
-      </td>
-    </tr>` : '';
+    // Feature 4: Historia / story timeline subrow
+    const ex = row.ex;
+    const showHistoria = row.hasAcuse || ex.complementarias?.length || ex.pagoBancarioConfirmado
+      || row.alertasNoLeidas.length > 0 || row.alertasLeidas.length > 0;
 
-    return main + acuse;
+    let historiaHtml = '';
+    if (showHistoria) {
+      const timelineItems = [];
+
+      // 1. Fecha límite
+      timelineItems.push(_htItem('📅', row.venc.limite, `Fecha límite SAT — declaración mensual`));
+
+      // 2. Pago bancario confirmado
+      if (ex.pagoBancarioConfirmado && ex.bbva_fechaPago) {
+        const subParts = [
+          ex.bbva_llave1 ? `Llave: ${ex.bbva_llave1}` : '',
+          ex.lineaCaptura1 ? `LC: ${ex.lineaCaptura1}` : ''
+        ].filter(Boolean);
+        timelineItems.push(_htItem('💳', ex.bbva_fechaPago,
+          `Pago ${ex.bbva_banco||'banco'} <strong>$${fmtNum(row.totalPag)}</strong>${ex.bbva_llave1 ? ' ✓ verificado' : ''}`,
+          subParts.join(' · ')));
+      }
+
+      // 3. Acuse SAT
+      if (row.acuseTotal > 0) {
+        const subParts = [
+          ex.lineaCaptura1 ? `LC1: ${ex.lineaCaptura1}` : '',
+          ex.lineaCaptura2 ? `LC2: ${ex.lineaCaptura2}` : ''
+        ].filter(Boolean);
+        timelineItems.push(_htItem('🧾', row.acuseFecha||'',
+          `Acuse SAT <strong>$${fmtNum(row.acuseTotal)}</strong>`,
+          subParts.join(' · ')));
+      }
+
+      // 4. Diferencia detectada
+      if (row.diff > 100) {
+        timelineItems.push(_htItem('⚠️', row.fechaPago||'',
+          `Diferencia detectada: <strong style="color:#9a3412;">$${fmtNum(row.diff)}</strong> sin cubrir`,
+          `Retenido: $${fmtNum(row.totalRet)} · Pagado: $${fmtNum(row.totalPag)}`));
+      }
+
+      // 5. Complementarias
+      if (ex.complementarias?.length) {
+        ex.complementarias.forEach(c => {
+          const total = (c.importe||0) + (c.recargos||0) + (c.multas||0);
+          const subParts = [
+            c.lc ? `LC: ${c.lc}` : '',
+            c.banco || '',
+            c.notas || ''
+          ].filter(Boolean);
+          timelineItems.push(_htItem('💳', c.fecha,
+            `Complementaria <strong>$${fmtNum(total)}</strong>${c.recargos?` (incl. $${fmtNum(c.recargos)} recargos)`:''}${c.multas?` + $${fmtNum(c.multas)} multas`:''}`,
+            subParts.join(' · ')));
+        });
+
+        // 6. Resolución
+        const totalCubierto = row.totalPag + (ex.totalComplementarias||0);
+        const lastCompl = ex.complementarias[ex.complementarias.length-1];
+        if (totalCubierto >= row.totalRet - 1) {
+          timelineItems.push(_htItem('✅', lastCompl?.fecha||'', `Diferencia cubierta — saldo cerrado`));
+        } else {
+          timelineItems.push(_htItem('🔄', '', `Diferencia parcialmente cubierta · Pendiente: $${fmtNum(row.totalRet - totalCubierto)}`));
+        }
+      }
+
+      // Action buttons
+      const actionBtns = [
+        (row.diff > 100 || ex.complementarias?.length)
+          ? `<button class="btn-ht btn-ht-warn" onclick="abrirComplementaria('${row.key}')">+ Registrar complementaria</button>`
+          : '',
+        `<button class="btn-ht" onclick="abrirEditar('${row.key}')">✏️ Editar período</button>`
+      ].join('');
+
+      // Build process status header
+      const pp = _pasosProceso(row);
+
+      // Next action message
+      let pnaClass = 'pna-info', pnaMsg = '';
+      if (!pp.step1) {
+        pnaClass = 'pna-info';
+        pnaMsg = '⊙ Sin CFDIs registrados — importa la nómina o los honorarios de este período';
+      } else if (pp.step1 && !pp.step2) {
+        pnaClass = 'pna-next';
+        pnaMsg = '👉 <strong>Siguiente:</strong> importa las líneas de captura SAT cuando las tengas disponibles (↑ Previos / LCs)';
+      } else if (pp.step2 && !pp.step3 && !pp.hasDiffAcuse) {
+        pnaClass = 'pna-next';
+        pnaMsg = '👉 <strong>Siguiente:</strong> importa el comprobante bancario de pago (🏦 Recibo Bancario)';
+      } else if (pp.step2 && !pp.step3 && pp.hasDiffAcuse) {
+        pnaClass = 'pna-warn';
+        pnaMsg = `⚠️ <strong>Diferencia en el acuse:</strong> $${fmtNum(Math.abs(pp.diffAcuse))} — verifica con tu contador antes de completar el pago`;
+      } else if (pp.step3 && !pp.hasDiffBanco) {
+        pnaClass = 'pna-ok';
+        pnaMsg = '✅ <strong>Proceso completo</strong> — CFDIs → LCs → Comprobante bancario · Sin diferencias pendientes';
+      } else if (pp.step3 && pp.hasDiffBanco) {
+        pnaClass = 'pna-warn';
+        pnaMsg = `⚠️ <strong>Proceso documentado con diferencia de $${fmtNum(Math.abs(pp.diffBanco))}</strong> — te recomendamos aclarar con tu contador (declaración complementaria o corrección de CFDIs)`;
+      }
+
+      // Connector colors
+      const conn12 = pp.step2 ? 'pc-done' : '';
+      const conn23 = pp.step3 ? 'pc-done' : pp.step2 ? 'pc-part' : '';
+
+      const procHeaderHtml = `
+  <div class="proc-header">
+    <div class="proc-steps">
+      <div class="proc-step ${pp.step1?'ps-done':'ps-pend'}">
+        <div class="ps-circle">${pp.step1?'✓':'1'}</div>
+        <div class="ps-label">CFDIs</div>
+        <div class="ps-amt">${pp.step1?'$'+fmtNum(row.totalRet):''}</div>
+      </div>
+      <div class="proc-conn ${conn12}"></div>
+      <div class="proc-step ${pp.step2?'ps-done':pp.step1?'ps-next':'ps-pend'}">
+        <div class="ps-circle">${pp.step2?'✓':'2'}</div>
+        <div class="ps-label">LCs SAT</div>
+        <div class="ps-amt">${pp.step2&&pp.acuseTotal>0?'$'+fmtNum(pp.acuseTotal):'pendiente'}</div>
+      </div>
+      <div class="proc-conn ${conn23}"></div>
+      <div class="proc-step ${pp.step3?'ps-done':pp.step2?'ps-next':'ps-pend'}">
+        <div class="ps-circle">${pp.step3?'✓':'3'}</div>
+        <div class="ps-label">Banco</div>
+        <div class="ps-amt">${pp.step3?'verificado':pp.step2?'pendiente':''}</div>
+      </div>
+    </div>
+    <div class="proc-next-action ${pnaClass}">${pnaMsg}</div>
+  </div>`;
+
+      historiaHtml = `
+    <tr class="historia-row">
+      <td colspan="14">
+        ${procHeaderHtml}
+        <div class="historia-timeline">
+          <div style="font-family:var(--brand);font-size:0.62rem;font-weight:700;color:var(--navy);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.4rem;">
+            📋 Historia fiscal — ${row.mesLabel}
+          </div>
+          ${timelineItems.join('')}
+          <div class="ht-actions">
+            ${actionBtns}
+          </div>
+        </div>
+      </td>
+    </tr>`;
+    }
+
+    return main + historiaHtml;
   }).join('');
+
+  // Calendario fiscal
+  renderCalendario(rows);
 
   // Anomaly panel
   renderAnomaliaPanel(rows);
+
+  // Auto-dispatch Telegram (on-page fallback, anti-spam 8h)
+  if (typeof tg_isConfigured === 'function' && tg_isConfigured()) {
+    rows.forEach(row => {
+      if (row.alertasRow && row.alertasRow.length) {
+        tg_despacharAnomalias(row, row.alertasRow);
+      }
+    });
+    // Sync data al Service Worker para notificaciones proactivas en background
+    syncNotifDataToSW(rows);
+  }
 
   // Tfoot
   const totDiff = tTotR - tTotP;
@@ -1222,11 +1941,23 @@ function abrirEditar(key) {
   document.getElementById('edit-acuseFecha').value= ex.acuseFecha || r.acuseFechaPago || '';
   document.getElementById('edit-lc1').value       = ex.lineaCaptura1 || '';
   document.getElementById('edit-lc2').value       = ex.lineaCaptura2 || '';
-  document.getElementById('edit-lc3').value       = ex.lineaCaptura3 || '';
+  // LC3 (Arrendamiento) solo se pre-llena si hay acuse de arrendamiento guardado;
+  // evita mostrar datos residuales de importaciones previas incorrectas
+  const tieneArr = (ex.acuseArr > 0) || (parseNum(r.pagadoIsrArr) + parseNum(r.pagadoIvaArr)) > 0;
+  document.getElementById('edit-lc3').value = tieneArr ? (ex.lineaCaptura3 || '') : '';
   document.getElementById('edit-notas').value     = ex.notas || '';
 
   calcEditTotals();
   pdfData = {};
+  // Reset inline PDF zones
+  [1,2,3].forEach(n => {
+    const pr = document.getElementById('edit-pr-'+n);
+    const pz = document.getElementById('edit-pz-'+n);
+    const pf = document.getElementById('edit-pf-'+n);
+    if (pr) pr.textContent = '';
+    if (pz) pz.classList.remove('loaded');
+    if (pf) pf.value = '';
+  });
   openModal('modal-editar');
 }
 
@@ -1254,6 +1985,59 @@ function calcEditTotals() {
   document.getElementById('edit-total-acuse').textContent = '$'+fmtNum(acuseTotal);
 }
 
+/* ══════════════════════════════════════════════════════
+   SINCRONIZACIÓN RETENCIONES SAT → MOVIMIENTOS REALES
+   Cuando el usuario registra un acuse/pago al SAT, crea o
+   actualiza automáticamente un egreso en stgl_mov_manual.
+   Elimina la re-captura manual en el módulo de Financiero.
+══════════════════════════════════════════════════════ */
+
+/**
+ * Registra (o actualiza) el pago de retenciones SAT como egreso real.
+ * ID determinístico por período → idempotente, nunca duplica.
+ *
+ * @param {string} periodo  - "YYYY-MM" del período retenido
+ * @param {number} importe  - Total pagado al SAT (acuse)
+ * @param {string} fecha    - Fecha real de pago (YYYY-MM-DD)
+ */
+function registrarPagoSATEnMovManual(periodo, importe, fecha) {
+  if (!importe || !fecha) return;
+  try {
+    let cuentaSAT = '';
+    try {
+      const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+      cuentaSAT = cfg.cuentaSAT || '';
+    } catch {}
+
+    const id  = `mov-sat-ret-${periodo.replace('-', '')}`;
+    const mov = {
+      id,
+      fecha,
+      mov:        'Egresos',
+      tipo:       'Retenciones SAT',
+      desc:       `Pago retenciones SAT · período ${periodo}`,
+      concepto:   'ISR / IVA retenido',
+      cuenta:     cuentaSAT,
+      cuentaCont: 'Impuestos y Retenciones',
+      entradas:   null,
+      salidas:    Math.round(importe * 100) / 100,
+      origenRef:  'retenciones-sat',
+      _saldoAjustado: false,
+    };
+
+    const manual = loadRegistry('stgl_mov_manual');
+    const idx    = manual.findIndex(m => m.id === id);
+    if (idx >= 0) {
+      Object.assign(manual[idx], mov);
+    } else {
+      manual.push(mov);
+    }
+    saveRegistry('stgl_mov_manual', manual);
+  } catch(e) {
+    console.warn('registrarPagoSATEnMovManual:', e);
+  }
+}
+
 function guardarEdicion() {
   if (!currentEditKey) return;
   const extra = loadExtraObj();
@@ -1277,9 +2061,32 @@ function guardarEdicion() {
   const a1 = document.getElementById('edit-acuseAsim').value;
   const a2 = document.getElementById('edit-acuseHon').value;
   const a3 = document.getElementById('edit-acuseArr').value;
-  if (a1 !== '') ex.acuseAsim = parseFloat(a1); else delete ex.acuseAsim;
-  if (a2 !== '') ex.acuseHon  = parseFloat(a2); else delete ex.acuseHon;
-  if (a3 !== '') ex.acuseArr  = parseFloat(a3); else delete ex.acuseArr;
+  if (a1 !== '') {
+    ex.acuseAsim  = parseFloat(a1);
+    ex.pagadoAsim = parseFloat(a1);
+    // La DIM (slot 1) cubre ISR Asimilados + ISR PM + IVA Retenciones.
+    // Marcar IVA Hon Pag con el monto efectivo de IVA retenido para que la columna muestre verde.
+    // Prioridad: override del campo > calculado de nómina > Excel
+    const ivaHonREl  = document.getElementById('edit-ivaHonR');
+    const ivaFieldV  = ivaHonREl && ivaHonREl.value !== '' ? parseFloat(ivaHonREl.value) : NaN;
+    let   ivaRetEfec = !isNaN(ivaFieldV) ? ivaFieldV : 0;
+    if (ivaRetEfec === 0) {
+      // Fallback: calcular desde nómina o Excel
+      const [yr2, mo2] = currentEditKey.split('-').map(Number);
+      const comp2   = (typeof calcFromNomina === 'function') ? calcFromNomina(yr2, mo2) : {};
+      const allRet2 = (typeof loadRegistry === 'function') ? loadRegistry(KEY_RET) : [];
+      const r2      = allRet2.find(x => Number(x.año) === yr2 && Number(x.mes) === mo2) || {};
+      ivaRetEfec = comp2.retenidoIvaHon || parseNum(r2.retenidoIvaHon || 0);
+    }
+    if (ivaRetEfec > 0) ex.pagadoIvaHon = ivaRetEfec;
+    else delete ex.pagadoIvaHon;
+  } else {
+    delete ex.acuseAsim; delete ex.pagadoAsim; delete ex.pagadoIvaHon;
+  }
+  if (a2 !== '') { ex.acuseHon  = parseFloat(a2); ex.pagadoIsrHon = parseFloat(a2); }
+  else           { delete ex.acuseHon; delete ex.pagadoIsrHon; }
+  if (a3 !== '') { ex.acuseArr  = parseFloat(a3); }
+  else           { delete ex.acuseArr; }
   ex.acuseTotal = (parseFloat(a1)||0)+(parseFloat(a2)||0)+(parseFloat(a3)||0);
   if (ex.acuseTotal === 0) delete ex.acuseTotal;
 
@@ -1293,6 +2100,17 @@ function guardarEdicion() {
   if (lc2) ex.lineaCaptura2 = lc2; else delete ex.lineaCaptura2;
   if (lc3) ex.lineaCaptura3 = lc3; else delete ex.lineaCaptura3;
 
+  // IVA PM: leer desde dataset del zone 1 (slot DIM), si fue cargado via PDF
+  const pz1 = document.getElementById('edit-pz-1');
+  if (pz1 && pz1.dataset.ivaPmFavor) {
+    ex.ivaPmFavor = parseFloat(pz1.dataset.ivaPmFavor) || 0;
+    delete ex.ivaPmCargo;
+  } else if (pz1 && pz1.dataset.ivaPmCargo) {
+    ex.ivaPmCargo = parseFloat(pz1.dataset.ivaPmCargo) || 0;
+    delete ex.ivaPmFavor;
+  }
+  // No borrar ivaPmFavor/Cargo preexistente si no se importó PDF en esta sesión de edición
+
   const notas = document.getElementById('edit-notas').value.trim();
   if (notas) ex.notas = notas; else delete ex.notas;
 
@@ -1303,6 +2121,14 @@ function guardarEdicion() {
   if (Object.keys(ex).length === 0) delete extra[currentEditKey];
 
   saveExtraObj(extra);
+
+  // Registrar pago real en Financiero si hay acuse con importe y fecha de pago
+  const _acuseTotalFinal = (parseFloat(a1)||0) + (parseFloat(a2)||0) + (parseFloat(a3)||0);
+  const _acuseFechaFinal = af; // ya declarado arriba: const af = document.getElementById('edit-acuseFecha').value
+  if (_acuseTotalFinal > 0 && _acuseFechaFinal) {
+    registrarPagoSATEnMovManual(currentEditKey, _acuseTotalFinal, _acuseFechaFinal);
+  }
+
   closeModal('modal-editar');
   // Remove from pendingChanges if it was inline-edited too
   delete pendingChanges[currentEditKey];
@@ -1373,34 +2199,564 @@ async function procesarPdf(file, num) {
   }
 }
 
-function parsearLineaCaptura(text) {
-  // Línea de captura: 18–25 dígitos consecutivos
-  const lcMatch = text.match(/\b(\d{18,25})\b/);
-  const linea   = lcMatch ? lcMatch[1] : '';
+/* ══════════════════════════════════════════════════════════════
+   IMPORTACIÓN RECIBO BANCARIO BBVA — Pago de Contribuciones
+   ══════════════════════════════════════════════════════════════ */
 
-  // Importes: buscar "$" o "MXN" seguido de número
-  const importeMatches = [...text.matchAll(/\$\s*([\d,]+\.?\d*)/g)];
-  const importes = importeMatches.map(m => parseFloat(m[1].replace(/,/g,''))).filter(v=>v>50);
-  // Tomar el importe más grande (el total a pagar suele ser el principal)
-  const importe = importes.length ? Math.max(...importes) : 0;
+let _bbvaData = {};  // { 1: parsed, 2: parsed, 3: parsed }
 
-  // Fecha límite: DD/MM/YYYY o YYYY-MM-DD
-  const fechaMatch = text.match(/(\d{2}\/\d{2}\/\d{4})/);
-  let fecha = '';
+function abrirImportReciboBBVA() {
+  _bbvaData = {};
+  [1, 2, 3].forEach(n => {
+    const r = document.getElementById('bbva-result-' + n);
+    const z = document.getElementById('bbva-zone-' + n);
+    const f = document.getElementById('bbva-file-' + n);
+    if (r) r.innerHTML = '';
+    if (z) z.classList.remove('loaded');
+    if (f) f.value = '';
+  });
+  document.getElementById('bbva-preview').style.display = 'none';
+  document.getElementById('bbva-apply-btn').style.display = 'none';
+  openModal('modal-bbva-recibo');
+}
+
+/** Permite al usuario corregir el período fiscal detectado desde la LC.
+ *  El LC prefix codifica el MES DE PAGO, no el período de retención.
+ *  Para pagos tardíos ambos difieren en 1 mes — este selector lo resuelve. */
+function _bbvaSetPeriodo(num, val) {
+  const [m, y] = val.split('|').map(Number);
+  if (_bbvaData[num]) { _bbvaData[num].mes = m; _bbvaData[num].anio = y; }
+  _actualizarPreviewBBVA();
+}
+
+async function procesarPdfBBVA(file, num) {
+  if (!file) return;
+  const resultEl = document.getElementById('bbva-result-' + num);
+  const zoneEl   = document.getElementById('bbva-zone-' + num);
+  resultEl.innerHTML = '<span style="color:var(--text-dim)">⏳ Leyendo comprobante…</span>';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js no cargado');
+    const buf  = await file.arrayBuffer();
+    const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
+    let   text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page    = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(x => x.str).join(' ') + ' ';
+    }
+
+    const parsed = parsearReciboBBVA(text);
+    _bbvaData[num] = parsed;
+
+    if (!parsed.esReciboBancario) {
+      resultEl.innerHTML = '⚠️ No parece un Recibo Bancario de Pago de Contribuciones BBVA';
+      return;
+    }
+
+    const lines = [];
+    if (parsed.banco !== 'Desconocido') lines.push(`🏦 ${parsed.banco}`);
+    if (parsed.lineaCaptura) lines.push(`LC: ${parsed.lineaCaptura}`);
+    if (parsed.importe > 0)   lines.push(`<strong>$${fmtNum(parsed.importe)}</strong>`);
+    if (parsed.fechaDisplay)  lines.push(`Fecha: ${parsed.fechaDisplay}`);
+    if (parsed.numOperacion)  lines.push(`Op: ${parsed.numOperacion}`);
+    if (parsed.folio)         lines.push(`Folio: ${parsed.folio}`);
+    if (parsed.llavePago)     lines.push(`Llave: ${parsed.llavePago}`);
+    // Period selector — LC encodes the PAYMENT month (not the retention period).
+    // For late payments both can differ by 1 month, so let the user override.
+    const _detMes  = parsed.mes;
+    const _detAnio = parsed.anio;
+    if (_detMes) lines.push(`→ Período detectado: <strong>${MES_NOMBRES[_detMes-1]}-${String(_detAnio).slice(2)}</strong>`);
+
+    const _yr = selectedYear;
+    const _optsArr = [
+      {m:12,y:_yr-1},...[1,2,3,4,5,6,7,8,9,10,11,12].map(mm=>({m:mm,y:_yr})),
+      {m:1,y:_yr+1},{m:2,y:_yr+1}
+    ];
+    const _selOptions = _optsArr.map(o => {
+      const lbl = `${MES_NOMBRES[o.m-1]}-${String(o.y).slice(2)}`;
+      const sel  = (o.m===_detMes && o.y===_detAnio) ? ' selected' : '';
+      return `<option value="${o.m}|${o.y}"${sel}>${lbl}</option>`;
+    }).join('');
+
+    const _mainHtml = lines.length
+      ? `✅ ${lines.join(' · ')}`
+      : '⚠️ PDF procesado sin datos reconocidos — ¿es un recibo bancario de contribuciones?';
+
+    resultEl.innerHTML = _mainHtml + (parsed.esReciboBancario ? `
+      <div style="margin-top:0.4rem;font-size:0.67rem;color:var(--text-dim);display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+        📅 <span>Período fiscal:</span>
+        <select style="font-size:0.67rem;padding:0.1rem 0.3rem;border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;"
+                onchange="_bbvaSetPeriodo(${num},this.value)">
+          ${_selOptions}
+        </select>
+        <span style="color:#94a3b8;font-style:italic;font-size:0.62rem;">Derivado de la fecha de pago (mes M → período M-1). Corrige si es necesario.</span>
+      </div>` : '');
+
+    zoneEl.classList.add('loaded');
+    _actualizarPreviewBBVA();
+  } catch(e) {
+    resultEl.innerHTML = `⚠️ Error: ${e.message}`;
+  }
+}
+
+function parsearReciboBBVA(text) {
+  // Soporta: BBVA México, Scotiabank Inverlat, Banamex, Banorte, HSBC, Santander
+  // Todos usan el mismo título SAT y campos similares con variaciones de formato.
+  const t = text.replace(/\s+/g, ' ');
+
+  const esReciboBancario = /Recibo Bancario de Pago de Contribuciones/i.test(t) ||
+                           /Pago de Contribuciones.*Aprovechamientos/i.test(t);
+
+  // ── Banco emisor ────────────────────────────────────────────────────
+  let banco = 'Desconocido';
+  if (/BBVA/i.test(t))       banco = 'BBVA';
+  else if (/Scotiabank/i.test(t)) banco = 'Scotiabank';
+  else if (/Banamex|Citibanamex/i.test(t)) banco = 'Banamex';
+  else if (/Banorte/i.test(t)) banco = 'Banorte';
+  else if (/HSBC/i.test(t))   banco = 'HSBC';
+  else if (/Santander/i.test(t)) banco = 'Santander';
+
+  // ── Línea de Captura ─────────────────────────────────────────────────
+  // BBVA: "0426 3VFU 3600 4999 1444" (con espacios)
+  // Scotiabank: "04263VF8780049990258" (continua, sin espacios)
+  const lcMatch = t.match(/L[ií]nea de Captura[:\s]+([0-9A-Z][0-9A-Z ]{8,35}[0-9A-Z])/i);
+  const lc      = lcMatch ? lcMatch[1].trim().replace(/\s{2,}/g, ' ') : '';
+  const lcClean = lc.replace(/\s/g, '');
+
+  // ── Importe Pagado ────────────────────────────────────────────────────
+  const impMatch = t.match(/Importe Pagado[:\s]+\$?([\d,]+)/i);
+  const importe  = impMatch ? parseFloat(impMatch[1].replace(/,/g, '')) : 0;
+
+  // ── Fecha de Pago ─────────────────────────────────────────────────────
+  // BBVA: "Fecha y Hora de Pago: 26/05/2026 17:33 Hrs."
+  // Scotiabank: "Fecha de Pago: 26/05/2026" (Hora en campo separado)
+  const fechaMatch = t.match(/Fecha(?:\s+y\s+Hora)?\s+de\s+Pago[:\s]+(\d{2})\/(\d{2})\/(\d{4})/i);
+  let fechaISO = '', fechaDisplay = '';
   if (fechaMatch) {
-    const [d,mo,y] = fechaMatch[1].split('/');
-    fecha = `${y}-${mo}-${d}`;
+    const [, dd, mm, yyyy] = fechaMatch;
+    fechaISO     = `${yyyy}-${mm}-${dd}`;
+    fechaDisplay = `${dd}/${mm}/${yyyy}`;
   }
 
-  // Concepto: buscar texto clave
-  const conceptoMatch = text.match(/Concepto[:\s]+([^\n$]{5,60})/i);
-  const concepto = conceptoMatch ? conceptoMatch[1].trim().substring(0,60) : '';
+  // ── Período de retención derivado de la fecha de pago ─────────────────
+  // REGLA FISCAL: las retenciones del período M se declaran y pagan en M+1.
+  // El prefijo de la LC (ej. 0426) codifica tipo-de-forma + año, NO el mes.
+  // Todos los pagos de retenciones 2026 tienen LC con 0426 sin importar el mes.
+  // Por tanto: período = mes de pago - 1 (año ajustado si es enero).
+  let mes = null, anio = null;
+  if (fechaISO) {
+    const pd = new Date(fechaISO + 'T12:00:00');
+    mes  = pd.getMonth();          // getMonth() devuelve 0-11 → ya es el mes M-1 en 0-base
+    anio = pd.getFullYear();
+    if (mes === 0) { mes = 12; anio--; }  // Pago en enero → retención de diciembre del año anterior
+    // mes queda 1-12, anio = año del período
+  } else if (lcClean.length >= 4 && /^\d{4}/.test(lcClean)) {
+    // Fallback legacy: intentar LC prefix solo si no hay fecha (documentos muy viejos)
+    mes  = parseInt(lcClean.substring(0, 2));
+    anio = 2000 + parseInt(lcClean.substring(2, 4));
+  }
 
-  return { linea, importe, fecha, concepto };
+  // ── Número de Operación ───────────────────────────────────────────────
+  const opMatch      = t.match(/N[úu]mero de Operaci[oó]n[:\s]+(\d+)/i);
+  const numOperacion = opMatch ? opMatch[1] : '';
+
+  // ── Folio (Scotiabank) ────────────────────────────────────────────────
+  const folioMatch = t.match(/Folio[:\s]+(\d+)/i);
+  const folio      = folioMatch ? folioMatch[1] : '';
+
+  // ── Llave de Pago ─────────────────────────────────────────────────────
+  const llaveMatch = t.match(/Llave de Pago[:\s]+([A-Z0-9]{6,14})/i);
+  const llavePago  = llaveMatch ? llaveMatch[1] : '';
+
+  // ── Certificación de Pago (BBVA) ──────────────────────────────────────
+  const certMatch     = t.match(/Certificaci[oó]n de Pago[:\s]+([A-Z0-9]{20,60})/i);
+  const certificacion = certMatch ? certMatch[1] : '';
+
+  // ── Cuenta bancaria ───────────────────────────────────────────────────
+  // BBVA: "Cuenta de Cargo: 0118971277"
+  // Scotiabank: "Cuenta: C SCOTIA CHEQ SALDO-****4662 - MXN"
+  const cuentaCargoMatch = t.match(/Cuenta de Cargo[:\s]+(\d+)/i);
+  const cuentaGenMatch   = t.match(/Cuenta[:\s]+([^\n]{5,50}?)(?:\s+L[ií]nea|\s+Importe|\s*$)/i);
+  const cuenta = cuentaCargoMatch ? cuentaCargoMatch[1]
+               : (cuentaGenMatch  ? cuentaGenMatch[1].trim() : '');
+
+  // ── Guía / referencia adicional (BBVA) ───────────────────────────────
+  const guiaMatch = t.match(/Gu[ií]a[:\s]+(\d+)/i);
+  const guia      = guiaMatch ? guiaMatch[1] : '';
+
+  return { esReciboBancario, banco, lineaCaptura: lc, mes, anio, importe,
+           fecha: fechaISO, fechaDisplay, numOperacion, folio, llavePago,
+           certificacion, cuenta, guia };
+}
+
+function _actualizarPreviewBBVA() {
+  const items = Object.values(_bbvaData).filter(d => d && d.esReciboBancario && d.importe > 0);
+  if (!items.length) return;
+
+  const previewEl = document.getElementById('bbva-preview');
+  const applyBtn  = document.getElementById('bbva-apply-btn');
+
+  // Agrupar por período
+  const porPeriodo = {};
+  Object.entries(_bbvaData).forEach(([slot, d]) => {
+    if (!d || !d.esReciboBancario) return;
+    const key = (d.anio && d.mes) ? `${d.anio}-${d.mes}` : 'desconocido';
+    if (!porPeriodo[key]) porPeriodo[key] = { mes: d.mes, anio: d.anio, slots: [] };
+    porPeriodo[key].slots.push({ slot: parseInt(slot), ...d });
+  });
+
+  const etiquetas = ['Asim + IVA + ISR PM', 'ISR Honorarios', 'Arrendamiento'];
+  let html = '';
+
+  Object.entries(porPeriodo).forEach(([, grupo]) => {
+    const total = grupo.slots.reduce((s, d) => s + (d.importe || 0), 0);
+    const fecha = grupo.slots.find(d => d.fecha)?.fecha || '';
+
+    // Retención calculada para el período
+    let retCalc = 0;
+    if (grupo.mes && grupo.anio) {
+      const allRet = (typeof loadRegistry === 'function') ? loadRegistry(KEY_RET) : [];
+      const r      = allRet.find(x => Number(x.año) === grupo.anio && Number(x.mes) === grupo.mes) || {};
+      const comp   = (typeof calcFromNomina === 'function') ? calcFromNomina(grupo.anio, grupo.mes) : {};
+      retCalc = comp.totalRetencion ||
+                (parseNum(r.retenidoAsim||0) + parseNum(r.retenidoIvaHon||0) + parseNum(r.retenidoIsrHon||0));
+    }
+
+    const diff      = total - retCalc;
+    const diffColor = Math.abs(diff) < 100 ? 'var(--green)' : Math.abs(diff) < 2000 ? '#b45309' : '#dc2626';
+    const periodoLabel = grupo.mes ? `${MES_NOMBRES[grupo.mes-1]}-${String(grupo.anio).slice(2)}` : 'Período desconocido';
+
+    html += `<div style="margin-bottom:0.75rem;padding:0.9rem;background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);">`;
+    html += `<div style="font-family:var(--brand);font-weight:700;font-size:0.84rem;margin-bottom:0.5rem;">🏛️ ${periodoLabel}</div>`;
+    grupo.slots.forEach(d => {
+      html += `<div style="font-size:0.75rem;color:var(--text-dim);margin-left:0.5rem;margin-bottom:0.2rem;">`;
+      html += `PDF ${d.slot} — ${etiquetas[d.slot-1]||'?'}: <strong style="color:var(--text);">$${fmtNum(d.importe)}</strong>`;
+      if (d.banco && d.banco !== 'Desconocido') html += ` · 🏦 ${d.banco}`;
+      if (d.numOperacion) html += ` · Op: ${d.numOperacion}`;
+      if (d.folio)        html += ` · Folio: ${d.folio}`;
+      if (d.llavePago)    html += ` · Llave: <code>${d.llavePago}</code>`;
+      html += `</div>`;
+    });
+    html += `<div style="margin-top:0.5rem;font-size:0.76rem;display:flex;gap:1.2rem;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:0.45rem;">`;
+    html += `<span>Total bancario: <strong>$${fmtNum(total)}</strong></span>`;
+    if (retCalc > 0) {
+      html += `<span>Retención Compass: <strong>$${fmtNum(retCalc)}</strong></span>`;
+      html += `<span style="color:${diffColor};">Δ ${diff>=0?'+':''}$${fmtNum(Math.abs(diff))}</span>`;
+    }
+    if (fecha) html += `<span>Fecha pago: ${fecha}</span>`;
+    html += `</div></div>`;
+  });
+
+  previewEl.innerHTML = html;
+  previewEl.style.display = '';
+  applyBtn.style.display  = '';
+}
+
+/* ── Complementaria: abrir modal ── */
+function abrirComplementaria(key) {
+  document.getElementById('compl-key').value     = key;
+  document.getElementById('compl-periodo').value = key;
+  document.getElementById('compl-importe').value  = '';
+  document.getElementById('compl-recargos').value = '';
+  document.getElementById('compl-multas').value   = '';
+  document.getElementById('compl-fecha').value    = new Date().toISOString().slice(0,10);
+  document.getElementById('compl-lc').value       = '';
+  document.getElementById('compl-op').value       = '';
+  document.getElementById('compl-notas').value    = '';
+  openModal('modal-complementaria');
+}
+
+/* ── Complementaria: guardar ── */
+function guardarComplementaria() {
+  const key      = document.getElementById('compl-key').value;
+  const concepto = document.getElementById('compl-concepto').value;
+  const importe  = parseNum(document.getElementById('compl-importe').value);
+  const recargos = parseNum(document.getElementById('compl-recargos').value);
+  const multas   = parseNum(document.getElementById('compl-multas').value);
+  const fecha    = document.getElementById('compl-fecha').value;
+  const banco    = document.getElementById('compl-banco').value;
+  const lc       = document.getElementById('compl-lc').value.trim();
+  const op       = document.getElementById('compl-op').value.trim();
+  const notas    = document.getElementById('compl-notas').value.trim();
+
+  if (!key)    { toast('Período no especificado', 'error'); return; }
+  if (!importe){ toast('Ingresa el importe pagado', 'error'); return; }
+  if (!fecha)  { toast('Selecciona la fecha de pago', 'error'); return; }
+
+  const extras = loadExtraObj();
+  if (!extras[key]) extras[key] = {};
+  if (!Array.isArray(extras[key].complementarias)) extras[key].complementarias = [];
+
+  extras[key].complementarias.push({
+    concepto, importe, recargos, multas, fecha, banco, lc, op, notas,
+    ts: new Date().toISOString()
+  });
+
+  // Recalculate totalComplementarias
+  const totalCompl = extras[key].complementarias.reduce((s,c) => s + (c.importe||0) + (c.recargos||0) + (c.multas||0), 0);
+  extras[key].totalComplementarias = totalCompl;
+
+  localStorage.setItem(KEY_EXTRA, JSON.stringify(extras));
+  closeModal('modal-complementaria');
+  renderTable();
+  toast(`✅ Complementaria registrada para ${key}`, 'success');
+}
+
+function aplicarRecibosBBVA() {
+  const extras = loadExtraObj();
+  let   count  = 0;
+
+  // Agrupar por período
+  const porPeriodo = {};
+  Object.entries(_bbvaData).forEach(([slot, d]) => {
+    if (!d || !d.esReciboBancario || !d.mes || !d.anio) return;
+    const key = `${d.anio}-${String(d.mes).padStart(2,'0')}`;
+    if (!porPeriodo[key]) porPeriodo[key] = { mes: d.mes, anio: d.anio, key, slots: [] };
+    porPeriodo[key].slots.push({ slot: parseInt(slot), ...d });
+  });
+
+  // ── Protección contra sobreescritura ─────────────────────────────────────
+  // Si un período ya tiene pagos bancarios confirmados y los montos difieren,
+  // pedir confirmación antes de sobreescribir para evitar corrupción de datos.
+  const conflictos = Object.entries(porPeriodo).filter(([key, grupo]) => {
+    if (!extras[key]?.pagoBancarioConfirmado) return false;
+    const prevTotal = extras[key].acuseTotal
+                   || (extras[key].acuseAsim||0) + (extras[key].acuseHon||0) + (extras[key].acuseArr||0);
+    const newTotal  = grupo.slots.reduce((s, d) => s + (d.importe||0), 0);
+    return Math.abs(prevTotal - newTotal) > 1;
+  });
+  if (conflictos.length > 0) {
+    const detalles = conflictos.map(([key, grupo]) => {
+      const prev = extras[key].acuseTotal
+                || (extras[key].acuseAsim||0) + (extras[key].acuseHon||0);
+      const nuevo = grupo.slots.reduce((s, d) => s + (d.importe||0), 0);
+      const lbl   = MES_NOMBRES[(grupo.mes||1)-1] + '-' + String(grupo.anio||0).slice(2);
+      return `• ${lbl}: confirmado $${fmtNum(prev)} → nuevo $${fmtNum(nuevo)}`;
+    }).join('\n');
+    const ok = confirm(
+      `⚠️ Período(s) ya confirmados bancariamente con montos diferentes:\n\n${detalles}\n\n¿Reemplazar los datos existentes?\n\n(Cancela si el período en el selector es incorrecto)`
+    );
+    if (!ok) return;
+  }
+
+  Object.entries(porPeriodo).forEach(([key, grupo]) => {
+    if (!extras[key]) extras[key] = {};
+    const ex = extras[key];
+
+    const slot1 = grupo.slots.find(s => s.slot === 1);
+    const slot2 = grupo.slots.find(s => s.slot === 2);
+    const slot3 = grupo.slots.find(s => s.slot === 3);
+
+    if (slot1) {
+      ex.acuseAsim   = slot1.importe;
+      ex.pagadoAsim  = slot1.importe;
+      // IVA Hon pagado desde nómina calculada
+      const comp = (typeof calcFromNomina === 'function') ? calcFromNomina(grupo.anio, grupo.mes) : {};
+      if (comp.retenidoIvaHon > 0) ex.pagadoIvaHon = comp.retenidoIvaHon;
+      ex.lineaCaptura1 = slot1.lineaCaptura;
+      ex.bbva_op1      = slot1.numOperacion;
+      ex.bbva_llave1   = slot1.llavePago;
+      ex.bbva_cert1    = slot1.certificacion;
+      ex.bbva_cuenta   = slot1.cuenta;
+      if (slot1.banco && slot1.banco !== 'Desconocido') ex.bbva_banco = slot1.banco;
+      if (slot1.folio) ex.bbva_folio1 = slot1.folio;
+    }
+    if (slot2) {
+      ex.acuseHon      = slot2.importe;
+      ex.pagadoIsrHon  = slot2.importe;
+      ex.lineaCaptura2 = slot2.lineaCaptura;
+      ex.bbva_op2      = slot2.numOperacion;
+      ex.bbva_llave2   = slot2.llavePago;
+      ex.bbva_cert2    = slot2.certificacion;
+      if (slot2.folio) ex.bbva_folio2 = slot2.folio;
+    }
+    if (slot3) {
+      ex.acuseArr      = slot3.importe;
+      ex.lineaCaptura3 = slot3.lineaCaptura;
+      ex.bbva_op3      = slot3.numOperacion;
+      ex.bbva_llave3   = slot3.llavePago;
+      ex.bbva_cert3    = slot3.certificacion;
+    }
+
+    ex.acuseTotal = (ex.acuseAsim||0) + (ex.acuseHon||0) + (ex.acuseArr||0);
+    if (ex.acuseTotal === 0) delete ex.acuseTotal;
+
+    // Fecha de pago bancario (la más reciente de los slots)
+    const fechas = grupo.slots.filter(s => s.fecha).map(s => s.fecha).sort();
+    if (fechas.length) {
+      ex.fechaPagoReal    = fechas[fechas.length - 1];
+      ex.bbva_fechaPago   = fechas[fechas.length - 1];
+    }
+
+    ex.pagoBancarioConfirmado = true;
+    count++;
+  });
+
+  if (count === 0) {
+    toast('No se detectaron períodos válidos en los PDFs cargados', 'error');
+    return;
+  }
+
+  localStorage.setItem(KEY_EXTRA, JSON.stringify(extras));
+  closeModal('modal-bbva-recibo');
+  renderTable();
+  toast(`🏦 ${count} período${count>1?'s':''} confirmado${count>1?'s':''} con recibo bancario`, 'success');
+}
+
+/**
+ * parsearAcuseSAT — parser estructurado para acuses del SAT.
+ * Extrae: período, tipo de declaración, importes por concepto,
+ * línea de captura, importe total a pagar, vigencia y slot auto-detectado.
+ *
+ * Soporta:
+ *  - Declaraciones normales y complementarias
+ *  - Una o varias líneas de captura por concepto
+ *  - LC alfanuméricas con espacios: "0426 36CP 2900 4966 1404"
+ *  - LC alfanuméricas continuas:    "042636CP290049661404"
+ *  - LC de dígitos puros:           "123456789012345678"
+ */
+function parsearAcuseSAT(text) {
+
+  /* ── Período y tipo de declaración ─────────────────────────── */
+  const mesMatch   = text.match(/Per[ií]odo de la declaraci[oó]n:\s*(\w+)/i);
+  const ejercMatch = text.match(/Ejercicio:\s*(\d{4})/i);
+  const tipoMatch  = text.match(/Tipo de declaraci[oó]n:\s*(\w+)/i);
+  const periodo    = mesMatch   ? mesMatch[1].trim()     : '';
+  const ejercicio  = ejercMatch ? parseInt(ejercMatch[1]) : null;
+  const tipoDecl   = tipoMatch  ? tipoMatch[1].trim()    : 'Normal';
+
+  /* ── Número de operación (identificador único del acuse) ───── */
+  const opMatch    = text.match(/N[úu]mero de operaci[oó]n:\s*(\d+)/i);
+  const numOperacion = opMatch ? opMatch[1] : '';
+
+  /* ── Conceptos: cada bloque "Concepto de pago N: ... Cantidad a pagar: X" ─ */
+  // PDF.js concatena los tokens con espacios; buscamos por bloques
+  const conceptos = { isrAsimilados:0, isrHonorarios:0, ivaRetenciones:0, isrPm:0, isrArr:0, ivaArr:0,
+                      ivaPm:0, ivaPmFavor:0, ivaPmCargo:0 };
+
+  // Dividir el texto en bloques por "Concepto de pago N:"
+  const bloques = text.split(/Concepto\s+de\s+pago\s+\d+:/i).slice(1);
+  bloques.forEach(bloque => {
+    // Primera línea (hasta el siguiente campo o salto) = nombre del concepto
+    const nombreM = bloque.match(/^\s*([A-Za-záéíóúÁÉÍÓÚüÜñÑ\s.]+?)(?:\s{2,}|A\s+cargo:|A\s+favor:)/i);
+    const pagarM  = bloque.match(/Cantidad\s+a\s+pagar:\s*([\d,]+)/i);
+    if (!nombreM) return;
+
+    const nombre   = nombreM[1].trim().toLowerCase();
+    const cantidad = pagarM ? (parseFloat(pagarM[1].replace(/,/g, '')) || 0) : 0;
+
+    // Extraer saldo a favor y a cargo por concepto
+    const favorM  = bloque.match(/A\s+favor:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
+    const cargoM  = bloque.match(/A\s+cargo:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
+    const aFavor  = favorM ? (parseFloat(favorM[1].replace(/,/g,'')) || 0) : 0;
+    const aCargo  = cargoM ? (parseFloat(cargoM[1].replace(/,/g,'')) || 0) : 0;
+
+    if      (nombre.includes('asimilad'))
+      conceptos.isrAsimilados = cantidad;
+    else if (nombre.includes('honorario') && (nombre.includes('isr') || nombre.includes('retenci')))
+      conceptos.isrHonorarios = cantidad;
+    else if (nombre.includes('iva') && nombre.includes('retenci') && !nombre.includes('arrend'))
+      conceptos.ivaRetenciones = cantidad;
+    else if ((nombre.includes('isr') || nombre.includes('renta')) && nombre.includes('moral'))
+      conceptos.isrPm = cantidad;
+    else if (nombre.includes('arrend') && nombre.includes('isr'))
+      conceptos.isrArr = cantidad;
+    else if (nombre.includes('arrend') && nombre.includes('iva'))
+      conceptos.ivaArr = cantidad;
+    // IVA PM (Impuesto al Valor Agregado, Personas Morales) — puede ser saldo a favor
+    else if ((nombre.includes('valor agregado') || nombre.includes('iva')) && !nombre.includes('retenci') && !nombre.includes('arrend')) {
+      conceptos.ivaPm      = cantidad;
+      conceptos.ivaPmFavor = aFavor;
+      conceptos.ivaPmCargo = aCargo;
+    }
+  });
+
+  /* ── Línea(s) de captura — buscar dentro de la sección LC primero ── */
+  // El SAT puede emitir VARIAS líneas de captura en un mismo acuse (una por concepto)
+  const lineas = [];
+
+  // Aislar la sección "SECCIÓN LÍNEA DE CAPTURA" si existe
+  const seccionLC = text.match(/SECCI[OÓ]N\s+L[IÍ]NEA\s+DE\s+CAPTURA([\s\S]*?)(?=ACUSE\s+DE\s+RECIBO|$)/i);
+  const areaLC    = seccionLC ? seccionLC[1] : text;
+
+  // Extraer todas las LCs dentro del área (puede haber más de una)
+  const lcSpacedAll = [...areaLC.matchAll(/\b(\d{4}(?:\s[A-Z0-9]{4}){4})\b/g)];
+  if (lcSpacedAll.length) {
+    lcSpacedAll.forEach(m => { if (!lineas.includes(m[1])) lineas.push(m[1]); });
+  } else {
+    // Alfanumérica continua
+    const lcAlphaAll = [...areaLC.matchAll(/\b([A-Z0-9]{18,22})\b/g)];
+    lcAlphaAll.forEach(m => {
+      if (/[A-Z]/.test(m[1]) && /\d/.test(m[1]) && !lineas.includes(m[1])) lineas.push(m[1]);
+    });
+    // Dígitos puros (fallback)
+    if (!lineas.length) {
+      const lcDigit = areaLC.match(/\b(\d{18,25})\b/);
+      if (lcDigit) lineas.push(lcDigit[1]);
+    }
+  }
+  const linea = lineas[0] || '';   // LC principal
+
+  /* ── Importe total a pagar (de la sección LC) ──────────────── */
+  // Formatos vistos: "$21,758", "21,758", "Importe totala pagar: $21,758"
+  const totalM = areaLC.match(/[Ii]mporte\s+\w*\s*a?\s*pagar[:\s]*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  let total = totalM ? parseFloat(totalM[1].replace(/,/g, '')) : 0;
+  // Fallback: suma de conceptos con cantidad > 0
+  if (!total) total = Object.values(conceptos).reduce((s, v) => s + v, 0);
+  // Fallback 2: mayor importe con $ en todo el texto
+  if (!total) {
+    const montos = [...text.matchAll(/\$\s*([\d,]+(?:\.\d{1,2})?)/g)]
+      .map(m => parseFloat(m[1].replace(/,/g,'')))
+      .filter(v => v > 100);
+    if (montos.length) total = Math.max(...montos);
+  }
+
+  /* ── Fecha vigente hasta (vigencia de la línea de captura) ─── */
+  const vigM = areaLC.match(/Vigente\s+hasta:\s*(\d{2}\/\d{2}\/\d{4})/i)
+            || text.match(/Vigente\s+hasta:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  let vigencia = '';
+  if (vigM) {
+    const [d, m, y] = vigM[1].split('/');
+    vigencia = `${y}-${m}-${d}`;
+  }
+
+  /* ── Fecha de presentación ──────────────────────────────────── */
+  const presM = text.match(/Fecha\s+y\s+hora\s+de\s+presentaci[oó]n:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  let fechaPres = '';
+  if (presM) {
+    const [d, m, y] = presM[1].split('/');
+    fechaPres = `${y}-${m}-${d}`;
+  }
+
+  /* ── Auto-detectar slot ─────────────────────────────────────── */
+  //   Slot 1 = ISR Asimilados + IVA Retenciones + ISR PM  (declaración DIM)
+  //   Slot 2 = ISR Honorarios                             (declaración 37)
+  //   Slot 3 = ISR/IVA Arrendamiento
+  const hasArr  = conceptos.isrArr > 0 || conceptos.ivaArr > 0
+                  || text.toLowerCase().includes('arrendamiento');
+  const hasHon  = conceptos.isrHonorarios > 0;
+  const hasAsim = conceptos.isrAsimilados > 0 || conceptos.ivaRetenciones > 0 || conceptos.isrPm > 0 || conceptos.ivaPm > 0 || conceptos.ivaPmFavor > 0;
+
+  let slot = 1;
+  if (hasArr  && !hasAsim && !hasHon) slot = 3;
+  else if (hasHon && !hasAsim)        slot = 2;
+  else                                slot = 1;
+
+  return { periodo, ejercicio, tipoDecl, numOperacion, conceptos, lineas, linea, total, vigencia, fechaPres, slot };
+}
+
+/**
+ * parsearLineaCaptura — wrapper retrocompatible con el formato anterior.
+ * Úsalo solo para el modal de importación masiva (bulk).
+ */
+function parsearLineaCaptura(text) {
+  const p = parsearAcuseSAT(text);
+  return { linea: p.linea, importe: p.total, fecha: p.vigencia, concepto: p.tipoDecl !== 'Normal' ? `Decl. ${p.tipoDecl}` : '' };
 }
 
 function aplicarPdfs() {
-  // Pre-fill modal fields from pdfData
+  // Pre-fill modal fields from pdfData (used by the legacy separate PDF modal)
   if (pdfData[1]) {
     if (pdfData[1].importe > 0) document.getElementById('edit-acuseAsim').value = pdfData[1].importe.toFixed(2);
     if (pdfData[1].linea)       document.getElementById('edit-lc1').value = pdfData[1].linea;
@@ -1421,6 +2777,119 @@ function aplicarPdfs() {
 }
 
 /* ══════════════════════════════
+   PDF INLINE — zonas dentro del modal de edición
+══════════════════════════════ */
+function _editPdfDrop(event, num) {
+  event.preventDefault();
+  const file = event.dataTransfer.files[0];
+  if (file) procesarEditPdf(file, num);
+}
+
+async function procesarEditPdf(file, num) {
+  if (!file) return;
+  const resultEl = document.getElementById('edit-pr-' + num);
+  const zoneEl   = document.getElementById('edit-pz-' + num);
+  if (resultEl) resultEl.textContent = '⏳ Leyendo PDF…';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js no cargado');
+    const buf  = await file.arrayBuffer();
+    const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
+    let   text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page    = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(x => x.str).join(' ') + ' ';
+    }
+
+    const p = parsearAcuseSAT(text);
+
+    // ── Usar SIEMPRE la zona donde el usuario soltó el PDF (num) ──
+    // p.slot es solo informativo; el usuario sabe qué acuse está cargando.
+    const slot = num;
+
+    if (slot === 1) {
+      if (p.total > 0) document.getElementById('edit-acuseAsim').value = p.total.toFixed(2);
+      if (p.linea)     document.getElementById('edit-lc1').value = p.linea;
+      if (p.vigencia && !document.getElementById('edit-acuseFecha').value)
+        document.getElementById('edit-acuseFecha').value = p.vigencia;
+    } else if (slot === 2) {
+      if (p.total > 0) document.getElementById('edit-acuseHon').value = p.total.toFixed(2);
+      if (p.linea)     document.getElementById('edit-lc2').value = p.linea;
+      if (p.vigencia && !document.getElementById('edit-acuseFecha').value)
+        document.getElementById('edit-acuseFecha').value = p.vigencia;
+    } else if (slot === 3) {
+      if (p.total > 0) document.getElementById('edit-acuseArr').value = p.total.toFixed(2);
+      if (p.linea)     document.getElementById('edit-lc3').value = p.linea;
+    }
+    calcEditTotals();
+
+    // ── Validar que el período del PDF coincide con el mes que se edita ──
+    const MES_ES = { enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6,
+                     julio:7, agosto:8, septiembre:9, octubre:10, noviembre:11, diciembre:12 };
+    let periodWarning = '';
+    if (currentEditKey && p.ejercicio) {
+      const [edYr, edMo] = currentEditKey.split('-').map(Number);
+      const pdfMes = MES_ES[(p.periodo || '').toLowerCase()] || 0;
+      if (p.ejercicio !== edYr || (pdfMes && pdfMes !== edMo)) {
+        periodWarning = `⚠ PDF: ${p.periodo} ${p.ejercicio} — verifica el mes`;
+      }
+    }
+
+    // ── Desglose de conceptos para feedback ──
+    const c = p.conceptos;
+    const detalle = [];
+    if (c.isrAsimilados > 0)  detalle.push(`ISR Asim $${fmtNum(c.isrAsimilados)}`);
+    if (c.ivaRetenciones > 0) detalle.push(`IVA Ret $${fmtNum(c.ivaRetenciones)}`);
+    if (c.isrPm > 0)          detalle.push(`ISR PM $${fmtNum(c.isrPm)}`);
+    if (c.isrHonorarios > 0)  detalle.push(`ISR Hon $${fmtNum(c.isrHonorarios)}`);
+    if (c.isrArr > 0)         detalle.push(`ISR Arr $${fmtNum(c.isrArr)}`);
+    if (c.ivaArr > 0)         detalle.push(`IVA Arr $${fmtNum(c.ivaArr)}`);
+    // IVA PM: puede ser saldo a favor (no se paga, pero se registra)
+    if (c.ivaPmFavor > 0)     detalle.push(`IVA PM a favor $${fmtNum(c.ivaPmFavor)}`);
+    else if (c.ivaPmCargo > 0) detalle.push(`IVA PM a cargo $${fmtNum(c.ivaPmCargo)}`);
+    else if (c.ivaPm > 0)     detalle.push(`IVA PM $${fmtNum(c.ivaPm)}`);
+
+    // Guardar ivaPmFavor en el dataset del zone para que guardarEdicion lo persista
+    const zoneData = zoneEl ? zoneEl.dataset : {};
+    if (c.ivaPmFavor > 0) zoneData.ivaPmFavor = c.ivaPmFavor;
+    else if (c.ivaPmCargo > 0) zoneData.ivaPmCargo = c.ivaPmCargo;
+
+    // Avisar si el PDF parece ser de un slot diferente al que el usuario eligió
+    const slotSugerido = p.slot;
+    const slotMismatch = slotSugerido !== num;
+    let html = '';
+
+    if (p.total > 0 || p.linea) {
+      const tipoTag = p.tipoDecl !== 'Normal' ? ` · <span style="color:#9a3412;">🔄 ${p.tipoDecl}</span>` : '';
+      html +=
+        `<span style="color:var(--green);font-weight:700;">` +
+        (p.linea ? `✓ LC: ${p.linea.replace(/\s/g,'').slice(0,10)}… · ` : '') +
+        `$${fmtNum(p.total)}${tipoTag}</span>`;
+    }
+    if (detalle.length) {
+      html += `<br><span style="color:var(--text-dim);font-size:0.6rem;">${detalle.join(' · ')}</span>`;
+    }
+    if (slotMismatch) {
+      const slotNom = ['','Asim+IVA+ISR PM','ISR Honorarios','Arrendamiento'];
+      html += `<br><span style="color:#d97706;font-size:0.62rem;">⚠ El PDF parece ser de slot ${slotSugerido} (${slotNom[slotSugerido]}) — verifica</span>`;
+    }
+    if (periodWarning) {
+      html += `<br><span style="color:#d97706;font-size:0.62rem;">${periodWarning}</span>`;
+    }
+    if (!html) {
+      html = '<span style="color:#d97706;">⚠ Sin datos — verifica el PDF</span>';
+    }
+
+    if (resultEl) resultEl.innerHTML = html;
+    if (zoneEl)   zoneEl.classList.add('loaded');
+
+  } catch(e) {
+    if (resultEl) resultEl.textContent = '⚠ Error: ' + e.message;
+  }
+}
+
+/* ══════════════════════════════
    IMPORTACIÓN MASIVA DE PDFs (previos de pago / líneas de captura)
 ══════════════════════════════ */
 
@@ -1433,39 +2902,28 @@ const _MESES_FULL_ES = {
 
 /** Detecta el período fiscal del texto del PDF → "YYYY-MM" o null */
 function _detectarPeriodoPDF(text) {
-  const t = text.toLowerCase();
-
-  // "ENERO 2026", "ENERO DE 2026"
-  const m1 = t.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b(?:\s+de)?\s+(20\d{2})\b/);
-  if (m1) {
-    const mn = _MESES_FULL_ES[m1[1]];
-    if (mn) return `${m1[2]}-${String(mn).padStart(2,'0')}`;
+  // Intentar primero con parsearAcuseSAT (más preciso)
+  const p = parsearAcuseSAT(text);
+  if (p.periodo && p.ejercicio) {
+    const mn = _MESES_FULL_ES[p.periodo.toLowerCase()];
+    if (mn) return `${p.ejercicio}-${String(mn).padStart(2,'0')}`;
   }
-
-  // "Período: 01/2026" o "01 / 2026"
+  // Fallback: formatos numéricos
   const m2 = text.match(/\b(0[1-9]|1[0-2])\s*[\/\-]\s*(20\d{2})\b/);
   if (m2) return `${m2[2]}-${m2[1].padStart(2,'0')}`;
-
-  // "2026/01" o "2026-01"
   const m3 = text.match(/\b(20\d{2})[\/\-](0[1-9]|1[0-2])\b/);
   if (m3) return `${m3[1]}-${m3[2]}`;
-
   return null;
 }
 
 /**
- * Detecta el slot del PDF:
- *   1 = Asim + IVA + ISR PM (default)
+ * Detecta el slot del PDF usando parsearAcuseSAT (basado en conceptos reales).
+ *   1 = Asim + IVA + ISR PM
  *   2 = ISR Honorarios
  *   3 = Arrendamiento
  */
 function _detectarSlotPDF(text) {
-  const t = text.toLowerCase();
-  if (t.includes('arrendamiento'))                          return 3;
-  if (t.includes('honorario'))                              return 2;
-  if (t.includes('asimilad') || t.includes('asimilable'))  return 1;
-  // ISR PM / personas morales without "honorarios" → slot 1
-  return 1;
+  return parsearAcuseSAT(text).slot;
 }
 
 function abrirImportBulkPdf() {
@@ -1623,6 +3081,13 @@ function guardarBulkPdfs() {
 
   saveExtraObj(extra);
 
+  // Registrar pagos SAT en stgl_mov_manual para cada período con importe y fecha
+  _bulkPdfItems.forEach(item => {
+    if (!item.ok || item.importe <= 0 || !item.fecha) return;
+    if (!item.periodo || !/^\d{4}-\d{2}$/.test(item.periodo)) return;
+    registrarPagoSATEnMovManual(item.periodo, item.importe, item.fecha);
+  });
+
   if (errores.length) {
     toast('Advertencias: ' + errores.join(' | '), 'error');
   }
@@ -1630,6 +3095,14 @@ function guardarBulkPdfs() {
     toast(`${guardados} PDF${guardados!==1?'s':''} guardado${guardados!==1?'s':''} correctamente`, 'success');
     closeModal('modal-bulk-pdf');
     renderTable();
+    // Re-ejecutar verificación para reflejar los nuevos datos en el badge y panel
+    try {
+      const resVerif = ejecutarVerificacion('save');
+      renderVerificacionBadge(resVerif);
+      if (document.getElementById('verif-panel')?.classList.contains('open')) {
+        renderVerificacionPanel(resVerif);
+      }
+    } catch(e) {}
   } else if (!errores.length) {
     toast('No había datos válidos para guardar', 'error');
   }
@@ -1859,6 +3332,83 @@ function confirmarImportPagosSAT() {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   SERVICE WORKER — registro + sync de datos para notificaciones
+   proactivas (funciona aunque Compass esté cerrado en HTTPS)
+   ══════════════════════════════════════════════════════════════ */
+
+/** Convierte las filas de retenciones al formato plano que entiende el SW */
+function _buildAnomaliasSWPayload(rows) {
+  const payload = [];
+  rows.forEach(row => {
+    if (!row.alertasRow || !row.alertasRow.length) return;
+    const MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const mesNom = `${MES[row.m - 1]} ${selectedYear}`;
+    row.alertasRow.forEach(a => {
+      payload.push({
+        mesNom,
+        tipo          : a.tipo,
+        totalRet      : row.totalRet,
+        totalPag      : row.totalPag,
+        diff          : row.diff,
+        diasAtraso    : row.venc.diasAtraso,
+        diasRestantes : row.venc.diasRestantes,
+        fechaLimite   : row.venc.limite,
+        fechaPago     : row.fechaPago || '',
+        isrHon        : row.isrHonR
+      });
+    });
+  });
+  return payload;
+}
+
+/** Envía los datos al SW vía postMessage Y escribe directo en IDB como fallback */
+function syncNotifDataToSW(rows) {
+  if (!tg_isConfigured()) return;
+  const cfg = tg_getConfig();
+  const anomalias = _buildAnomaliasSWPayload(rows);
+
+  // Siempre escribir en IDB (el SW lo lee al despertar, sin depender del controller)
+  if (typeof tg_syncToIDB === 'function') {
+    tg_syncToIDB({ token: cfg.token, chatId: cfg.chatId, chatId2: cfg.chatId2,
+                   chat2Label: cfg.chat2Label, clientName: cfg.clientName,
+                   prefs: cfg.prefs, anomalias });
+  }
+
+  // Si el SW ya controla la página, notificarle para un check inmediato
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'FORCE_CHECK' });
+  }
+}
+
+/** Registra el Service Worker y solicita Periodic Background Sync */
+async function registerCompassSW() {
+  if (!('serviceWorker' in navigator)) return;
+  // SW no funciona en file:// — solo en HTTPS
+  if (location.protocol === 'file:') return;
+
+  try {
+    const reg = await navigator.serviceWorker.register('sw-compass.js');
+    console.log('[Compass] SW registrado v1.1');
+
+    // Periodic Background Sync (Chrome/Edge — requiere permiso)
+    if ('periodicSync' in reg) {
+      const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+      if (status.state === 'granted') {
+        await reg.periodicSync.register('stgl-notif', {
+          minInterval: 6 * 60 * 60 * 1000  // mínimo cada 6 h
+        });
+        console.log('[Compass] Periodic Sync registrado (≥6 h)');
+      }
+    }
+  } catch(e) {
+    console.warn('[Compass] SW no disponible:', e.message);
+  }
+}
+
+// Iniciar registro al cargar la página
+registerCompassSW();
+
 /* ── Init ── */
 // Add input listeners for auto-calc in modal
 ['edit-isrPm','edit-asimR','edit-isrHonR','edit-ivaHonR'].forEach(id => {
@@ -1877,6 +3427,282 @@ try {
 } catch(e) {}
 
 renderTable();
+
+/* ── Botón "Enviar a Telegram" en panel de anomalías ── */
+async function tgEnviarAlertasRetenciones() {
+  const btn = document.getElementById('tg-anom-btn');
+  if (btn) { btn.textContent = '⏳ Enviando…'; btn.disabled = true; }
+
+  // Borrar el anti-spam para forzar reenvío manual
+  try {
+    const sent = JSON.parse(localStorage.getItem('stgl_tg_sent') || '{}');
+    Object.keys(sent).forEach(k => { if (k.startsWith('ret_')) delete sent[k]; });
+    localStorage.setItem('stgl_tg_sent', JSON.stringify(sent));
+  } catch {}
+
+  // Re-leer filas y despachar
+  const all   = loadRegistry(KEY_RET);
+  const extra = loadExtraObj();
+  const monthMap = {};
+  all.filter(r => (r.año || Number(r.id?.split('-')[0])) === selectedYear
+                || Number(r.año) === selectedYear).forEach(r => {
+    const mes = r.mes || (r.id ? parseInt(r.id.split('-')[1]) : null);
+    if (mes) monthMap[mes] = r;
+  });
+
+  let enviados = 0;
+  for (let m = 1; m <= 12; m++) {
+    const key = `${selectedYear}-${String(m).padStart(2,'0')}`;
+    const r   = monthMap[m] || {};
+    const ex  = extra[key]  || {};
+    const asimR   = parseFloat(r.asimR   ?? ex.asimR   ?? 0) || 0;
+    const isrHonR = parseFloat(r.isrHonR ?? ex.isrHonR ?? 0) || 0;
+    const ivaHonR = parseFloat(r.ivaHonR ?? ex.ivaHonR ?? 0) || 0;
+    const isrPm   = parseFloat(r.isrPm   ?? ex.isrPm   ?? 0) || 0;
+    const totalRet = asimR + isrHonR + ivaHonR + isrPm;
+    const totalPag = parseFloat(r.totalPag ?? ex.totalPag ?? 0) || 0;
+    const fechaPago = r.fechaPago || ex.fechaPago || '';
+    const venc = calcVencimiento(selectedYear, m);
+    const row = { m, totalRet, totalPag, diff: totalRet - totalPag,
+                  fechaPago, ivaHonR, isrHonR, venc };
+    const anomalias = detectarAnomalias(row);
+    if (anomalias.length) {
+      await tg_despacharAnomalias(row, anomalias);
+      enviados += anomalias.length;
+    }
+  }
+
+  if (btn) {
+    btn.textContent = enviados ? `✅ ${enviados} alerta${enviados!==1?'s':''} enviada${enviados!==1?'s':''}` : '✅ Sin alertas nuevas';
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = '✈️ Enviar a Telegram'; }, 3000);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-VERIFICACIÓN — Retenciones SAT
+   Checks: períodos vencidos con pago pendiente, diferencia
+   retenido vs pagado, pago sin fecha, sin datos de nómina.
+══════════════════════════════════════════════════════════════ */
+const KEY_VERIF_LOG = 'stgl_verificacion_log_retenciones';
+
+const _MES_NOMBRES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                            'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function ejecutarVerificacion(trigger) {
+  trigger = trigger || 'auto';
+  const errores = [], alertas = [], info = [];
+  const hoy = new Date();
+  const year = selectedYear || hoy.getFullYear();
+  const all  = loadRegistry(KEY_RET);
+  let extra  = {};
+  try { extra = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}'); } catch {}
+
+  // Construir mapa mes → registro
+  const yearRows = {};
+  all.filter(r => Number(r.año || 0) === year ||
+                  (r.id && Number(r.id.split('-')[0]) === year))
+     .forEach(r => {
+       const m = r.mes || (r.id ? parseInt(r.id.split('-')[1]) : null);
+       if (m) yearRows[m] = r;
+     });
+
+  for (let m = 1; m <= 12; m++) {
+    const r   = yearRows[m] || {};
+    const key = `${year}-${String(m).padStart(2,'0')}`;
+    const ex  = extra[key] || {};
+    // fechaPago: incluye acuseFecha (de importación de PDFs) y fechaPagoReal (edición manual)
+    const fechaPago = ex.fechaPagoReal || ex.acuseFecha || r.fechaPago || ex.fechaPago || '';
+
+    // Calcular retención desde nómina si la función está disponible
+    const comp    = typeof calcFromNomina === 'function' ? calcFromNomina(year, m) : {};
+    const asimR   = parseNum(ex.overrideAsimR   !== undefined ? ex.overrideAsimR   : (comp.retenidoAsim   || r.retenidoAsim   || 0));
+    const isrHonR = parseNum(ex.overrideIsrHonR !== undefined ? ex.overrideIsrHonR : (comp.retenidoIsrHon || r.retenidoIsrHon || 0));
+    const ivaHonR = parseNum(ex.overrideIvaHonR !== undefined ? ex.overrideIvaHonR : (comp.retenidoIvaHon || r.retenidoIvaHon || 0));
+    const isrPm   = parseNum(r.isrPm ?? ex.isrPm ?? 0);
+    const totalRet = asimR + isrHonR + ivaHonR + isrPm;
+
+    // totalPag: misma lógica que renderTable() para mantener consistencia.
+    // Prioridad: acuseTotal explícito > suma acuseAsim+Hon+Arr (de PDFs) >
+    //            pagadoAsim+Hon+Iva (de Excel) > totalPag legacy.
+    const _acuseSum = (ex.acuseAsim||0) + (ex.acuseHon||0) + (ex.acuseArr||0);
+    const acuseTotal = ex.acuseTotal !== undefined ? parseNum(ex.acuseTotal)
+                     : _acuseSum > 0 ? _acuseSum : 0;
+    const totalPag = acuseTotal > 0 ? acuseTotal
+      : parseNum((ex.pagadoAsim||0) + (ex.pagadoIsrHon||0) + (ex.pagadoIvaHon||0)
+                 + parseNum(r.pagadoAsim||0) + parseNum(r.pagadoIsrHon||0) + parseNum(r.pagadoIvaHon||0)
+                 || r.totalPag || ex.totalPag || 0);
+
+    if (totalRet < 1) continue; // mes sin retenciones calculadas
+
+    // Fecha de vencimiento: día 17 del mes siguiente
+    const vencMes  = m === 12 ? 1 : m + 1;
+    const vencAño  = m === 12 ? year + 1 : year;
+    const vencDate = new Date(vencAño, vencMes - 1, 17);
+    const vencStr  = vencDate.toLocaleDateString('es-MX');
+    const estaVencido = hoy > vencDate;
+
+    /* ── 1. Período vencido con pago pendiente ── */
+    if (estaVencido && totalPag < 1) {
+      errores.push({
+        tipo: 'PAGO_PENDIENTE', modulo: 'Retenciones SAT',
+        fecha: key,
+        msg:   `${_MES_NOMBRES_LARGO[m-1]} ${year}: $${fmtNum(totalRet)} retenido sin pago al SAT (vencía ${vencStr})`,
+        accion:'Registra el acuse de pago en la columna correspondiente',
+      });
+    }
+
+    /* ── 2. Diferencia significativa retenido vs pagado ── */
+    const diff = Math.abs(totalRet - totalPag);
+    if (totalPag > 0 && diff > 100) {
+      alertas.push({
+        tipo: 'DIFERENCIA_PAGO', modulo: 'Retenciones SAT',
+        fecha: key,
+        msg:   `${_MES_NOMBRES_LARGO[m-1]} ${year}: retenido $${fmtNum(totalRet)} vs pagado $${fmtNum(totalPag)} (Δ $${fmtNum(diff)})`,
+        accion:'Verifica el acuse SAT — puede incluir recargos o corresponder a otro período',
+      });
+    }
+
+    /* ── 3. Pago registrado sin fecha de pago ── */
+    if (totalPag > 0 && !fechaPago) {
+      info.push({
+        tipo: 'CAMPO_FALTANTE', modulo: 'Retenciones SAT',
+        fecha: key,
+        msg:   `${_MES_NOMBRES_LARGO[m-1]} ${year}: pago $${fmtNum(totalPag)} registrado sin fecha de pago`,
+        accion:'Agrega la fecha del SPEI o acuse en la columna de fecha de pago',
+      });
+    }
+  }
+
+  /* ── 4. Sin datos de nómina para el año seleccionado ── */
+  const asimAño = loadRegistry(KEY_ASIM).filter(r => {
+    const yr = r.fechaPago ? new Date(r.fechaPago).getFullYear() : 0;
+    return yr === year;
+  });
+  const honAño = loadRegistry(KEY_HON).filter(r => {
+    const yr = r.fechaPago ? new Date(r.fechaPago).getFullYear() : 0;
+    return yr === year;
+  });
+  if (!asimAño.length && !honAño.length) {
+    info.push({
+      tipo: 'SIN_DATOS_NOMINA', modulo: 'Nómina',
+      msg:  `Sin datos de nómina importados para ${year} — los montos mostrados provienen solo de registros históricos`,
+      accion:'Importa los CFDIs XML de asimilables y honorarios desde el módulo Nómina',
+    });
+  }
+
+  const resultado = {
+    fecha: new Date().toISOString(), trigger, errores, alertas, info,
+    ok:    !errores.length && !alertas.length,
+    total: errores.length + alertas.length + info.length,
+  };
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    logs.unshift(resultado);
+    localStorage.setItem(KEY_VERIF_LOG, JSON.stringify(logs.slice(0, 30)));
+  } catch {}
+  return resultado;
+}
+
+function cargarUltimaVerificacion() {
+  try { return JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]')[0] || null; } catch { return null; }
+}
+
+function lanzarVerificacion(trigger) {
+  const resultado = ejecutarVerificacion(trigger || 'manual');
+  renderVerificacionBadge(resultado);
+  renderVerificacionPanel(resultado);
+  document.getElementById('verif-panel').classList.add('open');
+}
+
+function toggleVerifPanel() {
+  const panel = document.getElementById('verif-panel');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+  } else {
+    const last = cargarUltimaVerificacion();
+    if (last) renderVerificacionPanel(last);
+    panel.classList.add('open');
+  }
+}
+
+function renderVerificacionBadge(resultado) {
+  const el = document.getElementById('verif-badge');
+  if (!el) return;
+  if (!resultado) {
+    el.innerHTML = `<button onclick="lanzarVerificacion('manual')"
+        style="color:var(--text-dim);border-color:var(--border);">🔍 Verificar</button>`;
+    return;
+  }
+  const { errores, alertas } = resultado;
+  const color = errores.length ? 'var(--red)' : alertas.length ? '#c8801b' : 'var(--green)';
+  const bg    = errores.length ? '#fff5f5'    : alertas.length ? '#fffbeb'  : '#f0fdf4';
+  const icon  = errores.length ? '⚠'          : alertas.length ? '🔔'       : '✓';
+  const label = errores.length ? `${errores.length} error${errores.length>1?'es':''}`
+              : alertas.length ? `${alertas.length} alerta${alertas.length>1?'s':''}`
+              : 'Datos OK';
+  el.innerHTML = `<button onclick="toggleVerifPanel()"
+      style="color:${color};border-color:${color};background:${bg};"
+      title="Ver log de verificación">${icon} ${label}</button>`;
+}
+
+function renderVerificacionPanel(resultado) {
+  const body   = document.getElementById('verif-body');
+  const footer = document.getElementById('verif-footer');
+  if (!body) return;
+  const { errores, alertas, info, fecha, trigger, ok } = resultado;
+  const triggerLabel = {load:'carga de página',import:'importación',save:'guardado',manual:'manual',auto:'automático'}[trigger] || trigger;
+  const ts = new Date(fecha).toLocaleString('es-MX', {dateStyle:'short', timeStyle:'short'});
+  const renderItems = (items, cls) => items.map(it => `
+    <div class="verif-item">
+      <div class="verif-dot ${cls}"></div>
+      <div>
+        <div class="verif-msg">${it.msg}</div>
+        ${it.accion ? `<div class="verif-accion">→ ${it.accion}</div>` : ''}
+      </div>
+      ${it.fecha ? `<div style="font-size:0.63rem;color:var(--text-xs);white-space:nowrap;">${it.fecha}</div>` : '<div></div>'}
+    </div>`).join('');
+  let html = '';
+  if (ok && !info.length) {
+    html = `<div class="verif-ok">✓ Todas las retenciones del ${selectedYear} están registradas y conciliadas</div>`;
+  } else {
+    if (errores.length) { html += `<div class="verif-section-title">🔴 Errores — acción requerida (${errores.length})</div>`; html += renderItems(errores, 'error'); }
+    if (alertas.length) { html += `<div class="verif-section-title">🟡 Alertas — revisar (${alertas.length})</div>`; html += renderItems(alertas, 'warning'); }
+    if (info.length)    { html += `<div class="verif-section-title">ℹ️ Información (${info.length})</div>`; html += renderItems(info, 'info'); }
+  }
+  body.innerHTML = html;
+  footer.innerHTML = `<span>Última verificación: ${ts} · disparador: ${triggerLabel}</span>
+    <span style="margin-left:auto;font-size:0.63rem;">${errores.length} error${errores.length!==1?'es':''} · ${alertas.length} alerta${alertas.length!==1?'s':''} · ${info.length} info</span>`;
+}
+
+/* ── Init badge desde última verificación guardada ── */
+renderVerificacionBadge(cargarUltimaVerificacion());
+
+/* ── Auto-verificación al cargar ── */
+setTimeout(() => {
+  try {
+    const res = ejecutarVerificacion('load');
+    renderVerificacionBadge(res);
+    if (res.errores.length > 0) {
+      renderVerificacionPanel(res);
+      document.getElementById('verif-panel').classList.add('open');
+    }
+  } catch(e) { console.warn('verif:', e); }
+}, 800);
+
+/* ── Re-verificar al cambiar de año (hook en selectYear) ── */
+const _origSelectYear = selectYear;
+selectYear = function(y) {
+  _origSelectYear(y);
+  setTimeout(() => {
+    try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+  }, 200);
+};
+
+/* ── Periódica cada 5 min ── */
+setInterval(() => {
+  try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+}, 5 * 60 * 1000);
 </script>
 </body>
 </html>
