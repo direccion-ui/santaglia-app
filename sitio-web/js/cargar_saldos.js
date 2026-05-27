@@ -87,7 +87,7 @@ window.__saldosData = [
     "cuenta": "Clara",
     "tipo": "Tarjeta Crédito",
     "moneda": "MXN",
-    "saldo": -20883.29,
+    "saldo": -22737.90,
     "fechaActualizacion": "2026-05-27"
   },
   {
