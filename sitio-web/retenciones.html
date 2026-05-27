@@ -1429,7 +1429,8 @@ function renderCalendario(rows) {
     const venceLabel = `17 ${MES_CORTO[vencMes-1]} ${vencYear}`;
 
     // ── Mini-card: mes sin retención y no accionable en los próximos 30 días ──
-    if (totalRet === 0 && (venc.isPast || venc.diasRestantes > 30)) {
+    console.log(`[cal] m=${m} totalRet=${totalRet} (${typeof totalRet}) isPast=${venc.isPast} dias=${venc.diasRestantes}`);
+    if (Number(totalRet) < 1 && (venc.isPast || venc.diasRestantes > 30)) {
       return `<div class="cal-mini" title="Sin retención registrada — Vence ${venceLabel}">
         <span class="cal-mini-mes">${MES_CORTO[m-1]}</span>
         <span class="cal-mini-sep">·</span>
