@@ -63,7 +63,7 @@ window.__saldosData = [
     "cuenta": "HEY Ahorro",
     "tipo": "Ahorro",
     "moneda": "MXN",
-    "saldo": 208.66,
+    "saldo": 218.43,
     "fechaActualizacion": "2026-05-27"
   },
   {
