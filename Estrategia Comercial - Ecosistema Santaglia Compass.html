@@ -199,7 +199,7 @@ p:last-child{margin-bottom:0;}
       <tr><th>Causa de cierre</th><th>% de cierres asociados</th><th>Fuente</th><th>Argumento Compass</th><th>Táctica que lo activa</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Problemas de flujo de caja</strong></td><td style="color:#dc2626;font-weight:700;">82%</td><td>U.S. Bank / LATAM</td><td>"¿Sabes cuánto tendrás en caja la próxima quincena? Compass sí."</td><td>T2 contenidos · T5 demo</td></tr>
+      <tr><td><strong>Problemas de flujo de caja</strong></td><td style="color:#dc2626;font-weight:700;">82%</td><td>U.S. Bank / LATAM</td><td>"¿Sabes cuánto tendrás en caja el viernes para pagar la nómina? Compass sí — y si no alcanza, te dice qué facturas cobrar antes." <em style="color:var(--dim);font-size:.72em;">(→ Momento Wow! Ups)</em></td><td>T2 contenidos · T5 demo</td></tr>
       <tr><td><strong>Mala gestión financiera general</strong></td><td style="color:#dc2626;font-weight:700;">65%</td><td>OCDE 2023</td><td>"El 65% de los cierres se evitarían con visibilidad financiera básica. Compass la da en 10 minutos."</td><td>T1 landing · T7 PR</td></tr>
       <tr><td><strong>Retenciones fiscales incorrectas</strong></td><td style="color:#dc2626;font-weight:700;">43% con irregularidades</td><td>IMCO 2022</td><td>"¿Cuándo calculaste por última vez tus retenciones de IVA e ISR? Compass lo hace solo."</td><td>T2 lead magnet · T4 despachos</td></tr>
       <tr><td><strong>Nómina IMSS mal calculada</strong></td><td style="color:#dc2626;font-weight:700;">35% con errores</td><td>IMSS 2022</td><td>"Un error de IMSS puede costarte 2× la diferencia en recargos. Compass calcula cuotas exactas."</td><td>T5 onboarding · T6 retención</td></tr>
@@ -491,6 +491,76 @@ p:last-child{margin-bottom:0;}
       <div class="task-item"><span class="task-num">12</span><div><div class="task-text">Enterprise demo y propuesta personalizada para Empresarial >50 colaboradores</div><div class="task-q">▸ Q3 2028 → continuo · ciclo de venta ≤21 días</div></div></div>
     </div>
   </div>
+</div>
+
+<!-- MOMENTOS WOW! -->
+<div class="section" style="border-left:4px solid #16a34a;background:linear-gradient(135deg,#f0fdf4 0%,#fff 100%);margin-bottom:1.5rem;">
+  <div class="section-label" style="background:#dcfce7;color:#15803d;border-color:#86efac;">UX Strategy · Stickiness · Onboarding</div>
+  <div class="section-title" style="color:#15803d;">Momentos Wow! — La arquitectura de la retención</div>
+  <div class="section-sub">El valor de Compass no se percibe con el primer login. Se percibe en destellos específicos donde el sistema conecta módulos distintos y entrega una conclusión que ningún ERP, banco ni contador daría en ese instante. Estos momentos deben ingeniarse — no esperarse.</div>
+
+  <!-- Los dos estados -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:1.1rem;">
+      <div style="font-size:1.2rem;font-weight:900;color:#15803d;font-family:var(--brand);margin-bottom:.5rem;">Wow! 🎉 — Confirmación positiva</div>
+      <div style="background:white;border-radius:7px;padding:.85rem;font-size:.76rem;color:#374151;line-height:1.7;font-family:'Courier New',monospace;border:1px solid #bbf7d0;">
+        🎉 <strong style="color:#15803d;">Wow!</strong> El viernes tienes que pagar la nómina por <strong>$42,800</strong> y la cuenta Banorte terminación <strong>4821</strong> ya tiene saldo suficiente para cubrirla. ¡Todo en orden!
+      </div>
+    </div>
+    <div style="background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:1.1rem;">
+      <div style="font-size:1.2rem;font-weight:900;color:#c2410c;font-family:var(--brand);margin-bottom:.5rem;">Ups ⚠️ — Déficit + solución de cobranza</div>
+      <div style="background:white;border-radius:7px;padding:.85rem;font-size:.76rem;color:#374151;line-height:1.7;font-family:'Courier New',monospace;border:1px solid #fed7aa;">
+        ⚠️ <strong style="color:#c2410c;">Ups.</strong> El viernes tienes que pagar la nómina por <strong>$42,800</strong> y la cuenta Banorte terminación <strong>4821</strong> no tiene saldo suficiente (<strong>$18,300</strong>).<br><br>
+        📄 <strong>Factura 251 — Arenas Rojas</strong> por <strong>$28,500</strong> vence mañana.<br>
+        📄 <strong>Factura 433 — Soluciones MK</strong> por <strong>$15,000</strong> vence el jueves.<br><br>
+        Si cobras alguna antes del viernes, tendrás fondos suficientes. <strong style="color:#15803d;">¡Wow! — Qué bueno que nos dimos cuenta a tiempo.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Por qué nadie más puede darlo -->
+  <div style="background:#f8fafc;border-radius:8px;padding:.9rem 1.1rem;margin-bottom:1.25rem;font-size:.78rem;color:var(--dim);border:1px solid var(--border);">
+    <strong style="color:var(--navy);">¿Por qué ningún ERP ni banco puede dar este mensaje?</strong>&nbsp;
+    El banco sabe el saldo pero no conoce tu nómina ni tus facturas. CONTPAQi/Aspel conoce nómina y facturas pero no proyecta flujo ni alerta al dueño en tiempo real. Compass combina los tres — y entrega la conclusión accionable directamente al empresario, sin pasar por el contador.
+    <strong style="color:#15803d;"> Compass dice qué hacer y cuándo. El banco y el despacho ejecutan.</strong>
+  </div>
+
+  <!-- Los 5 momentos en el onboarding -->
+  <div style="font-weight:700;font-size:.82rem;color:var(--navy);margin-bottom:.7rem;">Los 5 Momentos Wow! que se ingenian en los primeros 30 días</div>
+  <div style="display:flex;flex-direction:column;gap:.55rem;margin-bottom:1.25rem;">
+    <div style="display:grid;grid-template-columns:44px 1fr;gap:.75rem;align-items:start;font-size:.77rem;border:1px solid var(--border);border-radius:7px;padding:.75rem;background:#fff;">
+      <div style="font-weight:900;color:#15803d;font-family:var(--brand);font-size:1rem;text-align:center;">D1</div>
+      <div><strong>Proyección de flujo al conectar la primera cuenta</strong> — el usuario ve su saldo a 30 días en segundos. Detonador del "para esto sirve". <em style="color:var(--dim);">Acción: mostrar automáticamente al importar el primer CSV o activar sync bancario.</em></div>
+    </div>
+    <div style="display:grid;grid-template-columns:44px 1fr;gap:.75rem;align-items:start;font-size:.77rem;border:1px solid var(--border);border-radius:7px;padding:.75rem;background:#fff;">
+      <div style="font-weight:900;color:#c2410c;font-family:var(--brand);font-size:1rem;text-align:center;">D7</div>
+      <div><strong>Primera alerta Ups + solución de cobranza</strong> — el más memorable del onboarding. El sistema cruza nómina recurrente + saldo proyectado + facturas por cobrar. <em style="color:var(--dim);">Acción: push notification + email con las facturas que resuelven el déficit.</em></div>
+    </div>
+    <div style="display:grid;grid-template-columns:44px 1fr;gap:.75rem;align-items:start;font-size:.77rem;border:1px solid var(--border);border-radius:7px;padding:.75rem;background:#fff;">
+      <div style="font-weight:900;color:#7c3aed;font-family:var(--brand);font-size:1rem;text-align:center;">D14</div>
+      <div><strong>Primera retención pagada a tiempo sin esfuerzo</strong> — alerta el día 14, vencimiento el 17. El cliente que nunca había pagado a tiempo lo logra. El despacho lo nota. <em style="color:var(--dim);">Acción: Telegram Bot + email con monto exacto a pagar y liga al portal SAT.</em></div>
+    </div>
+    <div style="display:grid;grid-template-columns:44px 1fr;gap:.75rem;align-items:start;font-size:.77rem;border:1px solid var(--border);border-radius:7px;padding:.75rem;background:#fff;">
+      <div style="font-weight:900;color:#0369a1;font-family:var(--brand);font-size:1rem;text-align:center;">D21</div>
+      <div><strong>Gap facturado-cobrado revelado</strong> — "Facturaste $120K, entraron $74K, tienes $46K por cobrar." El empresario entiende por primera vez la diferencia entre ventas y flujo. <em style="color:var(--dim);">Acción: card prominente en el dashboard del primer cierre parcial de mes.</em></div>
+    </div>
+    <div style="display:grid;grid-template-columns:44px 1fr;gap:.75rem;align-items:start;font-size:.77rem;border:1px solid var(--border);border-radius:7px;padding:.75rem;background:#fff;">
+      <div style="font-weight:900;color:#b45309;font-family:var(--brand);font-size:1rem;text-align:center;">D30</div>
+      <div><strong>Primer cierre de mes sin buscar comprobantes</strong> — el cliente exporta el resumen categorizado y lo envía al despacho en un clic. Ambos asocian Compass con "este mes fue más fácil". <em style="color:var(--dim);">Acción: botón "Enviar a mi contador" visible en el dashboard al cierre de mes.</em></div>
+    </div>
+  </div>
+
+  <!-- Cómo usar en la demo -->
+  <div style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #93c5fd;border-radius:9px;padding:1rem 1.25rem;">
+    <div style="font-weight:700;font-size:.82rem;color:#1e40af;margin-bottom:.5rem;">🎬 Cómo usar los Momentos Wow! en demos y en el pitch a despachos</div>
+    <ul style="margin:0;padding-left:1.2rem;font-size:.77rem;color:#1e3a8a;line-height:1.8;">
+      <li><strong>Demo T5 (cliente directo):</strong> abre siempre con el escenario Ups — muestra el déficit de nómina y las facturas que lo resuelven. En 90 segundos el prospecto ya entiende el valor mejor que con 20 minutos de features.</li>
+      <li><strong>Pitch T4 (despacho):</strong> "La primera vez que un cliente tuyo usa Compass y paga su retención a tiempo porque recibió la alerta el día 14, ese cliente ya no va a querer prescindir del sistema — y tú tampoco vas a querer que lo haga."</li>
+      <li><strong>Email de onboarding D7:</strong> enviar el escenario Ups de manera simulada con datos reales del usuario si ya conectó su banco — o con datos de ejemplo si aún no lo ha hecho. El objetivo es que el usuario sienta el momento antes de que ocurra.</li>
+      <li><strong>Material de referidos:</strong> el 80% de los testimoniales orgánicos van a mencionar uno de estos 5 momentos. Identificarlos y amplificarlos en redes.</li>
+    </ul>
+  </div>
+
 </div>
 
 <!-- T6 -->
