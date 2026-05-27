@@ -79,7 +79,7 @@ window.__saldosData = [
     "cuenta": "Base_Pagaré",
     "tipo": "Inversión",
     "moneda": "MXN",
-    "saldo": 0.24,
+    "saldo": 0.00,
     "fechaActualizacion": "2026-05-27"
   },
   {
