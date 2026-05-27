@@ -777,12 +777,265 @@
         <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Landing → Edge Function en paralelo con Formspree. Registro automático en waitlist + correo de bienvenida vía <strong style="color:#fff;">compass@santaglia.app</strong> al instante del submit.</div>
       </div>
 
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#86efac;margin-bottom:4px;">Indicador 3 Pasos — Cumplimiento Fiscal Retenciones</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Chips visuales <strong style="color:#fff;">① CFDIs › ② LCs SAT › ③ Banco</strong> en cada tarjeta del calendario fiscal y encabezado detallado en la historia del período. 5 mensajes contextuales de siguiente acción según el avance de cada mes.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🔗</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#86efac;margin-bottom:4px;">Sync Cross-Módulo: PDFs Bancarios → Movimientos</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Importar un comprobante bancario de pago SAT en Retenciones <strong style="color:#fff;">actualiza automáticamente</strong> el módulo de Movimientos Bancarios. Un solo import — sin recaptura manual. Egreso tipificado "Retenciones SAT" listo para conciliación.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🗓️</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#86efac;margin-bottom:4px;">Parser LC Corregido — Período por Fecha de Pago</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">El prefijo de Línea de Captura <strong style="color:#fff;">0426 = forma 04 + año 26</strong>, no mes+año. El período de retención ahora se deriva de la fecha de pago bancario (pago en mes M → período M-1), eliminando asignaciones incorrectas a períodos equivocados.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🛡️</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#86efac;margin-bottom:4px;">Protección de Sobreescritura + Limpiar Banco</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Diálogo de confirmación antes de reemplazar datos bancarios ya confirmados con montos diferentes. Botón <strong style="color:#fff;">"🗑 Limpiar banco"</strong> en el modal de edición con descripción contextual de cuándo usarlo — evita corrupción accidental de datos.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">📋</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#86efac;margin-bottom:4px;">Alertas Descartables + Historia Fiscal por Período</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Alertas de cumplimiento marcables como leídas (persistencia en <strong style="color:#fff;">localStorage</strong>). Timeline cronológico "Historia Fiscal" por mes: CFDIs importados, LCs, comprobante banco, declaraciones complementarias — con botones de acción contextuales.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">⚙️</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#86efac;margin-bottom:4px;">CI/CD Pipeline Restaurado — Remote GitHub Activo</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Remote <strong style="color:#fff;">github.com/direccion-ui/santaglia-app</strong> configurado y trackeando <strong style="color:#fff;">main</strong>. Flujo <code style="color:#86efac;">git push → Vercel deploy</code> restaurado. Branch tracking automático, usuario git configurado localmente.</div>
+      </div>
+
     </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(34,197,94,.15);font-size:0.68rem;color:rgba(255,255,255,.4);display:flex;gap:20px;flex-wrap:wrap;">
       <span>✅ Fase 4 "Backend & Multi-usuario" adelantada ~4 meses respecto al plan original</span>
       <span>✅ Stack de producción completo antes de los primeros clientes pagadores</span>
       <span>✅ Infraestructura lista para escalar a 1,000+ usuarios sin cambios arquitecturales</span>
       <span>✅ 26 mayo: primer lead Beta recibido y respondido automáticamente — pipeline Waitlist CRM operativo</span>
+      <span>✅ 26 mayo tarde: 6 mejoras al módulo de Retenciones ISR/IVA + CI/CD pipeline restaurado y conectado a producción</span>
+    </div>
+  </div>
+
+  <!-- ══ RECOMENDACIONES MULTIDISCIPLINARIAS ══ -->
+  <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:16px;padding:24px 28px;margin-bottom:24px;box-shadow:0 2px 16px rgba(26,45,128,0.07);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:var(--gold);flex-shrink:0;"></div>
+      <span style="font-size:0.78rem;font-weight:700;color:var(--gray-800);text-transform:uppercase;letter-spacing:0.5px;">Recomendaciones del Consejo de Expertos · Sesión 26 Mayo 2026</span>
+    </div>
+    <p style="font-size:0.68rem;color:var(--gray-600);margin-bottom:18px;line-height:1.6;">Análisis colaborativo: UX/UI · Desarrollo · Finanzas Corporativas · Operación PYME · Fiscalista Mexicano</p>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+
+      <!-- UX/UI -->
+      <div style="border:1px solid #e0e7ff;border-radius:10px;padding:16px;background:#f8f9ff;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:1rem;">🎨</span>
+          <span style="font-size:0.75rem;font-weight:800;color:#3730a3;text-transform:uppercase;letter-spacing:0.5px;">UX / UI</span>
+          <span style="margin-left:auto;font-size:0.6rem;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-weight:700;">5 mejoras</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#6366f1;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Tour de onboarding interactivo.</strong> El módulo de Retenciones tiene 3+ flujos de importación (CFDI, LC SAT, PDF bancario) sin guía para usuarios nuevos. Un tooltip progresivo de 5 pasos al primer acceso reduciría la fricción inicial y las llamadas de soporte.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#6366f1;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Tabla de retenciones: demasiadas columnas.</strong> 14 columnas visibles en desktop, inusable en tablet/móvil. Propuesta: vista compacta por defecto (Mes / Total Ret / Total Pag / Diferencia / Estado) con expansión por clic para ver el detalle por concepto (asim/hon/IVA).
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#6366f1;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Indicador de proceso más prominente.</strong> Los chips ① CFDIs › ② LCs › ③ Banco están bien pero son pequeños (0.52rem). Considerar una barra de progreso horizontal con porcentaje al pasar el mouse, visible desde el dashboard principal.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#6366f1;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Estados vacíos accionables.</strong> Cuando Abril muestra "VENCIDO 9D" sin pago registrado, el CTA debería ser un botón "📄 Importar comprobante de pago" directamente en la tarjeta — no solo el badge rojo. Reducir pasos del usuario al mínimo.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#6366f1;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Alertas: restaurar vs. descartar individual.</strong> El botón "Restaurar alertas del año" es de baja granularidad. Agregar un panel de "Alertas descartadas" donde el usuario pueda reactivar alertas específicas sin resetear todo el año.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FISCALISTA -->
+      <div style="border:1px solid #dcfce7;border-radius:10px;padding:16px;background:#f0fdf4;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:1rem;">⚖️</span>
+          <span style="font-size:0.75rem;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:0.5px;">Fiscalista Mexicano</span>
+          <span style="margin-left:auto;font-size:0.6rem;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-weight:700;">6 mejoras</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Cálculo automático de recargos y actualizaciones.</strong> Cuando el pago es tardío (ej. Abr-26 VENCIDO 9D), el SAT aplica recargos del 1.47% mensual + actualización por inflación (INPC). El sistema debería calcular y mostrar el monto estimado de recargos para que el contador los anticipe antes de generar la declaración complementaria.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Flujo completo de declaración complementaria.</strong> El modal existe pero la cadena de evidencia está incompleta: falta registrar la nueva LC generada por el SAT para el complementario, el monto de multa aplicada, y vincular el comprobante bancario del pago de la complementaria con el período original.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>DIOT pendiente.</strong> La Declaración Informativa de Operaciones con Terceros (DIOT) es mensual y obligatoria para personas morales con retenciones de IVA a honorarios. El sistema ya tiene los datos (IVA retenido a honorarios por período) — agregar el módulo de generación de DIOT en formato .txt SAT sería un diferenciador de alto valor.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Conciliación CFDI vs. SAT.</strong> El SAT permite consultar vía API (Consulta de CFDI) los folios emitidos y recibidos. Cruzar los CFDIs importados en Compass contra los que el SAT tiene registrados detectaría diferencias antes de que el SAT las detecte — blindaje preventivo ante auditorías.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>IVA a Favor — seguimiento y aplicación.</strong> El sistema detecta "IVA PM a favor: $19,146" en los acuses de Marzo. Falta un módulo que rastree el saldo acumulado de IVA a favor, su aplicación (acreditamiento vs. compensación vs. devolución) y el impacto en flujo de caja.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Retenciones de arrendamiento.</strong> El sistema tiene columnas para ISR Arr / IVA Arr pero el flujo de importación está incompleto. Las retenciones a arrendadores tienen una declaración separada en el SAT — agregar el slot 3 completo en el parser de recibos bancarios.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FINANZAS CORPORATIVAS -->
+      <div style="border:1px solid #fef3c7;border-radius:10px;padding:16px;background:#fffbeb;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:1rem;">📈</span>
+          <span style="font-size:0.75rem;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;">Finanzas Corporativas</span>
+          <span style="margin-left:auto;font-size:0.6rem;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:700;">5 mejoras</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#d97706;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Reporte de antigüedad de diferencias (Aging Report).</strong> La diferencia de $1,708 en Abril lleva días sin resolverse. Un aging report de diferencias fiscales (0-30d / 31-60d / 60d+) con semáforo y escalación automática a Telegram cuando supera 15 días sería estándar en cualquier área de tesorería corporativa.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#d97706;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Conciliación bancaria automatizada.</strong> El cross-sync PDFs bancarios → Movimientos es un gran paso. El siguiente es la conciliación automática: cruzar los egresos tipificados "Retenciones SAT" contra el estado de cuenta bancario y marcar en verde los conciliados, en amarillo los pendientes. Hoy es manual.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#d97706;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Proyección de carga fiscal 12 meses.</strong> Con los datos de nómina actuales el sistema puede proyectar las retenciones de los próximos meses. Una gráfica de barras "Retención estimada por mes" en el dashboard permitiría al director anticipar el cash flow fiscal — cuánto saldrá de la cuenta el día 17 de cada mes.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#d97706;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Base devengado vs. flujo de efectivo.</strong> Hoy el sistema registra cuándo se paga, no cuándo se devenga. Para una PYME profesional, la distinción es crítica: el ISR retenido en enero se devengó en enero aunque se pague en febrero. Agregar una columna "Período devengado" vs. "Período pagado" en los reportes.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#d97706;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Exportación a Excel/PDF para auditoría.</strong> La cadena de evidencia CFDIs → LCs → Banco existe digitalmente pero no se puede exportar como un reporte consolidado. Un PDF de "Cédula de Retenciones [Año]" con las 3 columnas y sus referencias sería el documento que pide el auditor externo o el SAT en una revisión.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERACIÓN PYME -->
+      <div style="border:1px solid #fce7f3;border-radius:10px;padding:16px;background:#fdf4f9;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:1rem;">🏢</span>
+          <span style="font-size:0.75rem;font-weight:800;color:#9d174d;text-transform:uppercase;letter-spacing:0.5px;">Operación PYME</span>
+          <span style="margin-left:auto;font-size:0.6rem;background:#fce7f3;color:#9d174d;padding:2px 8px;border-radius:10px;font-weight:700;">5 mejoras</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#db2777;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Recordatorio proactivo al contador.</strong> El sistema sabe que el día 14 de cada mes vence la alerta. En lugar de esperar a que el usuario entre al sistema, enviar automáticamente un Telegram/email al contador: "📌 Quedan 3 días para declarar retenciones de [Mes]. Retención calculada: $X. ¿Confirmas LC?" — con el acuse pendiente de subir.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#db2777;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Adjuntar archivos al período.</strong> El sistema rastrea la cadena de evidencia en metadatos pero no almacena los PDFs originales (LCs, acuses SAT, comprobantes bancarios). Agregar almacenamiento en Supabase Storage (bucket privado por org) permitiría abrir el documento original con un clic — esencial en auditoría.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#db2777;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Vista del contador vs. vista del director.</strong> Hoy existe RBAC (owner/admin/viewer) pero la UI es idéntica para todos. El contador necesita ver LCs, acuses y diferencias; el director necesita ver el semáforo de cumplimiento y el impacto en flujo. Dos vistas del mismo módulo sin duplicar código.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#db2777;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Ciclo nómina → retención completamente automatizado.</strong> Hoy el sistema calcula retenciones desde datos de nómina, pero el contador aún sube manualmente los CFDIs de nómina. Integrar timbrado (vía PAC partner) haría que al dispersar nómina, los CFDIs se generen, los montos de retención se calculen solos y se cree el recordatorio fiscal — cero captura manual.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="color:#db2777;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
+            <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
+              <strong>Bitácora de cambios por período (Audit Trail).</strong> ¿Quién cambió el monto pagado de Febrero de $23,534 a $23,460? ¿Cuándo? El sistema guarda el estado final pero no el historial de cambios. Una bitácora inmutable (append-only en Supabase) registraría usuario + timestamp + campo + valor anterior + valor nuevo — indispensable en entornos multi-usuario y ante el SAT.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Priorización sugerida -->
+    <div style="margin-top:16px;padding:14px 16px;background:var(--navy-faint);border-radius:8px;border:1px solid var(--gray-200);">
+      <div style="font-size:0.7rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">🎯 Priorización Sugerida — Alto Impacto / Bajo Esfuerzo</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <div style="background:var(--white);border-radius:6px;padding:10px;border-left:3px solid #dc2626;">
+          <div style="font-size:0.65rem;font-weight:700;color:#dc2626;margin-bottom:4px;">🔴 INMEDIATO (Sprint actual)</div>
+          <div style="font-size:0.63rem;color:var(--text);line-height:1.55;">
+            • Cálculo de recargos y actualizaciones por pago tardío<br>
+            • Tabla retenciones: vista compacta responsive<br>
+            • CTA en tarjeta VENCIDO → botón directo de importar
+          </div>
+        </div>
+        <div style="background:var(--white);border-radius:6px;padding:10px;border-left:3px solid #d97706;">
+          <div style="font-size:0.65rem;font-weight:700;color:#d97706;margin-bottom:4px;">🟡 PRÓXIMO MES</div>
+          <div style="font-size:0.63rem;color:var(--text);line-height:1.55;">
+            • Almacenamiento de PDFs en Supabase Storage<br>
+            • Exportación cédula de retenciones PDF/Excel<br>
+            • Recordatorio proactivo D-3 antes del día 17<br>
+            • Módulo DIOT (generación .txt SAT)
+          </div>
+        </div>
+        <div style="background:var(--white);border-radius:6px;padding:10px;border-left:3px solid #059669;">
+          <div style="font-size:0.65rem;font-weight:700;color:#059669;margin-bottom:4px;">🟢 Q3 2026</div>
+          <div style="font-size:0.63rem;color:var(--text);line-height:1.55;">
+            • Conciliación bancaria automatizada<br>
+            • Audit Trail inmutable por período<br>
+            • Vista director vs. contador diferenciada<br>
+            • Conciliación CFDI vs. SAT (API Buzon-e)
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1013,6 +1266,7 @@ const PHASES = [
       { name: '✅ Deduplicación CSV cross-registro (Pasada 2b) — stgl_mov_manual vs stgl_mov_excel', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. Nuevo filtro en el importador CSV para prevenir doble-conteo entre movimientos CFDI/manuales (stgl_mov_manual) y movimientos bancarios importados (stgl_mov_excel) sobre la misma cuenta. Lógica: antes de insertar cada movimiento nuevo, cruza contra stgl_mov_manual filtrando por cuenta === cuentaSeleccionada; si hay coincidencia de monto exacto + dirección (entrada/salida) + fecha ±1 día, el movimiento se descarta silenciosamente. Resuelve duplicados retroactivos: script de consola identificó 3 duplicados (abono FX $82,259.06, honorarios Juan Carlos $38,000.81, honorarios Miguel Ángel $40,030.44) y los eliminó de stgl_mov_excel ajustando saldos.' },
       { name: '✅ Waitlist CRM — tabla Supabase + 2 Edge Functions + dashboard + email automático Resend', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. Sistema completo de gestión de la lista de espera Beta. Componentes: (1) SUPABASE: tabla waitlist_contacts (email, nombre, fuente, status, timestamps de cada etapa: welcome_sent_at, followup_1_sent_at, followup_2_sent_at, onboarding_at, notas, referido_por). RLS activo — solo usuarios autenticados. (2) EDGE FUNCTION waitlist-inbound: endpoint público (sin JWT); recibe el submit del formulario de la landing, hace upsert del contacto (ignoreDuplicates para re-submissions), envía correo de bienvenida personalizado vía Resend API desde compass@santaglia.app, actualiza welcome_sent_at y status a "bienvenida". (3) EDGE FUNCTION waitlist-send-email: requiere Supabase Auth Bearer token; acepta { contact_id, email_type: followup_1|followup_2|onboarding, mensaje_extra }; envía plantilla correspondiente y actualiza timestamp + status en BD. (4) DASHBOARD waitlist.html: KPI bar (Total/Bienvenida/En seguimiento/Onboarded/Pendiente), tabs de filtro por status, tabla de contactos con fechas, modal de detalle con línea de tiempo de correos, notas y botones de envío de seguimiento. Menú "Waitlist Beta" agregado en la navegación general de todos los módulos Compass. (5) PRIMER LEAD: rpolancomaldonado@gmail.com — registrado el 25 mayo 2026, bienvenida enviada automáticamente, entregado por Resend.' },
       { name: '✅ Landing → Edge Function — registro automático paralelo a Formspree al hacer submit', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. El webhook de Formspree es exclusivo del plan Premium; workaround: se modifica handleForm() en santaglia.app/index.html para hacer dos llamadas en paralelo con Promise.all(): (1) Formspree — conserva la notificación a info@santaglia.com, (2) Edge Function waitlist-inbound — registra el contacto en Supabase y envía el correo de bienvenida. La llamada a la Edge Function es fire-and-forget (.catch(() => {})) — si falla, el submit de Formspree igual termina exitosamente y el usuario ve la confirmación. El formulario ya no depende de Formspree para el CRM de Compass. Push al repo direccion-ui/santaglia-app (GitHub Pages → santaglia.app) autorizado y desplegado.' },
+      { name: '✅ Retenciones — Indicador 3 pasos + sync cross-módulo + parser LC + CI/CD restaurado', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. Seis mejoras al módulo de Retenciones ISR/IVA: (1) Indicador visual de 3 pasos (CFDIs → LCs SAT → Banco) en tarjetas del calendario y en la historia detallada por período, con 5 mensajes contextuales de siguiente acción. (2) Sincronización cross-módulo: importar PDF bancario en Retenciones actualiza automáticamente stgl_mov_manual en Movimientos Bancarios — sin recaptura. (3) Parser LC corregido: el prefijo 0426 = forma 04 + año 26, NO mes. Período derivado de fecha de pago (pago en mes M → período M-1). (4) Protección de sobreescritura con diálogo de confirmación cuando hay monto diferente. (5) Botón "Limpiar banco" con descripción contextual en modal de edición. (6) CI/CD pipeline restaurado: remote github.com/direccion-ui/santaglia-app configurado, branch main trackeado, push automático a Vercel operativo. Build automático en cada push a main.' },
       { name: 'Directorio de contactos (Fase 2) — módulo de gestión visual en Configuración', start: [2026,5,26], end: [2026,6,15], done: false, tooltip: 'UI de gestión del stgl_directorio: tabla con todos los contactos (clientes y proveedores), búsqueda por nombre/RFC/tipo, edición inline de conceptoDefault y cuentaContDefault, alta manual, eliminación, y vista de historial de usos. Promoción manual desde stgl_cfdi_index: lista de proveedores frecuentes aún no promovidos con botón "Agregar al directorio". Importación masiva desde CSV de contactos (para migrar desde otra herramienta). Badge en Configuración → "Directorio: X contactos activos". Prerequisito para el futuro CRM y para la reconciliación automática de proveedores en la Conexión SAT.' },
       { name: 'Exportación CSV para contador — Alegra / CONTPAQi (Estándar)', start: [2026,5,21], end: [2026,6,15], done: false, tooltip: 'Feature exclusivo del tier Estándar ($799). Exporta movimientos bancarios categorizados + egresos + nómina en CSV compatible con los principales paquetes contables del mercado. Columnas: fecha, descripción, categoría Compass, importe, RFC proveedor/cliente, UUID CFDI, cuenta bancaria, estado conciliación, check "contabilizado". Trigger de upsell para Segmento B (empresarios que ya usan paquete contable + despacho): elimina la captura manual en el software contable y la llamada de WhatsApp al contador. El despacho recibe el CSV, lo importa y confirma — sin transcribir nada. Cierra el loop del "Puente Compass↔Contabilidad" iniciado con el Check Contabilizado de Fase 4.' },
       { name: 'Conexión SAT — integración directa Descarga Masiva (sin API de terceros)', start: [2026,6,15], end: [2026,7,20], done: false, tooltip: 'Implementación de la integración con el Web Service de Descarga Masiva del SAT usando exclusivamente herramientas open source y gratuitas — costo de API: $0 MXN vs. $5,000–20,000 MXN/mes de proveedores comerciales a escala. Librería principal: @nodecfdi/sat-ws-descarga-masiva (npm, MIT, TypeScript, actualizada jun 2025) — maneja FIEL, firma XML RFC 3447, queries por RFC/fecha/tipo, descarga y descompresión de paquetes ZIP. Componentes a construir: (1) UI de onboarding SAT: pantalla de configuración donde el cliente ingresa RFC + CIEC (o sube .cer + .key de e.firma) — wizard de 3 pasos con prueba de conexión en tiempo real. (2) Almacenamiento seguro de credenciales: RFC + CIEC encriptados en Supabase (AES-256) por tenant — nunca en localStorage. (3) Supabase Edge Function de sync programado: job diario que autentica con SAT usando las credenciales del cliente, solicita CFDIs emitidos y recibidos del período (ventana móvil de 7 días), gestiona el ciclo asíncrono SAT (solicitar → verificar estado → descargar). (4) Manejo de asincronía: la Descarga Masiva del SAT NO es en tiempo real — el SAT puede tardar hasta 48 hrs en procesar una solicitud. El sistema solicita por la mañana, verifica estado cada 6 hrs y descarga cuando esté disponible. El usuario ve "última sincronización: hace X horas" en el dashboard. (5) Parser CFDI XML → modelo de datos Compass: extrae emisor, receptor, importe, UUID, fecha, tipo (I/E/T/N/P), moneda, tipo de cambio y mapea a stgl_mov_manual con origenRef:"sat". (6) Rate limit management: SAT permite máx. 10 solicitudes/día por RFC — el sistema prioriza el período más reciente y evita solicitudes duplicadas. (7) Deduplicación por UUID: si el mismo CFDI llega vía SAT y ya existe una captura manual, propone vinculación (Motor de Reconciliación, Fase 5). Prerequisitos: Supabase (Fase 4). Desbloquea: Monitor SAT, Panel de retenciones, Reconciliación automática.' },
