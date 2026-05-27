@@ -2,3 +2,5 @@
 *.DS_Store
 Respaldos/
 .claude/
+# landing/ es un repo git anidado con su propio origin — se gestiona de forma independiente
+landing/
