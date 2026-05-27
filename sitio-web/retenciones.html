@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Santaglia Compass · Retenciones</title>
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
@@ -1398,13 +1401,18 @@ function _pasosProceso(row) {
 const MES_CORTO = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 const MES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
+const RETENCIONES_BUILD = '20260526-v3';
+
 function renderCalendario(rows) {
   const el = document.getElementById('cal-fiscal');
   if (!el) return;
 
+  console.log(`[Retenciones ${RETENCIONES_BUILD}] renderCalendario: ${rows.length} filas`);
+
   const today = new Date(); today.setHours(0,0,0,0);
 
   el.innerHTML = rows.map(row => {
+    try {
     const { m, totalRet, totalPag, fechaPago, venc, ex: rowEx } = row;
 
     // Fecha de alerta día 14
@@ -1496,6 +1504,10 @@ function renderCalendario(rows) {
         ${rowEx?.pagoBancarioConfirmado ? `<div style="font-size:0.6rem;color:#1d4ed8;font-weight:700;margin-top:2px;letter-spacing:0.04em;">🏦 Verif. banco</div>` : ''}
         ${calProcHtml}
       </div>`;
+    } catch(e) {
+      console.error('[renderCalendario] Error en fila m=' + (row?.m) + ':', e);
+      return `<div class="cal-mini" style="color:#dc2626;">⚠ Error mes ${row?.m}: ${e.message}</div>`;
+    }
   }).join('');
 }
 
