@@ -12,6 +12,18 @@
   <style>
     .table-wrap { overflow-x: auto; }
     .fact-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 1300px; }
+    /* Compact mode: hide detail columns, reduce min-width */
+    .table-wrap.compact .col-detail { display: none !important; }
+    .table-wrap.compact .fact-table  { min-width: 560px; }
+    /* Toggle btn */
+    .compact-toggle {
+      font-size: 0.66rem; font-family: var(--brand); font-weight: 700;
+      padding: 0.22rem 0.6rem; border: 1.5px solid var(--border); border-radius: var(--radius);
+      background: var(--bg-white); color: var(--text-dim); cursor: pointer;
+      letter-spacing: 0.04em; transition: all 0.15s;
+    }
+    .compact-toggle.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .compact-toggle:hover:not(.active) { background: #f0f2f8; color: var(--navy); }
     .fact-table thead { position: sticky; top: 0; z-index: 10; }
     .fact-table th {
       background: var(--navy);
@@ -446,7 +458,7 @@
           <button class="btn btn-ghost" onclick="importarRetenciones()">↑ Importar histórico Excel</button>
           <button class="btn btn-primary" onclick="importarPagosSAT()">↑ Importar pagos SAT (Excel)</button>
           <button class="btn btn-ghost" onclick="abrirImportBulkPdf()">↑ Previos / LCs (PDFs)</button>
-          <button class="btn btn-primary" style="background:linear-gradient(135deg,#1a1a2e,#2a3a6e);" onclick="abrirImportReciboBBVA()">🏦 Recibo Bancario (PDF)</button>
+          <button id="btn-bbva-recibo" class="btn btn-primary" style="background:linear-gradient(135deg,#1a1a2e,#2a3a6e);" onclick="abrirImportReciboBBVA()">🏦 Recibo Bancario (PDF)</button>
         </div>
       </div>
 
@@ -526,22 +538,28 @@
 
       <!-- Table -->
       <div class="panel">
-        <div class="table-wrap">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
+          <span style="font-family:var(--brand); font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim);">📋 Detalle mensual de retenciones</span>
+          <button id="btn-compact-toggle" class="compact-toggle" onclick="toggleTablaCompacta()" title="Alternar entre vista compacta (5 columnas) y vista completa (14 columnas)">
+            ▦ Vista compacta
+          </button>
+        </div>
+        <div class="table-wrap" id="ret-table-wrap">
           <table class="fact-table" id="ret-table">
             <thead>
               <tr>
                 <th>Mes</th>
-                <th class="num">Asim. Ret.</th>
-                <th class="num">Asim. Pag.</th>
-                <th class="num">ISR Hon. Ret.</th>
-                <th class="num">ISR Hon. Pag.</th>
-                <th class="num">IVA Hon. Ret.</th>
-                <th class="num">IVA Hon. Pag.</th>
-                <th class="num">ISR PM</th>
+                <th class="num col-detail">Asim. Ret.</th>
+                <th class="num col-detail">Asim. Pag.</th>
+                <th class="num col-detail">ISR Hon. Ret.</th>
+                <th class="num col-detail">ISR Hon. Pag.</th>
+                <th class="num col-detail">IVA Hon. Ret.</th>
+                <th class="num col-detail">IVA Hon. Pag.</th>
+                <th class="num col-detail">ISR PM</th>
                 <th class="num">Total Ret.</th>
                 <th class="num">Total Pag.</th>
                 <th class="num">Diferencia</th>
-                <th>F. Pago Real</th>
+                <th class="col-detail">F. Pago Real</th>
                 <th class="center">Estado</th>
                 <th class="center" style="width:50px;"></th>
               </tr>
@@ -1031,6 +1049,29 @@
 <script src="js/telegram.js"></script>
 <script>
 
+/* ── Tabla: toggle vista compacta / completa ── */
+const KEY_COMPACT = 'stgl_ret_vista_compacta';
+function _initTablaCompacta() {
+  // Auto-compacta si pantalla < 1200px, a menos que haya preferencia guardada
+  const saved = localStorage.getItem(KEY_COMPACT);
+  const autoCompact = window.innerWidth < 1200;
+  const compact = saved !== null ? saved === '1' : autoCompact;
+  _applyTablaCompacta(compact);
+}
+function _applyTablaCompacta(compact) {
+  const wrap = document.getElementById('ret-table-wrap');
+  const btn  = document.getElementById('btn-compact-toggle');
+  if (wrap) wrap.classList.toggle('compact', compact);
+  if (btn)  { btn.classList.toggle('active', compact); btn.textContent = compact ? '▤ Vista completa' : '▦ Vista compacta'; }
+}
+function toggleTablaCompacta() {
+  const wrap    = document.getElementById('ret-table-wrap');
+  if (!wrap) return;
+  const compact = !wrap.classList.contains('compact');
+  localStorage.setItem(KEY_COMPACT, compact ? '1' : '0');
+  _applyTablaCompacta(compact);
+}
+
 /* ── Disclaimer SAT toggle ── */
 function toggleDisclaimer() {
   const body = document.getElementById('disclaimer-body');
@@ -1189,6 +1230,20 @@ function calcVencimiento(year, mes) {
   const diasAtraso    = Math.round((today - limDate) / 86400000);
   const diasRestantes = -diasAtraso; // positive = days left
   return { limite, limDate, diasAtraso, diasRestantes, isPast: diasAtraso > 0 };
+}
+
+/**
+ * Calcula recargos SAT estimados para un pago tardío.
+ * Tasa vigente RMF 2024: 1.47% mensual (art. 21 CFF).
+ * No incluye actualización INPC ni multas.
+ * @param {number} impuesto  - Monto del impuesto no pagado ($)
+ * @param {number} diasAtraso - Días transcurridos desde el vencimiento
+ * @returns {number} Monto estimado de recargos
+ */
+const TASA_RECARGOS_MENSUAL = 0.0147; // RMF 2024 — actualizar cuando cambie
+function calcRecargosEst(impuesto, diasAtraso) {
+  if (!impuesto || diasAtraso <= 0) return 0;
+  return Math.round(impuesto * (diasAtraso / 30) * TASA_RECARGOS_MENSUAL * 100) / 100;
 }
 
 /* ── Alertas descartadas ── */
@@ -1432,7 +1487,6 @@ function renderCalendario(rows) {
     const venceLabel = `17 ${MES_CORTO[vencMes-1]} ${vencYear}`;
 
     // ── Mini-card: mes sin retención y no accionable en los próximos 30 días ──
-    console.log(`[cal] m=${m} totalRet=${totalRet} (${typeof totalRet}) isPast=${venc.isPast} dias=${venc.diasRestantes}`);
     if (Number(totalRet) < 1 && (venc.isPast || venc.diasRestantes > 30)) {
       return `<div class="cal-mini" title="Sin retención registrada — Vence ${venceLabel}">
         <span class="cal-mini-mes">${MES_CORTO[m-1]}</span>
@@ -1499,6 +1553,33 @@ function renderCalendario(rows) {
       </div>`;
     }
 
+    // ── Recargos estimados (solo si vencido y sin pago confirmado) ──
+    let recargosHtml = '';
+    if (venc.isPast && venc.diasAtraso > 0 && totalRet > 0 && !rowEx?.pagoBancarioConfirmado) {
+      const diffPend = totalRet - (rowEx?.acuseTotal || 0);
+      if (diffPend > 10) {
+        const recEst = calcRecargosEst(diffPend, venc.diasAtraso);
+        if (recEst > 0) {
+          recargosHtml = `<div style="font-size:0.58rem;color:#dc2626;font-weight:600;margin-top:2px;" title="Estimado: ${venc.diasAtraso} días × ${(TASA_RECARGOS_MENSUAL*100).toFixed(2)}%/mes. No incluye INPC ni multas.">
+            ⚠️ Recargos est. ${fmt(recEst)}</div>`;
+        }
+      }
+    }
+
+    // ── CTA: importar comprobante bancario (si hay retención y no está confirmado) ──
+    let ctaHtml = '';
+    if (totalRet > 0 && !rowEx?.pagoBancarioConfirmado) {
+      const ctaColor = rowEx?.lineaCaptura1 || rowEx?.acuseTotal > 0 ? '#1d4ed8' : '#6b7280';
+      const ctaTitle = rowEx?.lineaCaptura1 || rowEx?.acuseTotal > 0
+        ? 'LCs importadas — importa el comprobante bancario para completar el proceso'
+        : 'Importa el comprobante de pago bancario cuando realices el pago al SAT';
+      ctaHtml = `<button onclick="event.stopPropagation();document.getElementById('btn-bbva-recibo')?.click()"
+        title="${ctaTitle}"
+        style="margin-top:5px;width:100%;font-size:0.55rem;font-weight:700;padding:3px 6px;border-radius:4px;border:1px solid ${ctaColor};color:${ctaColor};background:transparent;cursor:pointer;letter-spacing:0.03em;text-align:center;">
+        📄 Importar comprobante de pago
+      </button>`;
+    }
+
     return `
       <div class="cal-card ${cls}" title="Retención ${MES_NOMBRES[m-1]} ${selectedYear} — Vence ${venceLabel}">
         <div class="cal-mes">${MES_CORTO[m-1]} <span style="font-weight:400;opacity:0.6;font-size:0.62rem;">${selectedYear}</span></div>
@@ -1506,8 +1587,10 @@ function renderCalendario(rows) {
         ${amountHtml}
         <div class="cal-badge ${badgeCls}">${badgeText}</div>
         ${diasLabel ? `<div class="cal-dias">${diasLabel}</div>` : ''}
+        ${recargosHtml}
         ${rowEx?.pagoBancarioConfirmado ? `<div style="font-size:0.6rem;color:#1d4ed8;font-weight:700;margin-top:2px;letter-spacing:0.04em;">🏦 Verif. banco</div>` : ''}
         ${calProcHtml}
+        ${ctaHtml}
       </div>`;
     } catch(e) {
       console.error('[renderCalendario] Error en fila m=' + (row?.m) + ':', e);
@@ -1703,13 +1786,13 @@ function renderTable() {
       <td style="font-family:var(--brand); font-weight:700; color:var(--navy);">
         ${row.mesLabel}${autoTag}${ovTag}
       </td>
-      <td class="num">${row.asimR>0?'$'+fmtNum(row.asimR):'—'}</td>
-      <td class="num" style="color:var(--green);">${row.asimP>0?'$'+fmtNum(row.asimP):'—'}</td>
-      <td class="num">${row.isrHonR>0?'$'+fmtNum(row.isrHonR):'—'}</td>
-      <td class="num" style="color:var(--green);">${row.isrHonP>0?'$'+fmtNum(row.isrHonP):'—'}</td>
-      <td class="num">${row.ivaHonR>0?'$'+fmtNum(row.ivaHonR):'—'}</td>
-      <td class="num" style="color:var(--green);">${row.ivaHonP>0?'$'+fmtNum(row.ivaHonP):'—'}</td>
-      <td class="num">
+      <td class="num col-detail">${row.asimR>0?'$'+fmtNum(row.asimR):'—'}</td>
+      <td class="num col-detail" style="color:var(--green);">${row.asimP>0?'$'+fmtNum(row.asimP):'—'}</td>
+      <td class="num col-detail">${row.isrHonR>0?'$'+fmtNum(row.isrHonR):'—'}</td>
+      <td class="num col-detail" style="color:var(--green);">${row.isrHonP>0?'$'+fmtNum(row.isrHonP):'—'}</td>
+      <td class="num col-detail">${row.ivaHonR>0?'$'+fmtNum(row.ivaHonR):'—'}</td>
+      <td class="num col-detail" style="color:var(--green);">${row.ivaHonP>0?'$'+fmtNum(row.ivaHonP):'—'}</td>
+      <td class="num col-detail">
         <input type="number" class="inline-input inline-isrPm${row.dirtyPm?' dirty':''}"
           value="${row.isrPmRaw}" min="0" step="any" placeholder="—"
           oninput="markDirty('${row.key}','isrPm',this.value)" />
@@ -1719,7 +1802,7 @@ function renderTable() {
       <td class="num" style="color:${row.diff>0?'#a84400':row.diff<0?'var(--red)':'var(--text-dim)'};">
         ${row.diff!==0?'$'+fmtNum(row.diff):'—'}
       </td>
-      <td>
+      <td class="col-detail">
         <input type="date" class="inline-input inline-fechaPagoReal${row.dirtyFp?' dirty':''}"
           value="${row.fechaPago}" style="min-width:110px;"
           onchange="markDirty('${row.key}','fechaPagoReal',this.value)" />
@@ -1900,17 +1983,18 @@ function renderTable() {
   document.getElementById('ret-tfoot').innerHTML = `
     <tr>
       <td style="font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase;">TOTALES ${selectedYear}</td>
-      <td class="num">$${fmtNum(tAsimR)}</td>
-      <td class="num" style="color:var(--green);">$${fmtNum(tAsimP)}</td>
-      <td class="num">$${fmtNum(tIsrHonR)}</td>
-      <td class="num" style="color:var(--green);">$${fmtNum(tIsrHonP)}</td>
-      <td class="num">$${fmtNum(tIvaHonR)}</td>
-      <td class="num" style="color:var(--green);">$${fmtNum(tIvaHonP)}</td>
-      <td class="num">$${fmtNum(tIsrPm)}</td>
+      <td class="num col-detail">$${fmtNum(tAsimR)}</td>
+      <td class="num col-detail" style="color:var(--green);">$${fmtNum(tAsimP)}</td>
+      <td class="num col-detail">$${fmtNum(tIsrHonR)}</td>
+      <td class="num col-detail" style="color:var(--green);">$${fmtNum(tIsrHonP)}</td>
+      <td class="num col-detail">$${fmtNum(tIvaHonR)}</td>
+      <td class="num col-detail" style="color:var(--green);">$${fmtNum(tIvaHonP)}</td>
+      <td class="num col-detail">$${fmtNum(tIsrPm)}</td>
       <td class="num" style="font-size:0.82rem;">$${fmtNum(tTotR)}</td>
       <td class="num" style="color:var(--green); font-size:0.82rem;">$${fmtNum(tTotP)}</td>
       <td class="num" style="color:${totDiff>0?'#a84400':'var(--text-dim)'};">$${fmtNum(totDiff)}</td>
-      <td colspan="3"></td>
+      <td class="col-detail"></td>
+      <td colspan="2"></td>
     </tr>`;
 }
 
@@ -3496,6 +3580,7 @@ try {
   }
 } catch(e) {}
 
+_initTablaCompacta();
 renderTable();
 
 /* ── Botón "Enviar a Telegram" en panel de anomalías ── */
