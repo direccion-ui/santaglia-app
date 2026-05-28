@@ -3816,13 +3816,20 @@
     }
 
     function _parsearComprobanteBBVA(txt) {
-      // Detectar que sea un comprobante BBVA (no un estado de cuenta)
+      // Detectar que sea comprobante BBVA (no estado de cuenta)
       if (!/Folio de Internet/i.test(txt) && !/COMPROBANTE/i.test(txt)) return null;
       if (!/BBVA/i.test(txt)) return null;
 
-      const get = (pattern) => { const m = txt.match(pattern); return m ? m[1].trim() : ''; };
+      const get = (re) => { const m = txt.match(re); return m ? m[1].trim() : ''; };
 
-      // Extraer fecha — formatos: DD/MM/YYYY o DD/MM/YY
+      // ── Campos con patrón específico (numérico/fecha/divisa) — muy confiables ──
+      const cuentaRetiro   = get(/Cuenta de retiro[:\s]+(\d{5,})/i);
+      const cuentaDeposito = get(/Cuenta de dep[oó]sito[:\s]+(\d{5,})/i);
+      const folio          = get(/Folio de Internet[:\s]+(\d+)/i);
+      const divisa         = get(/Divisa[:\s]+([A-Z]{3})/i) || 'MXN';
+      const importeRaw     = get(/Importe[:\s]+\$?\s*([\d,]+\.?\d*)/i).replace(/,/g,'');
+      const importe        = parseFloat(importeRaw) || 0;
+
       const fechaRaw = get(/Fecha de operaci[oó]n[:\s]+(\d{2}\/\d{2}\/\d{2,4})/i);
       let fecha = '';
       if (fechaRaw) {
@@ -3831,32 +3838,31 @@
         fecha = `${year}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
       }
 
-      // Importe
-      const importeRaw = get(/Importe[:\s]+\$?\s*([\d,]+\.?\d*)/i).replace(/,/g, '');
-      const importe    = parseFloat(importeRaw) || 0;
+      // ── Campos de texto: lookahead para detenerse en el SIGUIENTE campo BBVA ──
+      // El PDF.js une todo en una línea; sin terminador se captura el resto del documento
+      const TERM = String.raw`(?=\s+(?:Cuenta de (?:retiro|dep)|Nombre (?:del tercero|corto)|` +
+                   String.raw`Fecha de operaci|Importe:|Divisa:|Concepto de pago:|` +
+                   String.raw`Folio de Internet:|El env[ií]o|BBVA M[eé]xico|Cerrar)|$)`;
+      const tget = (label) => {
+        const re = new RegExp(label + String.raw`[:\s]+(.+?)` + TERM, 'is');
+        return (txt.match(re)?.[1] || '').trim();
+      };
 
-      // Beneficiario y otros campos
-      const nombreTercero  = get(/Nombre del tercero[:\s]+([^\n\r]+)/i);
-      const nombreCorto    = get(/Nombre corto[:\s]+([^\n\r]+)/i);
-      const cuentaRetiro   = get(/Cuenta de retiro[:\s]+(\d+)/i);
-      const cuentaDeposito = get(/Cuenta de dep[oó]sito[:\s]+(\d+)/i);
-      const folio          = get(/Folio de Internet[:\s]+(\d+)/i);
-      const conceptoPago   = get(/Concepto de pago[:\s]+([^\n\r]+)/i);
-      const divisa         = get(/Divisa[:\s]+([A-Z]{3})/i) || 'MXN';
+      const nombreTercero = tget('Nombre del tercero');
+      const nombreCorto   = tget('Nombre corto');
+      const conceptoPago  = tget('Concepto de pago');
 
-      // Detectar tipo por concepto de pago
+      // Tipo detectado por concepto de pago
       let tipo = 'Gastos operativos';
-      const cp = conceptoPago.toLowerCase();
-      if (/asimilable/i.test(cp))       tipo = 'Nómina';
-      else if (/honorar/i.test(cp))     tipo = 'Honorarios';
-      else if (/traspaso|propio/i.test(cp)) tipo = 'Traspaso';
-      else if (/proveedor/i.test(cp))   tipo = 'Proveedor';
+      if (/asimilable/i.test(conceptoPago))           tipo = 'Nómina';
+      else if (/honorar/i.test(conceptoPago))         tipo = 'Honorarios';
+      else if (/traspaso|propio|mismo/i.test(conceptoPago)) tipo = 'Traspaso';
+      else if (/proveedor/i.test(conceptoPago))       tipo = 'Proveedor';
 
-      // Concepto legible
-      const nombreRef  = nombreTercero || nombreCorto || 'Beneficiario desconocido';
-      const concepto   = tipo === 'Nómina'
+      const nombreRef = nombreTercero || nombreCorto || 'Beneficiario';
+      const concepto  = tipo === 'Nómina'
         ? `Nómina ${_toTitleCase(nombreRef)}`
-        : `${tipo} ${_toTitleCase(nombreRef)}`;
+        : `${tipo} — ${_toTitleCase(nombreRef)}`;
 
       return { fecha, importe, divisa, nombreTercero, nombreCorto, cuentaRetiro,
                cuentaDeposito, folio, conceptoPago, tipo, concepto };
@@ -3866,24 +3872,39 @@
       return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
     }
 
+    /* Busca en stgl_nomina empleados cuyo nombre coincida con palabras del PDF */
+    function _buscarEnNomina(nombrePDF) {
+      const nomina  = loadRegistry('stgl_nomina') || [];
+      const palabras = (nombrePDF || '').toUpperCase().split(/\s+/).filter(p => p.length > 2);
+      let match = null;
+      for (const emp of nomina) {
+        const n = (emp.nombre || emp.name || emp.empleado || '').toUpperCase();
+        if (palabras.length && palabras.some(p => n.includes(p))) {
+          match = _toTitleCase(emp.nombre || emp.name || emp.empleado); break;
+        }
+      }
+      const todos = nomina.map(e => _toTitleCase(e.nombre || e.name || e.empleado || '')).filter(Boolean);
+      return { match, todos };
+    }
+
     function _mostrarConfirmacionComprobante(datos) {
       _compData = datos;
 
-      // Resumen extraído
-      const resumen = document.getElementById('comp-resumen');
-      resumen.innerHTML = [
-        ['🏦 Banco', 'BBVA Empresas'],
-        ['📅 Fecha', datos.fecha || '—'],
-        ['💰 Importe', datos.importe ? `$${datos.importe.toLocaleString('es-MX', {minimumFractionDigits:2})} ${datos.divisa}` : '—'],
-        ['👤 Beneficiario', _toTitleCase(datos.nombreTercero || datos.nombreCorto) || '—'],
-        ['🔑 Folio', datos.folio || '—'],
+      // Resumen limpio (solo datos clave)
+      const nombreLegible = _toTitleCase(datos.nombreTercero || datos.nombreCorto) || '—';
+      document.getElementById('comp-resumen').innerHTML = [
+        ['🏦 Banco',         'BBVA Empresas'],
+        ['📅 Fecha',         datos.fecha || '—'],
+        ['💰 Importe',       datos.importe
+          ? `$${datos.importe.toLocaleString('es-MX',{minimumFractionDigits:2})} ${datos.divisa}` : '—'],
+        ['👤 Beneficiario',  nombreLegible],
+        ['🔑 Folio',         datos.folio || '—'],
         ['📋 Concepto BBVA', datos.conceptoPago || '—'],
       ].map(([k,v]) => `<div style="color:var(--text-dim)">${k}</div><div style="font-weight:600">${v}</div>`).join('');
 
-      // Pre-llenar campos editables
+      // Fecha e importe
       document.getElementById('comp-fecha').value   = datos.fecha;
       document.getElementById('comp-importe').value = datos.importe;
-      document.getElementById('comp-concepto').value = datos.concepto;
       document.getElementById('comp-folio').value   = datos.folio
         ? `Folio BBVA: ${datos.folio}`
         : (datos.cuentaDeposito ? `Cta. depósito: ${datos.cuentaDeposito}` : '');
@@ -3894,12 +3915,39 @@
         if (opt.value === datos.tipo) { opt.selected = true; break; }
       }
 
-      // Cuentas — intentar pre-seleccionar por número de cuenta
+      // ── Concepto inteligente ──
+      const conceptoInput = document.getElementById('comp-concepto');
+      // Limpiar datalist anterior
+      const dlViejo = document.getElementById('comp-concepto-dl');
+      if (dlViejo) dlViejo.remove();
+      conceptoInput.removeAttribute('list');
+
+      if (datos.tipo === 'Nómina') {
+        // Buscar match en la nómina registrada
+        const { match, todos } = _buscarEnNomina(datos.nombreTercero || datos.nombreCorto);
+        conceptoInput.value = match ? `Nómina ${match}` : datos.concepto;
+        if (todos.length) {
+          // Inyectar datalist con todos los empleados para autocompletar
+          const dl = document.createElement('datalist');
+          dl.id = 'comp-concepto-dl';
+          todos.forEach(n => {
+            const o = document.createElement('option'); o.value = `Nómina ${n}`; dl.appendChild(o);
+          });
+          conceptoInput.parentNode.appendChild(dl);
+          conceptoInput.setAttribute('list', 'comp-concepto-dl');
+          if (!match && todos.length) {
+            conceptoInput.placeholder = 'Escribe el nombre o elige de la lista ▾';
+          }
+        }
+      } else {
+        conceptoInput.value = datos.concepto;
+      }
+
+      // Cuentas — pre-seleccionar por últimos 4 dígitos del número de retiro
       const cuentas = loadRegistry('stgl_saldos') || [];
       const cuentaSel = document.getElementById('comp-cuenta');
       cuentaSel.innerHTML = '<option value="">— Seleccionar cuenta —</option>' +
         cuentas.map(c => `<option value="${c.cuenta}">${c.cuenta} (${c.moneda || 'MXN'})</option>`).join('');
-      // Buscar match por últimos 4 dígitos del número de cuenta de retiro
       if (datos.cuentaRetiro) {
         const sufijo = datos.cuentaRetiro.slice(-4);
         for (const opt of cuentaSel.options) {
@@ -3909,7 +3957,6 @@
         }
       }
 
-      // Mostrar paso 2
       document.getElementById('comp-step1').style.display = 'none';
       document.getElementById('comp-step2').style.display = '';
       document.getElementById('comp-save-btn').style.display = '';
