@@ -302,6 +302,7 @@
               <button class="btn btn-ghost" onclick="abrirImportCSVUniversal()" style="font-size:0.72rem;" title="Importar CSV de cualquier banco o tarjeta — detección automática de columnas">📊 CSV</button>
               <input type="file" id="csv-universal-input" accept=".csv,.tsv,.txt" style="display:none;" onchange="procesarCSVUniversal(this)" />
               <button id="btn-limpiar-csv-malo" class="btn btn-ghost" onclick="limpiarCSVMalImportado()" style="display:none;font-size:0.72rem;color:var(--gold);border-color:var(--gold);">🧹</button>
+              <button class="btn btn-ghost" onclick="abrirImportComprobante()" style="font-size:0.72rem;" title="Registrar pago con comprobante bancario BBVA — sin esperar el CFDI">🧾 Comp.</button>
               <button class="btn btn-ghost" onclick="abrirCFDIGasto()" style="font-size:0.72rem;" title="Importar CFDIs de gastos">📎 CFDI</button>
               <button class="btn btn-ghost" onclick="abrirFX()" style="font-size:0.72rem;" title="Registrar operación de cambio de divisas">💱 FX</button>
               <button class="btn btn-primary" onclick="abrirNuevoMov()" style="font-size:0.72rem;">+ Movimiento</button>
@@ -753,6 +754,100 @@
       <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:flex-end;padding:0.9rem 1.25rem;border-top:1px solid var(--border);">
         <button class="btn btn-ghost" onclick="closeModal('modal-csv-universal')">Cancelar</button>
         <button class="btn btn-primary" id="csv-import-btn" onclick="confirmarCSVUniversal()">↓ Importar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: registrar comprobante de pago BBVA ══ -->
+  <div class="modal-backdrop hidden" id="modal-comprobante">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <span class="modal-title">🧾 Registrar comprobante de pago</span>
+        <button class="modal-close" onclick="cerrarModalComprobante()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1rem;">
+
+        <!-- Paso 1: drop zone -->
+        <div id="comp-step1">
+          <div id="comp-dropzone"
+            ondragover="event.preventDefault();this.style.borderColor='var(--navy)'"
+            ondragleave="this.style.borderColor='var(--border)'"
+            ondrop="dropComprobante(event)"
+            onclick="document.getElementById('comp-file-input').click()"
+            style="border:2px dashed var(--border);border-radius:8px;padding:2rem 1rem;
+                   text-align:center;cursor:pointer;transition:border-color .2s;color:var(--text-dim);">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">🧾</div>
+            <div style="font-family:var(--brand);font-size:0.75rem;font-weight:700;color:var(--navy);">
+              Arrastra el comprobante BBVA aquí
+            </div>
+            <div style="font-size:0.65rem;margin-top:0.3rem;">
+              o haz clic para seleccionar el PDF
+            </div>
+            <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.5rem;">
+              Soporta comprobantes de traspasos y transferencias BBVA Empresas
+            </div>
+          </div>
+          <input type="file" id="comp-file-input" accept=".pdf" style="display:none;"
+            onchange="procesarComprobantePDF(this.files[0])"/>
+          <div id="comp-progress" style="display:none;text-align:center;padding:1rem;
+               font-size:0.75rem;color:var(--text-dim);">⏳ Leyendo PDF…</div>
+        </div>
+
+        <!-- Paso 2: confirmación y edición -->
+        <div id="comp-step2" style="display:none;">
+          <!-- Resumen extraído -->
+          <div id="comp-resumen" style="background:#f0faf4;border:1px solid #86efac;border-radius:6px;
+               padding:0.65rem 0.9rem;margin-bottom:0.9rem;font-size:0.7rem;display:grid;
+               grid-template-columns:1fr 1fr;gap:0.2rem 1rem;"></div>
+
+          <!-- Campos editables -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 1rem;">
+            <label style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem;font-weight:600;color:var(--text-dim);">
+              Fecha
+              <input id="comp-fecha" type="date" class="input" style="font-size:0.78rem;"/>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem;font-weight:600;color:var(--text-dim);">
+              Importe (MXN)
+              <input id="comp-importe" type="number" step="0.01" class="input" style="font-size:0.78rem;"/>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem;font-weight:600;color:var(--text-dim);grid-column:1/-1;">
+              Concepto / descripción
+              <input id="comp-concepto" type="text" class="input" style="font-size:0.78rem;" placeholder="Ej: Nómina Ana María"/>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem;font-weight:600;color:var(--text-dim);">
+              Tipo
+              <select id="comp-tipo" class="input" style="font-size:0.78rem;">
+                <option value="Nómina">Nómina</option>
+                <option value="Honorarios">Honorarios</option>
+                <option value="Gastos operativos">Gastos operativos</option>
+                <option value="Proveedor">Proveedor</option>
+                <option value="Traspaso">Traspaso</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem;font-weight:600;color:var(--text-dim);">
+              Cuenta origen
+              <select id="comp-cuenta" class="input" style="font-size:0.78rem;"></select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem;font-weight:600;color:var(--text-dim);grid-column:1/-1;">
+              Folio / referencia
+              <input id="comp-folio" type="text" class="input" style="font-size:0.78rem;color:var(--text-dim);" readonly/>
+            </label>
+          </div>
+
+          <!-- Aviso CFDI pendiente -->
+          <div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:#fefce8;border:1px solid #fde047;
+               border-radius:6px;font-size:0.65rem;color:#854d0e;">
+            ⏳ <strong>Pendiente de CFDI</strong> — El movimiento se registra hoy con el folio bancario.
+            Cuando el despacho entregue el comprobante fiscal, se vinculará automáticamente.
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="gap:0.5rem;">
+        <button class="btn btn-ghost" onclick="cerrarModalComprobante()">Cancelar</button>
+        <button id="comp-save-btn" class="btn btn-primary" onclick="guardarComprobante()"
+          style="display:none;">✅ Registrar movimiento</button>
       </div>
     </div>
   </div>
@@ -3659,6 +3754,228 @@
     })();
 
     let __pdfRows = []; // parsed rows for preview
+
+    /* ══════════════════════════════════════════════════════════════
+       IMPORTAR COMPROBANTE DE PAGO BBVA
+       Registra salidas de fondos al momento del pago, sin esperar CFDI
+       ══════════════════════════════════════════════════════════════ */
+
+    let _compData = null; // datos extraídos del comprobante activo
+
+    function abrirImportComprobante() {
+      _compData = null;
+      document.getElementById('comp-step1').style.display = '';
+      document.getElementById('comp-step2').style.display = 'none';
+      document.getElementById('comp-progress').style.display = 'none';
+      document.getElementById('comp-save-btn').style.display = 'none';
+      document.getElementById('comp-file-input').value = '';
+      document.getElementById('modal-comprobante').classList.remove('hidden');
+    }
+
+    function cerrarModalComprobante() {
+      document.getElementById('modal-comprobante').classList.add('hidden');
+      _compData = null;
+    }
+
+    function dropComprobante(event) {
+      event.preventDefault();
+      document.getElementById('comp-dropzone').style.borderColor = 'var(--border)';
+      const file = event.dataTransfer.files[0];
+      if (!file || file.type !== 'application/pdf') {
+        toast('Por favor arrastra un archivo PDF', 'error'); return;
+      }
+      procesarComprobantePDF(file);
+    }
+
+    async function procesarComprobantePDF(file) {
+      if (!file) return;
+      if (!window.pdfjsLib) { toast('PDF.js no disponible — recarga la página', 'error'); return; }
+
+      document.getElementById('comp-progress').style.display = 'block';
+      try {
+        const ab  = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+        let   txt = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const tc   = await page.getTextContent();
+          txt += tc.items.map(i => i.str).join(' ') + '\n';
+        }
+        document.getElementById('comp-progress').style.display = 'none';
+        const datos = _parsearComprobanteBBVA(txt);
+        if (!datos) {
+          toast('No se reconoció como comprobante BBVA. Verifica que sea un comprobante de traspaso.', 'error');
+          return;
+        }
+        _mostrarConfirmacionComprobante(datos);
+      } catch(e) {
+        document.getElementById('comp-progress').style.display = 'none';
+        toast('Error al leer PDF: ' + e.message, 'error');
+        console.error(e);
+      }
+    }
+
+    function _parsearComprobanteBBVA(txt) {
+      // Detectar que sea un comprobante BBVA (no un estado de cuenta)
+      if (!/Folio de Internet/i.test(txt) && !/COMPROBANTE/i.test(txt)) return null;
+      if (!/BBVA/i.test(txt)) return null;
+
+      const get = (pattern) => { const m = txt.match(pattern); return m ? m[1].trim() : ''; };
+
+      // Extraer fecha — formatos: DD/MM/YYYY o DD/MM/YY
+      const fechaRaw = get(/Fecha de operaci[oó]n[:\s]+(\d{2}\/\d{2}\/\d{2,4})/i);
+      let fecha = '';
+      if (fechaRaw) {
+        const [d, mo, y] = fechaRaw.split('/');
+        const year = y.length === 2 ? '20' + y : y;
+        fecha = `${year}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      }
+
+      // Importe
+      const importeRaw = get(/Importe[:\s]+\$?\s*([\d,]+\.?\d*)/i).replace(/,/g, '');
+      const importe    = parseFloat(importeRaw) || 0;
+
+      // Beneficiario y otros campos
+      const nombreTercero  = get(/Nombre del tercero[:\s]+([^\n\r]+)/i);
+      const nombreCorto    = get(/Nombre corto[:\s]+([^\n\r]+)/i);
+      const cuentaRetiro   = get(/Cuenta de retiro[:\s]+(\d+)/i);
+      const cuentaDeposito = get(/Cuenta de dep[oó]sito[:\s]+(\d+)/i);
+      const folio          = get(/Folio de Internet[:\s]+(\d+)/i);
+      const conceptoPago   = get(/Concepto de pago[:\s]+([^\n\r]+)/i);
+      const divisa         = get(/Divisa[:\s]+([A-Z]{3})/i) || 'MXN';
+
+      // Detectar tipo por concepto de pago
+      let tipo = 'Gastos operativos';
+      const cp = conceptoPago.toLowerCase();
+      if (/asimilable/i.test(cp))       tipo = 'Nómina';
+      else if (/honorar/i.test(cp))     tipo = 'Honorarios';
+      else if (/traspaso|propio/i.test(cp)) tipo = 'Traspaso';
+      else if (/proveedor/i.test(cp))   tipo = 'Proveedor';
+
+      // Concepto legible
+      const nombreRef  = nombreTercero || nombreCorto || 'Beneficiario desconocido';
+      const concepto   = tipo === 'Nómina'
+        ? `Nómina ${_toTitleCase(nombreRef)}`
+        : `${tipo} ${_toTitleCase(nombreRef)}`;
+
+      return { fecha, importe, divisa, nombreTercero, nombreCorto, cuentaRetiro,
+               cuentaDeposito, folio, conceptoPago, tipo, concepto };
+    }
+
+    function _toTitleCase(s) {
+      return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function _mostrarConfirmacionComprobante(datos) {
+      _compData = datos;
+
+      // Resumen extraído
+      const resumen = document.getElementById('comp-resumen');
+      resumen.innerHTML = [
+        ['🏦 Banco', 'BBVA Empresas'],
+        ['📅 Fecha', datos.fecha || '—'],
+        ['💰 Importe', datos.importe ? `$${datos.importe.toLocaleString('es-MX', {minimumFractionDigits:2})} ${datos.divisa}` : '—'],
+        ['👤 Beneficiario', _toTitleCase(datos.nombreTercero || datos.nombreCorto) || '—'],
+        ['🔑 Folio', datos.folio || '—'],
+        ['📋 Concepto BBVA', datos.conceptoPago || '—'],
+      ].map(([k,v]) => `<div style="color:var(--text-dim)">${k}</div><div style="font-weight:600">${v}</div>`).join('');
+
+      // Pre-llenar campos editables
+      document.getElementById('comp-fecha').value   = datos.fecha;
+      document.getElementById('comp-importe').value = datos.importe;
+      document.getElementById('comp-concepto').value = datos.concepto;
+      document.getElementById('comp-folio').value   = datos.folio
+        ? `Folio BBVA: ${datos.folio}`
+        : (datos.cuentaDeposito ? `Cta. depósito: ${datos.cuentaDeposito}` : '');
+
+      // Tipo
+      const tipoSel = document.getElementById('comp-tipo');
+      for (const opt of tipoSel.options) {
+        if (opt.value === datos.tipo) { opt.selected = true; break; }
+      }
+
+      // Cuentas — intentar pre-seleccionar por número de cuenta
+      const cuentas = loadRegistry('stgl_saldos') || [];
+      const cuentaSel = document.getElementById('comp-cuenta');
+      cuentaSel.innerHTML = '<option value="">— Seleccionar cuenta —</option>' +
+        cuentas.map(c => `<option value="${c.cuenta}">${c.cuenta} (${c.moneda || 'MXN'})</option>`).join('');
+      // Buscar match por últimos 4 dígitos del número de cuenta de retiro
+      if (datos.cuentaRetiro) {
+        const sufijo = datos.cuentaRetiro.slice(-4);
+        for (const opt of cuentaSel.options) {
+          if (opt.value.toLowerCase().includes('bbva') || opt.value.slice(-4) === sufijo) {
+            opt.selected = true; break;
+          }
+        }
+      }
+
+      // Mostrar paso 2
+      document.getElementById('comp-step1').style.display = 'none';
+      document.getElementById('comp-step2').style.display = '';
+      document.getElementById('comp-save-btn').style.display = '';
+    }
+
+    function guardarComprobante() {
+      const fecha    = document.getElementById('comp-fecha').value;
+      const importe  = parseFloat(document.getElementById('comp-importe').value);
+      const concepto = document.getElementById('comp-concepto').value.trim();
+      const tipo     = document.getElementById('comp-tipo').value;
+      const cuenta   = document.getElementById('comp-cuenta').value;
+      const folioEl  = document.getElementById('comp-folio').value.trim();
+
+      if (!fecha)    { toast('Indica la fecha del pago', 'error'); return; }
+      if (!importe)  { toast('El importe no puede ser cero', 'error'); return; }
+      if (!concepto) { toast('Agrega un concepto', 'error'); return; }
+      if (!cuenta)   { toast('Selecciona la cuenta de origen', 'error'); return; }
+
+      // Extraer folio del campo para usar como ID único
+      const folioNum = (_compData?.folio) || (Date.now().toString(36));
+
+      // Verificar que no esté ya importado
+      const manuales = loadRegistry('stgl_mov_manual') || [];
+      const yaExiste = manuales.some(m => m.folio === folioEl || m.id === `COMP-${folioNum}`);
+      if (yaExiste) {
+        toast(`Este comprobante (folio ${_compData?.folio || folioNum}) ya fue registrado.`, 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('comp-save-btn');
+      btn.disabled = true; btn.textContent = '⏳ Guardando…';
+
+      const hoy  = new Date().toISOString().slice(0, 10);
+      const mov  = {
+        id:             `COMP-${folioNum}`,
+        fecha,
+        fecha_registro: hoy,
+        mov:            'Egresos',
+        tipo,
+        desc:           'Comprobante bancario BBVA',
+        concepto,
+        cuentaCont:     '',
+        folio:          folioEl,
+        cuenta,
+        origen:         cuenta,
+        dest:           _compData?.cuentaDeposito || '',
+        entradas:       null,
+        salidas:        importe,
+        origenRef:      'comprobante_bbva',
+        cfdi_pendiente: true,   // marcador para vincular CFDI posterior
+        _saldoAjustado: true,
+      };
+
+      manuales.push(mov);
+      saveRegistry('stgl_mov_manual', manuales);
+
+      toast(`✅ Movimiento registrado — $${importe.toLocaleString('es-MX', {minimumFractionDigits:2})} (Pendiente CFDI)`, 'success');
+      cerrarModalComprobante();
+      btn.disabled = false; btn.textContent = '✅ Registrar movimiento';
+
+      // Refrescar la vista de movimientos si está activa
+      if (typeof renderMovimientos === 'function') renderMovimientos();
+      else if (typeof _renderVistaContador === 'function') _renderVistaContador();
+    }
+
+    /* ══ fin comprobante ══ */
 
     function abrirImportPDF() {
       // Populate account selector
