@@ -1431,6 +1431,8 @@ function fmtNum(n)  { return Number(n||0).toLocaleString('es-MX',{minimumFractio
 function fmtM(n)    { return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(1)+'K'; }
 function parseNum(s){ return parseFloat((s||'0').toString().replace(/,/g,''))||0; }
 function fv(id)     { return parseFloat(document.getElementById(id)?.value||'0')||0; }
+/* fmt — formateador de pesos sin decimales (uso en Vista Director y Calendario) */
+function fmt(n)     { return '$' + Number(n||0).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 
 /* ── Parsear mes fiscal "Mar-26" → {año, mes} ── */
 function parseMesFiscal(mf) {
