@@ -479,12 +479,12 @@
         </div>
         <!-- View mode segmented control -->
         <div style="display:flex;background:#f1f5f9;border-radius:8px;padding:3px;gap:2px;border:1px solid #e2e8f0;">
-          <button id="tab-btn-director" onclick="toggleVistaDirector()" title="Vista ejecutiva: semáforo, vencidos, proyección de flujo"
+          <button id="tab-btn-director" onclick="_setVistaDirector(true)" title="Vista ejecutiva: semáforo, vencidos, proyección de flujo"
             style="font-size:0.67rem;font-family:var(--brand);font-weight:700;padding:0.28rem 0.85rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.18s;letter-spacing:0.03em;
                    background:transparent;color:#64748b;">
             👔 Director
           </button>
-          <button id="tab-btn-contador" onclick="toggleVistaDirector()" title="Vista detalle: calendario fiscal + tabla de retenciones"
+          <button id="tab-btn-contador" onclick="_setVistaDirector(false)" title="Vista detalle: calendario fiscal + tabla de retenciones"
             style="font-size:0.67rem;font-family:var(--brand);font-weight:700;padding:0.28rem 0.85rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.18s;letter-spacing:0.03em;
                    background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(26,45,128,0.18);">
             📊 Contador
@@ -1173,23 +1173,28 @@ function _setVistaDirector(activa) {
   // Tabs en el header
   const tabDir = document.getElementById('tab-btn-director');
   const tabCnt = document.getElementById('tab-btn-contador');
-  const tabActiveStyle  = 'background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(26,45,128,0.18);';
-  const tabInactiveStyle = 'background:transparent;color:#64748b;box-shadow:none;';
+
+  function _applyTabStyle(btn, isActive) {
+    if (!btn) return;
+    btn.style.background   = isActive ? 'var(--navy)' : 'transparent';
+    btn.style.color        = isActive ? '#fff' : '#64748b';
+    btn.style.boxShadow    = isActive ? '0 1px 4px rgba(26,45,128,0.18)' : 'none';
+  }
 
   if (activa) {
     // VISTA DIRECTOR: mostrar panel director, ocultar calendario + tabla
     if (vd)      { vd.style.display = 'block'; renderVistaDirector(); }
     if (vcPanel) vcPanel.style.display = 'none';
     if (tblPanel) tblPanel.style.display = 'none';
-    if (tabDir) tabDir.style.cssText += tabActiveStyle;
-    if (tabCnt) tabCnt.style.cssText += tabInactiveStyle;
+    _applyTabStyle(tabDir, true);
+    _applyTabStyle(tabCnt, false);
   } else {
     // VISTA CONTADOR: mostrar calendario + tabla, ocultar panel director
     if (vd)      vd.style.display = 'none';
     if (vcPanel) vcPanel.style.display = '';
     if (tblPanel) tblPanel.style.display = '';
-    if (tabDir) tabDir.style.cssText += tabInactiveStyle;
-    if (tabCnt) tabCnt.style.cssText += tabActiveStyle;
+    _applyTabStyle(tabDir, false);
+    _applyTabStyle(tabCnt, true);
     renderTable(); // re-render para que anomalia-panel aparezca si aplica
   }
 }
