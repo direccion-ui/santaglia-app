@@ -5242,6 +5242,8 @@ function limpiarCSVMalImportado() {
       ].map(v => Math.min(v, 9.99));
 
       if (_finWCChart) { _finWCChart.destroy(); _finWCChart = null; }
+      /* Escala dinámica del eje Y de ácido — mínimo 2.0, siempre deja margen arriba */
+      const acidMax = Math.max(2.0, Math.ceil(Math.max(...acid.filter(isFinite)) * 1.25 * 2) / 2);
       _finWCChart = new Chart(ctx, {
         data: {
           labels,
@@ -5250,21 +5252,30 @@ function limpiarCSVMalImportado() {
               type: 'bar',
               label: 'Capital de Trabajo (MXN)',
               data: wc,
-              backgroundColor: wc.map(v => v >= 0 ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)'),
-              borderColor:     wc.map(v => v >= 0 ? 'rgba(34,197,94,1)'   : 'rgba(239,68,68,1)'),
+              backgroundColor: wc.map(v => v >= 0 ? 'rgba(34,197,94,0.45)' : 'rgba(239,68,68,0.45)'),
+              borderColor:     wc.map(v => v >= 0 ? 'rgba(34,197,94,0.9)'  : 'rgba(239,68,68,0.9)'),
               borderWidth: 1,
               yAxisID: 'y',
+              order: 2,           /* barras detrás */
             },
             {
               type: 'line',
               label: 'Prueba del Ácido',
               data: acid,
-              borderColor: 'rgba(26,45,128,0.85)',
-              backgroundColor: 'rgba(26,45,128,0.08)',
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              tension: 0.3,
+              borderColor: 'rgba(234,88,12,1)',          /* naranja Santaglia */
+              backgroundColor: 'rgba(234,88,12,0.10)',
+              pointBackgroundColor: 'rgba(234,88,12,1)',
+              pointRadius: 6,
+              pointHoverRadius: 9,
+              borderWidth: 2.5,
+              fill: false,
+              tension: 0.35,
               yAxisID: 'y2',
+              order: 1,           /* línea encima de barras */
+              /* Línea de referencia: zona saludable ≥ 1.0 */
+              segment: {
+                borderDash: ctx2 => (acid[ctx2.p0DataIndex] < 1.0 && acid[ctx2.p1DataIndex] < 1.0) ? [5,3] : undefined,
+              },
             }
           ]
         },
@@ -5272,23 +5283,27 @@ function limpiarCSVMalImportado() {
           responsive: true,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { position: 'top', labels: { font: { size: 11 } } },
+            legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } },
             tooltip: {
               callbacks: {
                 label: ctx => {
                   if (ctx.datasetIndex === 0) return ' Capital: $' + (ctx.raw||0).toLocaleString('es-MX');
-                  return ' Ácido: ' + (ctx.raw||0).toFixed(2);
+                  const color = (ctx.raw||0) >= 1.0 ? '✅' : '⚠️';
+                  return ` ${color} Ácido: ${(ctx.raw||0).toFixed(2)}x`;
                 }
               }
-            }
+            },
+            /* Línea horizontal de referencia 1.0x */
+            annotation: undefined,
           },
           scales: {
             y:  { title: { display: true, text: 'Capital de Trabajo (MXN)', font: { size: 10 } },
-                  ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'k' } },
-            y2: { position: 'right', min: 0, max: 3,
-                  title: { display: true, text: 'Prueba del Ácido', font: { size: 10 } },
-                  grid: { drawOnChartArea: false },
-                  ticks: { stepSize: 0.5 } }
+                  ticks: { callback: v => '$' + (v >= 1000 || v <= -1000 ? (v/1000).toFixed(0) + 'k' : v) } },
+            y2: { position: 'right', min: 0, max: acidMax,
+                  title: { display: true, text: 'Prueba del Ácido (×)', font: { size: 10 } },
+                  grid: { drawOnChartArea: false, color: 'rgba(234,88,12,0.08)' },
+                  ticks: { stepSize: 0.5, color: 'rgba(234,88,12,0.8)',
+                           callback: v => v.toFixed(1) + 'x' } }
           }
         }
       });
@@ -5310,20 +5325,33 @@ function limpiarCSVMalImportado() {
     const kn = document.getElementById('dir-flujo-neto');
     if (kn) { kn.textContent = (neto >= 0 ? '+' : '−') + _fmtDir(Math.abs(neto)); kn.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-    /* Top 3 categorías de egreso */
+    /* Top 3 categorías de egreso — agrupado por TIPO (no por concepto individual) */
     const egresos = movs.filter(r => parseFloat(r.salidas||0) > 0);
-    const byCat   = {};
+    const byTipo  = {};
     egresos.forEach(r => {
-      const k = r.concepto || r.tipo || 'Sin categoría';
-      byCat[k] = (byCat[k] || 0) + parseFloat(r.salidas||0);
+      /* Jerarquía: tipo → rubro → concepto → 'Sin categoría'
+         Normalización básica para unificar variantes */
+      let k = (r.tipo || r.rubro || r.concepto || 'Sin categoría').trim();
+      /* Unificar nóminas: "Nómina Asimilable", "nómina", "Nomina" → "Nómina" */
+      if (/n[oó]mina/i.test(k)) k = 'Nómina';
+      /* Unificar honorarios */
+      if (/honorario/i.test(k)) k = 'Honorarios';
+      /* Unificar retenciones SAT */
+      if (/retenci[oó]n|retenciones|sat.*ret|isr.*iva|iva.*isr/i.test(k)) k = 'Retenciones SAT';
+      byTipo[k] = (byTipo[k] || 0) + parseFloat(r.salidas||0);
     });
-    const top3 = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const top3 = Object.entries(byTipo).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const top3El = document.getElementById('dir-flujo-top3');
     if (top3El) {
       if (top3.length) {
-        top3El.innerHTML = top3.map(([k, v]) =>
-          `<div><span style="font-weight:600;">${escHtml(k)}</span> <span style="color:var(--red);">${_fmtDir(v)}</span></div>`
-        ).join('');
+        const totalSal = Object.values(byTipo).reduce((s, v) => s + v, 0);
+        top3El.innerHTML = top3.map(([k, v]) => {
+          const pct = totalSal > 0 ? (v / totalSal * 100).toFixed(0) : 0;
+          return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;">
+            <span style="font-weight:600;">${escHtml(k)}</span>
+            <span style="color:var(--red);white-space:nowrap;">${_fmtDir(v)} <span style="font-size:0.62rem;color:var(--text-xs);">${pct}%</span></span>
+          </div>`;
+        }).join('');
       } else {
         top3El.textContent = 'Sin egresos este mes';
       }
