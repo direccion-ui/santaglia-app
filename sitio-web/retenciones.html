@@ -755,6 +755,28 @@
         </div>
       </div>
 
+      <!-- ④ IVA Saldo a Favor -->
+      <div class="modal-section">
+        <div class="modal-section-title">
+          ④ IVA Saldo a Favor
+          <span style="font-size:0.6rem; font-weight:400; color:var(--text-xs); text-transform:none; letter-spacing:0; margin-left:0.5rem;">Cuando el IVA acreditable supera al causado — no hay pago, hay crédito a favor</span>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:0.6rem 0.75rem;margin-bottom:0.6rem;font-size:0.68rem;color:#166534;">
+          💚 Si en este período tienes saldo de IVA a favor del SAT, captúralo aquí. Aparecerá en el <strong>Activo Circulante → Impuestos por Recuperar</strong> del módulo Financiero.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">💰 Importe IVA a Favor ($)</label>
+            <input class="form-input" id="edit-iva-favor-importe" type="number" min="0" step="0.01" placeholder="0.00" />
+            <div class="hint-calc">Dejar en blanco si no hay saldo a favor este período</div>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">🔖 Referencia SAT (opcional)</label>
+            <input class="form-input" id="edit-iva-favor-ref" type="text" placeholder="LC / folio / núm. operación" />
+          </div>
+        </div>
+      </div>
+
       <!-- Notas -->
       <div class="form-group">
         <label class="form-label">Notas / observaciones</label>
@@ -2380,7 +2402,9 @@ function abrirEditar(key) {
   // evita mostrar datos residuales de importaciones previas incorrectas
   const tieneArr = (ex.acuseArr > 0) || (parseNum(r.pagadoIsrArr) + parseNum(r.pagadoIvaArr)) > 0;
   document.getElementById('edit-lc3').value = tieneArr ? (ex.lineaCaptura3 || '') : '';
-  document.getElementById('edit-notas').value     = ex.notas || '';
+  document.getElementById('edit-notas').value              = ex.notas || '';
+  document.getElementById('edit-iva-favor-importe').value  = ex.ivaFavor > 0 ? ex.ivaFavor : '';
+  document.getElementById('edit-iva-favor-ref').value      = ex.ivaFavorRef || '';
 
   calcEditTotals();
   pdfData = {};
@@ -2548,6 +2572,18 @@ function guardarEdicion() {
 
   const notas = document.getElementById('edit-notas').value.trim();
   if (notas) ex.notas = notas; else delete ex.notas;
+
+  /* IVA Saldo a Favor — editable directamente en este modal */
+  const ivaFavImp = document.getElementById('edit-iva-favor-importe')?.value ?? '';
+  const ivaFavRef = (document.getElementById('edit-iva-favor-ref')?.value || '').trim();
+  const ivaFavNum = ivaFavImp !== '' ? parseFloat(ivaFavImp) : NaN;
+  if (!isNaN(ivaFavNum) && ivaFavNum > 0) {
+    ex.ivaFavor    = ivaFavNum;
+    if (ivaFavRef) ex.ivaFavorRef = ivaFavRef; else delete ex.ivaFavorRef;
+  } else {
+    delete ex.ivaFavor;
+    delete ex.ivaFavorRef;
+  }
 
   // Limpieza de null overrides que son innecesarios
   if (ex.overrideAsimR === null && ex.overrideIsrHonR === null && ex.overrideIvaHonR === null) {

@@ -5952,16 +5952,27 @@ function limpiarCSVMalImportado() {
         const cxcResumen = Object.entries(cxcPorCliente).sort((a,b)=>b[1]-a[1]).slice(0,3)
           .map(([c,m]) => `${c}: ${fmt(m)}`).join('; ');
 
-        /* 3. Impuestos por recuperar: IVA saldo a favor (stgl_iva_favor) */
-        let ivaTotal = 0;
-        const ivaDetalle = [];
+        /* 3. Impuestos por recuperar: IVA saldo a favor
+              Fuente A: stgl_iva_favor (entrada manual en Configuración)
+              Fuente B: stgl_retenciones_extra[ym].ivaFavor (por período, desde Retenciones)
+              Ambas fuentes se suman para el Activo Circulante. */
+        let ivaTotal = 0, ivaDetalleStr = '';
+        const ivaLineas = [];
         try {
           const ivaArr = JSON.parse(localStorage.getItem('stgl_iva_favor') || '[]');
           ivaArr.forEach(r => {
             const m = parseFloat(r.monto || 0);
-            if (m > 0) { ivaTotal += m; ivaDetalle.push(r); }
+            if (m > 0) { ivaTotal += m; ivaLineas.push(`${r.año||'—'}: ${fmtDec(m)}`); }
           });
         } catch {}
+        try {
+          const retExtra = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}');
+          Object.entries(retExtra).forEach(([ym, ex]) => {
+            const m = parseFloat(ex.ivaFavor || 0);
+            if (m > 0) { ivaTotal += m; ivaLineas.push(`${ym} (ret.): ${fmtDec(m)}`); }
+          });
+        } catch {}
+        ivaDetalleStr = ivaLineas.slice(0, 4).join(' · ');
         const sinIVA = ivaTotal === 0;
 
         /* 4. Inventarios: N/A (modelo de servicios) */
@@ -5972,7 +5983,7 @@ function limpiarCSVMalImportado() {
         const rowsAC = [
           `<div style="display:flex;justify-content:space-between;"><span>🏦 <b>Bancos</b></span><span>${fmtDec(bancosTotal)}<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">(MXN ${fmtDec(bancosMXN)} + USD ${bancosUSD.toLocaleString('es-MX',{minimumFractionDigits:2})})</span></span></div>`,
           `<div style="display:flex;justify-content:space-between;"><span>📄 <b>Clientes y CxC</b>${cxcTotal>0?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${cxcResumen}</span>`:''}</span><span>${fmtDec(cxcTotal)}</span></div>`,
-          `<div style="display:flex;justify-content:space-between;align-items:baseline;"><span>🧾 <b>Impuestos por recuperar (IVA a favor)</b></span><span>${sinIVA?`<a href="configuracion.html" style="color:#b45309;font-size:0.6rem;">⚠️ Sin datos — capturar</a>`:fmtDec(ivaTotal)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;"><span>🧾 <b>Impuestos por recuperar (IVA a favor)</b>${ivaDetalleStr?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${ivaDetalleStr}</span>`:''}</span><span>${sinIVA?`<a href="configuracion.html" style="color:#b45309;font-size:0.6rem;">⚠️ Sin datos — capturar en Ret. o Config.</a>`:fmtDec(ivaTotal)}</span></div>`,
           `<div style="display:flex;justify-content:space-between;"><span>📦 <b>Inventarios</b></span><span style="color:var(--text-xs);">N/A (servicios)</span></div>`,
           `<div style="display:flex;justify-content:space-between;border-top:1px solid #86efac;margin-top:4px;padding-top:4px;"><b>Total Activo Circulante</b><b style="color:var(--green);">${fmtDec(activoTotal)}</b></div>`,
         ];
