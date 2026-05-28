@@ -4013,13 +4013,28 @@
       manuales.push(mov);
       saveRegistry('stgl_mov_manual', manuales);
 
-      toast(`✅ Movimiento registrado — $${importe.toLocaleString('es-MX', {minimumFractionDigits:2})} (Pendiente CFDI)`, 'success');
+      // ── Actualizar saldo de la cuenta de origen ──
+      // El pago salió hoy: se descuenta del saldo registrado en stgl_saldos
+      const saldos = loadRegistry('stgl_saldos') || [];
+      const cuentaObj = saldos.find(s => s.cuenta === cuenta);
+      let saldoMsg = '';
+      if (cuentaObj) {
+        const saldoAntes = parseFloat(cuentaObj.saldo) || 0;
+        cuentaObj.saldo  = +(saldoAntes - importe).toFixed(2);
+        cuentaObj.ultimaActualizacion = fecha; // fecha del comprobante, no hoy
+        saveRegistry('stgl_saldos', saldos);
+        saldoMsg = ` · Saldo ${cuenta}: $${cuentaObj.saldo.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+      }
+
+      toast(`✅ Movimiento registrado — $${importe.toLocaleString('es-MX', {minimumFractionDigits:2})} (Pendiente CFDI)${saldoMsg}`, 'success');
       cerrarModalComprobante();
       btn.disabled = false; btn.textContent = '✅ Registrar movimiento';
 
-      // Refrescar la vista de movimientos si está activa
+      // Refrescar vistas
       if (typeof renderMovimientos === 'function') renderMovimientos();
-      else if (typeof _renderVistaContador === 'function') _renderVistaContador();
+      if (typeof _renderVistaContador === 'function') _renderVistaContador();
+      if (typeof renderSaldos === 'function') renderSaldos();
+      if (typeof _renderVistaDirector === 'function') _renderVistaDirector();
     }
 
     /* ══ fin comprobante ══ */
