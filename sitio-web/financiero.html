@@ -6208,16 +6208,31 @@ function limpiarCSVMalImportado() {
       return true;
     });
 
+    /* ── Sub-totales por componente de Nómina (para desglose en el label) ── */
+    const _nomSubtotales = { nomTrad: 0, asim: 0 };
+
     const byTipo  = {};
     egresos.forEach(r => {
-      /* ── Normalización de etiquetas ──
-         1. Tipos específicos conocidos → etiqueta canónica
-         2. Tipos genéricos → drilldown a concepto (más informativo para el director)
-         3. Sin dato → "Otros" */
-      let rawTipo = (r.tipo || r.rubro || '').trim();
+      /* ── Normalización de etiquetas ──────────────────────────────────────────
+         Regla clave: Nómina (tradicional) Y Asimilables → etiqueta ÚNICA "Nómina".
+         Así se evita doble conteo cuando la empresa usa ambas modalidades.
+         Si solo usa asimilables (caso Santaglia), el total es correcto.
+         Si usa ambas, el desglose se muestra en el sub-label.
+         ───────────────────────────────────────────────────────────────────── */
+      let rawTipo   = (r.tipo || r.rubro || '').trim();
+      let rawConc   = (r.concepto || r.descripcion || r.desc || '').trim();
       let k;
 
-      if      (/n[oó]mina/i.test(rawTipo))                                   k = 'Nómina';
+      const esNomTrad  = /n[oó]mina(?!\s+asim)/i.test(rawTipo) || /n[oó]mina(?!\s+asim)/i.test(rawConc);
+      const esAsim     = /asimilable|asimilado|pago\s+de\s+asim|nom.*asim|asim.*nom/i.test(rawTipo) ||
+                         /asimilable|asimilado/i.test(rawConc);
+
+      if (esNomTrad || esAsim) {
+        k = 'Nómina';
+        const imp = parseFloat(r.salidas||0);
+        if (esAsim)    _nomSubtotales.asim    += imp;
+        else           _nomSubtotales.nomTrad += imp;
+      }
       else if (/honorario/i.test(rawTipo))                                    k = 'Honorarios';
       else if (/retenci[oó]n|sat.*ret|isr.*iva/i.test(rawTipo))              k = 'Retenciones SAT';
       else if (/arrendamiento|renta\b/i.test(rawTipo))                        k = 'Arrendamiento';
@@ -6227,27 +6242,62 @@ function limpiarCSVMalImportado() {
       else if (/proveedor|compra\b|insumo/i.test(rawTipo))                    k = 'Proveedores';
       else if (_TIPOS_INTERNOS.test(rawTipo))                                 return; /* doble seguro */
       else if (_TIPOS_GENERICOS.test(rawTipo)) {
-        /* "Gastos" es demasiado vago → usar concepto como etiqueta de agrupación.
-           Si el concepto también está vacío, etiquetar con descripción truncada. */
-        const sub = (r.concepto || r.descripcion || r.desc || '').trim();
-        k = sub
-          ? sub.charAt(0).toUpperCase() + sub.slice(1, 40)   // capitalizar, máx 40 chars
-          : (rawTipo || 'Otros');
+        const sub = rawConc;
+        k = sub ? sub.charAt(0).toUpperCase() + sub.slice(1, 40) : (rawTipo || 'Otros');
       }
       else k = rawTipo || 'Otros';
 
       byTipo[k] = (byTipo[k] || 0) + parseFloat(r.salidas||0);
     });
+
+    /* ── Cross-validación vs stgl_asimilables del mes ──────────────────────
+       Compara el total "Nómina" en movimientos contra los registros de nómina.
+       Una diferencia > $500 podría indicar un pago sin registrar en nómina o
+       un movimiento duplicado. Se muestra como nota bajo el renglón. */
+    let _nomValidacion = '';
+    try {
+      const mesActivo = hoy; /* hoy = YYYY-MM, definido al inicio de _renderFlujoMes */
+      const asimArr  = loadRegistry('stgl_asimilables');
+      const nomArr   = typeof loadRegistry === 'function' ? loadRegistry('stgl_nomina') : [];
+      /* Sumar stgl_asimilables del mes activo */
+      const asimMes  = asimArr.filter(a => (a.fechaPago||'').startsWith(mesActivo))
+                               .reduce((s, a) => s + (parseFloat(a.subtotalNeto)||0), 0);
+      /* Sumar stgl_nomina (nómina tradicional) del mes activo si existe */
+      const nomTradMes = nomArr.filter(n => (n.fecha||n.fechaPago||'').startsWith(mesActivo))
+                                .reduce((s, n) => s + (parseFloat(n.subtotalNeto||n.neto||0)), 0);
+      const totalNomina   = byTipo['Nómina'] || 0;
+      const totalRegistro = asimMes + nomTradMes;
+      const gap = Math.abs(totalNomina - totalRegistro);
+
+      if (totalRegistro > 0 && gap > 500) {
+        _nomValidacion = `⚠️ Dif. vs nómina: ${gap > 0 ? '+' : ''}${_fmtDir(totalNomina - totalRegistro)}`;
+      } else if (totalRegistro > 0 && gap <= 500) {
+        _nomValidacion = `✓ vs nómina`;
+      }
+      /* Desglose de sub-componentes (si hay ambos) */
+      if (_nomSubtotales.nomTrad > 0 && _nomSubtotales.asim > 0) {
+        _nomValidacion = `Trad. ${_fmtDir(_nomSubtotales.nomTrad)} + Asim. ${_fmtDir(_nomSubtotales.asim)}` +
+                         (_nomValidacion ? ` · ${_nomValidacion}` : '');
+      } else if (_nomSubtotales.asim > 0 && _nomSubtotales.nomTrad === 0) {
+        _nomValidacion = (_nomValidacion ? `Asimilables · ${_nomValidacion}` : 'Asimilables');
+      }
+    } catch {}
+
     const top3 = Object.entries(byTipo).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const top3El = document.getElementById('dir-flujo-top3');
     if (top3El) {
       if (top3.length) {
         const totalSal = Object.values(byTipo).reduce((s, v) => s + v, 0);
         top3El.innerHTML = top3.map(([k, v]) => {
-          const pct = totalSal > 0 ? (v / totalSal * 100).toFixed(0) : 0;
+          const pct  = totalSal > 0 ? (v / totalSal * 100).toFixed(0) : 0;
+          /* Sub-label solo para Nómina */
+          const nota = k === 'Nómina' && _nomValidacion
+            ? `<span style="font-size:0.59rem;color:var(--text-xs);margin-left:0.3rem;">(${_nomValidacion})</span>`
+            : '';
+          const alertColor = k === 'Nómina' && _nomValidacion.startsWith('⚠️') ? '#d97706' : 'var(--red)';
           return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;">
-            <span style="font-weight:600;">${escHtml(k)}</span>
-            <span style="color:var(--red);white-space:nowrap;">${_fmtDir(v)} <span style="font-size:0.62rem;color:var(--text-xs);">${pct}%</span></span>
+            <span style="font-weight:600;">${escHtml(k)}${nota}</span>
+            <span style="color:${alertColor};white-space:nowrap;">${_fmtDir(v)} <span style="font-size:0.62rem;color:var(--text-xs);">${pct}%</span></span>
           </div>`;
         }).join('');
       } else {
