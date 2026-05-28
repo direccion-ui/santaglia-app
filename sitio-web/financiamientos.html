@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · Financiamientos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── KPI bar ── */
+    .fin-kpi-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 1.4rem; overflow: hidden;
+    }
+    .fin-kpi-item { background: var(--bg-white); padding: 0.9rem 1.1rem; }
+    .fin-kpi-label {
+      font-family: var(--brand); font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 0.25rem;
+    }
+    .fin-kpi-val {
+      font-family: var(--brand); font-size: 1.15rem; font-weight: 700; color: var(--navy);
+    }
+    .fin-kpi-val.red   { color: var(--red); }
+    .fin-kpi-val.green { color: var(--green); }
+    .fin-kpi-sub { font-size: 0.65rem; color: var(--text-xs); margin-top: 0.1rem; }
+
+    /* ── Cards grid ── */
+    .fin-cards-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.4rem;
+    }
+    @media (max-width: 860px) { .fin-cards-grid { grid-template-columns: 1fr; } }
+
+    .fin-card {
+      background: var(--bg-white); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1.25rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    /* badges */
+    .badge-credito {
+      display: inline-block; font-size: 0.58rem; font-weight: 700;
+      padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd;
+    }
+    .badge-arrendamiento {
+      display: inline-block; font-size: 0.58rem; font-weight: 700;
+      padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #f0fdf4; color: #166534; border: 1px solid #86efac;
+    }
+
+    /* card top row */
+    .fin-card-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 0.75rem; margin-bottom: 0.85rem;
+    }
+    .fin-card-left { display: flex; flex-direction: column; gap: 0.35rem; }
+    .fin-card-nombre {
+      font-family: var(--brand); font-size: 0.85rem; font-weight: 700;
+      color: var(--navy); line-height: 1.3;
+    }
+    .fin-card-acreedor { font-size: 0.65rem; color: var(--text-dim); }
+    .fin-card-prox {
+      font-size: 0.65rem; color: var(--text-dim); text-align: right;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .fin-card-prox strong { color: var(--navy); }
+
+    /* progress bar */
+    .fin-progress-wrap { margin-bottom: 0.9rem; }
+    .fin-progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.63rem; color: var(--text-dim); margin-bottom: 0.3rem;
+    }
+    .fin-progress-track {
+      height: 6px; border-radius: 3px; background: var(--border); overflow: hidden;
+    }
+    .fin-progress-fill { height: 100%; border-radius: 3px; background: var(--green); transition: width .3s; }
+
+    /* mini kpi grid inside card */
+    .fin-card-kpis {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1rem; margin-bottom: 1rem;
+    }
+    .fin-ck-label { font-size: 0.6rem; color: var(--text-dim); margin-bottom: 0.1rem; }
+    .fin-ck-val {
+      font-family: var(--brand); font-size: 0.82rem; font-weight: 700; color: var(--navy);
+    }
+    .fin-ck-val.green { color: var(--green); }
+    .fin-ck-val.orange { color: #b45309; }
+
+    /* chart + side metrics */
+    .fin-chart-row {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem;
+    }
+    .fin-chart-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+    .fin-chart-title {
+      font-family: var(--brand); font-size: 0.58rem; font-weight: 700;
+      color: var(--text-dim); text-align: center; margin-top: 0.3rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .fin-legend { flex: 1; display: flex; flex-direction: column; gap: 0.35rem; }
+    .fin-legend-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.66rem; }
+    .fin-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .fin-legend-name { color: var(--text-dim); flex: 1; }
+    .fin-legend-val { font-family: var(--brand); font-weight: 700; color: var(--navy); }
+
+    /* accordion trigger */
+    .fin-accordion-btn {
+      width: 100%; text-align: left; background: none; border: 1px solid var(--border);
+      border-radius: 5px; padding: 0.45rem 0.75rem; cursor: pointer;
+      font-family: var(--brand); font-size: 0.68rem; font-weight: 700; color: var(--navy);
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background .15s;
+    }
+    .fin-accordion-btn:hover { background: #f5f6fb; }
+    .fin-accordion-arrow { transition: transform .2s; font-size: 0.6rem; }
+    .fin-accordion-btn.open .fin-accordion-arrow { transform: rotate(90deg); }
+    .fin-accordion-body { display: none; margin-top: 0.6rem; overflow-x: auto; }
+    .fin-accordion-body.open { display: block; }
+
+    /* amortization table */
+    .amort-table {
+      width: 100%; border-collapse: collapse; font-size: 0.69rem;
+    }
+    .amort-table th {
+      font-family: var(--brand); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-dim); padding: 0.35rem 0.5rem;
+      background: #f7f8fc; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap;
+    }
+    .amort-table th:first-child, .amort-table th:nth-child(2) { text-align: left; }
+    .amort-table td {
+      padding: 0.28rem 0.5rem; text-align: right; border-bottom: 1px solid #f0f1f7;
+      white-space: nowrap;
+    }
+    .amort-table td:first-child, .amort-table td:nth-child(2) { text-align: left; }
+    .amort-row-paid { background: #f0faf4; }
+    .amort-row-pending { background: var(--bg-white); }
+    .estado-pagado { color: var(--green); font-weight: 700; }
+    .estado-pendiente { color: var(--text-dim); }
+
+    /* NIF note */
+    .fin-nif-note {
+      font-size: 0.63rem; color: var(--text-dim); font-style: italic;
+      margin-top: 0.5rem; padding: 0.45rem 0.6rem;
+      background: #f7f8fc; border-left: 3px solid var(--border); border-radius: 0 4px 4px 0;
+    }
+
+    /* ── Otros pasivos ── */
+    .otros-section {
+      background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 1.4rem;
+    }
+    .otros-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; margin-top: 0.75rem; }
+    .otros-table th {
+      font-family: var(--brand); font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim);
+      padding: 0.3rem 0.6rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .otros-table th:last-child { text-align: right; }
+    .otros-table td {
+      padding: 0.4rem 0.6rem; border-bottom: 1px solid #f0f1f7; color: var(--text-main);
+    }
+    .otros-table td:last-child { text-align: right; font-family: var(--brand); font-weight: 700; }
+    .otros-empty {
+      text-align: center; padding: 2rem 1rem; color: var(--text-dim); font-size: 0.78rem;
+    }
+    .otros-empty-icon { font-size: 1.6rem; margin-bottom: 0.5rem; }
+
+    /* ── Import section ── */
+    .import-section {
+      background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 1.4rem;
+    }
+    .import-dropzone {
+      border: 2px dashed var(--border); border-radius: 6px; padding: 2rem 1rem;
+      text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+      margin: 0.75rem 0;
+    }
+    .import-dropzone:hover { border-color: var(--navy); background: #f5f7fb; }
+    .import-dropzone-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .import-dropzone-text {
+      font-family: var(--brand); font-weight: 700; font-size: 0.82rem; color: var(--navy);
+      margin-bottom: 0.25rem;
+    }
+    .import-dropzone-sub { font-size: 0.68rem; color: var(--text-dim); }
+    .import-hints { list-style: none; padding: 0; margin: 0.5rem 0 0; display: flex; flex-direction: column; gap: 0.3rem; }
+    .import-hints li { font-size: 0.7rem; color: var(--text-dim); }
+
+    /* ── Modal overlay ── */
+    .fin-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 9000; align-items: center; justify-content: center;
+    }
+    .fin-modal-overlay.open { display: flex; }
+    .fin-modal {
+      background: var(--bg-white); border-radius: 10px; padding: 1.5rem;
+      width: min(480px, 94vw); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .fin-modal-title {
+      font-family: var(--brand); font-size: 0.95rem; font-weight: 700; color: var(--navy);
+      margin-bottom: 1rem;
+    }
+    .fin-form-row { margin-bottom: 0.75rem; }
+    .fin-form-label { font-size: 0.68rem; font-weight: 700; color: var(--text-dim); display: block; margin-bottom: 0.25rem; }
+    .fin-form-input, .fin-form-select {
+      width: 100%; padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 0.8rem; font-family: inherit; color: var(--text-main); background: var(--bg-white);
+      box-sizing: border-box;
+    }
+    .fin-form-input:focus, .fin-form-select:focus { outline: 2px solid var(--navy); border-color: var(--navy); }
+    .fin-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.1rem; }
+
+    /* page title */
+    .fin-page-title {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.1rem;
+    }
+    .fin-page-h1 {
+      font-family: var(--brand); font-size: 1.15rem; font-weight: 700; color: var(--navy);
+    }
+    .fin-page-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.1rem; }
+    .fin-page-actions { display: flex; gap: 0.5rem; }
+
+    /* section header */
+    .fin-section-title {
+      font-family: var(--brand); font-size: 0.78rem; font-weight: 700; color: var(--navy);
+      letter-spacing: 0.03em; margin-bottom: 0.25rem;
+    }
+    .fin-section-sub { font-size: 0.68rem; color: var(--text-dim); margin-bottom: 0.75rem; }
+
+    @media (max-width: 640px) {
+      .fin-kpi-bar { grid-template-columns: 1fr 1fr; }
+      .fin-chart-row { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 400px) {
+      .fin-kpi-bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrap">
+
+    <!-- ══ NAV ══ -->
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand">
+          <a href="dashboard.html">
+            <img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" />
+          </a>
+        </div>
+        <nav class="header-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="clientes.html">Clientes</a>
+
+          <div class="nav-menu">
+            <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+            <div class="nav-menu-items">
+              <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+              <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+              <a class="nav-menu-item" href="servicios.html">Servicios</a>
+              <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+            </div>
+          </div>
+
+          <div class="nav-menu">
+            <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+            <div class="nav-menu-items">
+              <a class="nav-menu-item" href="nomina.html">Nómina</a>
+              <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+            </div>
+          </div>
+
+          <div class="nav-menu">
+            <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
+            <div class="nav-menu-items">
+              <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+              <a class="nav-menu-item active" href="financiamientos.html">Financiamientos</a>
+              <a class="nav-menu-item" href="egresos.html">Egresos</a>
+              <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+              <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+            </div>
+          </div>
+
+          <div class="nav-menu">
+            <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+            <div class="nav-menu-items">
+              <a class="nav-menu-item" href="documentos.html">Documentos</a>
+              <a class="nav-menu-item" href="galeria.html">Galería</a>
+              <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
+              <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+            </div>
+          </div>
+
+          <a class="nav-link" href="ayuda.html">Ayuda</a>
+        </nav>
+        <div class="header-actions">
+          <button class="btn-logout" onclick="logout()">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="main">
+
+        <!-- ══ PAGE TITLE ══ -->
+        <div class="fin-page-title">
+          <div>
+            <div class="fin-page-h1">💰 Financiamientos</div>
+            <div class="fin-page-sub">Pasivos estructurados, créditos y arrendamientos</div>
+          </div>
+          <div class="fin-page-actions">
+            <button class="btn btn-ghost" onclick="abrirModalOtro()" style="font-size:0.73rem; padding:0.35rem 0.75rem;">+ Agregar</button>
+            <button class="btn btn-ghost" onclick="toastImport()" style="font-size:0.73rem; padding:0.35rem 0.75rem;">📄 Importar PDF</button>
+          </div>
+        </div>
+
+        <!-- ══ KPI BAR ══ -->
+        <div class="fin-kpi-bar" id="kpi-bar">
+          <div class="fin-kpi-item">
+            <div class="fin-kpi-label">Pago mensual conjunto</div>
+            <div class="fin-kpi-val" id="kpi-pago-mensual">—</div>
+            <div class="fin-kpi-sub" id="kpi-pago-sub">Toyota + BYD</div>
+          </div>
+          <div class="fin-kpi-item">
+            <div class="fin-kpi-label">Deuda vigente (capital)</div>
+            <div class="fin-kpi-val" id="kpi-deuda-vigente">—</div>
+            <div class="fin-kpi-sub">Saldo actual Toyota Camry</div>
+          </div>
+          <div class="fin-kpi-item">
+            <div class="fin-kpi-label">Compromisos CP 12 meses</div>
+            <div class="fin-kpi-val red" id="kpi-cp12">—</div>
+            <div class="fin-kpi-sub" id="kpi-cp12-sub">Capital Toyota + Rentas BYD</div>
+          </div>
+          <div class="fin-kpi-item">
+            <div class="fin-kpi-label">Próximo pago</div>
+            <div class="fin-kpi-val" id="kpi-prox-monto">—</div>
+            <div class="fin-kpi-sub" id="kpi-prox-info">—</div>
+          </div>
+        </div>
+
+        <!-- ══ FINANCING CARDS ══ -->
+        <div class="fin-cards-grid">
+
+          <!-- ── TOYOTA CAMRY ── -->
+          <div class="fin-card" id="card-camry">
+            <div class="fin-card-header">
+              <div class="fin-card-left">
+                <div><span class="badge-credito">Crédito</span></div>
+                <div class="fin-card-nombre">Toyota Camry 2022 — XLE NAVI HV AUTO</div>
+                <div class="fin-card-acreedor">Toyota Financial Services México, S.A. de C.V.</div>
+              </div>
+              <div class="fin-card-prox" id="camry-prox-badge">
+                <div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.15rem;">Siguiente pago</div>
+                <strong id="camry-prox-fecha">—</strong><br>
+                <span id="camry-prox-monto" style="font-family:var(--brand);font-weight:700;color:var(--green);">—</span>
+              </div>
+            </div>
+
+            <div class="fin-progress-wrap">
+              <div class="fin-progress-label">
+                <span id="camry-prog-label">0/60 pagos</span>
+                <span id="camry-prog-pct">0%</span>
+              </div>
+              <div class="fin-progress-track">
+                <div class="fin-progress-fill" id="camry-prog-fill" style="width:0%"></div>
+              </div>
+            </div>
+
+            <div class="fin-card-kpis">
+              <div>
+                <div class="fin-ck-label">Pagos realizados</div>
+                <div class="fin-ck-val green" id="camry-ck-pagados">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Mensualidad</div>
+                <div class="fin-ck-val" id="camry-ck-mensualidad">$7,071.43</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Saldo actual</div>
+                <div class="fin-ck-val" id="camry-ck-saldo">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Capital pagado</div>
+                <div class="fin-ck-val green" id="camry-ck-cap-pagado">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Interés + IVA pagado</div>
+                <div class="fin-ck-val orange" id="camry-ck-int-pagado">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Tasa / CAT</div>
+                <div class="fin-ck-val">12.99% / 14.0%</div>
+              </div>
+            </div>
+
+            <div class="fin-chart-row">
+              <div>
+                <div class="fin-chart-wrap">
+                  <canvas id="chart-camry" width="120" height="120"></canvas>
+                </div>
+                <div class="fin-chart-title">Composición del crédito</div>
+              </div>
+              <div class="fin-legend" id="legend-camry"></div>
+            </div>
+
+            <button class="fin-accordion-btn" onclick="toggleAccordion('acc-camry', this)">
+              ▶ Ver tabla de pagos (60 mensualidades)
+              <span class="fin-accordion-arrow">▶</span>
+            </button>
+            <div class="fin-accordion-body" id="acc-camry">
+              <div style="overflow-x:auto;">
+                <table class="amort-table" id="tbl-camry"></table>
+              </div>
+              <div class="fin-nif-note">
+                NIF C-6 / D-1: Crédito automotriz. Capital CP (12 meses) se reconoce en cta. <strong>208</strong>; capital LP en cta. <strong>252</strong>. No. Serie: 4T1F31AK7NU596842.
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BYD DOLPHIN MINI ── -->
+          <div class="fin-card" id="card-byd">
+            <div class="fin-card-header">
+              <div class="fin-card-left">
+                <div><span class="badge-arrendamiento">Arrendamiento</span></div>
+                <div class="fin-card-nombre">BYD Dolphin Mini Plus — Arrendamiento Puro</div>
+                <div class="fin-card-acreedor">Start (Banregio) Arrendamiento</div>
+              </div>
+              <div class="fin-card-prox" id="byd-prox-badge">
+                <div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.15rem;">Siguiente pago</div>
+                <strong id="byd-prox-fecha">—</strong><br>
+                <span id="byd-prox-monto" style="font-family:var(--brand);font-weight:700;color:var(--green);">—</span>
+              </div>
+            </div>
+
+            <div class="fin-progress-wrap">
+              <div class="fin-progress-label">
+                <span id="byd-prog-label">0/48 pagos</span>
+                <span id="byd-prog-pct">0%</span>
+              </div>
+              <div class="fin-progress-track">
+                <div class="fin-progress-fill" id="byd-prog-fill" style="width:0%"></div>
+              </div>
+            </div>
+
+            <div class="fin-card-kpis">
+              <div>
+                <div class="fin-ck-label">Pagos realizados</div>
+                <div class="fin-ck-val green" id="byd-ck-pagados">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Mensualidad</div>
+                <div class="fin-ck-val" id="byd-ck-mensualidad">$7,895.14</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Rentas restantes</div>
+                <div class="fin-ck-val" id="byd-ck-restante">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Total pagado</div>
+                <div class="fin-ck-val green" id="byd-ck-pagado-total">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Compromisos CP (12 m)</div>
+                <div class="fin-ck-val" id="byd-ck-cp12">—</div>
+              </div>
+              <div>
+                <div class="fin-ck-label">Inicio / Plazo</div>
+                <div class="fin-ck-val">Ene 2025 / 48 m</div>
+              </div>
+            </div>
+
+            <div class="fin-chart-row">
+              <div>
+                <div class="fin-chart-wrap">
+                  <canvas id="chart-byd" width="120" height="120"></canvas>
+                </div>
+                <div class="fin-chart-title">Progreso del arrendamiento</div>
+              </div>
+              <div class="fin-legend" id="legend-byd"></div>
+            </div>
+
+            <button class="fin-accordion-btn" onclick="toggleAccordion('acc-byd', this)">
+              ▶ Ver tabla de pagos (48 rentas)
+              <span class="fin-accordion-arrow">▶</span>
+            </button>
+            <div class="fin-accordion-body" id="acc-byd">
+              <div style="overflow-x:auto;">
+                <table class="amort-table" id="tbl-byd"></table>
+              </div>
+              <div class="fin-nif-note">
+                *Arrendamiento puro: sin capitalización. Gasto operativo conforme NIF D-5. Las rentas NO generan activo ni pasivo de capital; se reconocen como gasto del período.
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /fin-cards-grid -->
+
+        <!-- ══ OTROS PASIVOS ══ -->
+        <div class="otros-section">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <div>
+              <div class="fin-section-title">📋 Otros Pasivos Financieros</div>
+              <div class="fin-section-sub">Deudas estructuradas no incluidas en los contratos anteriores (ej. saldo deudor socio, préstamos informales)</div>
+            </div>
+            <button class="btn btn-ghost" onclick="abrirModalOtro()" style="font-size:0.72rem;padding:0.33rem 0.7rem;white-space:nowrap;">+ Agregar compromiso</button>
+          </div>
+          <div id="otros-container"></div>
+        </div>
+
+        <!-- ══ IMPORT SECTION ══ -->
+        <div class="import-section">
+          <div class="fin-section-title">📥 Importar Tabla de Amortización</div>
+          <div class="fin-section-sub">Sube el PDF de tu tabla de amortización o contrato de financiamiento</div>
+
+          <div class="import-dropzone" id="import-dropzone"
+               onclick="toastImport()"
+               ondragover="event.preventDefault();this.style.borderColor='var(--navy)'"
+               ondragleave="this.style.borderColor=''"
+               ondrop="event.preventDefault();this.style.borderColor='';toastImport()">
+            <div class="import-dropzone-icon">📄</div>
+            <div class="import-dropzone-text">Arrastra tu PDF aquí o haz clic para seleccionar</div>
+            <div class="import-dropzone-sub">Máx. 10 MB · Solo archivos PDF</div>
+          </div>
+
+          <ul class="import-hints">
+            <li>✅ Tablas en texto digital (Toyota, Banorte, BBVA, HSBC)</li>
+            <li>✅ Contratos con tabla de amortización embebida</li>
+            <li>⚠️ PDFs escaneados (imagen): requieren procesamiento OCR adicional</li>
+            <li>📋 Formatos: Toyota Financial, Start/Banregio, Scotiabank</li>
+          </ul>
+        </div>
+
+      </div><!-- /main -->
+    </main>
+
+  </div><!-- /site-wrap -->
+
+  <!-- ══ MODAL: AGREGAR OTRO PASIVO ══ -->
+  <div class="fin-modal-overlay" id="modal-otro">
+    <div class="fin-modal">
+      <div class="fin-modal-title">Agregar Pasivo Financiero</div>
+
+      <div class="fin-form-row">
+        <label class="fin-form-label" for="otro-nombre">Nombre / Descripción</label>
+        <input class="fin-form-input" type="text" id="otro-nombre" placeholder="Ej. Saldo deudor socio Carlos" />
+      </div>
+      <div class="fin-form-row">
+        <label class="fin-form-label" for="otro-tipo">Tipo</label>
+        <select class="fin-form-select" id="otro-tipo">
+          <option value="Deuda socio">Deuda socio</option>
+          <option value="Préstamo informal">Préstamo informal</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+        <div class="fin-form-row">
+          <label class="fin-form-label" for="otro-monto">Monto total</label>
+          <input class="fin-form-input" type="number" id="otro-monto" placeholder="0.00" min="0" step="0.01" />
+        </div>
+        <div class="fin-form-row">
+          <label class="fin-form-label" for="otro-pago">Pago mensual est.</label>
+          <input class="fin-form-input" type="number" id="otro-pago" placeholder="0.00" min="0" step="0.01" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+        <div class="fin-form-row">
+          <label class="fin-form-label" for="otro-plazo">Plazo (meses)</label>
+          <input class="fin-form-input" type="number" id="otro-plazo" placeholder="12" min="1" step="1" />
+        </div>
+        <div class="fin-form-row">
+          <label class="fin-form-label" for="otro-inicio">Fecha inicio</label>
+          <input class="fin-form-input" type="date" id="otro-inicio" />
+        </div>
+      </div>
+
+      <div class="fin-modal-actions">
+        <button class="btn btn-ghost" onclick="cerrarModalOtro()" style="font-size:0.75rem;">Cancelar</button>
+        <button class="btn" onclick="guardarOtro()" style="font-size:0.75rem;background:var(--navy);color:#fff;border-color:var(--navy);">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DATA CONSTANTS ══ -->
+  <script>
+    const FIN_CAMRY_AMORT = [{"no":1,"fecha":"2026-01-01","capital_ini":295431.68,"amortizacion":3310.18,"interes":3242.46,"iva":518.79,"mensualidad":7071.43},{"no":2,"fecha":"2026-02-01","capital_ini":292121.5,"amortizacion":3352.32,"interes":3206.13,"iva":512.98,"mensualidad":7071.43},{"no":3,"fecha":"2026-03-01","capital_ini":288769.18,"amortizacion":3395.0,"interes":3169.34,"iva":507.09,"mensualidad":7071.43},{"no":4,"fecha":"2026-04-01","capital_ini":285374.18,"amortizacion":3438.22,"interes":3132.08,"iva":501.13,"mensualidad":7071.43},{"no":5,"fecha":"2026-05-01","capital_ini":281935.96,"amortizacion":3482.0,"interes":3094.34,"iva":495.09,"mensualidad":7071.43},{"no":6,"fecha":"2026-06-01","capital_ini":278453.96,"amortizacion":3526.34,"interes":3056.12,"iva":488.97,"mensualidad":7071.43},{"no":7,"fecha":"2026-07-01","capital_ini":274927.62,"amortizacion":3571.23,"interes":3017.42,"iva":482.78,"mensualidad":7071.43},{"no":8,"fecha":"2026-08-01","capital_ini":271356.39,"amortizacion":3616.69,"interes":2978.23,"iva":476.51,"mensualidad":7071.43},{"no":9,"fecha":"2026-09-01","capital_ini":267739.7,"amortizacion":3662.74,"interes":2938.53,"iva":470.16,"mensualidad":7071.43},{"no":10,"fecha":"2026-10-01","capital_ini":264076.96,"amortizacion":3709.37,"interes":2898.33,"iva":463.73,"mensualidad":7071.43},{"no":11,"fecha":"2026-11-01","capital_ini":260367.59,"amortizacion":3756.6,"interes":2857.62,"iva":457.21,"mensualidad":7071.43},{"no":12,"fecha":"2026-12-01","capital_ini":256610.99,"amortizacion":3804.42,"interes":2816.39,"iva":450.62,"mensualidad":7071.43},{"no":13,"fecha":"2027-01-01","capital_ini":252806.57,"amortizacion":3852.86,"interes":2774.63,"iva":443.94,"mensualidad":7071.43},{"no":14,"fecha":"2027-02-01","capital_ini":248953.71,"amortizacion":3901.91,"interes":2732.35,"iva":437.17,"mensualidad":7071.43},{"no":15,"fecha":"2027-03-01","capital_ini":245051.8,"amortizacion":3951.59,"interes":2689.52,"iva":430.32,"mensualidad":7071.43},{"no":16,"fecha":"2027-04-01","capital_ini":241100.21,"amortizacion":4001.9,"interes":2646.15,"iva":423.38,"mensualidad":7071.43},{"no":17,"fecha":"2027-05-01","capital_ini":237098.31,"amortizacion":4052.85,"interes":2602.23,"iva":416.35,"mensualidad":7071.43},{"no":18,"fecha":"2027-06-01","capital_ini":233045.46,"amortizacion":4104.44,"interes":2557.75,"iva":409.24,"mensualidad":7071.43},{"no":19,"fecha":"2027-07-01","capital_ini":228941.02,"amortizacion":4156.7,"interes":2512.7,"iva":402.03,"mensualidad":7071.43},{"no":20,"fecha":"2027-08-01","capital_ini":224784.32,"amortizacion":4209.62,"interes":2467.08,"iva":394.73,"mensualidad":7071.43},{"no":21,"fecha":"2027-09-01","capital_ini":220574.7,"amortizacion":4263.21,"interes":2420.88,"iva":387.34,"mensualidad":7071.43},{"no":22,"fecha":"2027-10-01","capital_ini":216311.49,"amortizacion":4317.49,"interes":2374.09,"iva":379.85,"mensualidad":7071.43},{"no":23,"fecha":"2027-11-01","capital_ini":211994.0,"amortizacion":4372.46,"interes":2326.7,"iva":372.27,"mensualidad":7071.43},{"no":24,"fecha":"2027-12-01","capital_ini":207621.54,"amortizacion":4428.13,"interes":2278.71,"iva":364.59,"mensualidad":7071.43},{"no":25,"fecha":"2028-01-01","capital_ini":203193.41,"amortizacion":4484.51,"interes":2230.11,"iva":356.81,"mensualidad":7071.43},{"no":26,"fecha":"2028-02-01","capital_ini":198708.9,"amortizacion":4541.6,"interes":2180.89,"iva":348.94,"mensualidad":7071.43},{"no":27,"fecha":"2028-03-01","capital_ini":194167.3,"amortizacion":4599.42,"interes":2131.05,"iva":340.96,"mensualidad":7071.43},{"no":28,"fecha":"2028-04-01","capital_ini":189567.88,"amortizacion":4657.97,"interes":2080.57,"iva":332.89,"mensualidad":7071.43},{"no":29,"fecha":"2028-05-01","capital_ini":184909.91,"amortizacion":4717.27,"interes":2029.45,"iva":324.71,"mensualidad":7071.43},{"no":30,"fecha":"2028-06-01","capital_ini":180192.64,"amortizacion":4777.34,"interes":1977.67,"iva":316.42,"mensualidad":7071.43},{"no":31,"fecha":"2028-07-01","capital_ini":175415.3,"amortizacion":4838.16,"interes":1925.24,"iva":308.03,"mensualidad":7071.43},{"no":32,"fecha":"2028-08-01","capital_ini":170577.14,"amortizacion":4899.75,"interes":1872.14,"iva":299.54,"mensualidad":7071.43},{"no":33,"fecha":"2028-09-01","capital_ini":165677.39,"amortizacion":4962.14,"interes":1818.36,"iva":290.93,"mensualidad":7071.43},{"no":34,"fecha":"2028-10-01","capital_ini":160715.25,"amortizacion":5025.31,"interes":1763.9,"iva":282.22,"mensualidad":7071.43},{"no":35,"fecha":"2028-11-01","capital_ini":155689.94,"amortizacion":5089.28,"interes":1708.75,"iva":273.4,"mensualidad":7071.43},{"no":36,"fecha":"2028-12-01","capital_ini":150600.66,"amortizacion":5154.08,"interes":1652.89,"iva":264.46,"mensualidad":7071.43},{"no":37,"fecha":"2029-01-01","capital_ini":145446.58,"amortizacion":5219.7,"interes":1596.32,"iva":255.41,"mensualidad":7071.43},{"no":38,"fecha":"2029-02-01","capital_ini":140226.88,"amortizacion":5286.16,"interes":1539.03,"iva":246.24,"mensualidad":7071.43},{"no":39,"fecha":"2029-03-01","capital_ini":134940.72,"amortizacion":5353.45,"interes":1481.02,"iva":236.96,"mensualidad":7071.43},{"no":40,"fecha":"2029-04-01","capital_ini":129587.27,"amortizacion":5421.61,"interes":1422.26,"iva":227.56,"mensualidad":7071.43},{"no":41,"fecha":"2029-05-01","capital_ini":124165.66,"amortizacion":5490.63,"interes":1362.76,"iva":218.04,"mensualidad":7071.43},{"no":42,"fecha":"2029-06-01","capital_ini":118675.03,"amortizacion":5560.55,"interes":1302.49,"iva":208.39,"mensualidad":7071.43},{"no":43,"fecha":"2029-07-01","capital_ini":113114.48,"amortizacion":5631.33,"interes":1241.47,"iva":198.63,"mensualidad":7071.43},{"no":44,"fecha":"2029-08-01","capital_ini":107483.15,"amortizacion":5703.03,"interes":1179.66,"iva":188.74,"mensualidad":7071.43},{"no":45,"fecha":"2029-09-01","capital_ini":101780.12,"amortizacion":5775.63,"interes":1117.07,"iva":178.73,"mensualidad":7071.43},{"no":46,"fecha":"2029-10-01","capital_ini":96004.49,"amortizacion":5849.17,"interes":1053.68,"iva":168.58,"mensualidad":7071.43},{"no":47,"fecha":"2029-11-01","capital_ini":90155.32,"amortizacion":5923.64,"interes":989.48,"iva":158.31,"mensualidad":7071.43},{"no":48,"fecha":"2029-12-01","capital_ini":84231.68,"amortizacion":5999.05,"interes":924.47,"iva":147.91,"mensualidad":7071.43},{"no":49,"fecha":"2030-01-01","capital_ini":78232.63,"amortizacion":6075.42,"interes":858.63,"iva":137.38,"mensualidad":7071.43},{"no":50,"fecha":"2030-02-01","capital_ini":72157.21,"amortizacion":6152.77,"interes":791.95,"iva":126.71,"mensualidad":7071.43},{"no":51,"fecha":"2030-03-01","capital_ini":66004.44,"amortizacion":6231.11,"interes":724.42,"iva":115.9,"mensualidad":7071.43},{"no":52,"fecha":"2030-04-01","capital_ini":59773.33,"amortizacion":6310.44,"interes":656.03,"iva":104.96,"mensualidad":7071.43},{"no":53,"fecha":"2030-05-01","capital_ini":53462.89,"amortizacion":6390.78,"interes":586.77,"iva":93.88,"mensualidad":7071.43},{"no":54,"fecha":"2030-06-01","capital_ini":47072.11,"amortizacion":6472.14,"interes":516.63,"iva":82.66,"mensualidad":7071.43},{"no":55,"fecha":"2030-07-01","capital_ini":40599.97,"amortizacion":6554.55,"interes":445.59,"iva":71.29,"mensualidad":7071.43},{"no":56,"fecha":"2030-08-01","capital_ini":34045.42,"amortizacion":6637.99,"interes":373.66,"iva":59.78,"mensualidad":7071.43},{"no":57,"fecha":"2030-09-01","capital_ini":27407.43,"amortizacion":6722.51,"interes":300.8,"iva":48.12,"mensualidad":7071.43},{"no":58,"fecha":"2030-10-01","capital_ini":20684.92,"amortizacion":6808.09,"interes":227.02,"iva":36.32,"mensualidad":7071.43},{"no":59,"fecha":"2030-11-01","capital_ini":13876.83,"amortizacion":6894.77,"interes":152.3,"iva":24.36,"mensualidad":7071.43},{"no":60,"fecha":"2030-12-01","capital_ini":6982.06,"amortizacion":6982.06,"interes":76.63,"iva":12.26,"mensualidad":7070.95}];
+
+    const FIN_BYD_PAGOS = [{"no":1,"fecha":"2025-01-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":2,"fecha":"2025-02-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":3,"fecha":"2025-03-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":4,"fecha":"2025-04-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":5,"fecha":"2025-05-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":6,"fecha":"2025-06-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":7,"fecha":"2025-07-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":8,"fecha":"2025-08-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":9,"fecha":"2025-09-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":10,"fecha":"2025-10-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":11,"fecha":"2025-11-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":12,"fecha":"2025-12-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":13,"fecha":"2026-01-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":14,"fecha":"2026-02-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":15,"fecha":"2026-03-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":16,"fecha":"2026-04-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":17,"fecha":"2026-05-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":18,"fecha":"2026-06-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":19,"fecha":"2026-07-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":20,"fecha":"2026-08-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":21,"fecha":"2026-09-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":22,"fecha":"2026-10-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":23,"fecha":"2026-11-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":24,"fecha":"2026-12-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":25,"fecha":"2027-01-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":26,"fecha":"2027-02-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":27,"fecha":"2027-03-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":28,"fecha":"2027-04-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":29,"fecha":"2027-05-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":30,"fecha":"2027-06-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":31,"fecha":"2027-07-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":32,"fecha":"2027-08-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":33,"fecha":"2027-09-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":34,"fecha":"2027-10-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":35,"fecha":"2027-11-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":36,"fecha":"2027-12-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":37,"fecha":"2028-01-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":38,"fecha":"2028-02-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":39,"fecha":"2028-03-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":40,"fecha":"2028-04-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":41,"fecha":"2028-05-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":42,"fecha":"2028-06-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":43,"fecha":"2028-07-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":44,"fecha":"2028-08-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":45,"fecha":"2028-09-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":46,"fecha":"2028-10-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":47,"fecha":"2028-11-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14},{"no":48,"fecha":"2028-12-10","renta":6809.6,"iva":1085.54,"mensualidad":7895.14}];
+
+    const FIN_META = {
+      camry: {
+        id: 'camry',
+        nombre: 'Toyota Camry 2022 — XLE NAVI HV AUTO',
+        tipo: 'credito',
+        subtipo: 'automotriz',
+        acreedor: 'Toyota Financial Services México, S.A. de C.V.',
+        moneda: 'MXN',
+        monto_original: 295431.68,
+        tasa_anual: 12.99,
+        plazo: 60,
+        inicio: '2026-01-01',
+        mensualidad: 7071.43,
+        cat: 14.0,
+        no_serie: '4T1F31AK7NU596842',
+        cta_cp: '208',
+        cta_lp: '252',
+        amort: FIN_CAMRY_AMORT
+      },
+      byd: {
+        id: 'byd',
+        nombre: 'BYD Dolphin Mini Plus — Arrendamiento Puro',
+        tipo: 'arrendamiento',
+        subtipo: 'vehiculo',
+        acreedor: 'Start (Banregio) Arrendamiento',
+        moneda: 'MXN',
+        monto_original: 0,
+        tasa_anual: 0,
+        plazo: 48,
+        inicio: '2025-01-10',
+        mensualidad: 7895.14,
+        cat: 0,
+        no_serie: '',
+        cta_cp: '208',
+        cta_lp: '252',
+        amort: FIN_BYD_PAGOS
+      }
+    };
+
+    const KEY_FIN_KPIS  = 'stgl_financiamientos_kpis';
+    const KEY_FIN_OTROS = 'stgl_fin_otros_pasivos';
+
+    /* ── helpers ── */
+    function mxn(n) {
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(n);
+    }
+    function fmtFecha(iso) {
+      if (!iso) return '—';
+      const [y, m, d] = iso.split('-');
+      const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`;
+    }
+
+    /* ── KPI calculation ── */
+    function calcFinKpis() {
+      const hoy  = new Date().toISOString().slice(0, 10);
+      const lim12 = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
+      const result = {};
+
+      // CAMRY
+      const camry = FIN_META.camry;
+      const cPend  = camry.amort.filter(r => r.fecha > hoy);
+      const cPaid  = camry.amort.filter(r => r.fecha <= hoy);
+      const cNext  = cPend[0] || null;
+      const cCp12  = cPend.filter(r => r.fecha <= lim12).reduce((s, r) => s + r.amortizacion, 0);
+      const cSaldo = cNext ? cNext.capital_ini : 0;
+      const cCapPagado = cPaid.reduce((s, r) => s + r.amortizacion, 0);
+      const cIntPagado = cPaid.reduce((s, r) => s + r.interes + r.iva, 0);
+      const cTotalMen  = cPend.slice(0, 12).reduce((s, r) => s + r.mensualidad, 0);
+      result.camry = {
+        pagados: cPaid.length, pendientes: cPend.length, total: camry.amort.length,
+        saldo: cSaldo, cap_pagado: cCapPagado, int_pagado: cIntPagado,
+        cp12_capital: cCp12,
+        cp12_mensualidades: cTotalMen,
+        lp_capital: cSaldo - cCp12,
+        prox_fecha: cNext ? cNext.fecha : null,
+        prox_monto: cNext ? cNext.mensualidad : 0,
+        pct_pagado: Math.round(cPaid.length / camry.amort.length * 100)
+      };
+
+      // BYD
+      const byd = FIN_META.byd;
+      const bPend   = byd.amort.filter(r => r.fecha > hoy);
+      const bPaid   = byd.amort.filter(r => r.fecha <= hoy);
+      const bNext   = bPend[0] || null;
+      const bCp12   = bPend.filter(r => r.fecha <= lim12).reduce((s, r) => s + r.mensualidad, 0);
+      const bRestante = bPend.reduce((s, r) => s + r.mensualidad, 0);
+      const bPagado = bPaid.reduce((s, r) => s + r.mensualidad, 0);
+      result.byd = {
+        pagados: bPaid.length, pendientes: bPend.length, total: byd.amort.length,
+        pagado_total: bPagado, restante_total: bRestante,
+        cp12_renta: bCp12,
+        lp_renta: bRestante - bCp12,
+        prox_fecha: bNext ? bNext.fecha : null,
+        prox_monto: bNext ? bNext.mensualidad : 0,
+        pct_pagado: Math.round(bPaid.length / byd.amort.length * 100)
+      };
+
+      result.kpis = {
+        pago_mensual_total: camry.mensualidad + byd.mensualidad,
+        pasivo_cp_creditos: result.camry.cp12_capital,
+        pasivo_cp_arrendamiento: result.byd.cp12_renta,
+        pasivo_cp_total: result.camry.cp12_capital + result.byd.cp12_renta,
+        pasivo_lp_creditos: result.camry.lp_capital,
+        pasivo_lp_arrendamiento: result.byd.lp_renta,
+        updated: hoy
+      };
+
+      return result;
+    }
+
+    /* ── accordion ── */
+    function toggleAccordion(bodyId, btn) {
+      const body = document.getElementById(bodyId);
+      const open = body.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      const arrow = btn.querySelector('.fin-accordion-arrow');
+      if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : '';
+      // update button text prefix
+      const prefix = open ? '▼' : '▶';
+      const textNode = btn.firstChild;
+      if (textNode && textNode.nodeType === 3) {
+        textNode.textContent = textNode.textContent.replace(/^[▶▼]\s*/, prefix + ' ');
+      }
+    }
+
+    /* ── modal otros ── */
+    function abrirModalOtro() {
+      document.getElementById('modal-otro').classList.add('open');
+    }
+    function cerrarModalOtro() {
+      document.getElementById('modal-otro').classList.remove('open');
+      // reset fields
+      ['otro-nombre','otro-monto','otro-pago','otro-plazo','otro-inicio'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('otro-tipo').selectedIndex = 0;
+    }
+    function guardarOtro() {
+      const nombre = document.getElementById('otro-nombre').value.trim();
+      if (!nombre) { alert('El nombre es requerido.'); return; }
+      const monto  = parseFloat(document.getElementById('otro-monto').value) || 0;
+      const pago   = parseFloat(document.getElementById('otro-pago').value) || 0;
+      const plazo  = parseInt(document.getElementById('otro-plazo').value) || 0;
+      const inicio = document.getElementById('otro-inicio').value;
+      const tipo   = document.getElementById('otro-tipo').value;
+
+      const lista = JSON.parse(localStorage.getItem(KEY_FIN_OTROS) || '[]');
+      lista.push({ id: Date.now(), nombre, tipo, monto, pago_mensual: pago, plazo, inicio });
+      localStorage.setItem(KEY_FIN_OTROS, JSON.stringify(lista));
+
+      cerrarModalOtro();
+      renderOtros();
+      if (typeof toast !== 'undefined') toast('Pasivo guardado correctamente.', 'success');
+    }
+
+    /* ── import toast ── */
+    function toastImport() {
+      if (typeof toast !== 'undefined') {
+        toast('Importación automática disponible próximamente. Por ahora, los datos se cargaron directamente desde sus contratos.', 'info');
+      }
+    }
+
+    /* ── render otros pasivos ── */
+    function renderOtros() {
+      const container = document.getElementById('otros-container');
+      const lista = JSON.parse(localStorage.getItem(KEY_FIN_OTROS) || '[]');
+      if (!lista.length) {
+        container.innerHTML = `<div class="otros-empty"><div class="otros-empty-icon">📋</div><div>No hay otros pasivos registrados.</div><div style="font-size:0.65rem;margin-top:0.3rem;">Usa "+ Agregar compromiso" para registrar deudas informales, saldo deudor de socio, etc.</div></div>`;
+        return;
+      }
+      let rows = lista.map(p => `
+        <tr>
+          <td>${p.nombre}</td>
+          <td><span style="font-size:0.65rem;background:#f0f4ff;color:#1e40af;border:1px solid #bfcffd;border-radius:3px;padding:0.1rem 0.35rem;font-weight:700;">${p.tipo}</span></td>
+          <td>${p.inicio ? fmtFecha(p.inicio) : '—'}</td>
+          <td>${p.plazo ? p.plazo + ' m' : '—'}</td>
+          <td>${p.pago_mensual ? mxn(p.pago_mensual) : '—'}</td>
+          <td>${mxn(p.monto)}</td>
+          <td><button onclick="eliminarOtro(${p.id})" style="font-size:0.62rem;border:1px solid var(--border);background:none;border-radius:3px;padding:0.1rem 0.35rem;cursor:pointer;color:var(--red);">✕</button></td>
+        </tr>`).join('');
+      container.innerHTML = `
+        <table class="otros-table">
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Tipo</th><th>Inicio</th><th>Plazo</th>
+              <th>Pago mens.</th><th style="text-align:right;">Monto</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+    function eliminarOtro(id) {
+      let lista = JSON.parse(localStorage.getItem(KEY_FIN_OTROS) || '[]');
+      lista = lista.filter(p => p.id !== id);
+      localStorage.setItem(KEY_FIN_OTROS, JSON.stringify(lista));
+      renderOtros();
+    }
+
+    /* ── render camry table ── */
+    function renderCamryTable(kc) {
+      const hoy = new Date().toISOString().slice(0, 10);
+      const tbl = document.getElementById('tbl-camry');
+      let html = `<thead><tr>
+        <th>#</th><th>Fecha</th><th>Saldo Inicial</th>
+        <th>Amortización</th><th>Interés</th><th>IVA</th>
+        <th>Mensualidad</th><th>Estado</th>
+      </tr></thead><tbody>`;
+      FIN_CAMRY_AMORT.forEach(r => {
+        const paid = r.fecha <= hoy;
+        const rowCls = paid ? 'amort-row-paid' : 'amort-row-pending';
+        const estado = paid
+          ? '<span class="estado-pagado">✅ Pagado</span>'
+          : '<span class="estado-pendiente">⬜ Pendiente</span>';
+        html += `<tr class="${rowCls}">
+          <td>${r.no}</td>
+          <td>${fmtFecha(r.fecha)}</td>
+          <td>${mxn(r.capital_ini)}</td>
+          <td>${mxn(r.amortizacion)}</td>
+          <td>${mxn(r.interes)}</td>
+          <td>${mxn(r.iva)}</td>
+          <td>${mxn(r.mensualidad)}</td>
+          <td>${estado}</td>
+        </tr>`;
+      });
+      html += '</tbody>';
+      tbl.innerHTML = html;
+    }
+
+    /* ── render BYD table ── */
+    function renderBydTable(kb) {
+      const hoy = new Date().toISOString().slice(0, 10);
+      const tbl = document.getElementById('tbl-byd');
+      let html = `<thead><tr>
+        <th>#</th><th>Fecha</th><th>Renta (sin IVA)</th>
+        <th>IVA</th><th>Total</th><th>Estado</th>
+      </tr></thead><tbody>`;
+      FIN_BYD_PAGOS.forEach(r => {
+        const paid = r.fecha <= hoy;
+        const rowCls = paid ? 'amort-row-paid' : 'amort-row-pending';
+        const estado = paid
+          ? '<span class="estado-pagado">✅ Pagado</span>'
+          : '<span class="estado-pendiente">⬜ Pendiente</span>';
+        html += `<tr class="${rowCls}">
+          <td>${r.no}</td>
+          <td>${fmtFecha(r.fecha)}</td>
+          <td>${mxn(r.renta)}</td>
+          <td>${mxn(r.iva)}</td>
+          <td>${mxn(r.mensualidad)}</td>
+          <td>${estado}</td>
+        </tr>`;
+      });
+      html += '</tbody>';
+      tbl.innerHTML = html;
+    }
+
+    /* ── build camry donut ── */
+    function buildCamryChart(kc) {
+      const capPagado = kc.cap_pagado;
+      const intPagado = kc.int_pagado;
+      const saldo     = kc.saldo;
+      const ctx = document.getElementById('chart-camry').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Capital pagado', 'Interés + IVA pagado', 'Saldo pendiente'],
+          datasets: [{
+            data: [capPagado, intPagado, saldo],
+            backgroundColor: ['#16a34a', '#d97706', '#1e3a6e'],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: false,
+          cutout: '65%',
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: ctx => ' ' + mxn(ctx.parsed) }
+          }}
+        }
+      });
+      // legend
+      const items = [
+        { color: '#16a34a', name: 'Capital pagado',    val: capPagado },
+        { color: '#d97706', name: 'Interés + IVA pag.', val: intPagado },
+        { color: '#1e3a6e', name: 'Saldo pendiente',   val: saldo }
+      ];
+      const leg = document.getElementById('legend-camry');
+      leg.innerHTML = items.map(i => `
+        <div class="fin-legend-item">
+          <div class="fin-legend-dot" style="background:${i.color}"></div>
+          <span class="fin-legend-name">${i.name}</span>
+          <span class="fin-legend-val">${mxn(i.val)}</span>
+        </div>`).join('');
+    }
+
+    /* ── build BYD donut ── */
+    function buildBydChart(kb) {
+      const pagado   = kb.pagado_total;
+      const restante = kb.restante_total;
+      const ctx = document.getElementById('chart-byd').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Rentas pagadas', 'Rentas pendientes'],
+          datasets: [{
+            data: [pagado, restante],
+            backgroundColor: ['#16a34a', '#1e3a6e'],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: false,
+          cutout: '65%',
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: ctx => ' ' + mxn(ctx.parsed) }
+          }}
+        }
+      });
+      const leg = document.getElementById('legend-byd');
+      leg.innerHTML = `
+        <div class="fin-legend-item">
+          <div class="fin-legend-dot" style="background:#16a34a"></div>
+          <span class="fin-legend-name">Rentas pagadas</span>
+          <span class="fin-legend-val">${mxn(pagado)}</span>
+        </div>
+        <div class="fin-legend-item">
+          <div class="fin-legend-dot" style="background:#1e3a6e"></div>
+          <span class="fin-legend-name">Rentas pendientes</span>
+          <span class="fin-legend-val">${mxn(restante)}</span>
+        </div>
+        <div style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;font-style:italic;line-height:1.4;">
+          *Arrendamiento puro: sin capitalización.<br>Gasto operativo conforme NIF D-5.
+        </div>`;
+    }
+
+    /* ── populate card KPIs ── */
+    function renderCards(data) {
+      const kc = data.camry;
+      const kb = data.byd;
+      const kp = data.kpis;
+
+      // ─ CAMRY card ─
+      document.getElementById('camry-prox-fecha').textContent = fmtFecha(kc.prox_fecha);
+      document.getElementById('camry-prox-monto').textContent = mxn(kc.prox_monto);
+      document.getElementById('camry-prog-label').textContent = `${kc.pagados}/${kc.total} pagos`;
+      document.getElementById('camry-prog-pct').textContent   = kc.pct_pagado + '%';
+      document.getElementById('camry-prog-fill').style.width  = kc.pct_pagado + '%';
+      document.getElementById('camry-ck-pagados').textContent = `${kc.pagados} / ${kc.total}`;
+      document.getElementById('camry-ck-saldo').textContent   = mxn(kc.saldo);
+      document.getElementById('camry-ck-cap-pagado').textContent = mxn(kc.cap_pagado);
+      document.getElementById('camry-ck-int-pagado').textContent = mxn(kc.int_pagado);
+
+      // ─ BYD card ─
+      document.getElementById('byd-prox-fecha').textContent   = fmtFecha(kb.prox_fecha);
+      document.getElementById('byd-prox-monto').textContent   = mxn(kb.prox_monto);
+      document.getElementById('byd-prog-label').textContent   = `${kb.pagados}/${kb.total} pagos`;
+      document.getElementById('byd-prog-pct').textContent     = kb.pct_pagado + '%';
+      document.getElementById('byd-prog-fill').style.width    = kb.pct_pagado + '%';
+      document.getElementById('byd-ck-pagados').textContent   = `${kb.pagados} / ${kb.total}`;
+      document.getElementById('byd-ck-restante').textContent  = mxn(kb.restante_total);
+      document.getElementById('byd-ck-pagado-total').textContent = mxn(kb.pagado_total);
+      document.getElementById('byd-ck-cp12').textContent      = mxn(kb.cp12_renta);
+
+      // ─ KPI bar ─
+      document.getElementById('kpi-pago-mensual').textContent = mxn(kp.pago_mensual_total);
+      document.getElementById('kpi-pago-sub').textContent     = `Toyota ${mxn(FIN_META.camry.mensualidad)} + BYD ${mxn(FIN_META.byd.mensualidad)}`;
+      document.getElementById('kpi-deuda-vigente').textContent = mxn(kc.saldo);
+      document.getElementById('kpi-cp12').textContent         = mxn(kp.pasivo_cp_total);
+      document.getElementById('kpi-cp12-sub').textContent     = `Cap. Toyota + Rentas BYD (12 m)`;
+
+      // proxima fecha entre los dos
+      let proxFecha, proxMonto, proxWho;
+      if (kc.prox_fecha && kb.prox_fecha) {
+        if (kc.prox_fecha <= kb.prox_fecha) {
+          proxFecha = kc.prox_fecha; proxMonto = kc.prox_monto; proxWho = 'Toyota';
+        } else {
+          proxFecha = kb.prox_fecha; proxMonto = kb.prox_monto; proxWho = 'BYD';
+        }
+      } else if (kc.prox_fecha) {
+        proxFecha = kc.prox_fecha; proxMonto = kc.prox_monto; proxWho = 'Toyota';
+      } else if (kb.prox_fecha) {
+        proxFecha = kb.prox_fecha; proxMonto = kb.prox_monto; proxWho = 'BYD';
+      }
+      if (proxFecha) {
+        document.getElementById('kpi-prox-monto').textContent = mxn(proxMonto);
+        document.getElementById('kpi-prox-info').textContent  = `${proxWho} · ${fmtFecha(proxFecha)}`;
+      }
+    }
+
+    /* ── close modal on overlay click ── */
+    document.addEventListener('click', function(e) {
+      if (e.target.id === 'modal-otro') cerrarModalOtro();
+    });
+  </script>
+
+  <script src="js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const data = calcFinKpis();
+      // persist KPIs for Prueba del Ácido integration
+      try { localStorage.setItem(KEY_FIN_KPIS, JSON.stringify(data.kpis)); } catch(e) {}
+
+      renderCards(data);
+      buildCamryChart(data.camry);
+      buildBydChart(data.byd);
+      renderCamryTable(data.camry);
+      renderBydTable(data.byd);
+      renderOtros();
+    });
+  </script>
+</body>
+</html>

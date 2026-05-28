@@ -122,6 +122,7 @@
           <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
           <div class="nav-menu-items">
             <a class="nav-menu-item active" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="financiamientos.html">Financiamientos</a>
             <a class="nav-menu-item" href="egresos.html">Egresos</a>
             <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
             <a class="nav-menu-item" href="proyectados.html">Proyección</a>
@@ -5145,7 +5146,7 @@ function limpiarCSVMalImportado() {
       if (saldoMXN > 0) activoCirc += saldoMXN;
     });
 
-    /* Pasivo Circulante: tarjetas de crédito + retenciones pendientes */
+    /* Pasivo Circulante: tarjetas de crédito + retenciones pendientes + financiamientos CP */
     let pasivoCirc = 0;
     saldos.forEach(s => {
       if (s.cancelada) return;
@@ -5156,6 +5157,15 @@ function limpiarCSVMalImportado() {
     try {
       const ret = loadRegistry('stgl_retenciones_extra');
       ret.forEach(r => { pasivoCirc += Math.abs(parseFloat(r.monto||r.total||0)); });
+    } catch {}
+    /* Financiamientos CP (Toyota capital + BYD arrendamiento próx. 12 meses) */
+    try {
+      const finKpis = JSON.parse(localStorage.getItem('stgl_financiamientos_kpis') || 'null');
+      if (finKpis && !offsetDays) {
+        /* Solo para período actual (offsetDays=0); períodos históricos no tienen dato */
+        pasivoCirc += (parseFloat(finKpis.pasivo_cp_creditos)     || 0);
+        pasivoCirc += (parseFloat(finKpis.pasivo_cp_arrendamiento)|| 0);
+      }
     } catch {}
 
     /* Aproximación histórica: ajustar por flujo neto en el período */
