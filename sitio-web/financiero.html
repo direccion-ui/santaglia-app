@@ -225,6 +225,7 @@
                 oninput="renderSaldos()" />
               <button class="btn btn-ghost" onclick="importarSaldos()" style="font-size:0.72rem;">↑ Importar Excel</button>
               <button class="btn btn-ghost" onclick="recalcularSaldosDesdeExtracto()" title="Aplica a stgl_saldos los movimientos del estado de cuenta (Excel) que aún no habían sido contabilizados. Úsalo si los saldos proyectados no coinciden con la realidad." style="font-size:0.72rem; color:#c67000;">⟳ Recalcular saldos</button>
+              <button class="btn btn-ghost" onclick="restaurarSaldosBase()" title="Restaura los saldos base desde cargar_saldos.js y recalcula aplicando todos los movimientos actuales. Úsalo si los saldos están corruptos." style="font-size:0.72rem; color:var(--red);">🔄 Restaurar saldos</button>
             </div>
           </div>
 
@@ -1874,6 +1875,62 @@
       closeModal('modal-sal');
       toast(`${data[idx].cuenta} ${data[idx].cancelada ? 'marcada como cancelada' : 'actualizada'}`, data[idx].cancelada ? 'info' : 'success');
       renderSaldos();
+    }
+
+    /* ── RESTAURAR saldos base + recalcular desde movimientos actuales ─────────
+       Úsalo cuando los saldos se corrompieron (p.ej. dedup incorrecto).
+       1. Resetea stgl_saldos a los valores de cargar_saldos.js (fecha base)
+       2. Limpia el flag _saldoAjustado de todos los movimientos
+       3. Re-aplica todos los movimientos que tienen cuenta asignada            */
+    function restaurarSaldosBase() {
+      if (!confirm(
+        '⚠️ RESTAURAR SALDOS\n\n' +
+        'Esto hará:\n' +
+        '1. Recargar los saldos base desde cargar_saldos.js\n' +
+        '2. Limpiar el flag de "ajustado" en todos los movimientos\n' +
+        '3. Recalcular aplicando todos los movimientos existentes\n\n' +
+        'Úsalo para corregir saldos corruptos. ¿Continuar?'
+      )) return;
+
+      const s = document.createElement('script');
+      s.src = 'js/cargar_saldos.js?t=' + Date.now();
+      s.onerror = () => toast('No se encontró cargar_saldos.js', 'error');
+      s.onload  = () => {
+        const base = window.__saldosData;
+        if (!base || !base.length) { toast('Sin datos base', 'error'); return; }
+
+        // 1. Resetear saldos base (forzar sin merge)
+        saveRegistry(KEY_SAL, base);
+
+        // 2. Limpiar flag _saldoAjustado en todos los movimientos
+        const excel = getExcelMovData().map(m => ({ ...m, _saldoAjustado: false }));
+        localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excel));
+        const manual = loadRegistry('stgl_mov_manual').map(m => ({ ...m, _saldoAjustado: false }));
+        saveRegistry('stgl_mov_manual', manual);
+
+        // 3. Re-aplicar todos los movimientos con cuenta asignada
+        const todos = [...getExcelMovData(), ...loadRegistry('stgl_mov_manual')];
+        let aplicados = 0;
+        todos.forEach(m => {
+          if (!m.cuenta) return;
+          const delta = parseFloat(m.entradas||0) - parseFloat(m.salidas||0);
+          if (!delta) return;
+          ajustarSaldoCuenta(m.cuenta, delta);
+          aplicados++;
+        });
+        // Marcar todos como ajustados
+        const excelFinal = getExcelMovData().map(m => m.cuenta ? { ...m, _saldoAjustado: true } : m);
+        localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excelFinal));
+        const manualFinal = loadRegistry('stgl_mov_manual').map(m => m.cuenta ? { ...m, _saldoAjustado: true } : m);
+        saveRegistry('stgl_mov_manual', manualFinal);
+
+        delete window.__saldosData;
+        _invalidarSalCache();
+        renderSaldos();
+        filterMovimientos();
+        toast(`✅ Saldos restaurados: base + ${aplicados} movimientos recalculados`, 'success');
+      };
+      document.head.appendChild(s);
     }
 
     function importarSaldos() {
@@ -5649,8 +5706,8 @@ setTimeout(() => {
     localStorage.setItem('stgl_cuentas_normalized_v2', '1');
   } catch(e) { console.warn('norm-v2:', e); }
 
-  /* ── Detección de duplicados: se ejecuta en CADA carga (fuera del bloque one-time) ── */
-  try { _detectarDuplicados(); } catch(e) { console.warn('[dedup]', e); }
+  /* Detección de duplicados temporalmente deshabilitada — pendiente de reescritura segura */
+  // try { _detectarDuplicados(); } catch(e) { console.warn('[dedup]', e); }
 }, 2000);
 
 /* ── Limpieza de movimientos CSV con fecha en el concepto ── */
