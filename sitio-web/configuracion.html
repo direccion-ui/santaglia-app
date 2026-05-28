@@ -842,7 +842,7 @@
                 <div style="font-family:var(--brand);font-size:0.73rem;font-weight:700;color:#166534;margin-bottom:0.5rem;">📊 Comparación Supabase vs. Local</div>
                 <div id="restore-compare-table" style="display:grid;grid-template-columns:1fr auto auto;gap:0.25rem 0.75rem;align-items:baseline;"></div>
                 <div style="margin-top:0.65rem;display:flex;gap:0.5rem;">
-                  <button class="btn" onclick="confirmarRestaurar()" style="background:#166534;color:#fff;font-size:0.72rem;flex:1;">✅ Restaurar datos de la nube</button>
+                  <button class="btn" id="btn-confirmar-restaurar" onclick="confirmarRestaurar()" style="background:#166534;color:#fff;font-size:0.72rem;flex:1;">✅ Restaurar datos de la nube</button>
                   <button class="btn btn-ghost" onclick="cancelarRestaurar()" style="font-size:0.72rem;">Cancelar</button>
                 </div>
                 <div style="font-size:0.61rem;color:#166534;margin-top:0.35rem;">Solo se sobreescribirán los módulos donde la nube tiene MÁS registros. Los módulos que ya tienes completos no se tocan.</div>
@@ -3110,27 +3110,68 @@ async function restaurarDesdeSupabase() {
 }
 
 async function confirmarRestaurar() {
-  if (!_pendingRestoreData) return;
+  const btn = document.getElementById('btn-confirmar-restaurar');
+
+  // Guard: si no hay datos pendientes, avisar al usuario
+  if (!_pendingRestoreData) {
+    toast('Haz clic en "🔄 Restaurar desde nube" primero para comparar los datos.', 'warning');
+    return;
+  }
+
+  // Mostrar estado de carga inmediatamente
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Restaurando…'; }
+
   const KEY_LABELS = {
     stgl_mov_manual:'', stgl_mov_excel:'', stgl_saldos:'', stgl_facturas:'',
     stgl_retenciones:'', stgl_recurrentes:'', stgl_mov_proyectados:'',
     stgl_egresos:'', stgl_nomina:'', stgl_proyectos:'', stgl_clientes:'', stgl_servicios:'',
   };
+
   let restored = 0;
-  Object.entries(_pendingRestoreData).forEach(([key, sbRaw]) => {
-    if (!KEY_LABELS.hasOwnProperty(key)) return; // solo módulos conocidos
+  let quotaError = false;
+  const errors = [];
+
+  // Usar for...of para poder hacer await si se necesita en el futuro
+  for (const [key, sbRaw] of Object.entries(_pendingRestoreData)) {
+    if (!KEY_LABELS.hasOwnProperty(key)) continue; // solo módulos conocidos
     const localRaw = localStorage.getItem(key) || null;
     let sbCount = 0, localCount = 0;
     try { const p = JSON.parse(sbRaw);    sbCount    = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
     try { const p = JSON.parse(localRaw); localCount = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
     if (sbCount > localCount) {
-      localStorage.setItem(key, sbRaw); // activa el interceptor → IDB + Supabase
-      restored++;
+      try {
+        localStorage.setItem(key, sbRaw); // activa el interceptor → IDB + Supabase
+        restored++;
+      } catch (e) {
+        if (e && (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+          quotaError = true;
+          errors.push(key);
+          break; // no tiene caso seguir si ya se llenó
+        } else {
+          errors.push(key);
+        }
+      }
     }
-  });
+  }
+
+  // Ocultar panel de comparación
   document.getElementById('restore-compare-panel').style.display = 'none';
   _pendingRestoreData = null;
-  if (restored > 0) {
+
+  // Restaurar botón
+  if (btn) { btn.disabled = false; btn.textContent = '✅ Restaurar datos de la nube'; }
+
+  // Retroalimentación al usuario
+  if (quotaError) {
+    toast(
+      `⚠️ Almacenamiento local lleno. Se restauraron ${restored} módulo(s) antes del error. ` +
+      'Limpia algún módulo desde la Zona de Peligro e intenta de nuevo.',
+      'error'
+    );
+  } else if (errors.length > 0) {
+    toast(`⚠️ Se restauraron ${restored} módulo(s) con ${errors.length} error(es). Revisa la consola.`, 'warning');
+    console.warn('Errores al restaurar módulos:', errors);
+  } else if (restored > 0) {
     toast(`✅ ${restored} módulo(s) restaurados desde la nube. Recargando…`, 'success');
     setTimeout(() => location.reload(), 1800);
   } else {
