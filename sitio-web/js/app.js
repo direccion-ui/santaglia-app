@@ -196,13 +196,22 @@ function _idbSnapshot() {
    Restauración al arrancar — cascada: localStorage → IDB → Supabase
    ══════════════════════════════════════════════════════════════ */
 async function _checkAndRestore() {
-  // stgl_supabase_migrated es la señal de que los datos ya están cargados/sincronizados.
-  // Si existe en localStorage, no hay nada que restaurar.
-  if (localStorage.getItem('stgl_supabase_migrated')) return;
+  // Verificar si hay datos REALES en localStorage (no solo el flag de migración).
+  // El flag puede existir sin datos si se hizo sync desde un localStorage vacío.
+  const _metaKeys = new Set(['stgl_supabase_migrated', 'stgl_org_id', 'stgl_user_role', 'stgl_user_name']);
+  const hasRealData = (() => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k?.startsWith('stgl_') && !_metaKeys.has(k)) return true;
+    }
+    return false;
+  })();
+  if (hasRealData) return; // Datos presentes — no restaurar
 
-  // Intento 1: IndexedDB — solo si IDB también tiene la señal de sync válida
+  // Intento 1: IndexedDB — solo si IDB tiene datos reales (no solo el flag)
   const idb = await _idbReadAll();
-  if (idb['stgl_supabase_migrated']) {
+  const idbHasRealData = Object.keys(idb).some(k => k.startsWith('stgl_') && !_metaKeys.has(k));
+  if (idbHasRealData) {
     const entries = Object.entries(idb).filter(([k]) => k.startsWith('stgl_'));
     entries.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
     const ts = idb[_STGL_TS_KEY] ? new Date(+idb[_STGL_TS_KEY]).toLocaleString('es-MX') : '—';
