@@ -5642,91 +5642,142 @@ function limpiarCSVMalImportado() {
    El gemelo de stgl_mov_manual (CFDI) tiene más datos → se prefiere conservar.
    También detecta duplicados DENTRO de stgl_mov_excel misma cuenta/monto/fecha. */
 
+/* ── Helpers de dedup ─────────────────────────────────────────────────────── */
+const _DEDUP_WIN_MS = 3 * 86400000; // 3 días — suficiente para posteos de tarjeta
+
+/* Clave de agrupación: misma cuenta + mismo monto + misma dirección */
+function _dedupKey(m) {
+  const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+  const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+  return `${(m.cuenta||'').trim()}|${amt}|${dir}`;
+}
+
+/* Score de "riqueza de datos": mayor score = más información = se conserva */
+function _dedupScore(m) {
+  let s = 0;
+  if (m.uuid)                                              s += 10; // CFDI con UUID
+  const rec = (m.receptor || m.receptorRfc || '').trim();
+  if (rec && rec !== 'Clara' && !/^\d+$/.test(rec))        s += 4;  // receptor real (no folio)
+  const cc = (m.cuentaCont || '').trim();
+  if (cc && cc !== 'No Existe' && cc !== '')               s += 3;  // cta. contable mapeada
+  const conc = (m.concepto || m.desc || '').trim();
+  if (conc && !/^\d{2}\/\d{2}\/\d{2}$/.test(conc))        s += 2;  // concepto ≠ fecha
+  if (m.conciliado || m._conciliado)                       s += 1;  // ya conciliado
+  return s;
+}
+
+/* Encuentra pares duplicados dentro de un array de movimientos.
+   Devuelve array de IDs que se deben ELIMINAR (el de menor score). */
+function _dedupDentroDeRegistro(arr) {
+  const aEliminar = new Set();
+  for (let i = 0; i < arr.length; i++) {
+    if (aEliminar.has(arr[i].id)) continue;
+    const ki  = _dedupKey(arr[i]);
+    const tsi = new Date(arr[i].fecha||'').getTime();
+    for (let j = i + 1; j < arr.length; j++) {
+      if (aEliminar.has(arr[j].id)) continue;
+      if (_dedupKey(arr[j]) !== ki) continue;
+      const tsj = new Date(arr[j].fecha||'').getTime();
+      if (Math.abs(tsi - tsj) > _DEDUP_WIN_MS) continue;
+      /* Son duplicados — eliminar el de menor score (o el más reciente si empatan) */
+      const si = _dedupScore(arr[i]), sj = _dedupScore(arr[j]);
+      aEliminar.add(si >= sj ? arr[j].id : arr[i].id);
+    }
+  }
+  return aEliminar;
+}
+
+/* Encuentra IDs de stgl_mov_excel con gemelo en stgl_mov_manual */
+function _dedupCruzado(excel, manual) {
+  const manIdx = {};
+  manual.forEach(m => {
+    const k = _dedupKey(m);
+    const ts = new Date(m.fecha||'').getTime();
+    if (!manIdx[k]) manIdx[k] = [];
+    manIdx[k].push(ts);
+  });
+  const aEliminar = new Set();
+  excel.forEach(m => {
+    if (aEliminar.has(m.id)) return;
+    const ts = new Date(m.fecha||'').getTime();
+    if ((manIdx[_dedupKey(m)]||[]).some(t => Math.abs(t - ts) <= _DEDUP_WIN_MS))
+      aEliminar.add(m.id);
+  });
+  return aEliminar;
+}
+
 function _detectarDuplicados() {
-  const WIN_MS = 3 * 86400000;
   const excel  = getExcelMovData();
   const manual = loadRegistry('stgl_mov_manual');
 
-  /* Construir índice de manual: {amt|dir|cuenta → [ts]} */
-  const manualIdx = {};
-  manual.forEach(m => {
-    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
-    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
-    const k   = `${m.cuenta}|${amt}|${dir}`;
-    if (!manualIdx[k]) manualIdx[k] = [];
-    manualIdx[k].push(new Date(m.fecha||'').getTime());
-  });
+  const dupDentroExcel  = _dedupDentroDeRegistro(excel);
+  const dupDentroManual = _dedupDentroDeRegistro(manual);
+  const dupCruzado      = _dedupCruzado(excel, manual);
 
-  /* Contar cuántos excel tienen gemelo en manual */
-  let gemelos = 0;
-  excel.forEach(m => {
-    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
-    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
-    const k   = `${m.cuenta}|${amt}|${dir}`;
-    const ts  = new Date(m.fecha||'').getTime();
-    if ((manualIdx[k]||[]).some(t => Math.abs(t - ts) <= WIN_MS)) gemelos++;
-  });
+  const total = dupDentroExcel.size + dupDentroManual.size + dupCruzado.size;
 
   const btn = document.getElementById('btn-dedup-movs');
   if (btn) {
-    if (gemelos > 0) {
+    if (total > 0) {
+      const detalle = [
+        dupDentroExcel.size  ? `${dupDentroExcel.size} en extracto`  : '',
+        dupDentroManual.size ? `${dupDentroManual.size} en CFDI`     : '',
+        dupCruzado.size      ? `${dupCruzado.size} entre registros`  : '',
+      ].filter(Boolean).join(', ');
       btn.style.display = '';
-      btn.title = `${gemelos} movimiento(s) duplicados detectados — haz clic para limpiar`;
-      btn.textContent = `🔂 ${gemelos} dup.`;
+      btn.title = `${total} duplicados detectados (${detalle}) — haz clic para limpiar`;
+      btn.textContent = `🔂 ${total} dup.`;
     } else {
       btn.style.display = 'none';
     }
   }
-  return gemelos;
+  return total;
 }
 
 function dedupMovimientosRetroactivo() {
-  const WIN_MS = 3 * 86400000;
   const excel  = getExcelMovData();
   const manual = loadRegistry('stgl_mov_manual');
 
-  /* Índice manual */
-  const manualIdx = {};
-  manual.forEach(m => {
-    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
-    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
-    const k   = `${m.cuenta}|${amt}|${dir}`;
-    if (!manualIdx[k]) manualIdx[k] = [];
-    manualIdx[k].push(new Date(m.fecha||'').getTime());
-  });
+  const dupDentroExcel  = _dedupDentroDeRegistro(excel);
+  const dupDentroManual = _dedupDentroDeRegistro(manual);
+  const dupCruzado      = _dedupCruzado(excel, manual);
 
-  /* Separar: conservar los excel que NO tienen gemelo en manual */
-  const aEliminar = [];
-  const aConservar = excel.filter(m => {
-    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
-    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
-    const k   = `${m.cuenta}|${amt}|${dir}`;
-    const ts  = new Date(m.fecha||'').getTime();
-    const esGemelo = (manualIdx[k]||[]).some(t => Math.abs(t - ts) <= WIN_MS);
-    if (esGemelo) { aEliminar.push(m); return false; }
-    return true;
-  });
+  const total = dupDentroExcel.size + dupDentroManual.size + dupCruzado.size;
+  if (!total) { toast('Sin duplicados detectados', 'info'); return; }
 
-  if (!aEliminar.length) { toast('Sin duplicados detectados', 'info'); return; }
+  const lineas = [
+    dupDentroExcel.size  ? `• ${dupDentroExcel.size} dentro del extracto bancario (dos importaciones del mismo CSV)`   : '',
+    dupDentroManual.size ? `• ${dupDentroManual.size} dentro de los movimientos manuales/CFDI`                         : '',
+    dupCruzado.size      ? `• ${dupCruzado.size} entre extracto bancario y CFDI (mismo cargo, ambos registrados)`      : '',
+  ].filter(Boolean).join('\n');
 
   const ok = confirm(
-    `Se detectaron ${aEliminar.length} movimiento(s) en el extracto bancario que ya están registrados como CFDI.\n\n` +
-    `Se eliminarán los del extracto bancario (stgl_mov_excel) y se conservarán los CFDI.\n\n` +
+    `Se detectaron ${total} movimiento(s) duplicados:\n\n${lineas}\n\n` +
+    `Se conservará el registro con MÁS información (CFDI > banco, UUID > sin UUID).\n` +
     `¿Continuar?`
   );
   if (!ok) return;
 
-  /* Revertir ajuste de saldo de los eliminados (si se aplicó) */
-  aEliminar.filter(m => m._saldoAjustado && m.cuenta).forEach(m => {
+  /* ── Limpiar stgl_mov_excel ── */
+  const excelElim = new Set([...dupDentroExcel, ...dupCruzado]);
+  const excelOk   = excel.filter(m => !excelElim.has(m.id));
+  const excelRem  = excel.filter(m => excelElim.has(m.id));
+  excelRem.filter(m => m._saldoAjustado && m.cuenta).forEach(m => {
     const delta = parseFloat(m.entradas||0) - parseFloat(m.salidas||0);
     if (delta) ajustarSaldoCuenta(m.cuenta, -delta);
   });
+  localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excelOk));
 
-  localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(aConservar));
+  /* ── Limpiar stgl_mov_manual ── */
+  if (dupDentroManual.size) {
+    const manualOk = manual.filter(m => !dupDentroManual.has(m.id));
+    saveRegistry('stgl_mov_manual', manualOk);
+  }
+
+  _invalidarSalCache();
   renderSaldos(); filterMovimientos();
   _detectarDuplicados();
-  _invalidarSalCache();
-  toast(`🔂 ${aEliminar.length} duplicados eliminados — saldos actualizados`, 'success');
+  toast(`🔂 ${total} duplicados eliminados — saldos actualizados`, 'success');
 }
 
   /* ══════════════════════════════════════════════════════════════════
