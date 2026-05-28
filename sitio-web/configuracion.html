@@ -821,15 +821,31 @@
               <div class="cfg-section-hdr">Respaldo y restauración</div>
 
               <!-- ☁️ Sincronización Supabase -->
-              <div class="backup-card" style="background:#f0f7ff; border-color:#93c5fd; margin-bottom:0.85rem;">
+              <div class="backup-card" style="background:#f0f7ff; border-color:#93c5fd; margin-bottom:0.5rem;">
                 <div class="backup-card-icon">☁️</div>
                 <div class="backup-card-info">
                   <div class="backup-card-title" style="color:#1d4ed8;">Sincronización con la nube (Supabase)</div>
                   <div id="supabase-sync-status" class="backup-card-desc">Verificando estado…</div>
                 </div>
-                <button class="btn btn-ghost" id="btn-migrar-supabase" onclick="migrarDatosASupabase()" style="white-space:nowrap; border-color:#93c5fd; color:#1d4ed8;">
-                  ☁️ Sincronizar ahora
-                </button>
+                <div style="display:flex;flex-direction:column;gap:0.35rem;align-items:flex-end;">
+                  <button class="btn btn-ghost" id="btn-migrar-supabase" onclick="migrarDatosASupabase()" style="white-space:nowrap; border-color:#93c5fd; color:#1d4ed8;">
+                    ☁️ Subir a nube
+                  </button>
+                  <button class="btn btn-ghost" id="btn-restaurar-nube" onclick="restaurarDesdeSupabase()" style="white-space:nowrap; border-color:#4ade80; color:#166534; font-size:0.72rem;">
+                    🔄 Restaurar desde nube
+                  </button>
+                </div>
+              </div>
+
+              <!-- Comparador nube vs local -->
+              <div id="restore-compare-panel" style="display:none;background:#f0faf4;border:1px solid #86efac;border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;font-size:0.72rem;">
+                <div style="font-family:var(--brand);font-size:0.73rem;font-weight:700;color:#166534;margin-bottom:0.5rem;">📊 Comparación Supabase vs. Local</div>
+                <div id="restore-compare-table" style="display:grid;grid-template-columns:1fr auto auto;gap:0.25rem 0.75rem;align-items:baseline;"></div>
+                <div style="margin-top:0.65rem;display:flex;gap:0.5rem;">
+                  <button class="btn" onclick="confirmarRestaurar()" style="background:#166534;color:#fff;font-size:0.72rem;flex:1;">✅ Restaurar datos de la nube</button>
+                  <button class="btn btn-ghost" onclick="cancelarRestaurar()" style="font-size:0.72rem;">Cancelar</button>
+                </div>
+                <div style="font-size:0.61rem;color:#166534;margin-top:0.35rem;">Solo se sobreescribirán los módulos donde la nube tiene MÁS registros. Los módulos que ya tienes completos no se tocan.</div>
               </div>
 
               <!-- Estado del último respaldo -->
@@ -2998,6 +3014,133 @@ function _backupFilename(prefix) {
   const hora  = now.toTimeString().slice(0,5).replace(':','-');
   const nombre = (loadCfg().empresa?.nombre || 'santaglia').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
   return { filename: `${nombre}-${prefix}-${fecha}_${hora}.json`, now };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESTAURAR DESDE SUPABASE — compara nube vs. local y aplica
+   solo los módulos donde la nube tiene más registros
+══════════════════════════════════════════════════════════════ */
+let _pendingRestoreData = null; // almacena lo que bajó de Supabase
+
+async function restaurarDesdeSupabase() {
+  const btn = document.getElementById('btn-restaurar-nube');
+  if (btn) { btn.disabled = true; btn.textContent = 'Consultando nube…'; }
+  _pendingRestoreData = null;
+
+  try {
+    // Verificar autenticación
+    const sb = await _initSupabase().catch(() => null);
+    if (!sb) { toast('Supabase no disponible. Verifica tu conexión.', 'error'); return; }
+    const { data: authData } = await sb.auth.getSession();
+    if (!authData?.session) {
+      toast('Inicia sesión para restaurar desde la nube.', 'warning');
+      return;
+    }
+
+    // Bajar datos de Supabase
+    const sbRows = await _sbReadAll();
+    if (!sbRows.length) {
+      toast('La nube no tiene datos para esta organización.', 'info');
+      return;
+    }
+
+    // Construir mapa: key → sbValue
+    const sbMap = {};
+    sbRows.forEach(({ key, value }) => { if (key?.startsWith('stgl_')) sbMap[key] = value; });
+
+    // Labels legibles por módulo
+    const KEY_LABELS = {
+      stgl_mov_manual:     'Mov. bancarios (manuales)',
+      stgl_mov_excel:      'Mov. bancarios (importados)',
+      stgl_saldos:         'Saldos / Cuentas',
+      stgl_facturas:       'Facturas',
+      stgl_retenciones:    'Retenciones',
+      stgl_recurrentes:    'Recurrentes',
+      stgl_mov_proyectados:'Mov. proyectados',
+      stgl_egresos:        'Egresos',
+      stgl_nomina:         'Nómina',
+      stgl_proyectos:      'Proyectos',
+      stgl_clientes:       'Clientes',
+      stgl_servicios:      'Servicios',
+    };
+
+    // Comparar: contar registros en nube vs. local
+    const compareKeys = new Set([...Object.keys(sbMap), ...Object.keys(KEY_LABELS)]);
+    const rows = [];
+    let hayDiferencia = false;
+
+    compareKeys.forEach(key => {
+      if (!KEY_LABELS[key]) return; // ignorar claves de meta/config
+      const sbRaw   = sbMap[key] || null;
+      const localRaw= localStorage.getItem(key) || null;
+      let sbCount = 0, localCount = 0;
+      try { const p = JSON.parse(sbRaw);    sbCount    = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
+      try { const p = JSON.parse(localRaw); localCount = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
+      const ganaNube = sbCount > localCount;
+      if (sbCount !== localCount) hayDiferencia = true;
+      rows.push({ key, label: KEY_LABELS[key], sbCount, localCount, ganaNube, sbRaw });
+    });
+
+    _pendingRestoreData = sbMap;
+
+    // Renderizar tabla comparativa
+    const tbl = document.getElementById('restore-compare-table');
+    if (tbl) {
+      tbl.innerHTML = `
+        <div style="font-weight:700;color:var(--text-dim);font-size:0.64rem;text-transform:uppercase;">Módulo</div>
+        <div style="font-weight:700;color:#1d4ed8;font-size:0.64rem;text-transform:uppercase;text-align:center;">☁️ Nube</div>
+        <div style="font-weight:700;color:var(--navy);font-size:0.64rem;text-transform:uppercase;text-align:center;">💻 Local</div>
+      ` + rows.map(r => `
+        <div style="color:${r.ganaNube ? '#166534' : 'var(--text-dim)'};">${r.label}</div>
+        <div style="text-align:center;font-weight:${r.ganaNube?'700':'400'};color:${r.ganaNube?'#166534':'var(--text-dim)'};">${r.sbCount}</div>
+        <div style="text-align:center;color:${r.ganaNube?'var(--text-dim)':'var(--green)'};">${r.localCount}</div>
+      `).join('');
+    }
+
+    document.getElementById('restore-compare-panel').style.display = '';
+    if (!hayDiferencia) {
+      toast('La nube y local están sincronizados. No hay diferencias.', 'success');
+    }
+
+  } catch(e) {
+    toast('Error al consultar Supabase: ' + (e.message || e), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Restaurar desde nube'; }
+  }
+}
+
+async function confirmarRestaurar() {
+  if (!_pendingRestoreData) return;
+  const KEY_LABELS = {
+    stgl_mov_manual:'', stgl_mov_excel:'', stgl_saldos:'', stgl_facturas:'',
+    stgl_retenciones:'', stgl_recurrentes:'', stgl_mov_proyectados:'',
+    stgl_egresos:'', stgl_nomina:'', stgl_proyectos:'', stgl_clientes:'', stgl_servicios:'',
+  };
+  let restored = 0;
+  Object.entries(_pendingRestoreData).forEach(([key, sbRaw]) => {
+    if (!KEY_LABELS.hasOwnProperty(key)) return; // solo módulos conocidos
+    const localRaw = localStorage.getItem(key) || null;
+    let sbCount = 0, localCount = 0;
+    try { const p = JSON.parse(sbRaw);    sbCount    = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
+    try { const p = JSON.parse(localRaw); localCount = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
+    if (sbCount > localCount) {
+      localStorage.setItem(key, sbRaw); // activa el interceptor → IDB + Supabase
+      restored++;
+    }
+  });
+  document.getElementById('restore-compare-panel').style.display = 'none';
+  _pendingRestoreData = null;
+  if (restored > 0) {
+    toast(`✅ ${restored} módulo(s) restaurados desde la nube. Recargando…`, 'success');
+    setTimeout(() => location.reload(), 1800);
+  } else {
+    toast('No había nada que restaurar — local ya tenía más datos.', 'info');
+  }
+}
+
+function cancelarRestaurar() {
+  document.getElementById('restore-compare-panel').style.display = 'none';
+  _pendingRestoreData = null;
 }
 
 async function exportarDatos() {
