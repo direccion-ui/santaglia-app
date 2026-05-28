@@ -2827,6 +2827,25 @@ function guardarCuentaSAT() {
   const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
   cfg.cuentaSAT = val;
   localStorage.setItem('stgl_config', JSON.stringify(cfg));
+
+  /* Parche retroactivo: actualiza la cuenta en TODOS los movimientos SAT existentes */
+  if (val) {
+    try {
+      const KEY_MOV = 'stgl_mov_manual';
+      const manual  = JSON.parse(localStorage.getItem(KEY_MOV) || '[]');
+      let changed = false;
+      manual.forEach(m => {
+        if (m.origenRef !== 'retenciones-sat') return;
+        if (m.cuenta !== val) { m.cuenta = val; changed = true; }
+        if (!m.cuentaCont) { m.cuentaCont = 'Impuestos y Retenciones'; changed = true; }
+      });
+      if (changed) {
+        localStorage.setItem(KEY_MOV, JSON.stringify(manual));
+        toast(`Cuenta SAT guardada y aplicada retroactivamente a ${manual.filter(m=>m.origenRef==='retenciones-sat').length} pago(s) SAT`, 'success');
+        return;
+      }
+    } catch(e) { console.warn('[stgl] parche cuenta SAT:', e); }
+  }
   toast('Cuenta SAT guardada', 'success');
 }
 

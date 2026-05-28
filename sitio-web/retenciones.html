@@ -2459,16 +2459,36 @@ function calcEditTotals() {
  * @param {number} importe  - Total pagado al SAT (acuse)
  * @param {string} fecha    - Fecha real de pago (YYYY-MM-DD)
  */
+/* ── Cuenta SAT: leer desde config (DRY) ── */
+function _getCuentaSAT() {
+  try { return JSON.parse(localStorage.getItem('stgl_config') || '{}').cuentaSAT || ''; } catch { return ''; }
+}
+
+/* ── Parche retroactivo: actualiza cuenta en movimientos SAT ya registrados ──
+   Se llama al arrancar la página y cada vez que se guarda un acuse.
+   Solo toca movimientos con origenRef='retenciones-sat' y cuenta vacía o distinta. */
+function _parchearCuentaSATEnMovs() {
+  const cuentaSAT = _getCuentaSAT();
+  if (!cuentaSAT) return; // sin configuración, nada que hacer
+  try {
+    const manual  = loadRegistry('stgl_mov_manual');
+    let   changed = false;
+    manual.forEach(m => {
+      if (m.origenRef !== 'retenciones-sat') return;
+      if (m.cuenta !== cuentaSAT) { m.cuenta = cuentaSAT; changed = true; }
+      /* También rellenar cuentaCont si estaba vacío */
+      if (!m.cuentaCont) { m.cuentaCont = 'Impuestos y Retenciones'; changed = true; }
+    });
+    if (changed) saveRegistry('stgl_mov_manual', manual);
+  } catch(e) { console.warn('[stgl] _parchearCuentaSATEnMovs:', e); }
+}
+
 function registrarPagoSATEnMovManual(periodo, importe, fecha) {
   if (!importe || !fecha) return;
   try {
-    let cuentaSAT = '';
-    try {
-      const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
-      cuentaSAT = cfg.cuentaSAT || '';
-    } catch {}
+    const cuentaSAT = _getCuentaSAT();
 
-    const id  = `mov-sat-ret-${periodo.replace('-', '')}`;
+    const id  = `mov-sat-ret-${periodo.replace(/-/g, '')}`;  // reemplaza TODOS los guiones
     const mov = {
       id,
       fecha,
@@ -2593,12 +2613,23 @@ function guardarEdicion() {
 
   saveExtraObj(extra);
 
-  // Registrar pago real en Financiero si hay acuse con importe y fecha de pago
-  const _acuseTotalFinal = (parseFloat(a1)||0) + (parseFloat(a2)||0) + (parseFloat(a3)||0);
-  const _acuseFechaFinal = af; // ya declarado arriba: const af = document.getElementById('edit-acuseFecha').value
+  /* Registrar / actualizar movimiento SAT en Financiero.
+     Condición ampliada: usa los campos del form SI están presentes, o los valores
+     previamente guardados en extra si el usuario no los tocó en esta sesión.
+     Esto garantiza que aunque el usuario solo edite notas o IVA, la cuenta SAT
+     siempre quede actualizada en el movimiento. */
+  const _acuseA1    = parseFloat(a1) || 0;
+  const _acuseA2    = parseFloat(a2) || 0;
+  const _acuseA3    = parseFloat(a3) || 0;
+  const _acuseTotalFinal = _acuseA1 + _acuseA2 + _acuseA3
+      || (parseFloat(ex.acuseTotal) || 0);          // fallback al acuse ya guardado
+  const _acuseFechaFinal = af
+      || ex.fechaPagoReal || '';                     // fallback a fecha ya guardada
   if (_acuseTotalFinal > 0 && _acuseFechaFinal) {
     registrarPagoSATEnMovManual(currentEditKey, _acuseTotalFinal, _acuseFechaFinal);
   }
+  /* Parche cuenta en todos los demás períodos también (por si cambió en config) */
+  _parchearCuentaSATEnMovs();
 
   closeModal('modal-editar');
   // Remove from pendingChanges if it was inline-edited too
@@ -4106,6 +4137,11 @@ _initTablaCompacta();
 _vistaDirectorActiva = localStorage.getItem(KEY_VISTA_DIRECTOR) === '1';
 renderTable();
 if (_vistaDirectorActiva) _setVistaDirector(true);
+
+/* ── Parche retroactivo cuenta SAT: actualiza todos los movimientos existentes
+   con origenRef='retenciones-sat' que tengan cuenta vacía o incorrecta.
+   Se ejecuta silenciosamente en cada carga. */
+_parchearCuentaSATEnMovs();
 
 /* ── Botón "Enviar a Telegram" en panel de anomalías ── */
 async function tgEnviarAlertasRetenciones() {
