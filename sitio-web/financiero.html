@@ -5786,32 +5786,74 @@ function limpiarCSVMalImportado() {
     return { mxn, usd, cc, neto, compromisos, tc };
   }
 
-  /* ── 3B/3C: Capital de Trabajo + Prueba del Ácido ── */
+  /* ── 3B/3C: Capital de Trabajo + Prueba del Ácido ──────────────────────────
+     FUENTE ÚNICA DE VERDAD: esta función calcula activoCirc y pasivoCirc con
+     TODOS los componentes. Las cajas de KPI, la gráfica y el panel de desglose
+     consumen este resultado — nunca recalculan por su cuenta.
+
+     Activo Circulante:
+       1. Bancos (saldos líquidos MXN + USD×TC)
+       2. Clientes y CxC (facturas Pendiente/Vencida)
+       3. IVA a favor (stgl_iva_favor + stgl_retenciones_extra[].ivaFavor)
+       4. Inventarios — N/A, modelo de servicios
+
+     Pasivo Circulante:
+       1. Tarjetas de crédito
+       2. Retenciones SAT pendientes
+       3. Financiamientos CP (Toyota 12m + BYD 12m)
+
+     Para períodos históricos (offsetDays > 0) solo se ajusta la partida Bancos
+     por el flujo neto del período; CxC e IVA se tratan como constantes porque
+     no hay datos de serie temporal para esas partidas.                        ── */
   function _calcCapitalTrabajo(offsetDays) {
     const saldos = loadRegistry(KEY_SAL);
     const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
 
-    /* Activo Circulante: saldos positivos en cuentas corrientes/inversión/efectivo */
-    let activoCirc = 0;
+    /* ── 1. Bancos ── */
+    let bancos = 0;
     saldos.forEach(s => {
-      if (s.cancelada) return;
-      const saldo = _sal(s);                                         // ← saldo calculado
-      const tipo  = (s.tipo || '').toLowerCase();
-      const mon   = (s.moneda || 'MXN').toUpperCase();
-      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') return; /* es pasivo */
+      if (s.cancelada || _esTarjetaDir(s)) return;
+      const saldo    = _sal(s);
+      const mon      = (s.moneda || 'MXN').toUpperCase();
       const saldoMXN = mon === 'USD' ? saldo * tc : saldo;
-      if (saldoMXN > 0) activoCirc += saldoMXN;
+      if (saldoMXN > 0) bancos += saldoMXN;
     });
 
-    /* Pasivo Circulante: tarjetas de crédito + retenciones pendientes + financiamientos CP */
+    /* ── 2. CxC: facturas Pendiente / Vencida ── */
+    let cxc = 0;
+    try {
+      const facts = loadRegistry('stgl_facturas');
+      facts.forEach(f => {
+        const est = (f.estado || '').toLowerCase();
+        if (est === 'pendiente' || est === 'vencida' || est === 'por cobrar')
+          cxc += parseFloat(f.total || f.impMxn || 0);
+      });
+    } catch {}
+
+    /* ── 3. IVA a favor (ambas fuentes) ── */
+    let ivaFavor = 0;
+    try {
+      const ivaArr = JSON.parse(localStorage.getItem('stgl_iva_favor') || '[]');
+      ivaArr.forEach(r => { ivaFavor += parseFloat(r.monto || 0); });
+    } catch {}
+    try {
+      const retExtra = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}');
+      Object.values(retExtra).forEach(ex => { ivaFavor += parseFloat(ex.ivaFavor || 0); });
+    } catch {}
+
+    /* Activo circulante = Bancos + CxC + IVA a favor  (inventarios = 0, modelo servicios) */
+    let activoCirc = bancos + cxc + ivaFavor;
+
+    /* ── Pasivo Circulante ── */
     let pasivoCirc = 0;
+
+    /* 1. Tarjetas — usa _esTarjetaDir (robusto, con fallback a config) */
     saldos.forEach(s => {
-      if (s.cancelada) return;
-      const saldo = _sal(s);                                         // ← saldo calculado
-      const tipo  = (s.tipo || '').toLowerCase();
-      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') pasivoCirc += Math.abs(saldo);
+      if (s.cancelada || !_esTarjetaDir(s)) return;
+      pasivoCirc += Math.abs(_sal(s));
     });
-    /* Retenciones pendientes como pasivo circulante */
+
+    /* 2. Retenciones pendientes */
     try {
       const retExtra  = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}');
       const retArray  = loadRegistry('stgl_retenciones');
@@ -5830,34 +5872,34 @@ function limpiarCSVMalImportado() {
         if (pendiente > 0) pasivoCirc += pendiente;
       });
     } catch {}
-    /* Financiamientos CP (Toyota capital + BYD arrendamiento próx. 12 meses)
-       Se aplica a TODOS los períodos (actual e históricos). Para períodos históricos
-       usamos el mismo valor que hoy como mejor aproximación disponible.
-       Fallback BYD: $7,895.14 × 12 = $94,741.68 si aún no hay datos de financiamientos. */
+
+    /* 3. Financiamientos CP: Toyota 12m + BYD 12m */
     try {
       const finKpis = JSON.parse(localStorage.getItem('stgl_financiamientos_kpis') || 'null');
       if (finKpis) {
         pasivoCirc += (parseFloat(finKpis.pasivo_cp_creditos)     || 0);
         pasivoCirc += (parseFloat(finKpis.pasivo_cp_arrendamiento)|| 0);
       } else {
-        /* Fallback: BYD arrend. 12m conocido ($7,895.14/mes). Toyota desconocido = 0.
-           Marcamos con flag para diagnóstico. */
-        pasivoCirc += 94741.68; /* BYD CP estimado */
+        pasivoCirc += 94741.68; /* BYD CP estimado — fallback hasta abrir Financiamientos */
         _calcCapitalTrabajo._missingFinKpis = true;
       }
     } catch {}
 
-    /* Aproximación histórica: ajustar por flujo neto en el período */
+    /* ── Aproximación histórica ──────────────────────────────────────────────
+       Solo se ajusta la partida Bancos por el flujo neto del período.
+       CxC e IVA a favor no tienen series temporales → se mantienen constantes
+       (mejor aproximación disponible; el auditor puede señalarlo si necesita). */
     if (offsetDays > 0) {
-      const cutoff = new Date(Date.now() - offsetDays * 86400000).toISOString().slice(0,10);
-      const movs   = getAllMovData().filter(r => (r.fecha || '') >= cutoff);
+      const cutoff    = new Date(Date.now() - offsetDays * 86400000).toISOString().slice(0,10);
+      const movs      = getAllMovData().filter(r => (r.fecha || '') >= cutoff);
       const flujoNeto = movs.reduce((s, r) => s + (parseFloat(r.entradas||0) - parseFloat(r.salidas||0)), 0);
-      activoCirc = Math.max(0, activoCirc - flujoNeto); /* restar flujo positivo del período = posición anterior */
+      const bancosHist = Math.max(0, bancos - flujoNeto);
+      activoCirc = bancosHist + cxc + ivaFavor;
     }
 
     const capitalTrabajo = activoCirc - pasivoCirc;
     const pruebAcido     = pasivoCirc > 0 ? activoCirc / pasivoCirc : (activoCirc > 0 ? 9.99 : 0);
-    return { activoCirc, pasivoCirc, capitalTrabajo, pruebAcido };
+    return { activoCirc, pasivoCirc, capitalTrabajo, pruebAcido, bancos, cxc, ivaFavor };
   }
 
   function _labelAcido(ratio) {
@@ -5919,10 +5961,12 @@ function limpiarCSVMalImportado() {
       const fmt = v => '$' + Math.round(Math.abs(v)).toLocaleString('es-MX');
       const fmtDec = v => '$' + Math.abs(v||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-      /* ════════════════════ ACTIVO CIRCULANTE ════════════════════ */
+      /* ════════════════════ ACTIVO CIRCULANTE ════════════════════
+         Los TOTALES vienen de r0 (_calcCapitalTrabajo) — fuente única de verdad.
+         Aquí solo calculamos el DETALLE para el tooltip/sub-label visual.          */
       const activoEl = document.getElementById('dir-activo-breakdown');
       if (activoEl) {
-        /* 1. Bancos: saldos líquidos (misma lógica que Posición Ejecutiva) */
+        /* Detalle Bancos: desglosar MXN vs USD para el sub-label */
         let bancosMXN = 0, bancosUSD = 0;
         sal.forEach(s => {
           if (s.cancelada || _esTarjetaDir(s)) return;
@@ -5930,62 +5974,44 @@ function limpiarCSVMalImportado() {
           if ((s.moneda||'MXN').toUpperCase() === 'USD') bancosUSD += saldo;
           else                                           bancosMXN += saldo;
         });
-        const bancosTotal = bancosMXN + bancosUSD * tc;
 
-        /* 2. Clientes y CxC: facturas con estado Pendiente o Vencida */
-        let cxcTotal = 0;
-        const cxcDetalle = [];
+        /* Detalle CxC: top-3 por cliente para el sub-label */
+        const cxcPorCliente = {};
         try {
-          const facts = loadRegistry('stgl_facturas');
-          facts.forEach(f => {
+          loadRegistry('stgl_facturas').forEach(f => {
             const est = (f.estado || '').toLowerCase();
             if (est === 'pendiente' || est === 'vencida' || est === 'por cobrar') {
-              const imp = parseFloat(f.total || f.impMxn || 0);
-              cxcTotal += imp;
-              cxcDetalle.push({ cliente: f.cliente || f.razonSocial || '—', monto: imp, estado: f.estado });
+              const c = f.cliente || f.razonSocial || '—';
+              cxcPorCliente[c] = (cxcPorCliente[c]||0) + parseFloat(f.total || f.impMxn || 0);
             }
           });
         } catch {}
-        /* Agrupar CxC por cliente para el resumen */
-        const cxcPorCliente = {};
-        cxcDetalle.forEach(d => { cxcPorCliente[d.cliente] = (cxcPorCliente[d.cliente]||0) + d.monto; });
         const cxcResumen = Object.entries(cxcPorCliente).sort((a,b)=>b[1]-a[1]).slice(0,3)
           .map(([c,m]) => `${c}: ${fmt(m)}`).join('; ');
 
-        /* 3. Impuestos por recuperar: IVA saldo a favor
-              Fuente A: stgl_iva_favor (entrada manual en Configuración)
-              Fuente B: stgl_retenciones_extra[ym].ivaFavor (por período, desde Retenciones)
-              Ambas fuentes se suman para el Activo Circulante. */
-        let ivaTotal = 0, ivaDetalleStr = '';
+        /* Detalle IVA: etiquetas por origen para el sub-label */
         const ivaLineas = [];
         try {
-          const ivaArr = JSON.parse(localStorage.getItem('stgl_iva_favor') || '[]');
-          ivaArr.forEach(r => {
-            const m = parseFloat(r.monto || 0);
-            if (m > 0) { ivaTotal += m; ivaLineas.push(`${r.año||'—'}: ${fmtDec(m)}`); }
+          JSON.parse(localStorage.getItem('stgl_iva_favor') || '[]').forEach(r => {
+            const m = parseFloat(r.monto||0);
+            if (m > 0) ivaLineas.push(`${r.año||'—'}: ${fmtDec(m)}`);
           });
         } catch {}
         try {
-          const retExtra = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}');
-          Object.entries(retExtra).forEach(([ym, ex]) => {
-            const m = parseFloat(ex.ivaFavor || 0);
-            if (m > 0) { ivaTotal += m; ivaLineas.push(`${ym} (ret.): ${fmtDec(m)}`); }
+          Object.entries(JSON.parse(localStorage.getItem('stgl_retenciones_extra')||'{}')).forEach(([ym,ex]) => {
+            const m = parseFloat(ex.ivaFavor||0);
+            if (m > 0) ivaLineas.push(`${ym} (ret.): ${fmtDec(m)}`);
           });
         } catch {}
-        ivaDetalleStr = ivaLineas.slice(0, 4).join(' · ');
-        const sinIVA = ivaTotal === 0;
+        const ivaDetalleStr = ivaLineas.slice(0,4).join(' · ');
 
-        /* 4. Inventarios: N/A (modelo de servicios) */
-        const inventarios = 0;
-
-        const activoTotal = bancosTotal + cxcTotal + ivaTotal + inventarios;
-
+        /* Totales directamente de r0 para garantizar consistencia con KPIs y gráfica */
         const rowsAC = [
-          `<div style="display:flex;justify-content:space-between;"><span>🏦 <b>Bancos</b></span><span>${fmtDec(bancosTotal)}<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">(MXN ${fmtDec(bancosMXN)} + USD ${bancosUSD.toLocaleString('es-MX',{minimumFractionDigits:2})})</span></span></div>`,
-          `<div style="display:flex;justify-content:space-between;"><span>📄 <b>Clientes y CxC</b>${cxcTotal>0?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${cxcResumen}</span>`:''}</span><span>${fmtDec(cxcTotal)}</span></div>`,
-          `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;"><span>🧾 <b>Impuestos por recuperar (IVA a favor)</b>${ivaDetalleStr?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${ivaDetalleStr}</span>`:''}</span><span>${sinIVA?`<a href="configuracion.html" style="color:#b45309;font-size:0.6rem;">⚠️ Sin datos — capturar en Ret. o Config.</a>`:fmtDec(ivaTotal)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>🏦 <b>Bancos</b><span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">(MXN ${fmtDec(bancosMXN)} + USD ${bancosUSD.toLocaleString('es-MX',{minimumFractionDigits:2})})</span></span><span>${fmtDec(r0.bancos)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>📄 <b>Clientes y CxC</b>${r0.cxc>0?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${cxcResumen}</span>`:''}</span><span>${fmtDec(r0.cxc)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;"><span>🧾 <b>Impuestos por recuperar (IVA a favor)</b>${ivaDetalleStr?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${ivaDetalleStr}</span>`:''}</span><span>${r0.ivaFavor>0?fmtDec(r0.ivaFavor):`<a href="configuracion.html" style="color:#b45309;font-size:0.6rem;">⚠️ Sin datos</a>`}</span></div>`,
           `<div style="display:flex;justify-content:space-between;"><span>📦 <b>Inventarios</b></span><span style="color:var(--text-xs);">N/A (servicios)</span></div>`,
-          `<div style="display:flex;justify-content:space-between;border-top:1px solid #86efac;margin-top:4px;padding-top:4px;"><b>Total Activo Circulante</b><b style="color:var(--green);">${fmtDec(activoTotal)}</b></div>`,
+          `<div style="display:flex;justify-content:space-between;border-top:1px solid #86efac;margin-top:4px;padding-top:4px;"><b>Total Activo Circulante</b><b style="color:var(--green);">${fmtDec(r0.activoCirc)}</b></div>`,
         ];
         activoEl.innerHTML = `<div style="font-weight:700;margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;color:#166534;font-size:0.6rem;">📊 Desglose Activo Circulante (período actual)</div>${rowsAC.map(r=>`<div style="padding:2px 0;">${r}</div>`).join('')}`;
         activoEl.style.display = '';
@@ -6841,6 +6867,43 @@ function limpiarCSVMalImportado() {
         });
       } else {
         items.push({ cls:'info', msg:'Sin retenciones SAT pendientes de pago', accion:'' });
+      }
+    } catch {}
+
+    /* 5. Consistencia Capital de Trabajo: KPI caja vs _calcCapitalTrabajo ─────────
+          Si la "Posición Ejecutiva" (neto) difiere significativamente del capital de
+          trabajo calculado, indica que alguna partida no se refleja en los saldos. */
+    try {
+      const r0 = _calcCapitalTrabajo(0);
+      /* Verificar que el activo circulante incluye CxC e IVA (no solo bancos) */
+      if (r0.cxc === 0) {
+        items.push({ cls:'warning', msg:'Clientes y CxC = $0 — sin facturas pendientes/vencidas registradas', accion:'Confirma en Facturación que las facturas tienen estado Pendiente o Vencida' });
+      }
+      if (r0.ivaFavor === 0) {
+        items.push({ cls:'warning', msg:'IVA a favor = $0 — no hay saldos a favor del SAT registrados', accion:'Captura en Retenciones (④ IVA Saldo a Favor) o en Configuración → Empresa' });
+      } else {
+        items.push({ cls:'info', msg:`IVA a favor registrado: ${_fmtDir(r0.ivaFavor)} — incluido en Activo Circulante`, accion:'' });
+      }
+      /* Verificar coherencia: Capital de Trabajo = Activo - Pasivo */
+      const expected = r0.activoCirc - r0.pasivoCirc;
+      if (Math.abs(expected - r0.capitalTrabajo) > 1) {
+        items.push({ cls:'error', msg:`Inconsistencia Capital de Trabajo: esperado ${_fmtDir(expected)}, calculado ${_fmtDir(r0.capitalTrabajo)}`, accion:'Error interno — recarga la página' });
+      } else {
+        items.push({ cls:'info', msg:`Capital de Trabajo consistente: Activo ${_fmtDir(r0.activoCirc)} − Pasivo ${_fmtDir(r0.pasivoCirc)} = ${r0.capitalTrabajo >= 0 ? '' : '−'}${_fmtDir(Math.abs(r0.capitalTrabajo))}`, accion:'' });
+      }
+    } catch(e) {
+      items.push({ cls:'warning', msg:`Error al verificar Capital de Trabajo: ${e.message}`, accion:'Revise la consola' });
+    }
+
+    /* 6. IVA a favor histórico: alertar si hay años sin dato ── */
+    try {
+      const añoActual = new Date().getFullYear();
+      const ivaArr = JSON.parse(localStorage.getItem('stgl_iva_favor') || '[]');
+      const añosRegistrados = new Set(ivaArr.map(r => String(r.año)));
+      const retExtra = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}');
+      Object.values(retExtra).forEach(ex => { if (ex.ivaFavor > 0) añosRegistrados.add('ret'); });
+      if (añosRegistrados.size === 0 && añoActual >= 2022) {
+        items.push({ cls:'warning', msg:'Sin datos de IVA a favor para ningún año — posible activo fiscal no contabilizado', accion:'Captura histórico en Configuración → Empresa → Impuestos por Recuperar' });
       }
     } catch {}
 
