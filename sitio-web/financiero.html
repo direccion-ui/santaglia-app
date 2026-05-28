@@ -1529,16 +1529,58 @@
       renderSaldos();
     }
 
+    /* ══════════════════════════════════════════════════════════════
+       _sal(): Saldo CALCULADO = base (stgl_saldos) + Σ(movimientos
+       manuales con fecha POSTERIOR a la última actualización del saldo).
+       Elimina la necesidad de actualizar stgl_saldos manualmente al
+       registrar comprobantes o movimientos. El base solo cambia al
+       importar un estado de cuenta bancario.
+       ══════════════════════════════════════════════════════════════ */
+    let __salDeltaCache = null;
+
+    function _invalidarSalCache() { __salDeltaCache = null; }
+
+    function _buildSalCache() {
+      const saldos = loadRegistry('stgl_saldos') || [];
+      const movs   = loadRegistry('stgl_mov_manual') || [];
+      // Mapa cuenta → fecha base del último saldo conocido
+      const fechaBase = {};
+      saldos.forEach(s => {
+        fechaBase[s.cuenta] = s.fechaActualizacion || s.ultimaActualizacion || '';
+      });
+      // Acumular delta por cuenta: solo movimientos POSTERIORES a la fecha base
+      const delta = {};
+      movs.forEach(m => {
+        if (!m.cuenta || !m.fecha) return;
+        const fb = fechaBase[m.cuenta] || '';
+        if (fb && m.fecha <= fb) return; // ya reflejado en el saldo base — ignorar
+        delta[m.cuenta] = (delta[m.cuenta] || 0) +
+          (parseFloat(m.entradas) || 0) - (parseFloat(m.salidas) || 0);
+      });
+      return delta;
+    }
+
+    /* Devuelve el saldo proyectado de una cuenta (base + delta de movimientos) */
+    function _sal(cuentaObj) {
+      if (!cuentaObj) return 0;
+      const base = parseFloat(cuentaObj.saldo) || 0;
+      if (!cuentaObj.cuenta) return base;
+      if (!__salDeltaCache) __salDeltaCache = _buildSalCache();
+      return base + (__salDeltaCache[cuentaObj.cuenta] || 0);
+    }
+
     function filaCtaBancaria(r, esTarjeta) {
       const tc    = getTc();
-      const equiv = equivMxn(r.saldo, r.moneda);
-      const color = r.saldo < 0 ? 'color:var(--red);' : r.saldo > 0 ? '' : 'color:var(--text-xs);';
+      const sal   = _sal(r);                                         // ← saldo calculado
+      const equiv = equivMxn(sal, r.moneda);
+      const color = sal < 0 ? 'color:var(--red);' : sal > 0 ? '' : 'color:var(--text-xs);';
+      const pendiente = (__salDeltaCache?.[r.cuenta] || 0) !== 0;   // hay movimientos sin reconciliar
       return `<tr data-id="${r.id}">
         <td style="font-family:var(--brand); font-weight:700; color:var(--text-xs); font-size:0.66rem;">${r.id}</td>
         <td style="font-family:var(--brand); font-weight:700; color:var(--navy);">${r.cuenta}</td>
         <td><span class="tipo-badge ${tipoClass(resolverTipo(r))}">${resolverTipo(r)}</span></td>
         <td style="font-family:var(--brand); font-size:0.68rem; font-weight:700; color:var(--text-dim);">${r.moneda}</td>
-        <td class="num" style="${color} font-weight:${r.saldo!==0?'700':'400'};">${fmtSaldo(r.saldo,r.moneda)}</td>
+        <td class="num" style="${color} font-weight:${sal!==0?'700':'400'};">${fmtSaldo(sal,r.moneda)}${pendiente?'<span title="Incluye movimientos pendientes de conciliar" style="font-size:0.55rem;color:var(--gold);margin-left:0.25rem;">●</span>':''}</td>
         <td class="num" style="${color} font-size:0.7rem;">${r.moneda==='USD'?'$'+equiv.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}):'—'}</td>
         <td style="font-size:0.68rem; color:var(--text-xs);">${r.fechaActualizacion||'—'}${r.nota?'<br><span style="font-style:italic;">'+r.nota+'</span>':''}</td>
         <td><button class="sal-edit" onclick="abrirEditarSaldo('${r.id}')" title="Actualizar saldo">✏️</button></td>
@@ -1546,6 +1588,7 @@
     }
 
     function renderSaldos() {
+      _invalidarSalCache();                                          // ← recalcular siempre
       const all  = loadRegistry(KEY_SAL);
       if (!all.length) return;
 
@@ -1554,10 +1597,10 @@
       const activas   = all.filter(r => !r.cancelada);
       const canceladas = all.filter(r => r.cancelada);
 
-      /* ── KPIs (sólo cuentas activas) ── */
-      const totalMxn = activas.filter(r => !esTarjeta(r)).reduce((s,r) => s + equivMxn(r.saldo, r.moneda), 0);
-      const totalUsd = activas.filter(r => r.moneda === 'USD').reduce((s,r) => s + r.saldo, 0);
-      const totalCc  = activas.filter(r => esTarjeta(r)).reduce((s,r) => s + r.saldo, 0);
+      /* ── KPIs (sólo cuentas activas, usando saldo calculado) ── */
+      const totalMxn = activas.filter(r => !esTarjeta(r)).reduce((s,r) => s + equivMxn(_sal(r), r.moneda), 0);
+      const totalUsd = activas.filter(r => r.moneda === 'USD').reduce((s,r) => s + _sal(r), 0);
+      const totalCc  = activas.filter(r => esTarjeta(r)).reduce((s,r) => s + _sal(r), 0);
       const neto     = totalMxn + totalCc;
 
       document.getElementById('sal-k-mxn').textContent     = '$' + totalMxn.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1572,7 +1615,7 @@
       /* ── Totales para tfoot (activas solamente) ── */
       let totMxnDisp = 0, totUsdDisp = 0;
       activas.forEach(r => {
-        if (!esTarjeta(r)) { if (r.moneda==='USD') totUsdDisp+=r.saldo; else totMxnDisp+=r.saldo; }
+        if (!esTarjeta(r)) { if (r.moneda==='USD') totUsdDisp+=_sal(r); else totMxnDisp+=_sal(r); }
       });
 
       /* ── Filas activas ── */
@@ -3753,7 +3796,9 @@
       }
     })();
 
-    let __pdfRows = []; // parsed rows for preview
+    let __pdfRows = [];            // parsed rows for preview
+    let __pdfSaldoFinal  = null;   // saldo disponible detectado en el PDF (actualiza base)
+    let __pdfNumeroCuenta = '';    // número de cuenta del PDF para match automático
 
     /* ══════════════════════════════════════════════════════════════
        IMPORTAR COMPROBANTE DE PAGO BBVA
@@ -4013,20 +4058,11 @@
       manuales.push(mov);
       saveRegistry('stgl_mov_manual', manuales);
 
-      // ── Actualizar saldo de la cuenta de origen ──
-      // El pago salió hoy: se descuenta del saldo registrado en stgl_saldos
-      const saldos = loadRegistry('stgl_saldos') || [];
-      const cuentaObj = saldos.find(s => s.cuenta === cuenta);
-      let saldoMsg = '';
-      if (cuentaObj) {
-        const saldoAntes = parseFloat(cuentaObj.saldo) || 0;
-        cuentaObj.saldo  = +(saldoAntes - importe).toFixed(2);
-        cuentaObj.ultimaActualizacion = fecha; // fecha del comprobante, no hoy
-        saveRegistry('stgl_saldos', saldos);
-        saldoMsg = ` · Saldo ${cuenta}: $${cuentaObj.saldo.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-      }
+      // stgl_saldos no se modifica — _sal() calcula el saldo proyectado
+      // sumando este movimiento automáticamente desde stgl_mov_manual
+      _invalidarSalCache();
 
-      toast(`✅ Movimiento registrado — $${importe.toLocaleString('es-MX', {minimumFractionDigits:2})} (Pendiente CFDI)${saldoMsg}`, 'success');
+      toast(`✅ Movimiento registrado — $${importe.toLocaleString('es-MX', {minimumFractionDigits:2})} · Los saldos se actualizaron.`, 'success');
       cerrarModalComprobante();
       btn.disabled = false; btn.textContent = '✅ Registrar movimiento';
 
@@ -4104,6 +4140,13 @@
             }
           });
         }
+
+        // ── Detectar saldo disponible y número de cuenta para actualizar base ──
+        const allText = allItems.map(i => i.str).join(' ');
+        const saldoMatch = allText.match(/Saldo disponible[:\s]+([\d,]+\.?\d*)/i);
+        __pdfSaldoFinal   = saldoMatch ? parseFloat(saldoMatch[1].replace(/,/g,'')) : null;
+        const numCtaMatch = allText.match(/N[úu]mero de cuenta[:\s]+(\d{5,})/i);
+        __pdfNumeroCuenta = numCtaMatch ? numCtaMatch[1] : '';
 
         const banco = document.getElementById('pdf-banco').value;
         const cuenta = document.getElementById('pdf-cuenta').value;
@@ -4659,7 +4702,29 @@
 
       closeModal('modal-pdf-recon');
       filterMovimientos();
-      toast(`${nuevos.length} movimiento${nuevos.length !== 1 ? 's' : ''} nuevo${nuevos.length !== 1 ? 's' : ''} guardado${nuevos.length !== 1 ? 's' : ''}`, 'success');
+
+      // ── Actualizar saldo BASE de la cuenta si el PDF tenía "Saldo disponible" ──
+      // Esto reemplaza el saldo antiguo con el del banco, moviendo el punto de referencia
+      // hacia adelante para que futuros movimientos manuales generen el delta correcto.
+      let saldoBaseMsg = '';
+      if (__pdfSaldoFinal != null) {
+        const cuentaNombre = cuenta;
+        const saldosReg = loadRegistry('stgl_saldos') || [];
+        const ctaObj = saldosReg.find(s => s.cuenta === cuentaNombre);
+        if (ctaObj) {
+          const fechaUltMov = [...nuevos].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''))[0]?.fecha
+                              || new Date().toISOString().slice(0,10);
+          ctaObj.saldo = __pdfSaldoFinal;
+          ctaObj.fechaActualizacion = fechaUltMov;
+          saveRegistry('stgl_saldos', saldosReg);
+          _invalidarSalCache();
+          saldoBaseMsg = ` · Saldo base actualizado a $${__pdfSaldoFinal.toLocaleString('es-MX',{minimumFractionDigits:2})}`;
+        }
+        __pdfSaldoFinal = null;
+        __pdfNumeroCuenta = '';
+      }
+
+      toast(`${nuevos.length} movimiento${nuevos.length!==1?'s':''} guardado${nuevos.length!==1?'s':''}${saldoBaseMsg}`, 'success');
       __reconNuevos = [];
     }
 
@@ -5460,10 +5525,11 @@ function limpiarCSVMalImportado() {
     const saldos = loadRegistry(KEY_SAL);
     const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
 
+    _invalidarSalCache();
     let mxn = 0, usd = 0, cc = 0;
     saldos.forEach(s => {
       if (s.cancelada) return;
-      const saldo = parseFloat(s.saldo) || 0;
+      const saldo = _sal(s);                                         // ← saldo calculado
       const mon   = (s.moneda || 'MXN').toUpperCase();
       const tipo  = (s.tipo   || '').toLowerCase();
       if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') { cc += Math.abs(saldo); return; }
@@ -5527,7 +5593,7 @@ function limpiarCSVMalImportado() {
     let activoCirc = 0;
     saldos.forEach(s => {
       if (s.cancelada) return;
-      const saldo = parseFloat(s.saldo) || 0;
+      const saldo = _sal(s);                                         // ← saldo calculado
       const tipo  = (s.tipo || '').toLowerCase();
       const mon   = (s.moneda || 'MXN').toUpperCase();
       if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') return; /* es pasivo */
@@ -5539,7 +5605,7 @@ function limpiarCSVMalImportado() {
     let pasivoCirc = 0;
     saldos.forEach(s => {
       if (s.cancelada) return;
-      const saldo = parseFloat(s.saldo) || 0;
+      const saldo = _sal(s);                                         // ← saldo calculado
       const tipo  = (s.tipo || '').toLowerCase();
       if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') pasivoCirc += Math.abs(saldo);
     });
@@ -5834,7 +5900,7 @@ function limpiarCSVMalImportado() {
       const tipo = (s.tipo || '').toLowerCase();
       const mon  = (s.moneda || 'MXN').toUpperCase();
       if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') return tot;
-      return mon === 'MXN' ? tot + (parseFloat(s.saldo) || 0) : tot;
+      return mon === 'MXN' ? tot + _sal(s) : tot;
     }, 0);
 
     /* ── Todos los movimientos para análisis de cargos del período ── */
@@ -5844,7 +5910,7 @@ function limpiarCSVMalImportado() {
 
     for (const tdc of tdcCuentas) {
       const nombre    = tdc.nombre || tdc.banco || 'Tarjeta';
-      const saldoAbs  = Math.abs(parseFloat(tdc.saldo) || 0);
+      const saldoAbs  = Math.abs(_sal(tdc));
       const limite    = parseFloat(tdc.limite || tdc.limit || 0);
 
       /* Día de corte (default 17) y días hasta el pago después del corte (default 20) */
@@ -5964,7 +6030,7 @@ function limpiarCSVMalImportado() {
     const tarjetasPendientes = [];
     saldos.forEach(s => {
       if (s.cancelada) return;
-      const saldo = parseFloat(s.saldo) || 0;
+      const saldo = _sal(s);                                         // ← saldo calculado
       const mon   = (s.moneda || 'MXN').toUpperCase();
       const tipo  = (s.tipo || '').toLowerCase();
       const nombre = s.nombre || s.banco || 'Tarjeta';
