@@ -1899,8 +1899,9 @@
        Declaradas ANTES del auto-init para evitar ReferenceError
        (let/const no se elevan como var/function). */
     const KEY_MOV_EXCEL = 'stgl_mov_excel';
-    let __movFiltered   = [];            /* resultado del filtro activo */
-    let __movOpenGroups = new Set();     /* meses expandidos en la tabla */
+    let __movFiltered        = [];        /* resultado del filtro activo */
+    let __movOpenGroups      = new Set(); /* meses expandidos en la tabla */
+    let __hayFiltrosActivos  = false;     /* true cuando hay al menos un filtro de columna activo */
     /* Vista de meses: 'solo-actual' (acordeón, default) | 'compacto' (todos cerrados) | 'todo' (todos abiertos) */
     let __movModoVista  = (() => {
       const v = localStorage.getItem('stgl_mov_vista');
@@ -2833,6 +2834,11 @@
         return true;
       });
 
+      /* Detectar si hay algún filtro activo (para resaltar subtotales como "filtrado") */
+      __hayFiltrosActivos = !!(fecha || fMov || tipo || desc || concepto || cuenta ||
+        cuentaCnt || folio || origen || dest || !isNaN(minEnt) || !isNaN(minSal) ||
+        fConc || fCont || fCFDI);
+
       updateMovKpis();
       renderMovPagina(true);   /* scroll al mes más reciente */
     }
@@ -2840,15 +2846,26 @@
     /* ── KPIs ── */
     function updateMovKpis() {
       const data     = __movFiltered;
+      const all      = getAllMovData();
       const entradas = data.reduce((s,r) => s + (r.entradas || 0), 0);
       const salidas  = data.reduce((s,r) => s + (r.salidas  || 0), 0);
       const neto     = entradas - salidas;
       const fmtK = n => '$' + n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
-      document.getElementById('mov-k-count').textContent    = data.length.toLocaleString('es-MX') + ' movs.';
-      document.getElementById('mov-k-entradas').textContent = fmtK(entradas);
-      document.getElementById('mov-k-salidas').textContent  = fmtK(salidas);
+
+      const filtrado = __hayFiltrosActivos && data.length < all.length;
+      const countTxt = filtrado
+        ? `${data.length.toLocaleString('es-MX')} de ${all.length.toLocaleString('es-MX')} movs.`
+        : data.length.toLocaleString('es-MX') + ' movs.';
+      document.getElementById('mov-k-count').textContent = countTxt;
+
+      /* Etiqueta de filtro activo bajo los KPIs de entradas/salidas */
+      const badgeFiltro = filtrado
+        ? ` <span style="font-size:0.55rem;font-family:var(--brand);font-weight:700;color:#b45309;background:#fef3c7;padding:0.05rem 0.3rem;border-radius:3px;vertical-align:middle;">FILTRADO</span>`
+        : '';
+      document.getElementById('mov-k-entradas').innerHTML = fmtK(entradas) + badgeFiltro;
+      document.getElementById('mov-k-salidas').innerHTML  = fmtK(salidas)  + (filtrado ? badgeFiltro : '');
       const kn = document.getElementById('mov-k-neto');
-      kn.textContent = (neto >= 0 ? '+' : '−') + fmtK(Math.abs(neto));
+      kn.innerHTML = (neto >= 0 ? '+' : '−') + fmtK(Math.abs(neto)) + (filtrado ? badgeFiltro : '');
       kn.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)';
       // Badge sin contabilizar — sobre todos los movimientos (no solo los filtrados)
       const allMovs   = getAllMovData();
@@ -3041,6 +3058,16 @@
 
       const fmtK = n => '$' + n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 
+      /* Total de movimientos por mes en el conjunto SIN filtrar
+         (para mostrar "N de M" cuando hay filtros activos) */
+      const allPorMes = {};
+      if (__hayFiltrosActivos) {
+        getAllMovData().forEach(r => {
+          const k = (r.fecha||'').slice(0,7);
+          if (k) allPorMes[k] = (allPorMes[k]||0) + 1;
+        });
+      }
+
       let html = '';
       for (const ym of claves) {
         /* Ordenar por fecha_movimiento ASC; desempate por fecha_registro o id (orden de captura) */
@@ -3049,21 +3076,29 @@
           if (fd !== 0) return fd;
           return (a.fecha_registro||a.id||'').localeCompare(b.fecha_registro||b.id||'');
         });
-        const open   = __movOpenGroups.has(ym);
-        const ent    = rows.reduce((s,r) => s + (r.entradas||0), 0);
-        const sal    = rows.reduce((s,r) => s + (r.salidas||0),  0);
-        const neto   = ent - sal;
-        const conced  = rows.filter(r => conc.has(r.id)).length;
-        const contd   = rows.filter(r => cont.has(r.id)).length;
-        const sinCt   = rows.length - contd;
-        const chev    = open ? '▼' : '▶';
+        const open      = __movOpenGroups.has(ym);
+        const ent       = rows.reduce((s,r) => s + (r.entradas||0), 0);
+        const sal       = rows.reduce((s,r) => s + (r.salidas||0),  0);
+        const neto      = ent - sal;
+        const conced    = rows.filter(r => conc.has(r.id)).length;
+        const contd     = rows.filter(r => cont.has(r.id)).length;
+        const sinCt     = rows.length - contd;
+        const chev      = open ? '▼' : '▶';
         const netoColor = neto >= 0 ? 'var(--green)' : 'var(--red)';
+        const totalMes  = allPorMes[ym] || rows.length;
+        const esFiltrado = __hayFiltrosActivos && rows.length < totalMes;
+
+        /* Contador "N de M" cuando hay filtros, o "N movimientos" sin filtros */
+        const movLabel = esFiltrado
+          ? `<span style="font-family:var(--brand); font-size:0.65rem; color:#b45309; margin-left:0.8rem; font-weight:700;">${rows.length} de ${totalMes} movimientos</span>
+             <span style="margin-left:0.3rem; font-family:var(--brand); font-size:0.55rem; background:#fef3c7; color:#b45309; padding:0.05rem 0.35rem; border-radius:3px; font-weight:700;">FILTRADO</span>`
+          : `<span style="font-family:var(--brand); font-size:0.65rem; color:var(--text-dim); margin-left:0.8rem;">${rows.length} movimientos</span>`;
 
         html += `<tr class="mov-group-hdr" onclick="toggleMovGroup('${ym}')">
           <td colspan="15">
             <span class="mov-group-chevron">${chev}</span>
             <span class="mov-group-title">${mesLabel(ym)}</span>
-            <span style="font-family:var(--brand); font-size:0.65rem; color:var(--text-dim); margin-left:0.8rem;">${rows.length} movimientos</span>
+            ${movLabel}
             <span style="margin-left:1.2rem; font-family:var(--brand); font-size:0.62rem; color:var(--text-xs);">Entradas:</span>
             <span class="mov-group-stat g" style="margin-left:0.3rem;">${fmtK(ent)}</span>
             <span style="margin-left:0.8rem; font-family:var(--brand); font-size:0.62rem; color:var(--text-xs);">Salidas:</span>
@@ -3077,6 +3112,18 @@
 
         if (open) {
           html += rows.map(r => filaReg(r, conc, cont)).join('');
+
+          /* ── Fila de totales al pie del mes (siempre visible cuando está abierto) ── */
+          html += `<tr style="background:${esFiltrado ? '#fefce8' : 'var(--bg-alt)'};border-top:2px solid ${esFiltrado ? '#fcd34d' : 'var(--border)'};position:sticky;bottom:0;z-index:2;">
+            <td colspan="10" style="padding:0.35rem 0.7rem; font-family:var(--brand); font-size:0.64rem; font-weight:700; color:${esFiltrado ? '#92400e' : 'var(--navy)'}; letter-spacing:0.04em; text-transform:uppercase;">
+              ${esFiltrado ? `⟳ Subtotales filtrados · ${mesLabel(ym)}` : `Σ Totales · ${mesLabel(ym)}`}
+            </td>
+            <td class="num" style="padding:0.35rem 0.6rem; font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--green);">${fmtK(ent)}</td>
+            <td class="num" style="padding:0.35rem 0.6rem; font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--red);">${fmtK(sal)}</td>
+            <td colspan="4" style="padding:0.35rem 0.6rem; font-family:var(--brand); font-size:0.7rem; font-weight:700; color:${netoColor};">
+              Neto: ${neto>=0?'+':'−'}${fmtK(Math.abs(neto))}
+            </td>
+          </tr>`;
         }
       }
 
