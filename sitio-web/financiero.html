@@ -434,8 +434,8 @@
               <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
                 <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Efectivo en Cuentas</div>
                 <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:var(--green);" id="dir-k-mxn">—</div>
-                <div style="font-size:0.65rem;color:var(--text-xs);">Saldos bancarios (bruto)</div>
-                <div style="font-size:0.63rem;color:var(--red);margin-top:0.1rem;" id="dir-k-cc"></div>
+                <div style="font-size:0.65rem;color:var(--text-xs);">Cuentas MXN líquidas</div>
+                <div style="font-size:0.63rem;color:var(--text-xs);margin-top:0.1rem;" id="dir-k-cc"></div>
               </div>
               <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
                 <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Disponible USD</div>
@@ -450,7 +450,8 @@
               <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
                 <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Total Neto MXN</div>
                 <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:#8a6800;" id="dir-k-neto">—</div>
-                <div style="font-size:0.65rem;color:var(--text-xs);" id="dir-k-fecha"></div>
+                <div style="font-size:0.65rem;color:var(--text-xs);" id="dir-k-neto-sub"></div>
+                <div style="font-size:0.63rem;color:var(--text-xs);margin-top:0.1rem;" id="dir-k-fecha"></div>
               </div>
             </div>
 
@@ -5682,16 +5683,34 @@ function limpiarCSVMalImportado() {
     const saldos = loadRegistry(KEY_SAL);
     const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
 
+    /* Identificador robusto de tarjeta crédito.
+       Replica la lógica de resolverTipo() (Contador): usa s.tipo si existe y no es
+       "undefined", de lo contrario consulta stgl_config.cuentasConfig[cuenta].tipo.
+       Esto evita que cuentas como Clara (cuyo tipo puede estar vacío en el registro)
+       caigan en mxn como valor negativo y distorsionen "Efectivo en Cuentas". */
+    let _cfgCache = null;
+    const _esTarjetaCC = s => {
+      let tipo = (s.tipo && s.tipo !== 'undefined' && s.tipo.trim()) ? s.tipo.trim() : '';
+      if (!tipo) {
+        if (!_cfgCache) { try { _cfgCache = JSON.parse(localStorage.getItem('stgl_config')||'{}'); } catch { _cfgCache = {}; } }
+        const mapped = _cfgCache?.cuentasConfig?.[s.cuenta]?.tipo || '';
+        // _TIPO_MAP_CFG puede no estar accesible desde este scope; usamos el valor directo
+        tipo = mapped;
+      }
+      const lc = tipo.toLowerCase();
+      return tipo === 'Tarjeta Crédito' || tipo === 'Tarjeta de Crédito' ||
+             lc.includes('tarjeta') || lc === 'crédito' || lc === 'credito';
+    };
+
     _invalidarSalCache();
     let mxn = 0, usd = 0, cc = 0;
     saldos.forEach(s => {
       if (s.cancelada) return;
       const saldo = _sal(s);                                         // ← saldo calculado
       const mon   = (s.moneda || 'MXN').toUpperCase();
-      const tipo  = (s.tipo   || '').toLowerCase();
-      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') { cc += Math.abs(saldo); return; }
+      if (_esTarjetaCC(s)) { cc += Math.abs(saldo); return; }       // tarjeta → pasivo
       if (mon === 'USD') { usd += saldo; }
-      else               { mxn += saldo; }
+      else               { mxn += saldo; }                          // efectivo MXN puro
     });
 
     const neto = mxn + usd * tc - cc;
@@ -5744,13 +5763,23 @@ function limpiarCSVMalImportado() {
 
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('dir-k-mxn',  _fmtDir(mxn));
+    /* dir-k-cc: bajo el tile "Efectivo en Cuentas" — muestra tarjeta como deuda separada */
     const ccEl = document.getElementById('dir-k-cc');
-    if (ccEl) ccEl.textContent = cc > 0 ? `−${_fmtDir(cc)} tarjeta` : '';
+    if (ccEl) ccEl.textContent = cc > 0 ? `+ Tarjeta por pagar: −${_fmtDir(cc)}` : 'Sin tarjetas pendientes';
     set('dir-k-usd',  usd !== 0 ? `USD ${usd.toLocaleString('es-MX',{minimumFractionDigits:2})}` : '—');
     set('dir-k-usd-mxn', usd !== 0 ? `≈ ${_fmtDir(usd * tc)} MXN @ ${tc}` : '');
     set('dir-k-comp', compromisos > 0 ? _fmtDir(compromisos) : '—');
     const kn = document.getElementById('dir-k-neto');
     if (kn) { kn.textContent = (neto >= 0 ? '' : '−') + _fmtDir(Math.abs(neto)); kn.style.color = neto >= 0 ? '#8a6800' : 'var(--red)'; }
+    /* dir-k-neto-sub: desglosa la composición del neto para que sea auditable */
+    const netoSub = document.getElementById('dir-k-neto-sub');
+    if (netoSub) {
+      const partes = [];
+      if (mxn)    partes.push(`MXN ${_fmtDir(mxn)}`);
+      if (usd)    partes.push(`USD ${_fmtDir(usd*tc)}`);
+      if (cc > 0) partes.push(`−Tarjeta ${_fmtDir(cc)}`);
+      netoSub.textContent = partes.join(' + ');
+    }
     set('dir-k-fecha', fecha ? 'Al ' + fecha : '');
 
     return { mxn, usd, cc, neto, compromisos, tc };
