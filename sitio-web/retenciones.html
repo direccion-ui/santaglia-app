@@ -228,8 +228,8 @@
     }
     .cal-card {
       border: 1.5px solid var(--border); border-radius: var(--radius);
-      padding: 0.7rem 0.8rem; background: var(--bg-white);
-      display: flex; flex-direction: column; gap: 0.25rem;
+      padding: 0.45rem 0.6rem; background: var(--bg-white);
+      display: flex; flex-direction: column; gap: 0.18rem;
       transition: box-shadow 0.15s;
     }
     .cal-card:hover { box-shadow: 0 2px 10px rgba(26,45,128,0.1); }
@@ -249,14 +249,14 @@
     .cal-mini-vence { color: #94a3b8; }
     .cal-mini-sep { color: #d1d5db; }
     .cal-mes {
-      font-family: var(--brand); font-size: 0.72rem; font-weight: 800;
-      letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy);
+      font-family: var(--brand); font-size: 0.68rem; font-weight: 800;
+      letter-spacing: 0.07em; text-transform: uppercase; color: var(--navy);
     }
     .cal-vence {
-      font-size: 0.62rem; color: var(--text-dim); margin-bottom: 0.15rem;
+      font-size: 0.56rem; color: var(--text-dim); margin-bottom: 0.08rem;
     }
     .cal-amount {
-      font-family: 'Courier New', monospace; font-size: 0.8rem;
+      font-family: 'Courier New', monospace; font-size: 0.76rem;
       font-weight: 700; color: var(--text);
     }
     .cal-amount.zero { color: var(--text-xs); font-weight: 400; font-style: italic; }
@@ -462,19 +462,34 @@
         </div>
       </div>
 
-      <!-- Year selector -->
-      <div style="margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <span style="font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--text-dim); letter-spacing:0.06em; text-transform:uppercase;">Año:</span>
-        <div class="period-btns" id="year-btns">
-          <button class="period-btn" id="yr-2022" onclick="selectYear(2022)">2022</button>
-          <button class="period-btn" id="yr-2023" onclick="selectYear(2023)">2023</button>
-          <button class="period-btn" id="yr-2024" onclick="selectYear(2024)">2024</button>
-          <button class="period-btn" id="yr-2025" onclick="selectYear(2025)">2025</button>
-          <button class="period-btn active" id="yr-2026" onclick="selectYear(2026)">2026</button>
+      <!-- Year selector + View mode tabs (always visible) -->
+      <div style="margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <span style="font-family:var(--brand); font-size:0.72rem; font-weight:700; color:var(--text-dim); letter-spacing:0.06em; text-transform:uppercase;">Año:</span>
+          <div class="period-btns" id="year-btns">
+            <button class="period-btn" id="yr-2022" onclick="selectYear(2022)">2022</button>
+            <button class="period-btn" id="yr-2023" onclick="selectYear(2023)">2023</button>
+            <button class="period-btn" id="yr-2024" onclick="selectYear(2024)">2024</button>
+            <button class="period-btn" id="yr-2025" onclick="selectYear(2025)">2025</button>
+            <button class="period-btn active" id="yr-2026" onclick="selectYear(2026)">2026</button>
+          </div>
+          <span style="font-size:0.68rem; color:var(--text-xs); font-style:italic;">
+            ⟳ montos de Nómina
+          </span>
         </div>
-        <span style="font-size:0.68rem; color:var(--text-xs); font-style:italic;">
-          ⟳ Los montos retenidos se calculan automáticamente de Nómina
-        </span>
+        <!-- View mode segmented control -->
+        <div style="display:flex;background:#f1f5f9;border-radius:8px;padding:3px;gap:2px;border:1px solid #e2e8f0;">
+          <button id="tab-btn-director" onclick="toggleVistaDirector()" title="Vista ejecutiva: semáforo, vencidos, proyección de flujo"
+            style="font-size:0.67rem;font-family:var(--brand);font-weight:700;padding:0.28rem 0.85rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.18s;letter-spacing:0.03em;
+                   background:transparent;color:#64748b;">
+            👔 Director
+          </button>
+          <button id="tab-btn-contador" onclick="toggleVistaDirector()" title="Vista detalle: calendario fiscal + tabla de retenciones"
+            style="font-size:0.67rem;font-family:var(--brand);font-weight:700;padding:0.28rem 0.85rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.18s;letter-spacing:0.03em;
+                   background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(26,45,128,0.18);">
+            📊 Contador
+          </button>
+        </div>
       </div>
 
       <!-- Disclaimer SAT -->
@@ -518,31 +533,41 @@
         </div>
       </div>
 
-      <!-- Calendario fiscal -->
-      <div style="margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-family:var(--brand);font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">
-          📅 Calendario fiscal — vencimientos día 17
-        </div>
-        <div style="font-size:0.62rem;color:var(--text-xs);display:flex;gap:0.75rem;align-items:center;">
-          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#fee2e2;display:inline-block;border:1px solid #fca5a5;"></span>Vencido</span>
-          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#fef3c7;display:inline-block;border:1px solid #fcd34d;"></span>Por vencer</span>
-          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#dcfce7;display:inline-block;border:1px solid #bbf7d0;"></span>Pagado</span>
-          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#ffedd5;display:inline-block;border:1px solid #fdba74;"></span>Pago tardío</span>
-          <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#e8ecf8;display:inline-block;border:1px solid #c7d0ef;"></span>Sin vencer</span>
-        </div>
-      </div>
-      <div class="cal-grid" id="cal-fiscal"></div>
+      <!-- ══ VISTA DIRECTOR ══ -->
+      <div id="vista-director-panel" style="display:none;"></div>
 
-      <!-- Anomaly / compliance panel -->
-      <div class="anom-panel" id="anomalia-panel" style="display:none;"></div>
+      <!-- ══ VISTA CONTADOR ══ -->
+      <div id="vista-contador-panel">
 
-      <!-- Table -->
-      <div class="panel">
+        <!-- Alertas compliance — MOVED UP before calendar -->
+        <div class="anom-panel" id="anomalia-panel" style="display:none;margin-bottom:0.75rem;"></div>
+
+        <!-- Calendario fiscal -->
+        <div style="margin-bottom:0.4rem;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:var(--brand);font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">
+            📅 Calendario fiscal — vencimientos día 17
+          </div>
+          <div style="font-size:0.62rem;color:var(--text-xs);display:flex;gap:0.75rem;align-items:center;">
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#fee2e2;display:inline-block;border:1px solid #fca5a5;"></span>Vencido</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#fef3c7;display:inline-block;border:1px solid #fcd34d;"></span>Por vencer</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#dcfce7;display:inline-block;border:1px solid #bbf7d0;"></span>Pagado</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#ffedd5;display:inline-block;border:1px solid #fdba74;"></span>Pago tardío</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:2px;background:#e8ecf8;display:inline-block;border:1px solid #c7d0ef;"></span>Sin vencer</span>
+          </div>
+        </div>
+        <div class="cal-grid" id="cal-fiscal"></div>
+
+      </div><!-- /vista-contador-panel -->
+
+      <!-- Table (visible en ambas vistas en Contador; oculta en Director) -->
+      <div class="panel" id="panel-tabla">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
           <span style="font-family:var(--brand); font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim);">📋 Detalle mensual de retenciones</span>
-          <button id="btn-compact-toggle" class="compact-toggle" onclick="toggleTablaCompacta()" title="Alternar entre vista compacta (5 columnas) y vista completa (14 columnas)">
-            ▦ Vista compacta
-          </button>
+          <div style="display:flex;gap:0.4rem;">
+            <button id="btn-compact-toggle" class="compact-toggle" onclick="toggleTablaCompacta()" title="Alternar entre vista compacta (5 columnas) y vista completa (14 columnas)">
+              ▦ Vista compacta
+            </button>
+          </div>
         </div>
         <div class="table-wrap" id="ret-table-wrap">
           <table class="fact-table" id="ret-table">
@@ -805,37 +830,94 @@
       <button class="modal-close" onclick="closeModal('modal-bbva-recibo')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:1rem;">
-        Sube los <strong>Recibos Bancarios de Pago de Contribuciones</strong> descargados de BBVA.MX.
-        El sistema detecta el período desde la Línea de Captura y registra el pago como <strong>verificado bancariamente 🔐</strong>.
-      </p>
 
+      <!-- Instrucción -->
+      <div style="background:var(--navy-pale);border-left:3px solid var(--navy);border-radius:0 var(--radius) var(--radius) 0;padding:0.55rem 0.8rem;margin-bottom:0.9rem;font-size:0.73rem;color:var(--text-dim);line-height:1.5;">
+        <strong style="color:var(--navy);">¿Cómo usar?</strong>
+        Sube cada <strong>Recibo Bancario de Pago de Contribuciones</strong> en un slot.
+        Luego <strong>toca los chips</strong> de los conceptos que cubre esa Línea de Captura — pueden ser uno o varios.
+        Si el SAT te generó 3 Líneas de Captura distintas, usa 3 slots.
+      </div>
+
+      <!-- ── Recibo 1 ───────────────────────────────────────────── -->
       <div class="pdf-zone" id="bbva-zone-1" onclick="document.getElementById('bbva-file-1').click()">
         <input type="file" id="bbva-file-1" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],1)" />
-        <div class="pdf-zone-label">Recibo 1 — Asim + IVA + ISR PM</div>
+        <div class="pdf-zone-label" id="bbva-zone-1-label">Recibo 1</div>
         <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
         <div class="pdf-result" id="bbva-result-1"></div>
       </div>
+      <div style="font-size:0.6rem;color:var(--text-dim);padding:0.2rem 0.1rem 0.1rem;">Conceptos de esta LC:</div>
+      <div id="bbva-conceptos-1" style="display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.1rem 0.1rem 0.5rem;min-height:1.8rem;"></div>
 
-      <div class="pdf-zone" id="bbva-zone-2" onclick="document.getElementById('bbva-file-2').click()">
+      <!-- ── Recibo 2 ───────────────────────────────────────────── -->
+      <div class="pdf-zone" id="bbva-zone-2" onclick="document.getElementById('bbva-file-2').click()" style="margin-top:0.25rem;">
         <input type="file" id="bbva-file-2" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],2)" />
-        <div class="pdf-zone-label">Recibo 2 — ISR Honorarios</div>
+        <div class="pdf-zone-label" id="bbva-zone-2-label">Recibo 2 <span style="font-weight:400;font-size:0.75em;opacity:0.7;">(opcional)</span></div>
         <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
         <div class="pdf-result" id="bbva-result-2"></div>
       </div>
+      <div style="font-size:0.6rem;color:var(--text-dim);padding:0.2rem 0.1rem 0.1rem;">Conceptos de esta LC:</div>
+      <div id="bbva-conceptos-2" style="display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.1rem 0.1rem 0.5rem;min-height:1.8rem;"></div>
 
-      <div class="pdf-zone" id="bbva-zone-3" onclick="document.getElementById('bbva-file-3').click()">
+      <!-- ── Recibo 3 ───────────────────────────────────────────── -->
+      <div class="pdf-zone" id="bbva-zone-3" onclick="document.getElementById('bbva-file-3').click()" style="margin-top:0.25rem;">
         <input type="file" id="bbva-file-3" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],3)" />
-        <div class="pdf-zone-label">Recibo 3 — Arrendamiento (opcional)</div>
+        <div class="pdf-zone-label" id="bbva-zone-3-label">Recibo 3 <span style="font-weight:400;font-size:0.75em;opacity:0.7;">(opcional)</span></div>
         <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
         <div class="pdf-result" id="bbva-result-3"></div>
       </div>
+      <div style="font-size:0.6rem;color:var(--text-dim);padding:0.2rem 0.1rem 0.1rem;">Conceptos de esta LC:</div>
+      <div id="bbva-conceptos-3" style="display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.1rem 0.1rem 0.5rem;min-height:1.8rem;"></div>
 
-      <div id="bbva-preview" style="margin-top:1rem; display:none;"></div>
+      <!-- ── Recibo 4 ───────────────────────────────────────────── -->
+      <div class="pdf-zone" id="bbva-zone-4" onclick="document.getElementById('bbva-file-4').click()" style="margin-top:0.25rem;">
+        <input type="file" id="bbva-file-4" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],4)" />
+        <div class="pdf-zone-label" id="bbva-zone-4-label">Recibo 4 <span style="font-weight:400;font-size:0.75em;opacity:0.7;">(opcional)</span></div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
+        <div class="pdf-result" id="bbva-result-4"></div>
+      </div>
+      <div style="font-size:0.6rem;color:var(--text-dim);padding:0.2rem 0.1rem 0.1rem;">Conceptos de esta LC:</div>
+      <div id="bbva-conceptos-4" style="display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.1rem 0.1rem 0.5rem;min-height:1.8rem;"></div>
 
-      <div style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-dim); background:var(--navy-pale); border-radius:var(--radius); padding:0.5rem 0.85rem;">
+      <!-- ── Recibo 5 ───────────────────────────────────────────── -->
+      <div class="pdf-zone" id="bbva-zone-5" onclick="document.getElementById('bbva-file-5').click()" style="margin-top:0.25rem;">
+        <input type="file" id="bbva-file-5" accept=".pdf" style="display:none;" onchange="procesarPdfBBVA(this.files[0],5)" />
+        <div class="pdf-zone-label" id="bbva-zone-5-label">Recibo 5 <span style="font-weight:400;font-size:0.75em;opacity:0.7;">(opcional)</span></div>
+        <div class="pdf-zone-sub">Haz clic o arrastra el comprobante bancario aquí</div>
+        <div class="pdf-result" id="bbva-result-5"></div>
+      </div>
+      <div style="font-size:0.6rem;color:var(--text-dim);padding:0.2rem 0.1rem 0.1rem;">Conceptos de esta LC:</div>
+      <div id="bbva-conceptos-5" style="display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.1rem 0.1rem 0.5rem;min-height:1.8rem;"></div>
+
+      <!-- ── IVA Saldo a Favor ──────────────────────────────────── -->
+      <div style="margin-top:0.4rem;border-top:1px dashed var(--border);padding-top:0.55rem;">
+        <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.72rem;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="bbva-iva-favor-check" onchange="_bbvaToggleIvaFavor()"
+                 style="width:14px;height:14px;accent-color:#15803d;cursor:pointer;">
+          <span>💚 <strong>IVA Saldo a Favor</strong> — el IVA acreditable supera al causado (no hay pago, hay crédito)</span>
+        </label>
+        <div id="bbva-iva-favor-fields" style="display:none;margin-top:0.45rem;gap:0.6rem;flex-wrap:wrap;align-items:flex-end;">
+          <div>
+            <div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:0.2rem;">Importe IVA a Favor ($)</div>
+            <input type="number" id="bbva-iva-favor-importe" min="0" step="0.01" placeholder="0.00"
+                   oninput="_actualizarPreviewBBVA()"
+                   style="width:130px;font-size:0.78rem;padding:0.25rem 0.4rem;border:1px solid var(--border);border-radius:4px;font-family:monospace;">
+          </div>
+          <div>
+            <div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:0.2rem;">Ref. Acuse SAT (opcional)</div>
+            <input type="text" id="bbva-iva-favor-ref" placeholder="Núm. operación"
+                   style="width:160px;font-size:0.75rem;padding:0.25rem 0.4rem;border:1px solid var(--border);border-radius:4px;">
+          </div>
+          <div style="font-size:0.67rem;color:#15803d;max-width:200px;line-height:1.3;">
+            Se registra como crédito.<br>Disponible para solicitud de devolución al SAT.
+          </div>
+        </div>
+      </div>
+
+      <div id="bbva-preview" style="margin-top:0.9rem; display:none;"></div>
+
+      <div style="margin-top:0.6rem; font-size:0.68rem; color:var(--text-dim); background:var(--navy-pale); border-radius:var(--radius); padding:0.45rem 0.8rem;">
         🔐 Núm. Operación, Llave de Pago y Certificación quedan guardados como verificación bancaria.
-        El importe del recibo BBVA reemplaza el acuse SAT como monto pagado oficial.
       </div>
     </div>
     <div class="modal-footer">
@@ -1070,6 +1152,248 @@ function toggleTablaCompacta() {
   const compact = !wrap.classList.contains('compact');
   localStorage.setItem(KEY_COMPACT, compact ? '1' : '0');
   _applyTablaCompacta(compact);
+}
+
+/* ══════════════════════════════
+   VISTA DIRECTOR — Modo ejecutivo
+   Muestra semáforo, vencidos, próximos y proyección 3 meses.
+   Oculta la tabla de detalle y el panel de anomalías.
+══════════════════════════════ */
+const KEY_VISTA_DIRECTOR = 'stgl_ret_vista_director';
+let _vistaDirectorActiva = false;
+
+function _setVistaDirector(activa) {
+  _vistaDirectorActiva = activa;
+  localStorage.setItem(KEY_VISTA_DIRECTOR, activa ? '1' : '0');
+
+  const vd       = document.getElementById('vista-director-panel');
+  const vcPanel  = document.getElementById('vista-contador-panel');
+  const tblPanel = document.getElementById('panel-tabla');
+
+  // Tabs en el header
+  const tabDir = document.getElementById('tab-btn-director');
+  const tabCnt = document.getElementById('tab-btn-contador');
+  const tabActiveStyle  = 'background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(26,45,128,0.18);';
+  const tabInactiveStyle = 'background:transparent;color:#64748b;box-shadow:none;';
+
+  if (activa) {
+    // VISTA DIRECTOR: mostrar panel director, ocultar calendario + tabla
+    if (vd)      { vd.style.display = 'block'; renderVistaDirector(); }
+    if (vcPanel) vcPanel.style.display = 'none';
+    if (tblPanel) tblPanel.style.display = 'none';
+    if (tabDir) tabDir.style.cssText += tabActiveStyle;
+    if (tabCnt) tabCnt.style.cssText += tabInactiveStyle;
+  } else {
+    // VISTA CONTADOR: mostrar calendario + tabla, ocultar panel director
+    if (vd)      vd.style.display = 'none';
+    if (vcPanel) vcPanel.style.display = '';
+    if (tblPanel) tblPanel.style.display = '';
+    if (tabDir) tabDir.style.cssText += tabInactiveStyle;
+    if (tabCnt) tabCnt.style.cssText += tabActiveStyle;
+    renderTable(); // re-render para que anomalia-panel aparezca si aplica
+  }
+}
+
+function toggleVistaDirector() {
+  _setVistaDirector(!_vistaDirectorActiva);
+}
+
+function renderVistaDirector() {
+  const panel = document.getElementById('vista-director-panel');
+  if (!panel) return;
+
+  // Recolectar filas del año seleccionado
+  const all   = loadRegistry(KEY_RET);
+  const extra = loadExtraObj();
+  const monthMap = {};
+  all.filter(r => {
+    const yr = r.año || Number(r.id?.split('-')[0]);
+    return yr === selectedYear;
+  }).forEach(r => {
+    const mes = r.mes || (r.id ? parseInt(r.id.split('-')[1]) : null);
+    if (mes) monthMap[mes] = r;
+  });
+
+  const rows = [];
+  for (let m = 1; m <= 12; m++) {
+    const key  = `${selectedYear}-${String(m).padStart(2,'0')}`;
+    const r    = monthMap[m] || {};
+    const ex   = extra[key] || {};
+    const comp = calcFromNomina(selectedYear, m);
+
+    const asimR   = ex.overrideAsimR   !== undefined && ex.overrideAsimR   !== null ? parseNum(ex.overrideAsimR)   : (comp.retenidoAsim   || parseNum(r.retenidoAsim   || 0));
+    const isrHonR = ex.overrideIsrHonR !== undefined && ex.overrideIsrHonR !== null ? parseNum(ex.overrideIsrHonR) : (comp.retenidoIsrHon || parseNum(r.retenidoIsrHon || 0));
+    const ivaHonR = ex.overrideIvaHonR !== undefined && ex.overrideIvaHonR !== null ? parseNum(ex.overrideIvaHonR) : (comp.retenidoIvaHon || parseNum(r.retenidoIvaHon || 0));
+    const isrPm   = parseNum(ex.isrPm || 0);
+    const totalRet = asimR + isrHonR + ivaHonR + isrPm;
+    const acuseTotal = parseNum(ex.acuseTotal || 0);
+    const venc = calcVencimiento(selectedYear, m);
+
+    rows.push({ m, totalRet, acuseTotal, venc, ex, pagoBancarioConfirmado: !!ex.pagoBancarioConfirmado });
+  }
+
+  // Clasificar
+  const vencidos = rows.filter(r => r.totalRet > 0 && !r.pagoBancarioConfirmado && r.venc.isPast && r.venc.diasAtraso > 0);
+  const proximos = rows.filter(r => r.totalRet > 0 && !r.pagoBancarioConfirmado && !r.venc.isPast && r.venc.diasRestantes <= 15);
+  const totalRecargosAcum = vencidos.reduce((s, r) => s + calcRecargosEst(r.totalRet - r.acuseTotal, r.venc.diasAtraso), 0);
+
+  // Estatus global
+  let icon, texto, color, bg;
+  if (vencidos.length > 0)      { icon='🔴'; texto='Acción urgente'; color='#dc2626'; bg='#fff5f5'; }
+  else if (proximos.length > 0) { icon='⚠️'; texto='Vencimiento próximo'; color='#d97706'; bg='#fffbeb'; }
+  else                          { icon='✅'; texto='Al corriente'; color='#15803d'; bg='#f0fdf4'; }
+
+  // Proyección 3 meses
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const proyeccion = [];
+  for (let i = 1; i <= 3; i++) {
+    const dm = hoy.getMonth() + i;
+    const futM = (dm % 12) + 1;
+    const futY = hoy.getFullYear() + Math.floor(dm / 12);
+    const comp = calcFromNomina(futY, futM);
+    const est  = (comp.retenidoAsim||0) + (comp.retenidoIsrHon||0) + (comp.retenidoIvaHon||0);
+    if (est > 0) proyeccion.push({ m: futM, y: futY, est });
+  }
+  const MES_LARGO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  // ── Tira 12 meses: dot por mes coloreado según estado ──────────────────────
+  const MES_CORTO_VD = ['E','F','M','A','M','J','J','A','S','O','N','D'];
+  const tiraHtml = rows.map(r => {
+    let dotColor, dotBorder, title;
+    if (r.totalRet === 0) {
+      dotColor = '#e8ecf8'; dotBorder = '#c7d0ef'; title = `${MES_LARGOS[r.m-1]} — sin retención`;
+    } else if (r.pagoBancarioConfirmado) {
+      dotColor = r.venc.isPast && r.venc.diasAtraso < 0 ? '#dcfce7' : '#bbf7d0';
+      dotBorder = '#16a34a'; title = `${MES_LARGOS[r.m-1]} — pagado ${fmt(r.acuseTotal)}`;
+    } else if (r.venc.diasAtraso > 0) {
+      dotColor = '#fee2e2'; dotBorder = '#dc2626'; title = `${MES_LARGOS[r.m-1]} — VENCIDO ${r.venc.diasAtraso}d · ${fmt(r.totalRet - r.acuseTotal)} pendiente`;
+    } else if (r.venc.diasRestantes <= 15) {
+      dotColor = '#fef3c7'; dotBorder = '#d97706'; title = `${MES_LARGOS[r.m-1]} — vence en ${r.venc.diasRestantes}d · ${fmt(r.totalRet)}`;
+    } else {
+      dotColor = '#f8f9fc'; dotBorder = '#cbd5e1'; title = `${MES_LARGOS[r.m-1]} — pendiente · ${fmt(r.totalRet)}`;
+    }
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;" title="${title}">
+      <div style="width:18px;height:18px;border-radius:50%;background:${dotColor};border:2px solid ${dotBorder};"></div>
+      <span style="font-size:0.5rem;color:#94a3b8;font-weight:700;">${MES_CORTO_VD[r.m-1]}</span>
+    </div>`;
+  }).join('');
+
+  // ── IVA a Favor acumulado del año ───────────────────────────────────────────
+  const extra = loadExtraObj();
+  let ivaFavorTotal = 0; const ivaFavorMeses = [];
+  for (let m = 1; m <= 12; m++) {
+    const key = `${selectedYear}-${String(m).padStart(2,'0')}`;
+    const ex  = extra[key] || {};
+    if (ex.ivaFavor > 0) { ivaFavorTotal += ex.ivaFavor; ivaFavorMeses.push(MES_LARGOS[m-1]); }
+  }
+  const MES_LARGOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;flex-wrap:wrap;gap:0.5rem;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#c8a84b;"></div>
+        <span style="font-size:0.7rem;font-weight:800;color:#2d3452;text-transform:uppercase;letter-spacing:0.06em;">Vista Director · ${selectedYear}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        ${tiraHtml}
+      </div>
+    </div>
+
+    ${ivaFavorTotal > 0 ? `
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:0.7rem 1rem;margin-bottom:0.9rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:0.6rem;">
+        <span style="font-size:1.3rem;">💚</span>
+        <div>
+          <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#15803d;">IVA Saldo a Favor — Recuperable</div>
+          <div style="font-size:0.6rem;color:#16a34a;margin-top:0.1rem;">${ivaFavorMeses.join(', ')} · solicitud de devolución recomendada</div>
+        </div>
+      </div>
+      <div style="font-size:1.15rem;font-weight:800;color:#15803d;">${fmt(ivaFavorTotal)}</div>
+    </div>` : ''}
+
+
+    <div style="display:grid;grid-template-columns:200px 1fr;gap:1.25rem;align-items:start;">
+
+      <!-- Semáforo -->
+      <div style="background:${bg};border:2px solid ${color}33;border-radius:12px;padding:1.25rem;text-align:center;">
+        <div style="font-size:2.2rem;line-height:1;margin-bottom:0.4rem;">${icon}</div>
+        <div style="font-size:0.85rem;font-weight:800;color:${color};margin-bottom:0.15rem;">${texto}</div>
+        <div style="font-size:0.6rem;color:#94a3b8;">Ejercicio ${selectedYear}</div>
+        ${totalRecargosAcum > 0 ? `
+          <div style="margin-top:0.75rem;background:#fee2e2;border-radius:7px;padding:0.4rem 0.5rem;">
+            <div style="font-size:0.6rem;color:#dc2626;font-weight:800;">RECARGOS ACUMULADOS</div>
+            <div style="font-size:0.88rem;font-weight:800;color:#dc2626;">${fmt(totalRecargosAcum)}</div>
+            <div style="font-size:0.55rem;color:#dc2626;opacity:0.75;">estimado sin INPC</div>
+          </div>` : ''}
+      </div>
+
+      <!-- Panel de acciones -->
+      <div>
+        ${vencidos.length > 0 ? `
+          <div style="margin-bottom:0.9rem;">
+            <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#dc2626;margin-bottom:0.4rem;">🔴 Pago vencido — requiere acción hoy</div>
+            ${vencidos.map(r => {
+              const pendiente = r.totalRet - r.acuseTotal;
+              const recEst    = calcRecargosEst(pendiente, r.venc.diasAtraso);
+              const porDia    = pendiente > 0 ? (pendiente / 30 * TASA_RECARGOS_MENSUAL) : 0;
+              return `<div style="display:flex;align-items:center;justify-content:space-between;background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:0.55rem 0.85rem;margin-bottom:0.35rem;gap:0.75rem;">
+                <div style="min-width:0;">
+                  <div style="font-size:0.82rem;font-weight:700;color:#991b1b;">${MES_LARGO[r.m-1]} ${selectedYear}</div>
+                  <div style="font-size:0.62rem;color:#dc2626;">Vencido hace ${r.venc.diasAtraso}d · ${fmt(pendiente)} pendiente${recEst > 0 ? ` · recargo est. ${fmt(recEst)} (+${fmt(porDia)}/día)` : ''}</div>
+                </div>
+                <button onclick="event.stopPropagation();document.getElementById('btn-bbva-recibo')?.click()"
+                  style="flex-shrink:0;font-size:0.62rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:6px;border:1.5px solid #dc2626;color:#dc2626;background:white;cursor:pointer;white-space:nowrap;">
+                  📄 Registrar pago
+                </button>
+              </div>`;
+            }).join('')}
+          </div>` : ''}
+
+        ${proximos.length > 0 ? `
+          <div style="margin-bottom:0.9rem;">
+            <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#d97706;margin-bottom:0.4rem;">⚡ Próximo vencimiento</div>
+            ${proximos.map(r => `
+              <div style="display:flex;align-items:center;justify-content:space-between;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:0.55rem 0.85rem;margin-bottom:0.35rem;">
+                <div>
+                  <div style="font-size:0.82rem;font-weight:700;color:#92400e;">${MES_LARGO[r.m-1]} ${selectedYear}</div>
+                  <div style="font-size:0.62rem;color:#d97706;">Vence en ${r.venc.diasRestantes} días (día 17) · ${fmt(r.totalRet)} a declarar</div>
+                </div>
+                <div style="font-size:0.68rem;color:#92400e;font-weight:700;text-align:right;">17 ${MES_LARGO[r.m-1]}<br><span style="font-size:0.58rem;font-weight:400;color:#94a3b8;">${r.venc.diasRestantes}d restantes</span></div>
+              </div>
+            `).join('')}
+          </div>` : ''}
+
+        ${vencidos.length === 0 && proximos.length === 0 ? `
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;display:flex;align-items:center;gap:0.75rem;margin-bottom:0.9rem;">
+            <span style="font-size:1.5rem;">✅</span>
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#15803d;">Sin acciones pendientes</div>
+              <div style="font-size:0.62rem;color:#64748b;">Retenciones ${selectedYear} al corriente</div>
+            </div>
+          </div>` : ''}
+
+        ${proyeccion.length > 0 ? `
+          <div>
+            <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:0.4rem;">📅 Saldrá de tu cuenta (próximos 3 meses · día 17)</div>
+            <div style="display:flex;gap:0.5rem;">
+              ${proyeccion.map(f => `
+                <div style="flex:1;background:#f8f9fc;border:1.5px solid #e2e8f0;border-radius:8px;padding:0.6rem;text-align:center;">
+                  <div style="font-size:0.62rem;color:#64748b;margin-bottom:0.15rem;">${MES_LARGO[f.m-1]} ${f.y}</div>
+                  <div style="font-size:0.9rem;font-weight:800;color:#1a2d80;">${fmt(f.est)}</div>
+                  <div style="font-size:0.52rem;color:#94a3b8;margin-top:0.1rem;">estimado · día 17</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>` : ''}
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;padding-top:0.65rem;border-top:1px solid #e2e8f0;text-align:center;">
+      <button onclick="toggleVistaDirector()"
+        style="font-size:0.62rem;color:#64748b;background:none;border:none;cursor:pointer;text-decoration:underline;">
+        📊 Ver detalle técnico completo (vista contador)
+      </button>
+    </div>`;
 }
 
 /* ── Disclaimer SAT toggle ── */
@@ -1566,31 +1890,19 @@ function renderCalendario(rows) {
       }
     }
 
-    // ── CTA: importar comprobante bancario (si hay retención y no está confirmado) ──
-    let ctaHtml = '';
-    if (totalRet > 0 && !rowEx?.pagoBancarioConfirmado) {
-      const ctaColor = rowEx?.lineaCaptura1 || rowEx?.acuseTotal > 0 ? '#1d4ed8' : '#6b7280';
-      const ctaTitle = rowEx?.lineaCaptura1 || rowEx?.acuseTotal > 0
-        ? 'LCs importadas — importa el comprobante bancario para completar el proceso'
-        : 'Importa el comprobante de pago bancario cuando realices el pago al SAT';
-      ctaHtml = `<button onclick="event.stopPropagation();document.getElementById('btn-bbva-recibo')?.click()"
-        title="${ctaTitle}"
-        style="margin-top:5px;width:100%;font-size:0.55rem;font-weight:700;padding:3px 6px;border-radius:4px;border:1px solid ${ctaColor};color:${ctaColor};background:transparent;cursor:pointer;letter-spacing:0.03em;text-align:center;">
-        📄 Importar comprobante de pago
-      </button>`;
-    }
+    // CTA eliminado de tarjetas — movido a la fila de tabla para reducir altura de tarjeta
 
     return `
       <div class="cal-card ${cls}" title="Retención ${MES_NOMBRES[m-1]} ${selectedYear} — Vence ${venceLabel}">
-        <div class="cal-mes">${MES_CORTO[m-1]} <span style="font-weight:400;opacity:0.6;font-size:0.62rem;">${selectedYear}</span></div>
+        <div class="cal-mes">${MES_CORTO[m-1]} <span style="font-weight:400;opacity:0.5;font-size:0.58rem;">${selectedYear}</span></div>
         <div class="cal-vence">Vence ${venceLabel}</div>
         ${amountHtml}
         <div class="cal-badge ${badgeCls}">${badgeText}</div>
         ${diasLabel ? `<div class="cal-dias">${diasLabel}</div>` : ''}
         ${recargosHtml}
-        ${rowEx?.pagoBancarioConfirmado ? `<div style="font-size:0.6rem;color:#1d4ed8;font-weight:700;margin-top:2px;letter-spacing:0.04em;">🏦 Verif. banco</div>` : ''}
+        ${rowEx?.pagoBancarioConfirmado ? `<div style="font-size:0.57rem;color:#1d4ed8;font-weight:700;margin-top:1px;letter-spacing:0.03em;">🏦 Banco</div>` : ''}
+        ${rowEx?.ivaFavor > 0 ? `<div style="font-size:0.55rem;color:#15803d;font-weight:700;margin-top:1px;" title="IVA a Favor $${fmtNum(rowEx.ivaFavor)}">💚 IVA a Favor</div>` : ''}
         ${calProcHtml}
-        ${ctaHtml}
       </div>`;
     } catch(e) {
       console.error('[renderCalendario] Error en fila m=' + (row?.m) + ':', e);
@@ -1838,15 +2150,30 @@ function renderTable() {
           subParts.join(' · ')));
       }
 
-      // 3. Acuse SAT
+      // 3. Acuse SAT / recibos importados
       if (row.acuseTotal > 0) {
-        const subParts = [
-          ex.lineaCaptura1 ? `LC1: ${ex.lineaCaptura1}` : '',
-          ex.lineaCaptura2 ? `LC2: ${ex.lineaCaptura2}` : ''
-        ].filter(Boolean);
+        let subParts = [];
+        // Si hay recibos con conceptos, mostrarlos individualmente
+        if (Array.isArray(ex.recibos) && ex.recibos.length) {
+          subParts = ex.recibos.map(r => {
+            const conceptoLabels = (r.conceptos||[]).join('+') || `Recibo ${r.n}`;
+            return r.lc ? `LC${r.n}[${conceptoLabels}]: ${r.lc.slice(0,10)}…` : '';
+          }).filter(Boolean);
+        } else {
+          if (ex.lineaCaptura1) subParts.push(`LC1: ${ex.lineaCaptura1}`);
+          if (ex.lineaCaptura2) subParts.push(`LC2: ${ex.lineaCaptura2}`);
+          if (ex.lineaCaptura3) subParts.push(`LC3: ${ex.lineaCaptura3}`);
+        }
         timelineItems.push(_htItem('🧾', row.acuseFecha||'',
           `Acuse SAT <strong>$${fmtNum(row.acuseTotal)}</strong>`,
           subParts.join(' · ')));
+      }
+
+      // 3b. IVA a Favor (crédito SAT)
+      if (ex.ivaFavor > 0) {
+        timelineItems.push(_htItem('💚', row.acuseFecha||'',
+          `IVA Saldo a Favor <strong style="color:#15803d;">$${fmtNum(ex.ivaFavor)}</strong>`,
+          `Disponible para solicitud de devolución al SAT${ex.ivaFavorRef ? ' · Ref: '+ex.ivaFavorRef : ''}`));
       }
 
       // 4. Diferencia detectada
@@ -2253,12 +2580,15 @@ function limpiarDatosBancariosPeriodo() {
   if (!ex) { toast('No hay datos bancarios para este período','error'); return; }
 
   const CAMPOS_BANCO = [
-    'acuseTotal','acuseAsim','acuseHon','acuseArr','acuseFecha',
-    'pagoBancarioConfirmado','lineaCaptura1','lineaCaptura2','lineaCaptura3',
+    'acuseTotal','acuseAsim','acuseHon','acuseArr','acuseIvaRet','acuseFecha',
+    'pagoBancarioConfirmado','recibos',
+    'lineaCaptura1','lineaCaptura1b','lineaCaptura2','lineaCaptura3',
     'pagadoAsim','pagadoIsrHon','pagadoIvaHon',
-    'bbva_op1','bbva_op2','bbva_op3','bbva_llave1','bbva_llave2','bbva_llave3',
-    'bbva_cert1','bbva_cert2','bbva_cert3','bbva_cuenta','bbva_banco',
-    'bbva_folio1','bbva_folio2','bbva_fechaPago',
+    'bbva_op1','bbva_op1b','bbva_op2','bbva_op3',
+    'bbva_llave1','bbva_llave1b','bbva_llave2','bbva_llave3',
+    'bbva_cert1','bbva_cert1b','bbva_cert2','bbva_cert3','bbva_cuenta','bbva_banco',
+    'bbva_folio1','bbva_folio1b','bbva_folio2','bbva_folio3','bbva_fechaPago',
+    'ivaFavor','ivaFavorRef',
   ];
   CAMPOS_BANCO.forEach(f => delete ex[f]);
   // fechaPagoReal puede ser manual — la conservamos; si quiere borrarla puede usar el campo del modal
@@ -2343,21 +2673,92 @@ async function procesarPdf(file, num) {
    IMPORTACIÓN RECIBO BANCARIO BBVA — Pago de Contribuciones
    ══════════════════════════════════════════════════════════════ */
 
-let _bbvaData = {};  // { 1: parsed, 2: parsed, 3: parsed }
+let _bbvaData = {};      // { 1: parsed, 2: parsed, 3: parsed }
+let _bbvaConceptos = {}; // { 1: [...conceptoIds], 2: [...], ... } — se puebla en abrirImportReciboBBVA()
+
+/** Definición de conceptos fiscales — id, etiqueta corta, color chip */
+const CONCEPTOS_BBVA = [
+  { id:'isrAsim', label:'ISR Asimilables', color:'#1e3a8a' },
+  { id:'isrPM',   label:'ISR PM Prov.',   color:'#6d28d9' },
+  { id:'ivaRet',  label:'IVA Ret.',        color:'#0e7490' },
+  { id:'isrHon',  label:'ISR Honorarios', color:'#065f46' },
+  { id:'isrArr',  label:'Arrendamiento',  color:'#92400e' },
+];
 
 function abrirImportReciboBBVA() {
   _bbvaData = {};
-  [1, 2, 3].forEach(n => {
+  // Todos los slots empiezan vacíos — el usuario añade conceptos según su caso
+  _bbvaConceptos = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+  [1, 2, 3, 4, 5].forEach(n => {
     const r = document.getElementById('bbva-result-' + n);
     const z = document.getElementById('bbva-zone-' + n);
     const f = document.getElementById('bbva-file-' + n);
     if (r) r.innerHTML = '';
     if (z) z.classList.remove('loaded');
     if (f) f.value = '';
+    _bbvaRenderConceptos(n);
   });
+  // Restablecer IVA a Favor
+  const chk = document.getElementById('bbva-iva-favor-check');
+  const flds = document.getElementById('bbva-iva-favor-fields');
+  const imp  = document.getElementById('bbva-iva-favor-importe');
+  const ref  = document.getElementById('bbva-iva-favor-ref');
+  if (chk)  chk.checked = false;
+  if (flds) flds.style.display = 'none';
+  if (imp)  imp.value = '';
+  if (ref)  ref.value = '';
   document.getElementById('bbva-preview').style.display = 'none';
   document.getElementById('bbva-apply-btn').style.display = 'none';
   openModal('modal-bbva-recibo');
+}
+
+/** Renderiza los concept-chips para un slot */
+function _bbvaRenderConceptos(slot) {
+  const container = document.getElementById('bbva-conceptos-' + slot);
+  if (!container) return;
+  const selected = _bbvaConceptos[slot] || [];
+  const lbl = document.getElementById('bbva-zone-' + slot + '-label');
+
+  container.innerHTML = CONCEPTOS_BBVA.map(c => {
+    const on = selected.includes(c.id);
+    return `<button type="button" onclick="_bbvaToggleConcepto(${slot},'${c.id}')"
+      style="font-size:0.62rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:999px;cursor:pointer;
+             border:1.5px solid ${c.color};
+             background:${on ? c.color : 'transparent'};
+             color:${on ? '#fff' : c.color};
+             transition:all 0.15s;"
+      title="${c.label}">${c.label}</button>`;
+  }).join('');
+
+  if (lbl) {
+    const names = CONCEPTOS_BBVA.filter(c => selected.includes(c.id)).map(c => c.label);
+    // El span "(opcional)" está en el HTML como child, textContent lo sobreescribiría.
+    // Usamos innerHTML para preservar el span si no hay conceptos.
+    if (names.length) {
+      lbl.innerHTML = `Recibo ${slot} &mdash; ${names.join(' + ')}`;
+    } else {
+      const opt = slot > 1 ? ' <span style="font-weight:400;font-size:0.75em;opacity:0.7;">(opcional)</span>' : '';
+      lbl.innerHTML = `Recibo ${slot}${opt}`;
+    }
+  }
+}
+
+/** Toggle de un concepto en un slot */
+function _bbvaToggleConcepto(slot, conceptoId) {
+  if (!_bbvaConceptos[slot]) _bbvaConceptos[slot] = [];
+  const idx = _bbvaConceptos[slot].indexOf(conceptoId);
+  if (idx >= 0) _bbvaConceptos[slot].splice(idx, 1);
+  else          _bbvaConceptos[slot].push(conceptoId);
+  _bbvaRenderConceptos(slot);
+  _actualizarPreviewBBVA();
+}
+
+/** Mostrar/ocultar campos de IVA a Favor */
+function _bbvaToggleIvaFavor() {
+  const checked = document.getElementById('bbva-iva-favor-check').checked;
+  const flds = document.getElementById('bbva-iva-favor-fields');
+  if (flds) { flds.style.display = checked ? 'flex' : 'none'; }
+  _actualizarPreviewBBVA();
 }
 
 /** Permite al usuario corregir el período fiscal detectado desde la LC.
@@ -2546,7 +2947,6 @@ function _actualizarPreviewBBVA() {
     porPeriodo[key].slots.push({ slot: parseInt(slot), ...d });
   });
 
-  const etiquetas = ['Asim + IVA + ISR PM', 'ISR Honorarios', 'Arrendamiento'];
   let html = '';
 
   Object.entries(porPeriodo).forEach(([, grupo]) => {
@@ -2570,8 +2970,13 @@ function _actualizarPreviewBBVA() {
     html += `<div style="margin-bottom:0.75rem;padding:0.9rem;background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);">`;
     html += `<div style="font-family:var(--brand);font-weight:700;font-size:0.84rem;margin-bottom:0.5rem;">🏛️ ${periodoLabel}</div>`;
     grupo.slots.forEach(d => {
-      html += `<div style="font-size:0.75rem;color:var(--text-dim);margin-left:0.5rem;margin-bottom:0.2rem;">`;
-      html += `PDF ${d.slot} — ${etiquetas[d.slot-1]||'?'}: <strong style="color:var(--text);">$${fmtNum(d.importe)}</strong>`;
+      // Obtener conceptos asignados al slot
+      const conceptosSlot = (_bbvaConceptos[d.slot] || []);
+      const conceptoChips = CONCEPTOS_BBVA.filter(c => conceptosSlot.includes(c.id))
+        .map(c => `<span style="font-size:0.58rem;padding:0.08rem 0.35rem;border-radius:999px;background:${c.color};color:#fff;font-weight:700;">${c.label}</span>`)
+        .join(' ');
+      html += `<div style="font-size:0.75rem;color:var(--text-dim);margin-left:0.5rem;margin-bottom:0.25rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">`;
+      html += `Recibo ${d.slot}: <strong style="color:var(--text);">$${fmtNum(d.importe)}</strong> ${conceptoChips}`;
       if (d.banco && d.banco !== 'Desconocido') html += ` · 🏦 ${d.banco}`;
       if (d.numOperacion) html += ` · Op: ${d.numOperacion}`;
       if (d.folio)        html += ` · Folio: ${d.folio}`;
@@ -2587,6 +2992,16 @@ function _actualizarPreviewBBVA() {
     if (fecha) html += `<span>Fecha pago: ${fecha}</span>`;
     html += `</div></div>`;
   });
+
+  // IVA a Favor
+  const ivaFavChecked = document.getElementById('bbva-iva-favor-check')?.checked;
+  const ivaFavImporte = parseNum(document.getElementById('bbva-iva-favor-importe')?.value || '');
+  if (ivaFavChecked && ivaFavImporte > 0) {
+    html += `<div style="padding:0.6rem 0.9rem;background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius);font-size:0.75rem;">
+      💚 <strong style="color:#15803d;">IVA Saldo a Favor: $${fmtNum(ivaFavImporte)}</strong>
+      <span style="color:#166534;margin-left:0.5rem;">— disponible para solicitud de devolución al SAT</span>
+    </div>`;
+  }
 
   previewEl.innerHTML = html;
   previewEl.style.display = '';
@@ -2684,42 +3099,105 @@ function aplicarRecibosBBVA() {
     if (!extras[key]) extras[key] = {};
     const ex = extras[key];
 
-    const slot1 = grupo.slots.find(s => s.slot === 1);
-    const slot2 = grupo.slots.find(s => s.slot === 2);
-    const slot3 = grupo.slots.find(s => s.slot === 3);
+    // ── Guardar recibos completos con sus conceptos ────────────────────────────
+    ex.recibos = grupo.slots
+      .sort((a, b) => a.slot - b.slot)
+      .map(d => ({
+        n:            d.slot,
+        importe:      d.importe,
+        lc:           d.lineaCaptura,
+        conceptos:    (_bbvaConceptos[d.slot] || []).slice(),
+        banco:        d.banco,
+        fecha:        d.fecha,
+        numOperacion: d.numOperacion,
+        llavePago:    d.llavePago,
+        certificacion:d.certificacion,
+        cuenta:       d.cuenta,
+        folio:        d.folio,
+      }));
 
-    if (slot1) {
-      ex.acuseAsim   = slot1.importe;
-      ex.pagadoAsim  = slot1.importe;
-      // IVA Hon pagado desde nómina calculada
+    // ── Routing por concepto (no por número de slot) ───────────────────────────
+    // Busca el recibo cuya lista de conceptos incluye el concepto buscado.
+    // Si un recibo cubre múltiples conceptos, su importe TOTAL va al campo primario.
+    const _slotPorConcepto = (cid) =>
+      ex.recibos.find(r => r.conceptos.includes(cid));
+
+    // ISR Asimilables + ISR PM (slot "principal" = el que contiene isrAsim o isrPM)
+    const slotAsim = _slotPorConcepto('isrAsim') || _slotPorConcepto('isrPM') || ex.recibos[0];
+    // ISR Honorarios
+    const slotHon  = _slotPorConcepto('isrHon');
+    // IVA Retenciones
+    const slotIvaRet = _slotPorConcepto('ivaRet');
+    // Arrendamiento
+    const slotArr  = _slotPorConcepto('isrArr');
+
+    // Limpiar campos previos antes de reasignar
+    ['acuseAsim','pagadoAsim','pagadoIvaHon','acuseHon','pagadoIsrHon',
+     'acuseArr','acuseIvaRet',
+     'lineaCaptura1','lineaCaptura2','lineaCaptura3',
+     'bbva_op1','bbva_op2','bbva_op3',
+     'bbva_llave1','bbva_llave2','bbva_llave3',
+     'bbva_cert1','bbva_cert2','bbva_cert3',
+     'bbva_folio1','bbva_folio2','bbva_folio3',
+     'bbva_cuenta','bbva_banco',
+     'lineaCaptura1b','bbva_op1b','bbva_llave1b','bbva_cert1b','bbva_folio1b'
+    ].forEach(f => delete ex[f]);
+
+    if (slotAsim) {
+      ex.acuseAsim      = slotAsim.importe;
+      ex.pagadoAsim     = slotAsim.importe;
+      ex.lineaCaptura1  = slotAsim.lc;
+      ex.bbva_op1       = slotAsim.numOperacion;
+      ex.bbva_llave1    = slotAsim.llavePago;
+      ex.bbva_cert1     = slotAsim.certificacion;
+      ex.bbva_cuenta    = slotAsim.cuenta;
+      if (slotAsim.banco && slotAsim.banco !== 'Desconocido') ex.bbva_banco = slotAsim.banco;
+      if (slotAsim.folio) ex.bbva_folio1 = slotAsim.folio;
+      // IVA Hon (desde nómina calculada — no cambia el importe del banco)
       const comp = (typeof calcFromNomina === 'function') ? calcFromNomina(grupo.anio, grupo.mes) : {};
       if (comp.retenidoIvaHon > 0) ex.pagadoIvaHon = comp.retenidoIvaHon;
-      ex.lineaCaptura1 = slot1.lineaCaptura;
-      ex.bbva_op1      = slot1.numOperacion;
-      ex.bbva_llave1   = slot1.llavePago;
-      ex.bbva_cert1    = slot1.certificacion;
-      ex.bbva_cuenta   = slot1.cuenta;
-      if (slot1.banco && slot1.banco !== 'Desconocido') ex.bbva_banco = slot1.banco;
-      if (slot1.folio) ex.bbva_folio1 = slot1.folio;
     }
-    if (slot2) {
-      ex.acuseHon      = slot2.importe;
-      ex.pagadoIsrHon  = slot2.importe;
-      ex.lineaCaptura2 = slot2.lineaCaptura;
-      ex.bbva_op2      = slot2.numOperacion;
-      ex.bbva_llave2   = slot2.llavePago;
-      ex.bbva_cert2    = slot2.certificacion;
-      if (slot2.folio) ex.bbva_folio2 = slot2.folio;
+    if (slotIvaRet && slotIvaRet !== slotAsim) {
+      // IVA Retenciones en LC separada
+      ex.acuseIvaRet    = slotIvaRet.importe;
+      ex.lineaCaptura2  = slotIvaRet.lc;
+      ex.bbva_op2       = slotIvaRet.numOperacion;
+      ex.bbva_llave2    = slotIvaRet.llavePago;
+      ex.bbva_cert2     = slotIvaRet.certificacion;
+      if (slotIvaRet.folio) ex.bbva_folio2 = slotIvaRet.folio;
     }
-    if (slot3) {
-      ex.acuseArr      = slot3.importe;
-      ex.lineaCaptura3 = slot3.lineaCaptura;
-      ex.bbva_op3      = slot3.numOperacion;
-      ex.bbva_llave3   = slot3.llavePago;
-      ex.bbva_cert3    = slot3.certificacion;
+    if (slotHon) {
+      // Si ya usamos LC2 para ivaRet, usar LC3 para isrHon
+      const usarLC = ex.lineaCaptura2 ? 3 : 2;
+      ex.acuseHon                    = slotHon.importe;
+      ex.pagadoIsrHon                = slotHon.importe;
+      ex['lineaCaptura' + usarLC]    = slotHon.lc;
+      ex['bbva_op'      + usarLC]    = slotHon.numOperacion;
+      ex['bbva_llave'   + usarLC]    = slotHon.llavePago;
+      ex['bbva_cert'    + usarLC]    = slotHon.certificacion;
+      if (slotHon.folio) ex['bbva_folio' + usarLC] = slotHon.folio;
+    }
+    if (slotArr) {
+      ex.acuseArr       = slotArr.importe;
+      ex.lineaCaptura3  = ex.lineaCaptura3 || slotArr.lc; // no pisar si ya está
+      ex.bbva_op3       = ex.bbva_op3  || slotArr.numOperacion;
+      ex.bbva_llave3    = ex.bbva_llave3 || slotArr.llavePago;
+      ex.bbva_cert3     = ex.bbva_cert3  || slotArr.certificacion;
     }
 
-    ex.acuseTotal = (ex.acuseAsim||0) + (ex.acuseHon||0) + (ex.acuseArr||0);
+    // ── IVA a Favor (crédito, no un pago) ─────────────────────────────────────
+    const ivaFavChecked = document.getElementById('bbva-iva-favor-check')?.checked;
+    const ivaFavImporte = parseNum(document.getElementById('bbva-iva-favor-importe')?.value || '');
+    const ivaFavRef     = document.getElementById('bbva-iva-favor-ref')?.value?.trim() || '';
+    if (ivaFavChecked && ivaFavImporte > 0) {
+      ex.ivaFavor    = ivaFavImporte;
+      ex.ivaFavorRef = ivaFavRef;
+    } else {
+      delete ex.ivaFavor; delete ex.ivaFavorRef;
+    }
+
+    // ── Totales y suma ─────────────────────────────────────────────────────────
+    ex.acuseTotal = (ex.acuseAsim||0) + (ex.acuseHon||0) + (ex.acuseArr||0) + (ex.acuseIvaRet||0);
     if (ex.acuseTotal === 0) delete ex.acuseTotal;
 
     // Fecha de pago bancario (la más reciente de los slots)
@@ -3581,7 +4059,10 @@ try {
 } catch(e) {}
 
 _initTablaCompacta();
+// Restaurar modo director si estaba activo
+_vistaDirectorActiva = localStorage.getItem(KEY_VISTA_DIRECTOR) === '1';
 renderTable();
+if (_vistaDirectorActiva) _setVistaDirector(true);
 
 /* ── Botón "Enviar a Telegram" en panel de anomalías ── */
 async function tgEnviarAlertasRetenciones() {
@@ -3845,12 +4326,13 @@ setTimeout(() => {
   } catch(e) { console.warn('verif:', e); }
 }, 800);
 
-/* ── Re-verificar al cambiar de año (hook en selectYear) ── */
+/* ── Re-verificar al cambiar de año + actualizar vista director (hook en selectYear) ── */
 const _origSelectYear = selectYear;
 selectYear = function(y) {
   _origSelectYear(y);
   setTimeout(() => {
     try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+    if (_vistaDirectorActiva) renderVistaDirector();
   }, 200);
 };
 
