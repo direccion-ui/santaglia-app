@@ -437,6 +437,7 @@
             <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
               <span>Posición de Caja Ejecutiva</span>
               <button id="dir-auditoria-badge" onclick="var p=document.getElementById('dir-auditoria-panel');p.classList.toggle('open');" title="Auditoría de consistencia" style="font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:4px;cursor:pointer;border:1px solid currentColor;background:transparent;color:var(--text-dim);font-family:inherit;transition:opacity .2s;">🔍</button>
+              <button onclick="_detectarDuplicados();var n=document.getElementById('btn-dedup-global');if(n&&n.style.display!=='none'){document.getElementById('mov-alerts-bar').scrollIntoView({behavior:'smooth'});}else{toast('Sin duplicados detectados ✅','success');}" title="Verificar duplicados ahora" style="font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:4px;cursor:pointer;border:1px solid #d97706;background:transparent;color:#d97706;font-family:inherit;">🔂</button>
             </div>
             <!-- Panel de auditoría Director (colapsado por defecto) -->
             <div id="dir-auditoria-panel" style="display:none;margin-bottom:0.75rem;border-radius:8px;border:1px solid var(--border);background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.08);overflow:hidden;">
@@ -5644,11 +5645,12 @@ setTimeout(() => {
 
     // 3. Detectar movimientos con fecha en el concepto y mostrar botón de limpieza
     _mostrarBtnLimpiarCSV();
-    // 4. Detectar duplicados entre stgl_mov_excel y stgl_mov_manual
-    _detectarDuplicados();
 
     localStorage.setItem('stgl_cuentas_normalized_v2', '1');
   } catch(e) { console.warn('norm-v2:', e); }
+
+  /* ── Detección de duplicados: se ejecuta en CADA carga (fuera del bloque one-time) ── */
+  try { _detectarDuplicados(); } catch(e) { console.warn('[dedup]', e); }
 }, 2000);
 
 /* ── Limpieza de movimientos CSV con fecha en el concepto ── */
