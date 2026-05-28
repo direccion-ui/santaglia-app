@@ -6083,27 +6083,50 @@ function limpiarCSVMalImportado() {
     const kn = document.getElementById('dir-flujo-neto');
     if (kn) { kn.textContent = (neto >= 0 ? '+' : '−') + _fmtDir(Math.abs(neto)); kn.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-    /* Top 3 categorías de egreso REAL — excluye traspasos y FX (movimientos internos) */
+    /* Top 3 categorías de egreso REAL — excluye traspasos y FX (movimientos internos).
+       Tipos genéricos ("Gastos", "Egreso"…) se desglosan por concepto para dar
+       contexto real al director en lugar de un renglón inútil. */
+    const _TIPOS_GENERICOS = /^(gastos?|egresos?|otros?|varios|sin categor[ií]a|gasto\s+general)$/i;
+    const _TIPOS_INTERNOS  = /traspaso|transferencia\s+interna|fx\s+compra|fx\s+venta/i;
+
     const egresos = movs.filter(r => {
       if (!(parseFloat(r.salidas||0) > 0)) return false;
-      /* Excluir movimientos internos que no son gasto real de la empresa */
-      const orig = (r.origenRef || '').toLowerCase();
+      /* Excluir movimientos internos — regex cubre singular/plural y mayúsculas */
+      const orig = (r.origenRef || r.origen || '').toLowerCase();
       const tipo = (r.tipo || r.mov || '').toLowerCase();
-      if (orig === 'fx' || orig === 'traspaso') return false;
-      if (tipo === 'traspaso' || tipo === 'traspaso entre cuentas') return false;
+      if (/^fx$|^traspaso/.test(orig)) return false;
+      if (_TIPOS_INTERNOS.test(r.tipo || r.mov || '')) return false;
       return true;
     });
+
     const byTipo  = {};
     egresos.forEach(r => {
-      /* Jerarquía: tipo → rubro → concepto → 'Sin categoría'
-         Normalización básica para unificar variantes */
-      let k = (r.tipo || r.rubro || r.concepto || 'Sin categoría').trim();
-      /* Unificar nóminas: "Nómina Asimilable", "nómina", "Nomina" → "Nómina" */
-      if (/n[oó]mina/i.test(k)) k = 'Nómina';
-      /* Unificar honorarios */
-      if (/honorario/i.test(k)) k = 'Honorarios';
-      /* Unificar retenciones SAT */
-      if (/retenci[oó]n|retenciones|sat.*ret|isr.*iva|iva.*isr/i.test(k)) k = 'Retenciones SAT';
+      /* ── Normalización de etiquetas ──
+         1. Tipos específicos conocidos → etiqueta canónica
+         2. Tipos genéricos → drilldown a concepto (más informativo para el director)
+         3. Sin dato → "Otros" */
+      let rawTipo = (r.tipo || r.rubro || '').trim();
+      let k;
+
+      if      (/n[oó]mina/i.test(rawTipo))                                   k = 'Nómina';
+      else if (/honorario/i.test(rawTipo))                                    k = 'Honorarios';
+      else if (/retenci[oó]n|sat.*ret|isr.*iva/i.test(rawTipo))              k = 'Retenciones SAT';
+      else if (/arrendamiento|renta\b/i.test(rawTipo))                        k = 'Arrendamiento';
+      else if (/publicidad|marketing|promoci[oó]n/i.test(rawTipo))            k = 'Marketing';
+      else if (/seguro/i.test(rawTipo))                                        k = 'Seguros';
+      else if (/servi[ct]io|suscripci[oó]n/i.test(rawTipo))                  k = 'Servicios';
+      else if (/proveedor|compra\b|insumo/i.test(rawTipo))                    k = 'Proveedores';
+      else if (_TIPOS_INTERNOS.test(rawTipo))                                 return; /* doble seguro */
+      else if (_TIPOS_GENERICOS.test(rawTipo)) {
+        /* "Gastos" es demasiado vago → usar concepto como etiqueta de agrupación.
+           Si el concepto también está vacío, etiquetar con descripción truncada. */
+        const sub = (r.concepto || r.descripcion || r.desc || '').trim();
+        k = sub
+          ? sub.charAt(0).toUpperCase() + sub.slice(1, 40)   // capitalizar, máx 40 chars
+          : (rawTipo || 'Otros');
+      }
+      else k = rawTipo || 'Otros';
+
       byTipo[k] = (byTipo[k] || 0) + parseFloat(r.salidas||0);
     });
     const top3 = Object.entries(byTipo).sort((a, b) => b[1] - a[1]).slice(0, 3);
