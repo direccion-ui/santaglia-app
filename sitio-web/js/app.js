@@ -184,10 +184,21 @@ function _idbSnapshot() {
 (function _interceptLocalStorage() {
   const _orig = localStorage.setItem.bind(localStorage);
   localStorage.setItem = function(key, value) {
-    _orig(key, value);
     if (typeof key === 'string' && key.startsWith('stgl_')) {
+      try {
+        _orig(key, value);
+      } catch(e) {
+        const isQuota = e && (e.name === 'QuotaExceededError' || e.code === 22 ||
+                              e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+        if (!isQuota) throw e;
+        // localStorage lleno — los datos se preservan en IDB y Supabase
+        console.warn('[stgl] localStorage lleno, preservando en IDB+Supabase:', key);
+      }
+      // Siempre escribir en IDB y Supabase, aunque localStorage fallara
       _idbWrite(key, value);   // nivel 2: IndexedDB local
       _sbWrite(key, value);    // nivel 3: Supabase nube
+    } else {
+      _orig(key, value);       // claves no-stgl_ pasan directo
     }
   };
 })();
@@ -196,9 +207,78 @@ function _idbSnapshot() {
    Restauración al arrancar — cascada: localStorage → IDB → Supabase
    ══════════════════════════════════════════════════════════════ */
 async function _checkAndRestore() {
-  // Verificar si hay datos REALES en localStorage (no solo el flag de migración).
-  // El flag puede existir sin datos si se hizo sync desde un localStorage vacío.
   const _metaKeys = new Set(['stgl_supabase_migrated', 'stgl_org_id', 'stgl_user_role', 'stgl_user_name']);
+
+  /* ── Con sesión activa: comparación clave por clave ───────────────────
+     Supabase es la fuente de verdad. Si tiene más registros en cualquier
+     módulo que localStorage, se llena el hueco (sin borrar lo que ya hay).
+     Esto resuelve el problema de localStorage parcialmente lleno.
+  ───────────────────────────────────────────────────────────────────── */
+  try {
+    const sb = await _initSupabase();
+    const { data: authData } = await sb.auth.getSession();
+    const session = authData?.session;
+
+    if (session) {
+      const orgId = session.user.id;
+      _stglOrgId = orgId;
+      sessionStorage.setItem('stgl_org_id', orgId);
+
+      // Verificación rápida: si todos los módulos clave ya tienen datos locales, salir
+      const MODULE_KEYS = ['stgl_mov_excel','stgl_mov_manual','stgl_saldos','stgl_facturas',
+                           'stgl_retenciones','stgl_recurrentes','stgl_egresos','stgl_nomina'];
+      const localCounts = {};
+      MODULE_KEYS.forEach(k => {
+        try { const p = JSON.parse(localStorage.getItem(k)); localCounts[k] = Array.isArray(p) ? p.length : (p ? 1 : 0); }
+        catch { localCounts[k] = 0; }
+      });
+      const anyMissing = MODULE_KEYS.some(k => localCounts[k] === 0);
+      if (!anyMissing) return; // todos los módulos ya tienen datos — no hacer fetch
+
+      // Hay algún módulo vacío: traer todo de Supabase y comparar
+      const { data, error } = await sb
+        .from('stgl_data').select('key, value').eq('org_id', orgId);
+      if (error) { console.warn('[stgl] restore error:', error.message); return; }
+
+      const stglRows = (data || []).filter(r => r.key?.startsWith('stgl_') && !_metaKeys.has(r.key));
+      if (!stglRows.length) return;
+
+      let restored = 0, quotaHit = false;
+      for (const { key, value } of stglRows) {
+        if (!value) continue;
+        const localRaw = localStorage.getItem(key) || null;
+        let sbCount = 0, localCount = 0;
+        try { const p = JSON.parse(value);    sbCount    = Array.isArray(p) ? p.length : 1; } catch {}
+        try { const p = JSON.parse(localRaw); localCount = Array.isArray(p) ? p.length : (localRaw ? 1 : 0); } catch {}
+        if (sbCount > localCount) {
+          try {
+            localStorage.removeItem(key);    // liberar espacio del valor anterior primero
+            localStorage.setItem(key, value); // interceptor → IDB + re-sync SB (idempotente)
+            restored++;
+          } catch(e) {
+            // localStorage lleno — el interceptor ya guardó en IDB+Supabase
+            _idbWrite(key, value);
+            quotaHit = true;
+            console.warn('[stgl] localStorage lleno al restaurar:', key, '— datos en IDB+Supabase');
+          }
+        }
+      }
+
+      if (restored > 0) {
+        try { _actualizarEstadoSync?.(); } catch {}
+        const msg = quotaHit
+          ? `☁️ ${restored} módulo(s) restaurados. Almacenamiento local limitado — algunos datos solo en IDB. Recargando…`
+          : `☁️ ${restored} módulo(s) actualizados desde la nube. Recargando…`;
+        try { toast(msg, 'success'); } catch {}
+        setTimeout(() => location.replace(location.href.split('?')[0]), 1800);
+      }
+      return; // Con sesión: no usar la ruta de IDB
+    }
+  } catch(e) { console.warn('[stgl] _checkAndRestore exception:', e); }
+
+  /* ── Sin sesión: cascada IDB → nada ──────────────────────────────────
+     Solo restaurar si localStorage está completamente vacío de datos reales.
+  ───────────────────────────────────────────────────────────────────── */
   const hasRealData = (() => {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
@@ -206,42 +286,17 @@ async function _checkAndRestore() {
     }
     return false;
   })();
-  if (hasRealData) return; // Datos presentes — no restaurar
+  if (hasRealData) return;
 
-  // Intento 1: IndexedDB — solo si IDB tiene datos reales (no solo el flag)
   const idb = await _idbReadAll();
   const idbHasRealData = Object.keys(idb).some(k => k.startsWith('stgl_') && !_metaKeys.has(k));
   if (idbHasRealData) {
     const entries = Object.entries(idb).filter(([k]) => k.startsWith('stgl_'));
-    entries.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
+    entries.forEach(([k, v]) => { if (v != null) { try { localStorage.setItem(k, v); } catch {} } });
     const ts = idb[_STGL_TS_KEY] ? new Date(+idb[_STGL_TS_KEY]).toLocaleString('es-MX') : '—';
     try { toast(`✅ Datos restaurados desde respaldo local (${ts}). Recargando…`, 'success'); } catch {}
     setTimeout(() => location.reload(), 2000);
-    return;
   }
-
-  // Intento 2: Supabase — usar session.user.id directamente
-  try {
-    const sb = await _initSupabase();
-    const { data: authData } = await sb.auth.getSession();
-    const session = authData?.session;
-    if (!session) return;
-    const orgId = session.user.id;
-    const { data, error } = await sb
-      .from('stgl_data').select('key, value').eq('org_id', orgId);
-    if (error) { console.warn('[stgl] restore error:', error.message); return; }
-    const stglRows = (data || []).filter(r => r.key?.startsWith('stgl_'));
-    if (!stglRows.length) return;
-    _stglOrgId = orgId;
-    stglRows.forEach(({ key, value }) => { if (value != null) localStorage.setItem(key, value); });
-    stglRows.forEach(({ key, value }) => _idbWrite(key, value));
-    console.log(`[stgl] Restaurados ${stglRows.length} bloques desde Supabase. Recargando…`);
-    try { toast(`☁️ Datos restaurados desde la nube (${stglRows.length} bloques). Recargando…`, 'success'); } catch {}
-    // Usar location.replace para garantizar el reload en mobile Safari
-    // (setTimeout solo no siempre dispara en contexto post-login mobile)
-    const reloadUrl = location.href.split('?')[0];
-    setTimeout(() => { location.replace(reloadUrl); }, 1500);
-  } catch(e) { console.warn('[stgl] _checkAndRestore exception:', e); }
 }
 
 /* ══════════════════════════════════════════════════════════════

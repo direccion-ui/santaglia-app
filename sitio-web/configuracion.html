@@ -3127,55 +3127,90 @@ async function confirmarRestaurar() {
     stgl_egresos:'', stgl_nomina:'', stgl_proyectos:'', stgl_clientes:'', stgl_servicios:'',
   };
 
-  let restored = 0;
-  let quotaError = false;
-  const errors = [];
+  const isQuotaError = e => e && (e.name === 'QuotaExceededError' || e.code === 22 ||
+                                   e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+  let restored = 0, quotaError = false;
 
-  // Usar for...of para poder hacer await si se necesita en el futuro
   for (const [key, sbRaw] of Object.entries(_pendingRestoreData)) {
-    if (!KEY_LABELS.hasOwnProperty(key)) continue; // solo módulos conocidos
+    if (!KEY_LABELS.hasOwnProperty(key)) continue;
     const localRaw = localStorage.getItem(key) || null;
     let sbCount = 0, localCount = 0;
     try { const p = JSON.parse(sbRaw);    sbCount    = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
     try { const p = JSON.parse(localRaw); localCount = Array.isArray(p) ? p.length : (p ? 1 : 0); } catch {}
     if (sbCount > localCount) {
       try {
-        localStorage.setItem(key, sbRaw); // activa el interceptor → IDB + Supabase
+        localStorage.removeItem(key); // liberar valor anterior antes de escribir
+        localStorage.setItem(key, sbRaw);
         restored++;
-      } catch (e) {
-        if (e && (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-          quotaError = true;
-          errors.push(key);
-          break; // no tiene caso seguir si ya se llenó
-        } else {
-          errors.push(key);
-        }
+      } catch(e) {
+        if (isQuotaError(e)) { quotaError = true; break; }
       }
     }
   }
 
-  // Ocultar panel de comparación
+  // ── Si hay QuotaError: opción nuclear — limpiar caché y restaurar todo ──
+  if (quotaError) {
+    if (btn) btn.textContent = '⏳ Liberando espacio…';
+    try {
+      // 1. Guardar datos de Supabase en IDB antes de limpiar (seguridad)
+      for (const [k, v] of Object.entries(_pendingRestoreData)) {
+        if (KEY_LABELS.hasOwnProperty(k) && v) {
+          try { await (typeof _idbWrite === 'function' ? _idbWrite(k, v) : Promise.resolve()); } catch {}
+        }
+      }
+      // 2. Limpiar TODOS los stgl_* del localStorage (solo datos de módulos, no metas)
+      const metaKeys = new Set(['stgl_supabase_migrated','stgl_org_id','stgl_user_role','stgl_user_name']);
+      const toClear = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k?.startsWith('stgl_') && !metaKeys.has(k)) toClear.push(k);
+      }
+      toClear.forEach(k => localStorage.removeItem(k));
+
+      // 3. Restaurar todos los módulos desde _pendingRestoreData
+      if (btn) btn.textContent = '⏳ Restaurando desde nube…';
+      restored = 0;
+      const errors2 = [];
+      for (const [key, sbRaw] of Object.entries(_pendingRestoreData)) {
+        if (!KEY_LABELS.hasOwnProperty(key) || !sbRaw) continue;
+        try {
+          localStorage.setItem(key, sbRaw);
+          restored++;
+        } catch(e2) {
+          errors2.push(key);
+          console.warn('[stgl] Aún sin espacio tras limpiar:', key, e2);
+        }
+      }
+
+      document.getElementById('restore-compare-panel').style.display = 'none';
+      _pendingRestoreData = null;
+      if (btn) { btn.disabled = false; btn.textContent = '✅ Restaurar datos de la nube'; }
+
+      if (errors2.length) {
+        toast(`⚠️ ${restored} módulo(s) restaurados. ${errors2.length} módulo(s) solo en IDB (localStorage al límite).`, 'warning');
+        setTimeout(() => location.reload(), 2500);
+      } else {
+        toast(`✅ ${restored} módulo(s) restaurados completamente. Recargando…`, 'success');
+        setTimeout(() => location.reload(), 1800);
+      }
+      return;
+    } catch(e) {
+      if (btn) { btn.disabled = false; btn.textContent = '✅ Restaurar datos de la nube'; }
+      toast('Error al limpiar y restaurar: ' + (e.message || e), 'error');
+      return;
+    }
+  }
+
+  // ── Caso normal (sin quota error) ──
   document.getElementById('restore-compare-panel').style.display = 'none';
   _pendingRestoreData = null;
-
-  // Restaurar botón
   if (btn) { btn.disabled = false; btn.textContent = '✅ Restaurar datos de la nube'; }
 
-  // Retroalimentación al usuario
-  if (quotaError) {
-    toast(
-      `⚠️ Almacenamiento local lleno. Se restauraron ${restored} módulo(s) antes del error. ` +
-      'Limpia algún módulo desde la Zona de Peligro e intenta de nuevo.',
-      'error'
-    );
-  } else if (errors.length > 0) {
-    toast(`⚠️ Se restauraron ${restored} módulo(s) con ${errors.length} error(es). Revisa la consola.`, 'warning');
-    console.warn('Errores al restaurar módulos:', errors);
-  } else if (restored > 0) {
+  if (restored > 0) {
     toast(`✅ ${restored} módulo(s) restaurados desde la nube. Recargando…`, 'success');
     setTimeout(() => location.reload(), 1800);
   } else {
-    toast('No había nada que restaurar — local ya tenía más datos.', 'info');
+    toast('Local ya tenía todos los datos actualizados.', 'info');
   }
 }
 
