@@ -424,12 +424,22 @@ window.addEventListener('DOMContentLoaded', async () => {
 async function wlRefresh() {
   document.getElementById('wl-meta').textContent = 'Actualizando…';
   try {
-    const { data, error } = await _sbWL
-      .from('waitlist_contacts')
-      .select('*')
-      .order('submitted_at', { ascending: false });
+    // Usar fetch directo con JWT explícito para garantizar que la sesión
+    // autenticada se envíe correctamente al API (bypass de posibles issues
+    // con la inicialización del cliente SDK y la key publishable)
+    const sb = _sbWL || await _initSupabase();
+    const { data: { session } } = await sb.auth.getSession();
+    const token = session?.access_token || SB_KEY;
 
-    if (error) throw error;
+    const res = await fetch(
+      `${SB_URL}/rest/v1/waitlist_contacts?select=*&order=submitted_at.desc`,
+      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}` } }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
     _contacts = data || [];
     wlUpdateKPIs();
     wlRenderTable();

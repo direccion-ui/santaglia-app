@@ -72,6 +72,31 @@
     .period-btn:hover { background:#f0f2f8; color:var(--navy); }
     .period-btn.active { background:var(--navy); color:#fff; }
 
+    /* KPI saldos bancarios */
+    .kpi-saldos-bar {
+      display: flex; flex-wrap: wrap;
+      gap: 1px; background: var(--border); border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .kpi-saldos-bar .ksi {
+      background: var(--bg-white); padding: 0.8rem 1.1rem;
+      flex: 1 1 140px; min-width: 120px;
+    }
+    .kpi-saldos-bar .ksi.ksi-total {
+      background: #f0f4ff; flex: 1 1 160px;
+    }
+    .kpi-saldos-bar .ksi.ksi-proy30 {
+      background: #f8f9fa; flex: 1 1 160px;
+    }
+    .ksi-label { font-family: var(--brand); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--gray-bl); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.35rem; }
+    .ksi-val   { font-family: var(--brand); font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+    .ksi-badge { font-family: var(--brand); font-size: 0.55rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 3px; background: #e2e8f0; color: #4a5568; letter-spacing: 0.05em; }
+    .ksi-badge.usd { background: #dbeafe; color: #1e40af; }
+    .ksi-badge.mxn { background: #dcfce7; color: #166534; }
+    .ksi-val.green { color: var(--green); }
+    .ksi-val.red   { color: var(--red, #c0392b); }
+    .ksi-empty { padding: 0.9rem 1.25rem; font-size: 0.75rem; color: var(--text-xs); font-family: var(--brand); }
+
     /* KPI facturación */
     .kpi-fact-bar {
       display: grid; grid-template-columns: repeat(4, 1fr);
@@ -132,6 +157,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -184,6 +210,11 @@
           <div class="stat-value" id="stat-clientes">—</div>
           <div class="stat-label">Clientes facturados</div>
         </div>
+      </div>
+
+      <!-- KPIs de saldos bancarios -->
+      <div class="kpi-saldos-bar" id="kpi-saldos-bar">
+        <div class="ksi-empty">Cargando saldos…</div>
       </div>
 
       <!-- KPIs de facturación -->
@@ -802,6 +833,105 @@ function setPeriod(months) {
   renderChart();
 }
 
+/* ═══════════════════════════════════════════
+   SALDOS BANCARIOS — KPI strip
+═══════════════════════════════════════════ */
+function renderSaldosDash() {
+  const bar = document.getElementById('kpi-saldos-bar');
+  if (!bar) return;
+
+  // Leer configuración y saldos
+  let cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}'); } catch(e) {}
+  const tc = parseFloat(cfg.tcUsd) > 0 ? parseFloat(cfg.tcUsd) : 18.00;
+
+  let saldos = [];
+  try { saldos = JSON.parse(localStorage.getItem('stgl_saldos') || '[]'); } catch(e) {}
+
+  if (!Array.isArray(saldos) || saldos.length === 0) {
+    bar.innerHTML = `<div class="ksi-empty">Sin saldos configurados →
+      <a href="financiero.html" style="color:var(--navy); font-weight:600;">Ir a Financiero</a></div>`;
+    return;
+  }
+
+  // Calcular total neto en MXN
+  let totalMxn = 0;
+  const celdas = saldos.map(s => {
+    const saldo = parseFloat(s.saldo) || 0;
+    const mon   = (s.moneda || 'MXN').toUpperCase();
+    const enMxn = mon === 'USD' ? saldo * tc : saldo;
+    totalMxn += enMxn;
+
+    const fmtSaldo = '$' + Math.abs(saldo).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const badge    = mon === 'USD'
+      ? `<span class="ksi-badge usd">USD</span>`
+      : `<span class="ksi-badge mxn">MXN</span>`;
+    const nombre   = (s.cuenta || s.nombre || 'Cuenta').substring(0, 24);
+    const colorVal = saldo < 0 ? 'red' : '';
+
+    return `<div class="ksi">
+      <div class="ksi-label">${nombre} ${badge}</div>
+      <div class="ksi-val ${colorVal}">${fmtSaldo}</div>
+    </div>`;
+  });
+
+  // Calcular proyección a 30 días
+  const hoy        = new Date();
+  hoy.setHours(0,0,0,0);
+  const en30       = new Date(hoy); en30.setDate(en30.getDate() + 30);
+  const hoyStr     = hoy.toISOString().split('T')[0];
+  const en30Str    = en30.toISOString().split('T')[0];
+
+  let flujo30      = 0;
+
+  // Movimientos proyectados
+  try {
+    const movs = JSON.parse(localStorage.getItem('stgl_mov_proyectados') || '[]');
+    for (const m of movs) {
+      const f = (m.fecha || '').substring(0, 10);
+      if (f < hoyStr || f > en30Str) continue;
+      const monM = (m.moneda || 'MXN').toUpperCase();
+      const mult = monM === 'USD' ? tc : 1;
+      flujo30 += (parseFloat(m.entrada) || 0) * mult;
+      flujo30 -= (parseFloat(m.salida)  || 0) * mult;
+    }
+  } catch(e) {}
+
+  // Retenciones SAT que vencen en los próximos 30 días
+  // stgl_retenciones_extra y stgl_retenciones: buscar campos fecha/fechaVencimiento
+  const retKeys = ['stgl_retenciones_extra', 'stgl_retenciones'];
+  for (const rk of retKeys) {
+    try {
+      const rets = JSON.parse(localStorage.getItem(rk) || '[]');
+      for (const r of rets) {
+        const fv = (r.fechaVencimiento || r.fecha || r.fechaPago || '').substring(0, 10);
+        if (!fv || fv < hoyStr || fv > en30Str) continue;
+        // Las retenciones son salidas
+        const monto = parseFloat(r.total || r.monto || r.importe || 0);
+        if (monto > 0) flujo30 -= monto;
+      }
+    } catch(e) {}
+  }
+
+  const saldoProy30 = totalMxn + flujo30;
+  const colorProy   = saldoProy30 >= 0 ? 'green' : 'red';
+  const fmtTotal    = '$' + Math.abs(totalMxn).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtProy     = '$' + Math.abs(saldoProy30).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const signProy    = saldoProy30 < 0 ? '−' : '';
+
+  const celdaTotal = `<div class="ksi ksi-total">
+    <div class="ksi-label">Total neto MXN <span class="ksi-badge">TC ${tc.toFixed(2)}</span></div>
+    <div class="ksi-val ${totalMxn < 0 ? 'red' : ''}">${totalMxn < 0 ? '−' : ''}${fmtTotal}</div>
+  </div>`;
+
+  const celdaProy = `<div class="ksi ksi-proy30">
+    <div class="ksi-label">Saldo en 30 días</div>
+    <div class="ksi-val ${colorProy}">${signProy}${fmtProy}</div>
+  </div>`;
+
+  bar.innerHTML = celdas.join('') + celdaTotal + celdaProy;
+}
+
 /* ── Backup automático ── */
 
 // IndexedDB helpers (misma lógica que configuracion.html)
@@ -945,6 +1075,7 @@ function init() {
     } catch(e) { /* fecha inválida — ignorar, los filtros quedan vacíos */ }
   }
 
+  renderSaldosDash();
   buildClientChips();
   refreshStats();
   setPeriod(12);  // activa botón 12M y llama renderChart()

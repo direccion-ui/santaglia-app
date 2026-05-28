@@ -292,6 +292,11 @@
           <button class="cfg-tab" onclick="showTab('datos')">
             <span class="cfg-tab-icon">💾</span> Respaldos y datos
           </button>
+
+          <div class="cfg-sidebar-section">Integraciones</div>
+          <button class="cfg-tab" onclick="showTab('notificaciones')" id="tab-notificaciones">
+            <span class="cfg-tab-icon">📲</span> Notificaciones
+          </button>
         </nav>
 
         <!-- ════ PANELS ════ -->
@@ -626,8 +631,8 @@
                       <th>Nombre Completo</th>
                       <th>RFC</th>
                       <th>Tipo</th>
-                      <th>Teléfono</th>
-                      <th style="text-align:center;">Activo</th>
+                      <th>Ingreso</th>
+                      <th style="text-align:center;">Estado</th>
                       <th style="width:80px;"></th>
                     </tr>
                   </thead>
@@ -747,6 +752,29 @@
               </div>
             </div>
 
+            <!-- ── Cuenta para pagos al SAT ── -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Cuenta para pagos al SAT</div>
+              <div style="background:#f5f7ff; border:1px solid #b0bcec; border-radius:var(--radius); padding:0.9rem 1.1rem;">
+                <div style="display:flex; align-items:flex-start; gap:0.75rem; margin-bottom:0.75rem;">
+                  <span style="font-size:1.25rem; flex-shrink:0;">🏛</span>
+                  <div style="font-size:0.72rem; color:var(--text-dim); line-height:1.6;">
+                    Cuenta usada para proyectar y registrar pagos de <strong>ISR + IVA</strong>.
+                    Se usa en el módulo de Proyección para calcular disponibilidad real después de obligaciones fiscales.
+                  </div>
+                </div>
+                <div style="display:flex; gap:0.6rem; align-items:flex-end; flex-wrap:wrap;">
+                  <div class="form-group" style="margin:0; flex:1; min-width:200px;">
+                    <label class="form-label">Cuenta bancaria</label>
+                    <select class="form-input" id="cfg-cuenta-sat">
+                      <option value="">— Seleccionar cuenta —</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-primary" style="font-size:0.72rem; white-space:nowrap;" onclick="guardarCuentaSAT()">Guardar</button>
+                </div>
+              </div>
+            </div>
+
             <!-- ── Reservas y límites ── -->
             <div class="cfg-section">
               <div class="cfg-section-hdr">Reserva de fondos y límites de divisas</div>
@@ -855,6 +883,309 @@
               </div>
             </div>
           </div>
+
+          <!-- ── Panel: Notificaciones (Telegram Bot) ── -->
+          <div class="cfg-panel" id="panel-notificaciones">
+
+            <!-- Header -->
+            <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1.75rem;">
+              <span style="font-size:2.2rem;line-height:1;">📲</span>
+              <div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:800;color:var(--navy);letter-spacing:-0.01em;">Notificaciones Proactivas</div>
+                <div style="font-size:0.74rem;color:var(--text-dim);margin-top:0.1rem;">Compass te avisa en Telegram antes de que algo venza o cambie — sin abrir la app.</div>
+              </div>
+            </div>
+
+            <!-- ── Estado: no configurado ── -->
+            <div id="tg-setup">
+
+              <!-- ¿Qué es Telegram? -->
+              <div class="cfg-section">
+                <div class="cfg-section-hdr">¿Qué es Telegram y por qué lo usa Compass?</div>
+                <div style="background:#f0f4ff;border:1px solid #c7d0ef;border-radius:var(--radius);padding:1rem 1.2rem;font-size:0.78rem;color:var(--text);line-height:1.7;margin-bottom:0.85rem;">
+                  <p style="margin:0 0 0.6rem;">
+                    <strong>Telegram es una app de mensajería gratuita</strong> — similar a WhatsApp, pero diseñada para automatización y notificaciones. No reemplaza a WhatsApp; simplemente lo usarás en paralelo para recibir alertas de Compass.
+                  </p>
+                  <p style="margin:0;color:var(--text-dim);">
+                    La razón técnica: Telegram tiene una API pública que permite a Compass enviarte mensajes directamente <strong>sin ningún costo adicional</strong>, a diferencia de WhatsApp Business que cobra por mensaje.
+                  </p>
+                </div>
+
+                <!-- Qué puede hacer Telegram con Compass -->
+                <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--navy);margin-bottom:0.5rem;">Lo que Compass te envía por Telegram</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;">
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.85rem;font-size:0.73rem;">
+                    <div style="font-weight:700;color:var(--navy);margin-bottom:0.2rem;">📅 Retenciones por vencer</div>
+                    <div style="color:var(--text-dim);line-height:1.5;">Aviso antes del día 17 con el monto exacto a pagar — nunca más un recargo por olvido.</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.85rem;font-size:0.73rem;">
+                    <div style="font-weight:700;color:var(--navy);margin-bottom:0.2rem;">🛡️ Monitor SAT</div>
+                    <div style="color:var(--text-dim);line-height:1.5;">Alerta inmediata si tu Opinión de Cumplimiento cambia a Negativo — el mismo día, no cuando ya perdiste un contrato.</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.85rem;font-size:0.73rem;">
+                    <div style="font-weight:700;color:var(--navy);margin-bottom:0.2rem;">📷 Factura Express <span style="font-size:0.6rem;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;">Próximamente</span></div>
+                    <div style="color:var(--text-dim);line-height:1.5;">Fotografías el ticket de una compra en el chat y Compass solicita el CFDI automáticamente.</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.85rem;font-size:0.73rem;">
+                    <div style="font-weight:700;color:var(--navy);margin-bottom:0.2rem;">🏦 Cargos no reconocidos <span style="font-size:0.6rem;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;">Próximamente</span></div>
+                    <div style="color:var(--text-dim);line-height:1.5;">Aviso inmediato si aparece un cargo bancario que no coincide con ningún gasto registrado.</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.85rem;font-size:0.73rem;">
+                    <div style="font-weight:700;color:var(--navy);margin-bottom:0.2rem;">📋 Resumen semanal <span style="font-size:0.6rem;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;">Próximamente</span></div>
+                    <div style="color:var(--text-dim);line-height:1.5;">Cada lunes: flujo de la semana, top 5 tareas urgentes y CFDIs pendientes — todo en un solo mensaje.</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.85rem;font-size:0.73rem;">
+                    <div style="font-weight:700;color:var(--navy);margin-bottom:0.2rem;">💬 Registro de gastos en efectivo <span style="font-size:0.6rem;background:#fff3cd;color:#856404;border-radius:3px;padding:1px 4px;">Próximamente</span></div>
+                    <div style="color:var(--text-dim);line-height:1.5;">Escribe "gasté $150 en tacos" y Compass lo registra automáticamente — sin abrir la app.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ¿No tienes Telegram? -->
+              <div class="cfg-section">
+                <div class="cfg-section-hdr">
+                  <span>¿No tienes Telegram instalado?</span>
+                  <span style="background:#e8ecf8;color:var(--navy);font-size:0.58rem;font-weight:700;padding:2px 7px;border-radius:3px;">Empieza aquí</span>
+                </div>
+                <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;font-size:0.78rem;color:var(--text);line-height:1.75;margin-bottom:0.75rem;">
+                  <ol style="margin:0;padding-left:1.3rem;">
+                    <li><strong>Descarga Telegram</strong> en tu equipo — es gratuito:
+                      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
+                        <a href="https://apps.apple.com/app/telegram-messenger/id747648890" target="_blank" rel="noopener"
+                           style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.3rem 0.7rem;background:#000;color:#fff;border-radius:5px;text-decoration:none;font-size:0.68rem;font-weight:600;">
+                           🍎 Mac App Store
+                        </a>
+                        <a href="https://telegram.org/dl/macos" target="_blank" rel="noopener"
+                           style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.3rem 0.7rem;background:#0088cc;color:#fff;border-radius:5px;text-decoration:none;font-size:0.68rem;font-weight:600;">
+                           🖥 Telegram para Mac
+                        </a>
+                        <a href="https://play.google.com/store/apps/details?id=org.telegram.messenger" target="_blank" rel="noopener"
+                           style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.3rem 0.7rem;background:#01875f;color:#fff;border-radius:5px;text-decoration:none;font-size:0.68rem;font-weight:600;">
+                           🤖 Android
+                        </a>
+                        <a href="https://apps.apple.com/app/telegram-messenger/id686449807" target="_blank" rel="noopener"
+                           style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.3rem 0.7rem;background:#000;color:#fff;border-radius:5px;text-decoration:none;font-size:0.68rem;font-weight:600;">
+                           📱 iPhone
+                        </a>
+                      </div>
+                    </li>
+                    <li style="margin-top:0.5rem;"><strong>Crea tu cuenta</strong> — solo necesitas tu número de teléfono (como WhatsApp). Telegram te enviará un código por SMS para verificarlo. <em>No se requiere correo ni tarjeta.</em></li>
+                    <li style="margin-top:0.25rem;"><strong>Instala Telegram también en tu computadora</strong> — así recibirás las alertas de Compass directamente en el escritorio mientras trabajas, sin depender del celular.</li>
+                  </ol>
+                </div>
+                <div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.75rem;color:#78350f;line-height:1.6;">
+                  <div style="font-weight:800;font-family:var(--brand);letter-spacing:0.04em;margin-bottom:0.35rem;font-size:0.72rem;text-transform:uppercase;">⚠️ Instala Telegram en los dos dispositivos</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem;">
+                    <div style="background:rgba(255,255,255,0.7);border-radius:6px;padding:0.5rem 0.7rem;">
+                      <div style="font-weight:700;margin-bottom:0.2rem;">🖥 Computadora</div>
+                      <div style="font-size:0.7rem;line-height:1.5;">Las alertas de retenciones, Monitor SAT y tareas urgentes llegan mientras trabajas — sin tener que mirar el celular.</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.7);border-radius:6px;padding:0.5rem 0.7rem;">
+                      <div style="font-weight:700;margin-bottom:0.2rem;">📱 Celular</div>
+                      <div style="font-size:0.7rem;line-height:1.5;">Factura Express (foto del ticket), registro de gastos en efectivo y alertas urgentes cuando estás fuera de la oficina.</div>
+                    </div>
+                  </div>
+                  <div style="font-size:0.7rem;">Telegram sincroniza los mensajes entre todos tus dispositivos en tiempo real — igual que WhatsApp Web. Con ambos instalados tienes todas las funcionalidades de Compass disponibles en cualquier momento y lugar.</div>
+                </div>
+              </div>
+
+              <!-- Paso 1 -->
+              <div class="cfg-section">
+                <div class="cfg-section-hdr">
+                  <span>Paso 1 — Crea tu bot personal en Telegram</span>
+                  <span style="background:#e8ecf8;color:var(--navy);font-size:0.58rem;font-weight:700;padding:2px 7px;border-radius:3px;">~2 minutos</span>
+                </div>
+                <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;font-size:0.78rem;color:var(--text);line-height:1.75;margin-bottom:0.65rem;">
+                  <p style="margin:0 0 0.6rem;color:var(--text-dim);font-size:0.73rem;">Un "bot" es simplemente un contacto automático en Telegram — como un asistente privado que solo tú controlas. Lo creas una vez y Compass lo usa para enviarte mensajes.</p>
+                  <ol style="margin:0;padding-left:1.3rem;">
+                    <li>Abre Telegram y busca <strong>@BotFather</strong> en la barra de búsqueda</li>
+                    <li>Presiona <strong>Iniciar</strong> o <strong>Start</strong> si es la primera vez</li>
+                    <li>Envía el comando <code style="background:#e8ecf8;padding:1px 5px;border-radius:3px;font-size:0.75rem;">/newbot</code></li>
+                    <li>Elige un nombre para el bot (ej. <em>Compass Santaglia</em>)</li>
+                    <li>Elige un username terminado en <em>bot</em> (ej. <em>CompassSantaglia_bot</em>)</li>
+                    <li>BotFather te dará un <strong>token</strong> (una clave larga) — cópialo</li>
+                  </ol>
+                </div>
+                <div style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                  <code style="background:#e8ecf8;color:var(--navy);padding:0.4rem 0.75rem;border-radius:var(--radius);font-size:0.82rem;font-weight:700;letter-spacing:0.02em;">@BotFather</code>
+                  <button onclick="tgCopyBotfather(this)"
+                    style="padding:0.35rem 0.8rem;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:var(--brand);font-size:0.68rem;font-weight:700;cursor:pointer;">
+                    Copiar
+                  </button>
+                  <span style="font-size:0.7rem;color:var(--text-dim);">→ pégalo en la búsqueda de Telegram</span>
+                </div>
+              </div>
+
+              <!-- Paso 2 -->
+              <div class="cfg-section">
+                <div class="cfg-section-hdr">Paso 2 — Pega el token de tu bot</div>
+                <div style="display:flex;gap:0.6rem;align-items:flex-end;max-width:520px;">
+                  <div style="flex:1;">
+                    <label style="font-size:0.65rem;font-weight:700;color:var(--text-dim);display:block;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.06em;">Token del bot</label>
+                    <input type="text" id="tg-token-input" placeholder="1234567890:AAFxxxx..." autocomplete="off" spellcheck="false"
+                      style="width:100%;font-family:monospace;font-size:0.75rem;padding:0.5rem 0.7rem;border:1px solid var(--border);border-radius:var(--radius);color:var(--text);"
+                      oninput="tgValidateToken()" />
+                    <div id="tg-token-hint" style="font-size:0.62rem;color:var(--text-xs);margin-top:0.25rem;">Formato: números:letras (p. ej. 6721234567:AAGhxxx…)</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 3 -->
+              <div class="cfg-section">
+                <div class="cfg-section-hdr">Paso 3 — Conéctate a tu bot y prueba</div>
+                <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;font-size:0.78rem;color:var(--text);line-height:1.8;margin-bottom:0.85rem;">
+                  <ol style="margin:0;padding-left:1.3rem;">
+                    <li>
+                      <strong>Busca tu bot en Telegram</strong> — en la barra de búsqueda escribe el username que elegiste (ej. <em>@Santaglia_Compass_bot</em>) y ábrelo
+                      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:0.4rem 0.65rem;margin-top:0.35rem;font-size:0.72rem;color:#78350f;">
+                        💡 Es el mismo username que ingresaste al crearlo en BotFather — termina en <em>_bot</em>
+                      </div>
+                    </li>
+                    <li style="margin-top:0.5rem;">Presiona el botón <strong>Iniciar</strong> o <strong>Start</strong> que aparece en la parte inferior</li>
+                    <li style="margin-top:0.25rem;">Envía cualquier mensaje al bot — por ejemplo escribe <strong>"hola"</strong> y envíalo</li>
+                    <li style="margin-top:0.25rem;">Regresa aquí y haz clic en <strong>"Detectar mi Chat ID"</strong> — Compass lo encuentra solo</li>
+                  </ol>
+                </div>
+
+                <!-- Botón detectar Chat ID -->
+                <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-bottom:0.75rem;">
+                  <button onclick="tgDetectChatId()" id="tg-detect-btn"
+                    style="padding:0.5rem 1.1rem;background:#0088cc;color:#fff;border:none;border-radius:var(--radius);font-family:var(--brand);font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+                    🔍 Detectar mi Chat ID automáticamente
+                  </button>
+                  <span style="font-size:0.68rem;color:var(--text-dim);">— o ingrésalo manualmente:</span>
+                </div>
+
+                <div id="tg-detect-result" style="margin-bottom:0.65rem;font-size:0.75rem;display:none;padding:0.5rem 0.75rem;border-radius:var(--radius);"></div>
+
+                <div style="display:flex;gap:0.6rem;align-items:flex-end;max-width:520px;">
+                  <div style="flex:1;">
+                    <label style="font-size:0.65rem;font-weight:700;color:var(--text-dim);display:block;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.06em;">Chat ID</label>
+                    <input type="text" id="tg-chat-input" placeholder="Se detecta automáticamente o ingrésalo aquí" autocomplete="off" spellcheck="false"
+                      style="width:100%;font-family:monospace;font-size:0.75rem;padding:0.5rem 0.7rem;border:1px solid var(--border);border-radius:var(--radius);color:var(--text);" />
+                  </div>
+                  <button onclick="tgConnect()" id="tg-connect-btn"
+                    style="padding:0.5rem 1.1rem;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:var(--brand);font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap;height:36px;">
+                    Conectar →
+                  </button>
+                </div>
+                <div id="tg-connect-result" style="margin-top:0.65rem;font-size:0.75rem;display:none;padding:0.5rem 0.75rem;border-radius:var(--radius);"></div>
+              </div>
+
+            </div><!-- /#tg-setup -->
+
+            <!-- ── Estado: configurado ── -->
+            <div id="tg-configured" style="display:none;">
+
+              <!-- Badge de conexión -->
+              <div style="display:flex;align-items:center;gap:1rem;padding:0.85rem 1.1rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);margin-bottom:1.5rem;">
+                <span style="font-size:1.4rem;">✅</span>
+                <div style="flex:1;">
+                  <div style="font-family:var(--brand);font-size:0.72rem;font-weight:700;color:#065f46;">Bot conectado</div>
+                  <div id="tg-connected-token" style="font-family:monospace;font-size:0.65rem;color:#047857;margin-top:0.1rem;"></div>
+                </div>
+                <button onclick="tgSendTest()"
+                  style="padding:0.35rem 0.85rem;background:#065f46;color:#fff;border:none;border-radius:var(--radius);font-family:var(--brand);font-size:0.65rem;font-weight:700;cursor:pointer;">
+                  Enviar prueba
+                </button>
+                <button onclick="tgDisconnect()"
+                  style="padding:0.35rem 0.85rem;background:none;color:#c0392b;border:1px solid #fca5a5;border-radius:var(--radius);font-family:var(--brand);font-size:0.65rem;font-weight:700;cursor:pointer;">
+                  Desconectar
+                </button>
+              </div>
+
+              <!-- Toggles de alertas -->
+              <div class="cfg-section">
+                <div class="cfg-section-hdr">¿Qué alertas quieres recibir?</div>
+
+                <div style="display:flex;flex-direction:column;gap:0.6rem;">
+
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);background:#fafbff;">
+                    <div>
+                      <div style="font-size:0.78rem;font-weight:700;color:var(--text);">📅 Retenciones — vencimientos y anomalías</div>
+                      <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.15rem;">Aviso cuando una retención está por vencer o vencida, diferencias de pago, IVA faltante.</div>
+                    </div>
+                    <label class="toggle-sw" style="margin-left:1rem;flex-shrink:0;">
+                      <input type="checkbox" id="tg-pref-retenciones" onchange="tgSavePref('retenciones', this.checked)" />
+                      <span class="toggle-sl"></span>
+                    </label>
+                  </div>
+
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);background:#fafbff;opacity:0.55;">
+                    <div>
+                      <div style="font-size:0.78rem;font-weight:700;color:var(--text);">🛡️ Monitor SAT — Opinión de Cumplimiento</div>
+                      <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.15rem;">Alerta inmediata si tu Opinión SAT cambia a Negativo.</div>
+                    </div>
+                    <span style="font-size:0.62rem;background:#fff3cd;color:#856404;border-radius:3px;padding:2px 7px;font-weight:700;white-space:nowrap;margin-left:1rem;">Próximamente</span>
+                  </div>
+
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);background:#fafbff;opacity:0.55;">
+                    <div>
+                      <div style="font-size:0.78rem;font-weight:700;color:var(--text);">📄 CFDIs pendientes de recibir</div>
+                      <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.15rem;">Aviso cuando un movimiento tiene más de X días sin CFDI vinculado.</div>
+                    </div>
+                    <span style="font-size:0.62rem;background:#fff3cd;color:#856404;border-radius:3px;padding:2px 7px;font-weight:700;white-space:nowrap;margin-left:1rem;">Próximamente</span>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Receptor secundario (contador / auxiliar) -->
+              <div class="cfg-section" style="margin-top:1.5rem;">
+                <div class="cfg-section-hdr">
+                  Receptor secundario — Contador / Despacho
+                  <span style="font-size:0.6rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-xs);">opcional</span>
+                </div>
+                <div style="background:#f0f3fa;border:1px solid #c7d2e8;border-radius:var(--radius);padding:0.8rem 1rem;margin-bottom:1rem;font-size:0.72rem;color:#3a4a72;line-height:1.6;">
+                  🤝 Las alertas se enviarán <strong>simultáneamente</strong> a ti y a tu contador. El contador recibe un mensaje diferente — orientado a que envíe las líneas de captura. Deja este campo vacío si no lo necesitas.
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem 1rem;margin-bottom:0.75rem;">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Nombre de tu empresa / cliente</label>
+                    <input class="form-input" id="tg-client-name" type="text"
+                      placeholder="Empresa XYZ S.A. de C.V."
+                      oninput="tgSaveSecondary()"
+                      style="font-size:0.78rem;" />
+                    <div style="font-size:0.63rem;color:var(--text-xs);margin-top:0.2rem;">Aparece en el mensaje que recibe el contador para identificarte</div>
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Nombre del contador / receptor</label>
+                    <input class="form-input" id="tg-chat2-label" type="text"
+                      placeholder="C.P. García"
+                      oninput="tgSaveSecondary()"
+                      style="font-size:0.78rem;" />
+                    <div style="font-size:0.63rem;color:var(--text-xs);margin-top:0.2rem;">Solo para referencia interna</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:0.75rem;align-items:flex-end;">
+                  <div class="form-group" style="flex:1;margin:0;">
+                    <label class="form-label">Chat ID del contador</label>
+                    <input class="form-input" id="tg-chat2-input" type="text"
+                      placeholder="El contador debe enviar /start a tu bot para obtener su Chat ID"
+                      autocomplete="off" spellcheck="false"
+                      oninput="tgSaveSecondary()"
+                      style="font-family:monospace;font-size:0.75rem;" />
+                  </div>
+                  <button onclick="tgTestSecondary()" id="tg-test2-btn"
+                    style="padding:0.5rem 0.9rem;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:var(--brand);font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap;height:36px;flex-shrink:0;">
+                    Probar envío →
+                  </button>
+                </div>
+                <div id="tg-test2-result" style="margin-top:0.55rem;font-size:0.72rem;display:none;padding:0.45rem 0.75rem;border-radius:var(--radius);"></div>
+                <div style="margin-top:0.65rem;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:0.65rem 0.9rem;font-size:0.68rem;color:#78450e;line-height:1.6;">
+                  💡 <strong>¿Cómo obtiene su Chat ID el contador?</strong><br>
+                  1. El contador abre Telegram y busca tu bot (o le envías el enlace)<br>
+                  2. Presiona <strong>Start</strong> o envía <code>/start</code><br>
+                  3. Visita: <code>https://api.telegram.org/bot<em>TOKEN</em>/getUpdates</code> y copia el campo <code>from.id</code> del mensaje del contador
+                </div>
+              </div>
+
+              <!-- Botón enviar prueba + feedback -->
+              <div id="tg-test-result" style="margin-top:0.75rem;font-size:0.75rem;display:none;padding:0.5rem 0.75rem;border-radius:var(--radius);"></div>
+
+            </div><!-- /#tg-configured -->
+
+          </div><!-- /#panel-notificaciones -->
 
         </div><!-- /cfg-panels -->
       </div><!-- /cfg-wrap -->
@@ -1047,6 +1378,14 @@
           <input class="form-input" id="cfg-colab-direccion" type="text" placeholder="Calle 123, Col. Centro, CDMX 06000" />
         </div>
         <div class="form-group">
+          <label class="form-label">Fecha de ingreso</label>
+          <input class="form-input" id="cfg-colab-fechaIngreso" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de separación</label>
+          <input class="form-input" id="cfg-colab-fechaSeparacion" type="date" title="Dejar en blanco si sigue activo" />
+        </div>
+        <div class="form-group">
           <label class="form-label">Tipo de colaborador</label>
           <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.25rem;">
             <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.72rem;color:var(--text-dim);">
@@ -1065,9 +1404,10 @@
         </div>
         <div class="form-group">
           <label class="form-label">Estado</label>
-          <select class="form-input" id="cfg-colab-activo">
-            <option value="1">Activo</option>
-            <option value="0">Inactivo</option>
+          <select class="form-input" id="cfg-colab-estado">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="pausado">Pausado — freelancer / por proyecto</option>
           </select>
         </div>
       </div>
@@ -1150,12 +1490,8 @@ function showTab(key) {
   history.replaceState(null, '', `#${key}`);
 }
 
-// Navegar directamente a una pestaña vía hash (ej: configuracion.html#datos)
-(function() {
-  const hash = location.hash.replace('#','');
-  const valid = ['empresa','apariencia','modulos','colaboradores','catalogos','plantillas','cuentas','datos'];
-  if (hash && valid.includes(hash)) showTab(hash);
-})();
+// Navegación por hash — se ejecuta desde el bloque INIT (al final del script)
+// para garantizar que todas las constantes estén inicializadas antes de llamar showTab/renderColabCfg.
 
 /* ══════════════════════════════════════════════════════════════
    PANEL: EMPRESA
@@ -1380,11 +1716,11 @@ function activarTodosModulos() {
 const KEY_COLAB_CFG = 'stgl_colaboradores';
 
 const COLABORADORES_SEMILLA = [
-  { id:'col-lourdes',        rfc:'',              nombre:'LOURDES URIBE',                             nombreCorto:'Lourdes',   alias:'lourdes', tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
-  { id:'col-MEMA730801AK7',  rfc:'MEMA730801AK7', nombre:'ANA MARIA MENDIOLA MARTINEZ',              nombreCorto:'Ana Ma.',   alias:'anama',   tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
-  { id:'col-SAMC040713HI8',  rfc:'SAMC040713HI8', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE MENDIOLA', nombreCorto:'CESTM',     alias:'cestm',   tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
-  { id:'col-SARC690526MW7',  rfc:'SARC690526MW7', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE RUIZ',    nombreCorto:'CESTR',     alias:'cestr',   tipoColaborador:['asimilables'],             telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
-  { id:'col-jfabela',        rfc:'',              nombre:'J. FABELA',                                 nombreCorto:'J. Fabela', alias:'jfabela', tipoColaborador:['honorarios'],              telefono:'', direccion:'', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-lourdes',        rfc:'',              nombre:'LOURDES URIBE',                             nombreCorto:'Lourdes',   alias:'lourdes', tipoColaborador:['asimilables'], telefono:'', direccion:'', fechaIngreso:'', fechaSeparacion:'', estado:'activo', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-MEMA730801AK7',  rfc:'MEMA730801AK7', nombre:'ANA MARIA MENDIOLA MARTINEZ',              nombreCorto:'Ana Ma.',   alias:'anama',   tipoColaborador:['asimilables'], telefono:'', direccion:'', fechaIngreso:'', fechaSeparacion:'', estado:'activo', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-SAMC040713HI8',  rfc:'SAMC040713HI8', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE MENDIOLA', nombreCorto:'CESTM',     alias:'cestm',   tipoColaborador:['asimilables'], telefono:'', direccion:'', fechaIngreso:'', fechaSeparacion:'', estado:'activo', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-SARC690526MW7',  rfc:'SARC690526MW7', nombre:'CARLOS EDUARDO SANCHEZ DE TAGLE RUIZ',    nombreCorto:'CESTR',     alias:'cestr',   tipoColaborador:['asimilables'], telefono:'', direccion:'', fechaIngreso:'', fechaSeparacion:'', estado:'activo', activo:true,  creado: new Date(0).toISOString() },
+  { id:'col-jfabela',        rfc:'',              nombre:'J. FABELA',                                 nombreCorto:'J. Fabela', alias:'jfabela', tipoColaborador:['asimilables'], telefono:'', direccion:'', fechaIngreso:'', fechaSeparacion:'', estado:'activo', activo:true,  creado: new Date(0).toISOString() },
 ];
 
 const TIPO_LABELS = { sueldos:'Sueldos', asimilables:'Asimilables', honorarios:'Honorarios' };
@@ -1393,7 +1729,26 @@ const TIPO_CLS    = { sueldos:'tipo-suel', asimilables:'tipo-asim', honorarios:'
 function loadColabCfg() {
   try {
     const stored = JSON.parse(localStorage.getItem(KEY_COLAB_CFG) || 'null');
-    if (stored && Array.isArray(stored) && stored.length) return stored;
+    if (stored && Array.isArray(stored) && stored.length) {
+      // Migración silenciosa: añadir campos nuevos a registros que no los tienen
+      let migrated = false;
+      stored.forEach(c => {
+        if (c.estado === undefined) {
+          c.estado = c.activo === false ? 'inactivo' : 'activo';
+          migrated = true;
+        }
+        if (c.fechaIngreso === undefined)    { c.fechaIngreso    = ''; migrated = true; }
+        if (c.fechaSeparacion === undefined) { c.fechaSeparacion = ''; migrated = true; }
+        // Corrección: J. Fabela fue sembrado con tipo honorarios por error — debe ser asimilables
+        if (c.id === 'col-jfabela' && Array.isArray(c.tipoColaborador) &&
+            c.tipoColaborador.length === 1 && c.tipoColaborador[0] === 'honorarios') {
+          c.tipoColaborador = ['asimilables'];
+          migrated = true;
+        }
+      });
+      if (migrated) localStorage.setItem(KEY_COLAB_CFG, JSON.stringify(stored));
+      return stored;
+    }
     localStorage.setItem(KEY_COLAB_CFG, JSON.stringify(COLABORADORES_SEMILLA));
     return JSON.parse(JSON.stringify(COLABORADORES_SEMILLA));
   } catch { return JSON.parse(JSON.stringify(COLABORADORES_SEMILLA)); }
@@ -1416,6 +1771,10 @@ function renderColabCfg() {
     const tipoChips = tipos.length
       ? tipos.map(t => `<span class="tipo-chip ${TIPO_CLS[t]||''}">${TIPO_LABELS[t]||t}</span>`).join('')
       : `<span style="color:var(--text-xs);font-size:0.65rem;">—</span>`;
+    const estado = c.estado || (c.activo === false ? 'inactivo' : 'activo');
+    const estadoColor = { activo:'var(--green)', inactivo:'var(--text-xs)', pausado:'#c8801b' }[estado] || 'var(--text-xs)';
+    const estadoLabel = { activo:'Activo', inactivo:'Inactivo', pausado:'Pausado' }[estado] || estado;
+    const fiColor = c.fechaIngreso ? 'var(--text-dim)' : 'var(--text-xs)';
     return `<tr>
       <td style="font-family:var(--brand);font-weight:700;color:var(--navy);">${i+1}</td>
       <td><code style="background:#f0f2f8;padding:0.12rem 0.32rem;border-radius:3px;font-size:0.7rem;">${escH(c.alias||'')}</code></td>
@@ -1423,25 +1782,27 @@ function renderColabCfg() {
       <td style="color:var(--text-dim);font-size:0.7rem;">${escH(c.nombre||'—')}</td>
       <td><code style="font-size:0.68rem;">${escH(c.rfc||'—')}</code></td>
       <td>${tipoChips}</td>
-      <td style="color:var(--text-dim);">${escH(c.telefono||'—')}</td>
-      <td style="text-align:center;"><span style="color:${c.activo?'var(--green)':'var(--text-xs)'};">${c.activo?'✓':'—'}</span></td>
+      <td style="font-size:0.69rem;color:${fiColor};">${escH(c.fechaIngreso||'—')}</td>
+      <td style="text-align:center;font-size:0.69rem;font-weight:600;color:${estadoColor};">${estadoLabel}</td>
       <td style="white-space:nowrap;">
-        <button class="tmpl-act-btn" onclick="editarColabCfg(${JSON.stringify(c.id)})">✏</button>
-        <button class="tmpl-act-btn" onclick="eliminarColabCfg(${JSON.stringify(c.id)})" title="Eliminar" style="color:#e88;">✕</button>
+        <button class="tmpl-act-btn" data-id="${escH(c.id)}" onclick="editarColabCfg(this.dataset.id)" title="Editar">✏</button>
+        <button class="tmpl-act-btn" data-id="${escH(c.id)}" onclick="eliminarColabCfg(this.dataset.id)" title="Eliminar" style="color:#e88;">✕</button>
       </td>
     </tr>`;
   }).join('');
 }
 
 function abrirAltaColab(rfcPre, nombrePre) {
-  document.getElementById('cfg-colab-id').value           = '';
-  document.getElementById('cfg-colab-rfc').value          = rfcPre || '';
-  document.getElementById('cfg-colab-alias').value        = '';
-  document.getElementById('cfg-colab-nombre').value       = nombrePre || '';
-  document.getElementById('cfg-colab-nombreCorto').value  = '';
-  document.getElementById('cfg-colab-telefono').value     = '';
-  document.getElementById('cfg-colab-direccion').value    = '';
-  document.getElementById('cfg-colab-activo').value       = '1';
+  document.getElementById('cfg-colab-id').value              = '';
+  document.getElementById('cfg-colab-rfc').value             = rfcPre || '';
+  document.getElementById('cfg-colab-alias').value           = '';
+  document.getElementById('cfg-colab-nombre').value          = nombrePre || '';
+  document.getElementById('cfg-colab-nombreCorto').value     = '';
+  document.getElementById('cfg-colab-telefono').value        = '';
+  document.getElementById('cfg-colab-direccion').value       = '';
+  document.getElementById('cfg-colab-fechaIngreso').value    = '';
+  document.getElementById('cfg-colab-fechaSeparacion').value = '';
+  document.getElementById('cfg-colab-estado').value          = 'activo';
   ['sueldos','asimilables','honorarios'].forEach(t =>
     document.getElementById(`cfg-colab-tipo-${t}`).checked = false);
   document.getElementById('cfg-colab-modal-titulo').textContent = 'Nuevo colaborador';
@@ -1456,9 +1817,13 @@ function editarColabCfg(id) {
   document.getElementById('cfg-colab-alias').value        = c.alias || '';
   document.getElementById('cfg-colab-nombre').value       = c.nombre || '';
   document.getElementById('cfg-colab-nombreCorto').value  = c.nombreCorto || '';
-  document.getElementById('cfg-colab-telefono').value     = c.telefono || '';
-  document.getElementById('cfg-colab-direccion').value    = c.direccion || '';
-  document.getElementById('cfg-colab-activo').value       = c.activo ? '1' : '0';
+  document.getElementById('cfg-colab-telefono').value        = c.telefono || '';
+  document.getElementById('cfg-colab-direccion').value       = c.direccion || '';
+  document.getElementById('cfg-colab-fechaIngreso').value    = c.fechaIngreso || '';
+  document.getElementById('cfg-colab-fechaSeparacion').value = c.fechaSeparacion || '';
+  // Compatibilidad: usar estado si existe; si no, derivar de activo boolean
+  const estadoVal = c.estado || (c.activo === false ? 'inactivo' : 'activo');
+  document.getElementById('cfg-colab-estado').value          = estadoVal;
   const tipos = c.tipoColaborador || [];
   ['sueldos','asimilables','honorarios'].forEach(t =>
     document.getElementById(`cfg-colab-tipo-${t}`).checked = tipos.includes(t));
@@ -1467,37 +1832,90 @@ function editarColabCfg(id) {
 }
 
 function guardarColabCfg() {
-  const id          = document.getElementById('cfg-colab-id').value;
-  const rfc         = document.getElementById('cfg-colab-rfc').value.trim().toUpperCase();
-  const alias       = document.getElementById('cfg-colab-alias').value.trim().toLowerCase();
-  const nombre      = document.getElementById('cfg-colab-nombre').value.trim();
-  const nombreCorto = document.getElementById('cfg-colab-nombreCorto').value.trim() || alias;
-  const telefono    = document.getElementById('cfg-colab-telefono').value.trim();
-  const direccion   = document.getElementById('cfg-colab-direccion').value.trim();
-  const activo      = document.getElementById('cfg-colab-activo').value === '1';
-  const tipoColaborador = ['sueldos','asimilables','honorarios']
-    .filter(t => document.getElementById(`cfg-colab-tipo-${t}`).checked);
+  try {
+    const id              = document.getElementById('cfg-colab-id').value;
+    const rfc             = document.getElementById('cfg-colab-rfc').value.trim().toUpperCase();
+    const alias           = document.getElementById('cfg-colab-alias').value.trim().toLowerCase();
+    const nombre          = document.getElementById('cfg-colab-nombre').value.trim();
+    const nombreCorto     = document.getElementById('cfg-colab-nombreCorto').value.trim() || alias;
+    const telefono        = document.getElementById('cfg-colab-telefono').value.trim();
+    const direccion       = document.getElementById('cfg-colab-direccion').value.trim();
+    const fechaIngreso    = (document.getElementById('cfg-colab-fechaIngreso')   || {}).value || '';
+    const fechaSeparacion = (document.getElementById('cfg-colab-fechaSeparacion')|| {}).value || '';
+    const estadoEl        = document.getElementById('cfg-colab-estado');
+    const estado          = estadoEl ? (estadoEl.value || 'activo') : 'activo';
+    const activo          = estado === 'activo';
+    const tipoColaborador = ['sueldos','asimilables','honorarios']
+      .filter(t => { const el = document.getElementById(`cfg-colab-tipo-${t}`); return el && el.checked; });
 
-  if (!alias || !nombre) { toast('Alias y nombre son obligatorios', 'error'); return; }
+    if (!alias)  { toast('El alias (clave única) es obligatorio', 'error'); return; }
+    if (!nombre) { toast('El nombre completo es obligatorio', 'error'); return; }
 
-  const colabs = loadColabCfg();
-  const dupAlias = colabs.find(c => c.alias === alias && c.id !== id);
-  if (dupAlias) { toast(`El alias "${alias}" ya existe`, 'error'); return; }
+    const colabs = loadColabCfg();
 
-  if (id) {
-    const idx = colabs.findIndex(c => c.id === id);
-    if (idx >= 0) colabs[idx] = { ...colabs[idx], rfc, alias, nombre, nombreCorto, telefono, direccion, activo, tipoColaborador };
-  } else {
+    // ── Caso 1: Edición de registro existente (id está presente)
+    if (id) {
+      const idx = colabs.findIndex(c => c.id === id);
+      // Verificar alias duplicado contra otros registros
+      const dupAlias = colabs.find(c => c.alias === alias && c.id !== id);
+      if (dupAlias) { toast(`El alias "${alias}" ya está en uso por "${dupAlias.nombre || dupAlias.alias}"`, 'error'); return; }
+      if (idx >= 0) {
+        colabs[idx] = { ...colabs[idx], rfc, alias, nombre, nombreCorto, telefono,
+                        direccion, fechaIngreso, fechaSeparacion, estado, activo, tipoColaborador };
+      } else {
+        toast('No se encontró el registro a editar — recarga la página', 'error'); return;
+      }
+      saveColabCfg(colabs);
+      closeModal('modal-colab-cfg');
+      toast('Colaborador actualizado ✓', 'success');
+      renderColabCfg();
+      return;
+    }
+
+    // ── Caso 2: Registro nuevo — verificar RFC duplicado primero
+    if (rfc) {
+      const dupRfc = colabs.find(c => c.rfc === rfc);
+      if (dupRfc) {
+        // Mismo RFC → actualizar el registro existente con los datos nuevos (incluyendo teléfono, dirección, fechas)
+        const idx = colabs.findIndex(c => c.id === dupRfc.id);
+        if (idx >= 0) {
+          colabs[idx] = { ...colabs[idx], rfc, nombre, nombreCorto, telefono, direccion,
+                          fechaIngreso, fechaSeparacion, estado, activo, tipoColaborador };
+          // Solo actualizar alias si el nuevo alias no está en uso por otro registro
+          const aliasEnUso = colabs.find((c, i) => c.alias === alias && i !== idx);
+          if (!aliasEnUso) colabs[idx].alias = alias;
+        }
+        saveColabCfg(colabs);
+        closeModal('modal-colab-cfg');
+        toast(`Colaborador existente actualizado (RFC ya registrado como "${dupRfc.alias}") ✓`, 'success');
+        renderColabCfg();
+        return;
+      }
+    }
+
+    // ── Caso 3: RFC nuevo (o sin RFC) — verificar alias duplicado
+    const dupAlias = colabs.find(c => c.alias === alias);
+    if (dupAlias) {
+      toast(`El alias "${alias}" ya está en uso por "${dupAlias.nombre || dupAlias.alias}" — elige un alias diferente`, 'error');
+      return;
+    }
+
+    // ── Crear registro completamente nuevo
+    const nuevoId = 'col-' + (rfc ? rfc : alias + '-' + Date.now());
     colabs.push({
-      id: 'col-' + (rfc || alias + Date.now()),
-      rfc, alias, nombre, nombreCorto, telefono, direccion,
-      tipoColaborador, activo, creado: new Date().toISOString(),
+      id: nuevoId, rfc, alias, nombre, nombreCorto, telefono, direccion,
+      fechaIngreso, fechaSeparacion, estado, activo,
+      tipoColaborador, creado: new Date().toISOString(),
     });
+    saveColabCfg(colabs);
+    closeModal('modal-colab-cfg');
+    toast('Colaborador guardado ✓', 'success');
+    renderColabCfg();
+
+  } catch(e) {
+    console.error('[guardarColabCfg] Error:', e);
+    toast('Error al guardar: ' + (e.message || e), 'error');
   }
-  saveColabCfg(colabs);
-  closeModal('modal-colab-cfg');
-  toast('Colaborador guardado', 'success');
-  renderColabCfg();
 }
 
 function eliminarColabCfg(id) {
@@ -1508,13 +1926,15 @@ function eliminarColabCfg(id) {
 }
 
 function descargarPlantillaColab() {
-  const header = 'RFC,Alias,Nombre Completo,Nombre Corto,Tipo (sueldos/asimilables/honorarios),Teléfono,Dirección,Activo';
-  const rows = loadColabCfg().map(c =>
-    [c.rfc||'', c.alias||'', c.nombre||'', c.nombreCorto||'',
-     (c.tipoColaborador||[]).join('+'), c.telefono||'', c.direccion||'', c.activo?'SI':'NO']
+  const header = 'RFC,Alias,Nombre Completo,Nombre Corto,Tipo (sueldos/asimilables/honorarios),Teléfono,Dirección,Fecha Ingreso,Fecha Separación,Estado';
+  const rows = loadColabCfg().map(c => {
+    const estado = c.estado || (c.activo === false ? 'inactivo' : 'activo');
+    return [c.rfc||'', c.alias||'', c.nombre||'', c.nombreCorto||'',
+      (c.tipoColaborador||[]).join('+'), c.telefono||'', c.direccion||'',
+      c.fechaIngreso||'', c.fechaSeparacion||'', estado]
     .map(v => `"${String(v).replace(/"/g,'""')}"`)
-    .join(',')
-  );
+    .join(',');
+  });
   const csv  = [header, ...rows].join('\n');
   const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
@@ -1552,17 +1972,22 @@ function importarColabCSV(file) {
       const nombreCorto = getCol(row,'nombre corto') || getCol(row,'corto') || alias;
       const tipoRaw     = getCol(row,'tipo');
       const tipoColaborador = tipoRaw ? tipoRaw.split(/[+,|]/).map(t=>t.trim().toLowerCase()).filter(t=>['sueldos','asimilables','honorarios'].includes(t)) : [];
-      const telefono    = getCol(row,'tel');
-      const direccion   = getCol(row,'direc');
-      const activoStr   = getCol(row,'activo').toUpperCase();
-      const activo      = activoStr !== 'NO' && activoStr !== '0' && activoStr !== 'FALSE';
+      const telefono        = getCol(row,'tel');
+      const direccion       = getCol(row,'direc');
+      const fechaIngreso    = getCol(row,'ingreso');
+      const fechaSeparacion = getCol(row,'separaci');
+      const estadoRaw       = getCol(row,'estado').toLowerCase() || getCol(row,'activo').toUpperCase();
+      let estado = 'activo';
+      if (['inactivo','no','0','false'].includes(estadoRaw)) estado = 'inactivo';
+      else if (estadoRaw === 'pausado') estado = 'pausado';
+      const activo = estado === 'activo';
       if (!alias || !nombre) continue;
       const existing = colabs.find(c => c.alias === alias || (rfc && c.rfc === rfc));
       if (existing) {
-        Object.assign(existing, { rfc, alias, nombre, nombreCorto, tipoColaborador, telefono, direccion, activo });
+        Object.assign(existing, { rfc, alias, nombre, nombreCorto, tipoColaborador, telefono, direccion, fechaIngreso, fechaSeparacion, estado, activo });
         updated++;
       } else {
-        colabs.push({ id:'col-'+(rfc||alias+Date.now()), rfc, alias, nombre, nombreCorto, tipoColaborador, telefono, direccion, activo, creado: new Date().toISOString() });
+        colabs.push({ id:'col-'+(rfc||alias+Date.now()), rfc, alias, nombre, nombreCorto, tipoColaborador, telefono, direccion, fechaIngreso, fechaSeparacion, estado, activo, creado: new Date().toISOString() });
         added++;
       }
     }
@@ -2201,6 +2626,7 @@ function renderCuentasPanel() {
   const todas   = saldos.map(s => s.cuenta);
 
   document.getElementById('cfg-reserva-nomina').value = cfg.reservaNomina ?? 0;
+  renderCuentaSATSelect();
 
   // ── Tabla de cuentas ──────────────────────────────────────────
   const tbody = document.getElementById('cuentas-tbody');
@@ -2332,6 +2758,32 @@ function saveCuentasCfg() {
 
   localStorage.setItem('stgl_config', JSON.stringify(cfg));
   toast('Configuración de cuentas guardada', 'success');
+}
+
+function renderCuentaSATSelect() {
+  const sel = document.getElementById('cfg-cuenta-sat');
+  if (!sel) return;
+  const saldos = loadRegistry('stgl_saldos').filter(s => !s.cancelada && (s.moneda === 'MXN' || !s.moneda));
+  const cfg = loadCfg();
+  const savedVal = cfg.cuentaSAT || '';
+  sel.innerHTML = '<option value="">— Seleccionar cuenta —</option>';
+  saldos.forEach(s => {
+    const ccfg  = (cfg.cuentasConfig || {})[s.cuenta] || {};
+    const alias = ccfg.alias || s.cuenta;
+    const opt   = document.createElement('option');
+    opt.value   = s.cuenta;
+    opt.textContent = alias !== s.cuenta ? `${alias} — ${s.cuenta}` : s.cuenta;
+    if (s.cuenta === savedVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function guardarCuentaSAT() {
+  const val = document.getElementById('cfg-cuenta-sat')?.value || '';
+  const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+  cfg.cuentaSAT = val;
+  localStorage.setItem('stgl_config', JSON.stringify(cfg));
+  toast('Cuenta SAT guardada', 'success');
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2721,6 +3173,276 @@ renderPlantillas();
 applyGlobalConfig();
 // Seed collaborators if not yet initialized
 loadColabCfg();
+// Navegar directamente a una pestaña vía hash (ej: configuracion.html#colaboradores)
+// Se ejecuta aquí — DESPUÉS de inicializar todas las constantes — para evitar TDZ en COLABORADORES_SEMILLA.
+(function() {
+  const hash = location.hash.replace('#','');
+  const valid = ['empresa','apariencia','modulos','colaboradores','catalogos','plantillas','cuentas','datos'];
+  if (hash && valid.includes(hash)) showTab(hash);
+})();
+// Telegram panel
+tgInitPanel();
+</script>
+<script src="js/telegram.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   Telegram Bot — lógica del panel de configuración
+   ══════════════════════════════════════════════════════════════ */
+
+function tgInitPanel() {
+  if (tg_isConfigured()) {
+    tgShowConfigured();
+  } else {
+    document.getElementById('tg-setup').style.display      = '';
+    document.getElementById('tg-configured').style.display = 'none';
+  }
+}
+
+function tgValidateToken() {
+  const val = document.getElementById('tg-token-input').value.trim();
+  const hint = document.getElementById('tg-token-hint');
+  const url  = document.getElementById('tg-getme-url');
+  // Telegram token format: digits:alphanum (>20 chars)
+  const ok = /^\d{8,12}:[A-Za-z0-9_-]{35,}$/.test(val);
+  hint.textContent = ok
+    ? '✅ Formato válido'
+    : 'Formato: números:letras (p. ej. 6721234567:AAGhxxx…)';
+  hint.style.color = ok ? '#065f46' : '';
+  if (url && val.length > 15) {
+    url.innerHTML = `<a href="https://api.telegram.org/bot${val}/getUpdates" target="_blank"
+      style="color:var(--navy);font-family:monospace;font-size:0.72rem;word-break:break-all;">
+      https://api.telegram.org/bot${val}/getUpdates</a>`;
+  }
+}
+
+async function tgConnect() {
+  const token  = document.getElementById('tg-token-input').value.trim();
+  const chatId = document.getElementById('tg-chat-input').value.trim();
+  const result = document.getElementById('tg-connect-result');
+  const btn    = document.getElementById('tg-connect-btn');
+
+  if (!token || !chatId) {
+    result.style.display     = '';
+    result.style.background  = '#fef2f2';
+    result.style.border      = '1px solid #fca5a5';
+    result.style.color       = '#c0392b';
+    result.textContent       = 'Completa el token y el Chat ID antes de conectar.';
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Conectando…';
+  result.style.display = 'none';
+
+  // Guardar temporalmente para que tg_send() funcione
+  tg_saveConfig(token, chatId);
+
+  const res = await tg_test();
+  btn.disabled    = false;
+  btn.textContent = 'Probar conexión →';
+  result.style.display = '';
+
+  if (res && res.ok) {
+    result.style.background = '#f0fdf4';
+    result.style.border     = '1px solid #bbf7d0';
+    result.style.color      = '#065f46';
+    result.textContent      = '✅ ¡Conexión exitosa! Revisa Telegram — ya llegó el mensaje de bienvenida.';
+    setTimeout(tgShowConfigured, 1200);
+  } else {
+    // Limpiar si falló
+    localStorage.removeItem('stgl_tg_token');
+    localStorage.removeItem('stgl_tg_chat_id');
+    const err = res?.description || res?.error || 'Error desconocido';
+    result.style.background = '#fef2f2';
+    result.style.border     = '1px solid #fca5a5';
+    result.style.color      = '#c0392b';
+    result.textContent      = `❌ No se pudo conectar: ${err}. Verifica el token y el Chat ID.`;
+  }
+}
+
+function tgShowConfigured() {
+  document.getElementById('tg-setup').style.display      = 'none';
+  document.getElementById('tg-configured').style.display = '';
+  // Mostrar token enmascarado
+  const token = localStorage.getItem('stgl_tg_token') || '';
+  const masked = token.length > 10
+    ? token.slice(0, 10) + '…' + token.slice(-5)
+    : token;
+  document.getElementById('tg-connected-token').textContent = `Token: ${masked}`;
+  // Cargar prefs en toggles
+  const cfg = tg_getConfig();
+  const chk = document.getElementById('tg-pref-retenciones');
+  if (chk) chk.checked = cfg.prefs.retenciones;
+  // Pre-llenar campos de receptor secundario
+  const n = document.getElementById('tg-client-name');
+  const l = document.getElementById('tg-chat2-label');
+  const c = document.getElementById('tg-chat2-input');
+  if (n) n.value = cfg.clientName  || '';
+  if (l) l.value = cfg.chat2Label  || '';
+  if (c) c.value = cfg.chatId2     || '';
+}
+
+function tgSaveSecondary() {
+  const chatId2    = document.getElementById('tg-chat2-input')?.value.trim() || '';
+  const clientName = document.getElementById('tg-client-name')?.value.trim() || '';
+  const chat2Label = document.getElementById('tg-chat2-label')?.value.trim() || '';
+  const { token, chatId } = tg_getConfig();
+  tg_saveConfig(token, chatId, chatId2, clientName, chat2Label);
+}
+
+async function tgTestSecondary() {
+  const chatId2 = document.getElementById('tg-chat2-input')?.value.trim();
+  const result  = document.getElementById('tg-test2-result');
+  const btn     = document.getElementById('tg-test2-btn');
+  if (!chatId2) {
+    result.style.display = '';
+    result.style.background = '#fef2f2'; result.style.border = '1px solid #fca5a5'; result.style.color = '#c0392b';
+    result.textContent = 'Ingresa el Chat ID del contador antes de probar.';
+    return;
+  }
+  tgSaveSecondary();
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  result.style.display = 'none';
+  const fecha = new Date().toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' });
+  const cfg = tg_getConfig();
+  const res = await tg_sendTo(chatId2,
+    `📋 <b>Notificaciones Compass activadas</b>\n\n` +
+    `Recibirás alertas de cumplimiento SAT` +
+    (cfg.clientName ? ` de <b>${cfg.clientName}</b>` : '') + `.\n` +
+    `Las notificaciones llegarán cuando haya retenciones próximas a vencer o vencidas.\n\n` +
+    `<i>Compass · ${fecha}</i>`
+  );
+  btn.disabled = false; btn.textContent = 'Probar envío →';
+  result.style.display = '';
+  if (res && res.ok) {
+    result.style.background = '#f0fdf4'; result.style.border = '1px solid #bbf7d0'; result.style.color = '#065f46';
+    result.textContent = '✅ Mensaje enviado al contador — pídele que confirme que lo recibió.';
+  } else {
+    result.style.background = '#fef2f2'; result.style.border = '1px solid #fca5a5'; result.style.color = '#c0392b';
+    result.textContent = `❌ Error: ${res?.description || res?.error || 'Chat ID incorrecto o el contador no ha iniciado el bot'}`;
+  }
+  setTimeout(() => { result.style.display = 'none'; }, 5000);
+}
+
+function tgDisconnect() {
+  if (!confirm('¿Desconectar el bot? Dejarás de recibir alertas en Telegram.')) return;
+  localStorage.removeItem('stgl_tg_token');
+  localStorage.removeItem('stgl_tg_chat_id');
+  document.getElementById('tg-setup').style.display      = '';
+  document.getElementById('tg-configured').style.display = 'none';
+  document.getElementById('tg-token-input').value = '';
+  document.getElementById('tg-chat-input').value  = '';
+}
+
+async function tgSendTest() {
+  const result = document.getElementById('tg-test-result');
+  result.style.display    = '';
+  result.style.background = '#f8f9fc';
+  result.style.border     = '1px solid var(--border)';
+  result.style.color      = 'var(--text-dim)';
+  result.textContent      = 'Enviando…';
+  const res = await tg_test();
+  if (res && res.ok) {
+    result.style.background = '#f0fdf4';
+    result.style.border     = '1px solid #bbf7d0';
+    result.style.color      = '#065f46';
+    result.textContent      = '✅ Mensaje enviado — revisa Telegram.';
+  } else {
+    result.style.background = '#fef2f2';
+    result.style.border     = '1px solid #fca5a5';
+    result.style.color      = '#c0392b';
+    result.textContent      = `❌ Error: ${res?.description || res?.error || 'desconocido'}`;
+  }
+  setTimeout(() => { result.style.display = 'none'; }, 4000);
+}
+
+function tgSavePref(key, value) {
+  const prefs = tg_getConfig().prefs;
+  prefs[key] = value;
+  tg_savePrefs(prefs);
+}
+
+function tgCopyBotfather(btn) {
+  navigator.clipboard.writeText('@BotFather').then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+async function tgDetectChatId() {
+  const token  = document.getElementById('tg-token-input').value.trim();
+  const btn    = document.getElementById('tg-detect-btn');
+  const result = document.getElementById('tg-detect-result');
+
+  if (!token || token.length < 20) {
+    result.style.display    = '';
+    result.style.background = '#fef2f2';
+    result.style.border     = '1px solid #fca5a5';
+    result.style.color      = '#c0392b';
+    result.textContent      = '⚠️ Primero pega el token de tu bot en el Paso 2.';
+    return;
+  }
+
+  btn.textContent = '⏳ Buscando…';
+  btn.disabled    = true;
+  result.style.display = 'none';
+
+  try {
+    // Intentar dos veces: sin offset (pendientes) y con offset=-1 (el más reciente de todos)
+    let chatId = null;
+
+    for (const url of [
+      `https://api.telegram.org/bot${token}/getUpdates?limit=100`,
+      `https://api.telegram.org/bot${token}/getUpdates?limit=1&offset=-1`
+    ]) {
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.description || 'Token inválido');
+      const update = (data.result || []).reverse().find(
+        u => u.message?.from?.id || u.my_chat_member?.from?.id
+      );
+      if (update) {
+        chatId = String(update.message?.from?.id || update.my_chat_member?.from?.id);
+        break;
+      }
+    }
+
+    if (!chatId) {
+      result.style.display    = '';
+      result.style.background = '#fffbeb';
+      result.style.border     = '1px solid #fde68a';
+      result.style.color      = '#78350f';
+      result.innerHTML = `
+        <strong>Aún no hay mensajes registrados.</strong> Sigue estos pasos:<br>
+        <ol style="margin:0.4rem 0 0;padding-left:1.3rem;line-height:1.8;">
+          <li>Abre Telegram en tu celular o computadora</li>
+          <li>En el buscador escribe el username de tu bot (ej. <em>@Santaglia_Compass_bot</em>)</li>
+          <li>Abre el chat y presiona <strong>Iniciar</strong> si aparece ese botón</li>
+          <li>Escribe <strong>"hola"</strong> y envíalo</li>
+          <li>Regresa aquí y haz clic en <strong>Detectar</strong> de nuevo</li>
+        </ol>`;
+    } else {
+      document.getElementById('tg-chat-input').value = chatId;
+      result.style.display    = '';
+      result.style.background = '#f0fdf4';
+      result.style.border     = '1px solid #bbf7d0';
+      result.style.color      = '#065f46';
+      result.innerHTML =
+        `✅ <strong>Chat ID detectado: <span style="font-family:monospace;font-size:0.9em;">${chatId}</span></strong>
+         — el campo de abajo ya está listo. Solo haz clic en <strong>Conectar →</strong>`;
+    }
+  } catch (e) {
+    result.style.display    = '';
+    result.style.background = '#fef2f2';
+    result.style.border     = '1px solid #fca5a5';
+    result.style.color      = '#c0392b';
+    result.textContent      = `❌ Error: ${e.message}. Verifica que el token sea correcto.`;
+  }
+
+  btn.textContent = '🔍 Detectar mi Chat ID automáticamente';
+  btn.disabled    = false;
+}
 </script>
 </body>
 </html>

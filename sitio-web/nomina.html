@@ -89,6 +89,131 @@
     /* Toggle persona columns button */
     .btn-toggle-persona { font-size: 0.72rem; padding: 0.3rem 0.75rem; white-space: nowrap; }
 
+    /* ── Verificación automática ── */
+    #verif-badge button {
+      font-family: var(--brand); font-size: 0.7rem; font-weight: 700;
+      padding: 0.22rem 0.55rem; border-radius: 5px; cursor: pointer;
+      border: 1px solid currentColor; background: transparent; transition: opacity .2s;
+    }
+    #verif-badge button:hover { opacity: .8; }
+    #verif-panel {
+      display: none; margin: 0 0 0.75rem; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08); overflow: hidden;
+    }
+    #verif-panel.open { display: block; }
+    .verif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 1rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+    }
+    .verif-title { font-family: var(--brand); font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+    .verif-body  { padding: 0.75rem 1rem; max-height: 340px; overflow-y: auto; }
+    .verif-section-title {
+      font-family: var(--brand); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-dim); margin: 0.5rem 0 0.3rem;
+    }
+    .verif-item {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.6rem;
+      align-items: start; padding: 0.3rem 0; border-bottom: 1px solid #f0f1f5;
+      font-size: 0.72rem;
+    }
+    .verif-item:last-child { border-bottom: none; }
+    .verif-dot  { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .verif-dot.error   { background: var(--red); }
+    .verif-dot.warning { background: #d97706; }
+    .verif-dot.info    { background: var(--text-dim); }
+    .verif-msg  { color: var(--text-main); line-height: 1.4; }
+    .verif-accion { font-size: 0.65rem; color: var(--text-dim); grid-column: 2; margin-top: -2px; }
+    .verif-ok { text-align: center; padding: 1rem; color: var(--green); font-family: var(--brand); font-weight: 700; }
+    .verif-footer { padding: 0.4rem 1rem; background: #f7f8fc; border-top: 1px solid var(--border);
+                    display: flex; align-items: center; gap: 0.75rem; font-size: 0.68rem; color: var(--text-dim); }
+    .verif-btns { display: flex; gap: 0.35rem; margin-top: 0.32rem; flex-wrap: wrap; }
+    .verif-btn {
+      font-size: 0.61rem; padding: 0.13rem 0.42rem; border-radius: 4px;
+      cursor: pointer; border: 1px solid; transition: opacity .15s, background .15s;
+      font-family: inherit; line-height: 1.5;
+    }
+    .verif-btn-descartar {
+      color: var(--text-dim); border-color: var(--border); background: #f7f8fc;
+    }
+    .verif-btn-descartar:hover { background: #e8eaf0; color: var(--text-main); }
+    .verif-btn-cfdi {
+      color: var(--navy); border-color: var(--navy); background: transparent;
+    }
+    .verif-btn-cfdi:hover { background: #eef3fa; }
+    .verif-descartados-note {
+      font-size: 0.62rem; color: var(--text-xs); font-style: italic; margin-top: 0.5rem;
+      padding: 0.2rem 0; text-align: center;
+    }
+    .verif-descartados-note button {
+      font-size: 0.62rem; color: var(--navy); background: none; border: none;
+      cursor: pointer; text-decoration: underline; padding: 0;
+    }
+    /* ── Sección colapsable "¿Qué se verifica?" ── */
+    .verif-checks { border-top: 1px dashed #e0e2ec; margin-top: 0.6rem; padding-top: 0.35rem; }
+    .verif-checks-toggle {
+      width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+      font-size: 0.64rem; color: var(--text-dim); display: flex; align-items: center;
+      gap: 0.3rem; padding: 0.15rem 0; font-family: inherit;
+    }
+    .verif-checks-toggle:hover { color: var(--navy); }
+    .vct-arrow { font-size: 0.58rem; transition: transform .2s; display: inline-block; }
+    .verif-checks-toggle.open .vct-arrow { transform: rotate(90deg); }
+    .verif-checks-body { display: none; padding: 0.35rem 0 0.1rem; }
+    .verif-checks-body.open { display: block; }
+    .verif-check-row {
+      display: flex; gap: 0.45rem; align-items: baseline; font-size: 0.66rem;
+      color: var(--text-dim); padding: 0.18rem 0; border-bottom: 1px solid #f4f5fb;
+      line-height: 1.4;
+    }
+    .verif-check-row:last-child { border-bottom: none; }
+    .verif-check-num { font-weight: 700; color: var(--navy); flex-shrink: 0; min-width: 1.1rem; font-size: 0.61rem; }
+    .verif-check-name { font-weight: 600; color: var(--text-main); }
+    .verif-check-badge {
+      display: inline-block; font-size: 0.56rem; font-weight: 700; padding: 0.03rem 0.28rem;
+      border-radius: 3px; background: #eef3fa; color: var(--navy); margin-left: 0.25rem;
+      vertical-align: middle; white-space: nowrap;
+    }
+    /* ── Agrupación por colaborador ── */
+    .verif-grupo { margin-bottom: 0.2rem; }
+    .verif-grupo-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.32rem 0.55rem; background: #f4f5fb; border-radius: 6px;
+      cursor: pointer; user-select: none; border: 1px solid #eaecf4;
+      margin-bottom: 0.2rem; transition: background .15s;
+    }
+    .verif-grupo-header:hover { background: #eaecf4; }
+    .verif-grupo-nombre { font-weight: 700; font-size: 0.73rem; color: var(--navy); flex: 1; min-width: 0; }
+    .verif-grupo-count  { font-size: 0.62rem; color: var(--text-dim); white-space: nowrap; }
+    .verif-grupo-chevron { font-size: 0.68rem; color: var(--text-dim); transition: transform .2s; flex-shrink: 0; }
+    .verif-grupo.collapsed .verif-grupo-chevron { transform: rotate(-90deg); }
+    .verif-grupo.collapsed .verif-grupo-items   { display: none; }
+    .verif-grupo-items { padding-left: 0.7rem; }
+    .verif-btn-bulk { font-size: 0.58rem !important; padding: 0.1rem 0.36rem !important; }
+    /* ── Vista tabla por colaborador ── */
+    .verif-tabla-colab { width: 100%; border-collapse: collapse; font-size: 0.73rem; }
+    .verif-tabla-colab th {
+      background: var(--navy); color: #fff; font-size: 0.61rem; font-weight: 700;
+      padding: 0.42rem 0.65rem; text-align: left; letter-spacing: .04em; white-space: nowrap;
+    }
+    .verif-tabla-colab th:first-child { border-radius: 6px 0 0 0; }
+    .verif-tabla-colab th:last-child  { border-radius: 0 6px 0 0; }
+    .verif-tabla-colab td { padding: 0.42rem 0.65rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .verif-tabla-colab tr:last-child td { border-bottom: none; }
+    .verif-tabla-colab tr:hover td { background: #f8f9fc; }
+    .verif-tabla-dismissed { opacity: .38; }
+    .verif-tabla-num-err { color: var(--red);    font-weight: 700; }
+    .verif-tabla-num-alt { color: #d97706;        font-weight: 700; }
+    .verif-tabla-num-inf { color: var(--text-dim);}
+    .verif-tabla-num-zer { color: var(--text-xs); }
+    /* ── Toggle vista ── */
+    .verif-vista-btn {
+      font-size: 0.62rem; padding: 0.14rem 0.48rem; border-radius: 5px;
+      cursor: pointer; border: 1px solid var(--border); background: #f4f5fb;
+      color: var(--text-dim); font-family: inherit; transition: background .15s;
+    }
+    .verif-vista-btn:hover { background: #eaecf4; color: var(--text-main); }
+
     /* Hidden persona columns */
     .col-persona     { display: none; }
     .col-persona.visible { display: table-cell; }
@@ -170,6 +295,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -206,6 +332,26 @@
         <a href="configuracion.html#colaboradores" style="font-size:0.68rem; color:var(--text-xs); font-family:var(--brand); font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; opacity:0.7;" title="Gestionar catálogo de colaboradores">
           👥 Gestionar colaboradores ↗
         </a>
+      </div>
+
+      <!-- ══════════════════════════════
+           PANEL DE AUTO-VERIFICACIÓN
+      ══════════════════════════════ -->
+      <div id="verif-panel">
+        <div class="verif-header">
+          <span class="verif-title">🔍 Auto-verificación de datos de nómina</span>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button id="verif-vista-btn" class="verif-vista-btn" onclick="toggleVerifVista()" title="Cambiar entre vista lista agrupada y vista tabla resumen">⊞ Tabla</button>
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="lanzarVerificacion('manual')">↻ Re-verificar</button>
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="document.getElementById('verif-panel').classList.remove('open')">✕</button>
+          </div>
+        </div>
+        <div class="verif-body" id="verif-body">
+          <div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.75rem;">Ejecutando verificación…</div>
+        </div>
+        <div class="verif-footer" id="verif-footer"></div>
       </div>
 
       <!-- ══════════════════════════════
@@ -744,25 +890,29 @@ function switchTab(tab) {
 
 function renderHeaderBtns() {
   const c = document.getElementById('page-header-btns');
+  const verifBadge = `<span id="verif-badge" style="margin-right:0.25rem;"></span>`;
   if (currentTab === 'asim') {
     const satCuenta = localStorage.getItem(KEY_SAT_CUENTA) || '';
-    const satLabel  = satCuenta
-      ? `⚙ SAT: ${satCuenta}`
-      : `⚙ Configurar cuenta SAT`;
+    const satLabel  = satCuenta ? `⚙ SAT: ${satCuenta}` : `⚙ Configurar cuenta SAT`;
     const satStyle  = satCuenta ? '' : 'color:var(--red);border-color:var(--red);';
     c.innerHTML = `
+      ${verifBadge}
       <button class="btn btn-ghost" style="font-size:0.7rem;${satStyle}" title="Cuenta desde la que se pagan retenciones al SAT" onclick="configurarCuentaSAT()">${satLabel}</button>
       <button class="btn btn-ghost" onclick="importarAsim()">&#x2191; Importar histórico</button>
       <button class="btn btn-ghost" onclick="abrirCFDI()">&#x1F4CE; CFDI XML</button>
       <button class="btn btn-primary" onclick="abrirAsim()">+ Nuevo registro</button>`;
   } else if (currentTab === 'hon') {
     c.innerHTML = `
+      ${verifBadge}
       <button class="btn btn-ghost" onclick="importarHon()">&#x2191; Importar histórico</button>
       <button class="btn btn-ghost" onclick="abrirCFDI()">&#x1F4CE; CFDI XML</button>
       <button class="btn btn-primary" onclick="openModal('modal-hon')">+ Nuevo registro</button>`;
   } else {
-    c.innerHTML = '';
+    c.innerHTML = verifBadge;
   }
+  // Restaurar badge con último resultado
+  const lastResult = cargarUltimaVerificacion();
+  renderVerificacionBadge(lastResult);
 }
 
 /* ── Toggle persona columns ── */
@@ -874,22 +1024,49 @@ function renderAsim() {
 
   /* ---- Generar thead dinámicamente ---- */
   const v = personaVisible ? ' visible' : '';
-  const personaHeaders = colabs.map(c =>
-    `<th class="col-persona num">${c.nombreCorto} B</th>
-     <th class="col-persona num">Ret</th>
-     <th class="col-persona num">${c.nombreCorto} N</th>`
-  ).join('');
+
+  // Cada colaborador ocupa 3 columnas: Bruto / ISR Ret. / Neto
+  // El nombre de la persona va en la primera línea del <th>, la etiqueta en la segunda.
+  const personaHeaders = colabs.map(c => `
+    <th class="col-persona num${v}" style="white-space:nowrap;">
+      <span style="display:block;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.9);
+                   letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px;
+                   border-bottom:1px solid rgba(255,255,255,0.25);padding-bottom:2px;">
+        ${c.nombreCorto}
+      </span>
+      <span style="display:block;font-size:0.68rem;color:rgba(255,255,255,0.65);">Bruto</span>
+    </th>
+    <th class="col-persona num${v}" style="white-space:nowrap;">
+      <span style="display:block;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.9);
+                   letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px;
+                   border-bottom:1px solid rgba(255,255,255,0.25);padding-bottom:2px;">
+        &nbsp;
+      </span>
+      <span style="display:block;font-size:0.68rem;color:#f8c6c6;">ISR Ret.</span>
+    </th>
+    <th class="col-persona num${v}" style="white-space:nowrap;">
+      <span style="display:block;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.9);
+                   letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px;
+                   border-bottom:1px solid rgba(255,255,255,0.25);padding-bottom:2px;">
+        &nbsp;
+      </span>
+      <span style="display:block;font-size:0.68rem;color:#c6f0d8;">Neto</span>
+    </th>`).join('');
+
+  // Filtros por colaborador (fila secundaria)
   const personaFilterHeaders = colabs.map(c =>
-    `<th class="col-persona"><input class="col-filter" id="acf-${c.alias}" placeholder="≥ monto"
-       oninput="renderAsim()" /></th>
-     <th class="col-persona"></th><th class="col-persona"></th>`
+    `<th class="col-persona${v}">
+       <input class="col-filter" id="acf-${c.alias}" placeholder="≥ monto" oninput="renderAsim()" />
+     </th>
+     <th class="col-persona${v}"></th><th class="col-persona${v}"></th>`
   ).join('');
 
   document.getElementById('asim-thead').innerHTML = `
     <tr>
       <th>#</th><th>Fecha Pago</th><th>Mes Fiscal</th>
-      <th class="num">Bruto</th><th class="num" style="color:#f8c6c6;">Ret.</th>
-      <th class="num" style="color:#c6f0d8;">Neto</th>
+      <th class="num">Total Bruto</th>
+      <th class="num" style="color:#f8c6c6;">Total ISR</th>
+      <th class="num" style="color:#c6f0d8;">Total Neto</th>
       ${personaHeaders}
       <th></th>
     </tr>
@@ -917,7 +1094,19 @@ function renderAsim() {
   /* ---- Helper para obtener datos de un colaborador en un registro ---- */
   function getPP(rec, col) {
     const pp = rec.perPersona || {};
-    return pp[col.rfc] || pp[col.alias] || { bruto:0, ret:0, neto:0 };
+    // 1. Lookup directo por RFC del catálogo (caso normal)
+    if (col.rfc && pp[col.rfc]) return pp[col.rfc];
+    // 2. Lookup directo por alias del catálogo
+    if (col.alias && pp[col.alias]) return pp[col.alias];
+    // 3. Búsqueda profunda: el registro puede estar keyed por el RFC del CFDI
+    //    (que difiere del RFC guardado en el catálogo) pero el valor interno
+    //    sí guarda el alias o rfc correcto.  Ej: key="CAFJ850101ABC" pero
+    //    value.alias="carlos".  Sin esta búsqueda la celda aparece vacía.
+    const found = Object.values(pp).find(v =>
+      (col.rfc  && v.rfc  && col.rfc.toUpperCase()  === v.rfc.toUpperCase()) ||
+      (col.alias && v.alias && col.alias === v.alias)
+    );
+    return found || { bruto:0, ret:0, neto:0 };
   }
 
   /* Filtros por colaborador */
@@ -1079,10 +1268,14 @@ function guardarAsim() {
   }
   all.sort((a,b)=>(a.fechaPago||'').localeCompare(b.fechaPago||''));
   saveRegistry(KEY_ASIM, all);
+  // Registrar egreso INDIVIDUAL por colaborador en stgl_mov_manual
+  // (permite que proyectados.html detecte cada pago contra su recurrente)
+  registrarAsimEnMovManual(fecha, rec.perPersona);
   closeModal('modal-asim');
   toast('Registro guardado','success');
   renderAsim();
   syncRetencionesAProyeccion();
+  setTimeout(() => { try { renderVerificacionBadge(ejecutarVerificacion('save')); } catch {} }, 200);
 }
 
 /* ── Importar histórico asimilables ── */
@@ -1138,7 +1331,7 @@ function renderHon() {
     : all;
   document.getElementById('hon-kpi-bruto').textContent = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.bruto),0));
   document.getElementById('hon-kpi-iva').textContent   = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.iva),0));
-  document.getElementById('hon-kpi-ret').textContent   = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.totalRetenciones),0));
+  document.getElementById('hon-kpi-ret').textContent   = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.retIsr||0)+parseNum(r.retIva||0),0));
   document.getElementById('hon-kpi-neto').textContent  = '$'+fmtNum(kpiData.reduce((s,r)=>s+parseNum(r.pagado),0));
   const yearLabel = selectedHonYear ? `${selectedHonYear}` : 'histórico completo';
   document.getElementById('nom-meta').textContent =
@@ -1169,7 +1362,7 @@ function renderHon() {
       <td class="num" style="color:var(--red);">$${fmtNum(r.retIsr)}</td>
       <td class="num" style="color:var(--red);">$${fmtNum(r.retIva)}</td>
       <td class="num" style="color:var(--green); font-weight:600;">$${fmtNum(r.pagado)}</td>
-      <td class="num">$${fmtNum(r.totalRetenciones)}</td>
+      <td class="num">$${fmtNum(parseNum(r.retIsr||0)+parseNum(r.retIva||0))}</td>
       <td style="white-space:nowrap;">
         <button class="del-row" style="color:var(--text-xs); margin-right:2px;" onclick="abrirEditarHon('${r.id}')" title="Editar">✏️</button>
         <button class="del-row" onclick="eliminarHon('${r.id}')" title="Eliminar">✕</button>
@@ -1189,7 +1382,7 @@ function renderHon() {
       <td class="num" style="color:var(--red);">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.retIsr),0))}</td>
       <td class="num" style="color:var(--red);">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.retIva),0))}</td>
       <td class="num" style="color:var(--green);">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.pagado),0))}</td>
-      <td class="num">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.totalRetenciones),0))}</td>
+      <td class="num">$${fmtNum(data.reduce((s,r)=>s+parseNum(r.retIsr||0)+parseNum(r.retIva||0),0))}</td>
       <td></td>
     </tr>`;
 }
@@ -1244,10 +1437,19 @@ function guardarHon() {
   const data = loadRegistry(KEY_HON);
   data.push(rec);
   saveRegistry(KEY_HON, data);
+  // Registrar egreso real en Financiero (stgl_mov_manual) — evita doble captura
+  registrarEnMovManual(
+    `mov-hon-${rec.id}`,
+    fecha,
+    'Honorarios',
+    prestador || 'Honorarios',
+    pagado
+  );
   toast('Registro guardado','success');
   closeModal('modal-hon');
   resetHonModal();
   renderHon();
+  setTimeout(() => { try { renderVerificacionBadge(ejecutarVerificacion('save')); } catch {} }, 200);
 }
 
 function resetHonModal() {
@@ -1445,9 +1647,72 @@ function xmlImpuestoRaiz(doc, tag, attrImpuesto) {
 }
 
 function mesFiscalDeFecha(fecha) {
-  const EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const d = new Date((fecha || '').substring(0,10) + 'T12:00:00');
-  return isNaN(d) ? '' : EN[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
+  return isNaN(d) ? '' : ES[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
+}
+
+/* Migración silenciosa: corrige llaves de perPersona en registros existentes.
+   Problema: cuando el catálogo no tiene RFC (ej. lourdes, jfabela), la llave
+   almacenada era el RFC crudo del CFDI ("URIX730101XYZ").  getPP() busca por
+   col.rfc (vacío) y col.alias ("lourdes") y nunca encontraba el dato.
+   Fix: si la llave no coincide con ningún RFC del catálogo, renombrarla al alias. */
+function migratePerPersonaKeys() {
+  try {
+    const colabs  = loadColaboradores();
+    const rfcSet  = new Set(colabs.map(c => (c.rfc || '').toUpperCase()).filter(Boolean));
+    const arr     = loadRegistry(KEY_ASIM);
+    let changed   = false;
+
+    arr.forEach(rec => {
+      if (!rec.perPersona) return;
+      const newPP = {};
+      let ppChanged = false;
+
+      for (const [key, val] of Object.entries(rec.perPersona)) {
+        if (rfcSet.has(key.toUpperCase())) {
+          // La llave ya es un RFC del catálogo → correcta, dejar igual
+          newPP[key] = val;
+        } else {
+          // La llave no es RFC del catálogo (probablemente RFC del CFDI o alias viejo)
+          // Usar el alias guardado en el valor, o la llave actual si no hay alias
+          const correctKey = val.alias || key;
+          if (correctKey !== key) ppChanged = true;
+          newPP[correctKey] = val;
+        }
+      }
+
+      if (ppChanged) { rec.perPersona = newPP; changed = true; }
+    });
+
+    if (changed) saveRegistry(KEY_ASIM, arr);
+  } catch(e) { console.warn('migratePerPersonaKeys:', e); }
+}
+
+/* Migración silenciosa: convierte abreviaturas de mes en inglés → español
+   para los registros importados cuando mesFiscalDeFecha usaba EN en lugar de ES.
+   Solo afecta Jan→Ene, Apr→Abr, Aug→Ago, Dec→Dic (los demás son idénticos).
+   Corre una sola vez al cargar la página. */
+function migrarMesFiscalAEspañol() {
+  const MAP = {Jan:'Ene', Apr:'Abr', Aug:'Ago', Dec:'Dic'};
+  function convertir(mf) {
+    if (!mf) return mf;
+    const partes = mf.split('-');
+    if (partes.length < 2) return mf;
+    const abr = partes[0];
+    return MAP[abr] ? MAP[abr] + '-' + partes.slice(1).join('-') : mf;
+  }
+  ['stgl_asimilables','stgl_honorarios'].forEach(key => {
+    try {
+      const arr = loadRegistry(key);
+      let changed = false;
+      arr.forEach(r => {
+        const nuevo = convertir(r.mesFiscal);
+        if (nuevo !== r.mesFiscal) { r.mesFiscal = nuevo; changed = true; }
+      });
+      if (changed) saveRegistry(key, arr);
+    } catch {}
+  });
 }
 
 function parseCFDIXml(text, filename) {
@@ -1540,12 +1805,16 @@ function agruparNomina(nominaRecs) {
     let stB = 0, stR = 0, stN = 0;
     for (const e of grp.mapeados) {
       const col = getColaboradorByAlias(e.persona);
-      const key = e.rfc || e.persona;
+      // Llave = RFC del catálogo si existe; en otro caso el alias.
+      // NUNCA usar el RFC crudo del CFDI como llave cuando el catálogo no tiene RFC,
+      // porque getPP() busca por col.rfc (vacío) o col.alias, y jamás encontraría
+      // una llave que sea el RFC del CFDI de la persona.
+      const key = (col?.rfc) || e.persona;
       perPersona[key] = {
         alias:       e.persona,
         nombre:      e.nombre,
         nombreCorto: col ? col.nombreCorto : e.persona,
-        rfc:         e.rfc || '',
+        rfc:         col?.rfc || e.rfc || '',
         bruto:       e.bruto,
         ret:         e.ret,
         neto:        e.neto,
@@ -1728,6 +1997,8 @@ function aplicarMapeo(nombre, columna) {
 
 function importarCFDIs() {
   let asimGuardados = 0, honGuardados = 0;
+  const movsAsim = []; // {fecha, perPersona} para registrar individualmente en stgl_mov_manual
+  const movsHon  = []; // {movId, fecha, desc, salidas}
 
   /* Asimilables */
   if (cfdiAsimAgrupado.length) {
@@ -1751,6 +2022,7 @@ function importarCFDIs() {
           Object.assign(all[existIdx], rec, { id, creado, modificado: new Date().toISOString() });
           delete all[existIdx]._noMapeados;
           asimGuardados++;
+          movsAsim.push({ fecha: rec.fechaPago, perPersona: rec.perPersona || {} });
         }
         continue;
       }
@@ -1758,6 +2030,7 @@ function importarCFDIs() {
       delete newRec._noMapeados;
       all.push(newRec);
       asimGuardados++;
+      movsAsim.push({ fecha: rec.fechaPago, perPersona: rec.perPersona || {} });
     }
     all.sort((a,b) => (a.fechaPago||'').localeCompare(b.fechaPago||''));
     saveRegistry(KEY_ASIM, all);
@@ -1779,9 +2052,18 @@ function importarCFDIs() {
         subtotalRet: rec.totalRet, totalRetenciones: rec.totalRet,
       });
       honGuardados++;
+      movsHon.push({ movId: `mov-hon-${id}`, fecha: rec.fecha, desc: rec.prestador || 'Honorarios', salidas: rec.pagado });
     }
     all.sort((a,b) => (a.fechaPago||'').localeCompare(b.fechaPago||''));
     saveRegistry(KEY_HON, all);
+  }
+
+  /* Registrar egresos en stgl_mov_manual: asimilables individualmente, honorarios por prestador */
+  for (const m of movsAsim) {
+    registrarAsimEnMovManual(m.fecha, m.perPersona);
+  }
+  for (const m of movsHon) {
+    registrarEnMovManual(m.movId, m.fecha, 'Honorarios', m.desc, m.salidas);
   }
 
   const msgs = [];
@@ -1798,6 +2080,118 @@ function importarCFDIs() {
   closeModal('modal-cfdi');
   if (currentTab === 'asim') renderAsim(); else renderHon();
   if (asimGuardados || honGuardados) syncRetencionesAProyeccion();
+
+  // Auto-verificar tras importación
+  setTimeout(() => {
+    try {
+      const res = ejecutarVerificacion('import');
+      renderVerificacionBadge(res);
+      if (res.errores.length > 0) {
+        renderVerificacionPanel(res);
+        document.getElementById('verif-panel').classList.add('open');
+      }
+    } catch {}
+  }, 300);
+}
+
+/* ══════════════════════════════════════════════════════
+   SINCRONIZACIÓN NÓMINA → MOVIMIENTOS REALES (stgl_mov_manual)
+   Al guardar cualquier registro de asimilables u honorarios
+   (vía CFDI o formulario manual) se crea/actualiza automáticamente
+   un movimiento real en stgl_mov_manual, eliminando la doble captura
+   con el módulo de Financiero.
+════════════════════════════════════════════════════════ */
+
+/* ── Helpers compartidos para registro en mov_manual ── */
+
+/**
+ * Registra asimilables en stgl_mov_manual INDIVIDUALMENTE por colaborador.
+ * Esto permite que el detector de adelanto/retraso en proyectados.html
+ * reconozca cada pago contra su recurrente correspondiente por monto exacto.
+ * La cuenta bancaria se resuelve buscando el recurrente que coincide en importe.
+ */
+function registrarAsimEnMovManual(fecha, perPersona) {
+  if (!perPersona || !fecha) return;
+  try {
+    // Cargar recurrentes activos de egreso para resolver la cuenta por monto
+    let recsRef = [];
+    try { recsRef = loadRegistry('stgl_recurrentes').filter(r => r.activo && r.tipo === 'Egreso'); } catch {}
+
+    const manual = loadRegistry('stgl_mov_manual');
+
+    for (const [key, p] of Object.entries(perPersona)) {
+      const neto = Math.round((parseFloat(p.neto) || 0) * 100) / 100;
+      if (neto <= 0) continue;
+
+      // Buscar recurrente cuyo importe coincida (±5%) para obtener la cuenta
+      const recMatch = recsRef.find(r => {
+        const imp = parseFloat(r.importe) || 0;
+        return imp > 0 && Math.abs(imp - neto) / Math.max(neto, 1) < 0.05;
+      });
+
+      const id  = `mov-asim-${fecha.replace(/-/g,'')}-${key.replace(/[^a-zA-Z0-9]/g,'').substring(0,12)}`;
+      const mov = {
+        id,
+        fecha,
+        mov:        'Egresos',
+        tipo:       'Nómina Asimilable',
+        desc:       `Nómina: ${p.nombreCorto || p.alias || p.nombre || key}`,
+        concepto:   'Nómina Asimilable',
+        cuenta:     recMatch ? (recMatch.cuenta || '') : '',
+        cuentaCont: 'Nómina',
+        entradas:   null,
+        salidas:    neto,
+        origenRef:  'nomina-direct',
+        _saldoAjustado: false,
+      };
+
+      const idx = manual.findIndex(m => m.id === id);
+      if (idx >= 0) Object.assign(manual[idx], mov);
+      else          manual.push(mov);
+    }
+
+    saveRegistry('stgl_mov_manual', manual);
+  } catch(e) {
+    console.warn('registrarAsimEnMovManual:', e);
+  }
+}
+
+/**
+ * Crea o actualiza un movimiento real en stgl_mov_manual.
+ * Usado para honorarios (ya son individuales por prestador).
+ * Es idempotente: si ya existe un registro con el mismo id lo actualiza.
+ *
+ * @param {string} id      - Clave única del movimiento
+ * @param {string} fecha   - YYYY-MM-DD
+ * @param {string} tipo    - "Honorarios"
+ * @param {string} desc    - Descripción legible
+ * @param {number} salidas - Importe neto pagado
+ */
+function registrarEnMovManual(id, fecha, tipo, desc, salidas) {
+  try {
+    const mov = {
+      id,
+      fecha,
+      mov:        'Egresos',
+      tipo,
+      desc,
+      concepto:   tipo,
+      cuenta:     '',
+      cuentaCont: tipo,
+      entradas:   null,
+      salidas:    Math.round((salidas || 0) * 100) / 100,
+      origenRef:  'nomina-direct',
+      _saldoAjustado: false,
+    };
+
+    const manual = loadRegistry('stgl_mov_manual');
+    const idx    = manual.findIndex(m => m.id === id);
+    if (idx >= 0) Object.assign(manual[idx], mov);
+    else          manual.push(mov);
+    saveRegistry('stgl_mov_manual', manual);
+  } catch(e) {
+    console.warn('registrarEnMovManual:', e);
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1818,77 +2212,12 @@ function nextBusinessDayNom(dateStr) {
 }
 
 function syncRetencionesAProyeccion() {
-  const satCuenta = localStorage.getItem(KEY_SAT_CUENTA) || '';
-  if (!satCuenta) {
-    /* Notificar una sola vez que falta configurar la cuenta */
-    if (!sessionStorage.getItem('_ret_aviso')) {
-      sessionStorage.setItem('_ret_aviso', '1');
-      toast('⚙ Configura la cuenta bancaria SAT en Nómina → Configuración para sincronizar retenciones a la proyección', 'info', 6000);
-    }
-    return;
-  }
-
-  const asimRecs = loadRegistry(KEY_ASIM).map(r => {
-    /* Compatibilidad: si no tiene perPersona, usar subtotalRet directo */
-    return { fechaPago: r.fechaPago, ret: parseNum(r.subtotalRet) };
-  });
-  const honRecs  = loadRegistry(KEY_HON).map(r => ({
-    fechaPago: r.fechaPago, ret: parseNum(r.totalRetenciones || r.subtotalRet || 0)
-  }));
-
-  /* Agrupar retenciones por mes (YYYY-MM) */
-  const retByMes = {};
-  for (const r of [...asimRecs, ...honRecs]) {
-    const ym = (r.fechaPago || '').substring(0, 7);
-    if (!ym || ym.length < 7) continue;
-    retByMes[ym] = (retByMes[ym] || 0) + r.ret;
-  }
-
-  if (!Object.keys(retByMes).length) return;
-
-  let proyMovs = [];
-  try { proyMovs = JSON.parse(localStorage.getItem(KEY_PROY_MOV) || '[]'); } catch { proyMovs = []; }
-
-  let cambios = 0;
-  for (const [ym, totalRet] of Object.entries(retByMes)) {
-    if (!totalRet || totalRet < 0.01) continue;
-    /* Fecha de pago: día 17 del mes siguiente, ajustado a hábil */
-    const [y, m] = ym.split('-').map(Number);
-    const nextM  = m === 12 ? 1 : m + 1;
-    const nextY  = m === 12 ? y + 1 : y;
-    const raw17  = `${nextY}-${String(nextM).padStart(2,'0')}-17`;
-    const fecha  = nextBusinessDayNom(raw17);
-
-    const id  = `ret-sat-${ym}`;
-    const idx = proyMovs.findIndex(p => p.id === id);
-    const mov = {
-      id,
-      fecha,
-      tipo:        'RetencionesSAT',
-      descripcion: `Retenciones SAT — ${ym}`,
-      concepto:    'Retenciones fiscales (ISR asimilados + ISR honorarios + IVA ret.)',
-      cuentaCont:  '2100',
-      cuenta:      satCuenta,
-      cuentaDest:  '',
-      moneda:      'MXN',
-      entrada:     0,
-      salida:      round2(totalRet),
-      entradaDest: 0,
-      nominaMes:   ym,
-      _autoGenerado: true,
-    };
-    if (idx >= 0) {
-      proyMovs[idx] = { ...proyMovs[idx], ...mov };
-    } else {
-      proyMovs.push(mov);
-    }
-    cambios++;
-  }
-
-  if (cambios) {
-    proyMovs.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
-    localStorage.setItem(KEY_PROY_MOV, JSON.stringify(proyMovs));
-  }
+  /* DESACTIVADO — proyectados.html ahora calcula las retenciones SAT dinámicamente
+     con loadRetencionesProy() directamente desde stgl_asimilables + stgl_honorarios +
+     stgl_retenciones. Escribir entradas 'RetencionesSAT' en stgl_mov_proyectados
+     provocaba que las retenciones aparecieran duplicadas (doble-conteo) en la
+     proyección de saldos y en la tabla de movimientos.
+     La limpieza de entradas antiguas se ejecuta en el init de proyectados.html. */
 }
 
 /* Abre el panel de configuración de cuenta SAT */
@@ -1956,6 +2285,7 @@ function guardarRfcDesconocido() {
   const nuevo = {
     id: 'col-' + (rfc || alias + Date.now()),
     rfc, nombre, nombreCorto, alias, telefono, direccion,
+    fechaIngreso: '', fechaSeparacion: '', estado: 'activo',
     activo: true, creado: new Date().toISOString(),
   };
   colabs.push(nuevo);
@@ -1974,6 +2304,679 @@ function guardarRfcDesconocido() {
 /* ══ Catálogo de colaboradores — gestionado en Configuración ══ */
 /* Para editar el catálogo ve a: Configuración → Colaboradores       */
 
+/* ══════════════════════════════════════════════════════════════════
+   SISTEMA DE AUTO-VERIFICACIÓN DE NÓMINA
+   Ejecuta una batería de checks sobre la integridad de los datos:
+   1. Completitud de perPersona (todos los colaboradores tienen datos)
+   2. Consistencia de subtotales (suma pp == encabezado)
+   3. Retenciones honorarios (retIsr+retIva == totalRetenciones)
+   4. Doble-captura (cada nómina/hon tiene movimiento en stgl_mov_manual — con detección de desfase ±7 días)
+      — incluye búsqueda de desfase de fecha ±7 días (VENTANA_DESFASE)
+   5. Formato mesFiscal (todos en español)
+   Se dispara: al cargar la página, tras cada importación/guardado,
+   y manualmente desde el badge en el encabezado.
+══════════════════════════════════════════════════════════════════ */
+
+/* ── Días entre dos fechas ISO (resultado con signo) ── */
+function _diasEntre(f1, f2) {
+  const d1 = new Date(((f1||'').substring(0,10))+'T12:00:00');
+  const d2 = new Date(((f2||'').substring(0,10))+'T12:00:00');
+  if (isNaN(d1)||isNaN(d2)) return Infinity;
+  return Math.round((d2 - d1) / 86400000);
+}
+
+/* ── Busca movimiento cercano en stgl_mov_manual para el mismo colaborador ──
+   prefijo   : 'mov-asim-' | 'mov-hon-'
+   sufijo    : safeKey del colaborador (para asim) o null (para hon)
+   descMatch : fragmento del nombre/prestador (para hon)
+   fechaRef  : 'YYYY-MM-DD'  ventana : días máximos de diferencia (default 7) */
+function _buscarMovCercano(movManual, prefijo, sufijo, descMatch, fechaRef, ventana) {
+  ventana = ventana || 7;
+  let mejor = null, mejorDelta = Infinity;
+  movManual.forEach(m => {
+    if (!m.id || !m.id.startsWith(prefijo)) return;
+    // Filtro por persona: safeKey al final del id (asim) o desc parcial (hon)
+    if (sufijo   && !m.id.endsWith('-'+sufijo)) return;
+    if (descMatch && !(m.id.toLowerCase().includes(descMatch.toLowerCase()) ||
+                       (m.desc||'').toLowerCase().includes(descMatch.toLowerCase()) ||
+                       (m.desc||'').toLowerCase().replace(/\s+/g,'').includes(descMatch.toLowerCase()))) return;
+    const mFecha = m.fecha || '';
+    const delta = Math.abs(_diasEntre(fechaRef, mFecha));
+    if (delta > 0 && delta <= ventana && delta < mejorDelta) {
+      mejorDelta = delta;
+      mejor = { mov: m, delta, fecha: mFecha,
+                dir: _diasEntre(fechaRef, mFecha) > 0 ? 'después' : 'antes' };
+    }
+  });
+  return mejor;
+}
+
+const VENTANA_DESFASE = 7; // días de tolerancia para detectar desfases de fecha
+const KEY_VERIF_LOG       = 'stgl_verificacion_log';
+const KEY_VERIF_DISMISSED = 'stgl_verificacion_dismissed';
+
+/* ── Descartados ── */
+function getDescartados() {
+  try { return new Set(JSON.parse(localStorage.getItem(KEY_VERIF_DISMISSED) || '[]')); }
+  catch { return new Set(); }
+}
+function saveDescartados(set) {
+  localStorage.setItem(KEY_VERIF_DISMISSED, JSON.stringify([...set]));
+}
+function itemFingerprint(it) {
+  // Usar key estable si está disponible — resiste cambios en el texto del mensaje
+  if (it.key) return it.key;
+  return ((it.msg || '') + '|' + (it.fecha || '')).replace(/\s{2,}/g, ' ').trim();
+}
+function filtrarDescartados(resultado) {
+  if (!resultado) return resultado;
+  const desc = getDescartados();
+  if (!desc.size) return resultado;
+  // Comprueba ambos formatos: key estable (nuevo) y msg+fecha (legado anterior a keys)
+  const isDescartado = it => {
+    if (desc.has(itemFingerprint(it))) return true;
+    // Compatibilidad hacia atrás: items descartados antes de que se agregaran keys
+    if (it.key) {
+      const legacyFp = ((it.msg || '') + '|' + (it.fecha || '')).replace(/\s{2,}/g, ' ').trim();
+      if (desc.has(legacyFp)) return true;
+    }
+    return false;
+  };
+  const filtrar = arr => arr.filter(it => !isDescartado(it));
+  const errores = filtrar(resultado.errores);
+  const alertas = filtrar(resultado.alertas);
+  const info    = filtrar(resultado.info);
+  return { ...resultado, errores, alertas, info, ok: !errores.length && !alertas.length };
+}
+function descartarVerifItem(fp) {
+  const set = getDescartados();
+  set.add(fp);
+  saveDescartados(set);
+  // Re-render desde el último log
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+function restaurarDescartados() {
+  localStorage.removeItem(KEY_VERIF_DISMISSED);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+
+/* ── Vista y agrupación por colaborador ── */
+let _verifVista       = 'lista';   // 'lista' | 'tabla'
+let _lastVerifResult  = null;      // referencia al último resultado para descartes masivos
+
+function toggleVerifVista() {
+  _verifVista = _verifVista === 'lista' ? 'tabla' : 'lista';
+  const btn = document.getElementById('verif-vista-btn');
+  if (btn) btn.textContent = _verifVista === 'lista' ? '⊞ Tabla' : '≡ Lista';
+  if (_lastVerifResult) renderVerificacionPanel(_lastVerifResult);
+}
+
+/** Agrupa un array de items por it.persona (o '__sistema__' si no tienen) */
+function agruparPorPersona(items) {
+  const grupos = new Map();
+  items.forEach(it => {
+    const key = (it.persona || '').trim() || '__sistema__';
+    if (!grupos.has(key)) grupos.set(key, []);
+    grupos.get(key).push(it);
+  });
+  return grupos;
+}
+
+/** Descarta todos los items del resultado original que pertenecen a un colaborador dado */
+function descartarPersonaItems(persona) {
+  if (!_lastVerifResult) return;
+  const todos = [..._lastVerifResult.errores, ..._lastVerifResult.alertas, ..._lastVerifResult.info];
+  const set   = getDescartados();
+  todos.filter(it => ((it.persona || '').trim() || '__sistema__') === persona)
+       .forEach(it => set.add(itemFingerprint(it)));
+  saveDescartados(set);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+
+/** Restaura (activa) todos los items de un colaborador específico */
+function restaurarPersonaItems(persona) {
+  if (!_lastVerifResult) return;
+  const todos = [..._lastVerifResult.errores, ..._lastVerifResult.alertas, ..._lastVerifResult.info];
+  const set   = getDescartados();
+  todos.filter(it => ((it.persona || '').trim() || '__sistema__') === persona)
+       .forEach(it => set.delete(itemFingerprint(it)));
+  saveDescartados(set);
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    const last = logs[0];
+    if (last) { renderVerificacionBadge(last); renderVerificacionPanel(last); }
+  } catch {}
+}
+
+/** Renderiza un único item de verificación con sus botones de acción */
+function _renderVerifItem(it, cls) {
+  const fp    = itemFingerprint(it);
+  const fpEsc = fp.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  return `
+  <div class="verif-item" data-fp="${fp.replace(/"/g,'&quot;')}">
+    <div class="verif-dot ${cls}"></div>
+    <div>
+      <div class="verif-msg">${it.msg}</div>
+      ${it.accion ? `<div class="verif-accion">→ ${it.accion}</div>` : ''}
+      <div class="verif-btns">
+        <button class="verif-btn verif-btn-descartar" title="Descartar — esta observación no aplica"
+          onclick="descartarVerifItem('${fpEsc}')">✕ Descartar</button>
+        <button class="verif-btn verif-btn-cfdi" title="Abrir importador de CFDI XML"
+          onclick="abrirCFDI()">⬆ Cargar CFDI</button>
+      </div>
+    </div>
+    ${it.fecha ? `<div style="font-size:0.63rem;color:var(--text-xs);white-space:nowrap;">${it.fecha}</div>` : '<div></div>'}
+  </div>`;
+}
+
+/** Renderiza un array de items agrupando por persona cuando hay más de un colaborador */
+function _renderItemsAgrupados(items, cls) {
+  if (!items.length) return '';
+  const grupos = agruparPorPersona(items);
+
+  // Si hay un único grupo (o todo es sistema), renderizar plano sin cabecera de grupo
+  if (grupos.size === 1) {
+    return items.map(it => _renderVerifItem(it, cls)).join('');
+  }
+
+  let html = '';
+  const desc = getDescartados();
+
+  for (const [persona, gItems] of [...grupos.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const label     = persona === '__sistema__' ? 'Sistema / General' : persona;
+    const personaEsc = persona.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const totalPersona = (() => {
+      // cuenta en el resultado ORIGINAL (no filtrado) para saber si están todos descartados
+      if (!_lastVerifResult) return gItems.length;
+      const todosOrig = [..._lastVerifResult.errores, ..._lastVerifResult.alertas, ..._lastVerifResult.info];
+      return todosOrig.filter(it => ((it.persona||'').trim()||'__sistema__') === persona).length;
+    })();
+    const descPersona = (() => {
+      if (!_lastVerifResult) return 0;
+      const todosOrig = [..._lastVerifResult.errores, ..._lastVerifResult.alertas, ..._lastVerifResult.info];
+      return todosOrig.filter(it => ((it.persona||'').trim()||'__sistema__') === persona && desc.has(itemFingerprint(it))).length;
+    })();
+    // Auto-colapsar grupos con muchos items
+    const collapsed = gItems.length > 4 ? ' collapsed' : '';
+    html += `<div class="verif-grupo${collapsed}">
+      <div class="verif-grupo-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="verif-dot ${cls}" style="width:8px;height:8px;margin-top:0;flex-shrink:0;"></div>
+        <span class="verif-grupo-nombre">${label}</span>
+        <span class="verif-grupo-count">${gItems.length} ítem${gItems.length!==1?'s':''}</span>
+        <button class="verif-btn verif-btn-descartar verif-btn-bulk"
+          onclick="event.stopPropagation();descartarPersonaItems('${personaEsc}')"
+          title="Descartar todos los ítems de ${label}">✕ Descartar todos</button>
+        <span class="verif-grupo-chevron">▾</span>
+      </div>
+      <div class="verif-grupo-items">
+        ${gItems.map(it => _renderVerifItem(it, cls)).join('')}
+        ${descPersona > 0 ? `<div class="verif-descartados-note" style="margin-top:0.2rem;">
+          ${descPersona} de ${totalPersona} descartados para este colaborador —
+          <button onclick="restaurarPersonaItems('${personaEsc}')">restaurar</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+/** Renderiza la vista tabla resumen por colaborador */
+function _renderTablaColaboradores(resultado) {
+  const desc = getDescartados();
+  const allItems = [...resultado.errores, ...resultado.alertas, ...resultado.info];
+  if (!allItems.length) return `<div class="verif-ok">✓ Sin observaciones activas</div>`;
+
+  // Construir mapa con items ORIGINALES (sin filtrar) para conteos reales
+  const grupos = agruparPorPersona(allItems);
+  const gruposOrig = agruparPorPersona([
+    ...resultado.errores, ...resultado.alertas, ...resultado.info
+  ]);
+
+  // Ordenar: primero los que tienen errores, luego por nombre
+  const sorted = [...grupos.entries()].sort((a, b) => {
+    const aErr = a[1].filter(it => resultado.errores.includes(it)).length;
+    const bErr = b[1].filter(it => resultado.errores.includes(it)).length;
+    if (bErr !== aErr) return bErr - aErr;
+    return a[0].localeCompare(b[0]);
+  });
+
+  const rows = sorted.map(([persona, items]) => {
+    const label     = persona === '__sistema__' ? 'Sistema / General' : persona;
+    const personaEsc = persona.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const errN = items.filter(it => resultado.errores.includes(it)).length;
+    const altN = items.filter(it => resultado.alertas.includes(it)).length;
+    const infN = items.filter(it => resultado.info.includes(it)).length;
+    const descN = items.filter(it => desc.has(itemFingerprint(it))).length;
+    const allDesc = descN === items.length;
+    const fechas = items.filter(it => it.fecha).map(it => it.fecha).sort();
+    const rango = fechas.length
+      ? (fechas[0] === fechas[fechas.length-1] ? fechas[0] : `${fechas[0]} → ${fechas[fechas.length-1]}`)
+      : '—';
+    const numC = (n, cls) => n
+      ? `<span class="${cls}">${n}</span>`
+      : `<span class="verif-tabla-num-zer">—</span>`;
+    return `<tr class="${allDesc ? 'verif-tabla-dismissed' : ''}">
+      <td><strong>${label}</strong></td>
+      <td style="text-align:center;">${numC(errN,'verif-tabla-num-err')}</td>
+      <td style="text-align:center;">${numC(altN,'verif-tabla-num-alt')}</td>
+      <td style="text-align:center;">${numC(infN,'verif-tabla-num-inf')}</td>
+      <td style="font-size:0.65rem;color:var(--text-xs);white-space:nowrap;">${rango}</td>
+      <td>
+        ${allDesc
+          ? `<button class="verif-btn verif-btn-cfdi" style="font-size:0.59rem;padding:0.1rem 0.36rem;"
+               onclick="restaurarPersonaItems('${personaEsc}')">↩ Restaurar</button>`
+          : `<button class="verif-btn verif-btn-descartar verif-btn-bulk"
+               onclick="descartarPersonaItems('${personaEsc}')"
+               title="Descartar todos los ítems de ${label}">✕ Descartar todos</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<table class="verif-tabla-colab">
+    <thead>
+      <tr>
+        <th>Colaborador</th>
+        <th style="text-align:center;">🔴 Errores</th>
+        <th style="text-align:center;">🟡 Alertas</th>
+        <th style="text-align:center;">ℹ️ Info</th>
+        <th>Período afectado</th>
+        <th>Acción masiva</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+/* Helper de búsqueda de perPersona igual al usado en renderAsim */
+function _ppBuscar(perPersona, col) {
+  if (!perPersona) return null;
+  if (col.rfc   && perPersona[col.rfc])   return perPersona[col.rfc];
+  if (col.alias && perPersona[col.alias]) return perPersona[col.alias];
+  return Object.values(perPersona).find(v =>
+    (col.rfc  && v.rfc  && col.rfc.toUpperCase()  === v.rfc.toUpperCase()) ||
+    (col.alias && v.alias && col.alias === v.alias)
+  ) || null;
+}
+
+function ejecutarVerificacion(trigger) {
+  trigger = trigger || 'auto';
+  const colabs     = getActiveColaboradores();
+  const asimAll    = loadRegistry(KEY_ASIM).map(migrateAsimRecord);
+  const honAll     = loadRegistry(KEY_HON);
+  const movManual  = loadRegistry('stgl_mov_manual');
+
+  const errores  = [];   // 🔴 Datos faltantes o rotos — requieren acción
+  const alertas  = [];   // 🟡 Inconsistencias — pueden impactar cálculos
+  const info     = [];   // ℹ️ Información — sin impacto operativo inmediato
+
+  /* ── 1. COMPLETITUD perPersona ─────────────────────────────────
+     Cada colaborador activo debe tener datos (bruto>0 o ret>0) en
+     cada registro de asimilables.  Si falta, el CFDI de esa persona
+     no se incluyó en el lote importado. */
+  asimAll.forEach(rec => {
+    colabs.forEach(col => {
+      const pp = _ppBuscar(rec.perPersona, col);
+      if (!pp || (parseNum(pp.bruto) === 0 && parseNum(pp.ret) === 0 && parseNum(pp.neto) === 0)) {
+        errores.push({
+          tipo:    'DATO_FALTANTE',
+          modulo:  'Asimilables',
+          fecha:   rec.fechaPago,
+          mes:     rec.mesFiscal || '',
+          persona: col.nombreCorto,
+          key:     `DATO_FALTANTE|${col.nombreCorto}|${rec.fechaPago}`,
+          msg:     `${col.nombreCorto} no tiene datos en nómina del ${rec.fechaPago} (${rec.mesFiscal || '?'})`,
+          accion:  `Re-importar los CFDIs XML del ${rec.fechaPago} incluyendo el CFDI de ${col.nombreCorto}`,
+          id:      rec.id,
+        });
+      }
+    });
+  });
+
+  /* ── 2. CONSISTENCIA subtotales asimilables ────────────────────
+     La suma de bruto/ret/neto de perPersona debe coincidir con el
+     subtotal del registro (±$1 de tolerancia por redondeos). */
+  asimAll.forEach(rec => {
+    const vals = Object.values(rec.perPersona || {});
+    const sumB = vals.reduce((s, v) => s + parseNum(v.bruto), 0);
+    const sumR = vals.reduce((s, v) => s + parseNum(v.ret),   0);
+    const difB = Math.abs(sumB - parseNum(rec.subtotalBruto));
+    const difR = Math.abs(sumR - parseNum(rec.subtotalRet));
+    if (difB > 1) alertas.push({
+      tipo: 'INCONSISTENCIA', modulo: 'Asimilables', fecha: rec.fechaPago,
+      key:  `INCON_BRUTO|${rec.fechaPago}`,
+      msg:  `${rec.fechaPago}: Bruto encabezado $${fmtNum(rec.subtotalBruto)} ≠ suma personas $${fmtNum(sumB)} (Δ $${fmtNum(difB)})`,
+      accion: 'Re-importar el lote de CFDIs para este día',
+    });
+    if (difR > 1) alertas.push({
+      tipo: 'INCONSISTENCIA', modulo: 'Asimilables', fecha: rec.fechaPago,
+      key:  `INCON_ISR|${rec.fechaPago}`,
+      msg:  `${rec.fechaPago}: ISR encabezado $${fmtNum(rec.subtotalRet)} ≠ suma personas $${fmtNum(sumR)} (Δ $${fmtNum(difR)}) — cálculo informativo`,
+      accion: 'Este cálculo es de carácter informativo y proviene de los CFDIs emitidos por el despacho o contador del cliente, sobre los cuales Santaglia no tiene control ni responsabilidad. Si la discrepancia persiste después de re-importar el lote, verifica con el contador o despacho del cliente para una revisión más profunda.',
+    });
+  });
+
+  /* ── 3. RETENCIONES honorarios ─────────────────────────────────
+     El campo totalRetenciones almacenado debe ser retIsr+retIva.
+     La UI ya usa el cálculo en tiempo real, pero el almacenado
+     puede ser incorrecto en registros históricos. */
+  honAll.forEach(rec => {
+    const calc   = parseNum(rec.retIsr) + parseNum(rec.retIva);
+    const stored = parseNum(rec.totalRetenciones);
+    if (Math.abs(calc - stored) > 1) info.push({
+      tipo: 'CAMPO_CALCULADO', modulo: 'Honorarios', fecha: rec.fechaPago,
+      key:  `CAMPO_CALC_HON|${rec.prestador||'?'}|${rec.fechaPago}`,
+      msg:  `${rec.prestador || '?'} (${rec.fechaPago}): retención almacenada $${fmtNum(stored)} ≠ retISR+retIVA del CFDI $${fmtNum(calc)} (Δ $${fmtNum(Math.abs(calc-stored))}) — cálculo informativo`,
+      accion: `Este cálculo es de carácter informativo. Las retenciones provienen de los CFDIs emitidos por el despacho o contador del cliente, sobre los cuales Santaglia no tiene control ni responsabilidad fiscal o legal. Referencia del CFDI: retISR = $${fmtNum(parseNum(rec.retIsr))} · retIVA = $${fmtNum(parseNum(rec.retIva))} · total retenido = $${fmtNum(calc)}. La UI muestra el valor correcto en tiempo real. Si hay discrepancia, consulta directamente con el contador o despacho del cliente.`,
+    });
+  });
+
+  /* ── 4. DOBLE-CAPTURA — asim → stgl_mov_manual ─────────────────
+     Cada línea de perPersona debe tener un movimiento en stgl_mov_manual.
+     Solo revisamos los últimos 20 registros para no saturar el log.
+     Si no hay coincidencia exacta, busca movimiento del mismo colaborador
+     en un rango de ±VENTANA_DESFASE días (desfase de registro). */
+  asimAll.slice(-20).forEach(rec => {
+    Object.entries(rec.perPersona || {}).forEach(([key, val]) => {
+      if (parseNum(val.neto) <= 0) return;
+      const safeKey = key.replace(/[^a-zA-Z0-9]/g,'').substring(0,12);
+      const movId   = `mov-asim-${(rec.fechaPago||'').replace(/-/g,'')}-${safeKey}`;
+      const nombre  = val.nombreCorto || key;
+      if (movManual.find(m => m.id === movId)) return; // ✓ coincidencia exacta
+
+      const cercano = _buscarMovCercano(movManual, 'mov-asim-', safeKey, null, rec.fechaPago, VENTANA_DESFASE);
+      if (cercano) {
+        alertas.push({
+          tipo:   'DESFASE_FECHA', modulo: 'Asimilables → Financiero',
+          fecha:  rec.fechaPago, persona: nombre,
+          key:    `DESFASE_ASIM|${nombre}|${rec.fechaPago}`,
+          msg:    `${nombre} (${rec.fechaPago}): posible desfase — existe movimiento en Financiero el ${cercano.fecha} (${cercano.delta} día${cercano.delta!==1?'s':''} ${cercano.dir})`,
+          accion: 'Confirmar que el movimiento del '+cercano.fecha+' en Financiero corresponde a este registro; si es correcto, descartar esta alerta',
+        });
+      } else {
+        alertas.push({
+          tipo:   'MOV_FALTANTE', modulo: 'Asimilables → Financiero',
+          fecha:  rec.fechaPago, persona: nombre,
+          key:    `MOV_FALTANTE_ASIM|${nombre}|${rec.fechaPago}`,
+          msg:    `${nombre} (${rec.fechaPago}): sin movimiento en Financiero`,
+          accion: 'Guardar o re-importar el registro para registrar el egreso en Financiero',
+        });
+      }
+    });
+  });
+
+  /* ── 5. DOBLE-CAPTURA — honorarios → stgl_mov_manual ───────────
+     Cuatro niveles de detección, de más estricto a más amplio:
+     A) Coincidencia exacta por movId (sync perfecto desde Nómina).
+     B) Misma fecha + nombre del prestador en desc (cualquier prefijo).
+     C) ±VENTANA_DESFASE días con prefijo mov-hon- (desfase registrado).
+     D) ±VENTANA_DESFASE días + nombre en desc (cualquier prefijo) —
+        detecta pagos manuales en Financiero con fecha distinta a la del reporte. */
+  const _normDesc = s => normalStr(s||'').replace(/\s+/g,'');
+  honAll.slice(-20).forEach(rec => {
+    const id    = rec.uuid || `hon-${(rec.fechaPago||'').replace(/-/g,'')}-${(rec.prestador||'').replace(/\s+/g,'').substring(0,8)}`;
+    const movId = `mov-hon-${id}`;
+    const prestNorm = _normDesc(rec.prestador);
+
+    // A) Coincidencia exacta por ID de sync
+    if (movManual.find(m => m.id === movId)) return;
+
+    // B) Misma fecha + nombre del prestador en desc (pago manual en Financiero el mismo día)
+    if (rec.fechaPago && prestNorm.length >= 4 &&
+        movManual.find(m => m.fecha === rec.fechaPago && _normDesc(m.desc).includes(prestNorm))) return;
+
+    // C) ±7 días con prefijo mov-hon- (desfase de fecha en registro oficial)
+    const prestSafe = (rec.prestador||'').replace(/\s+/g,'').substring(0,8);
+    const cercano = _buscarMovCercano(movManual, 'mov-hon-', null, prestSafe, rec.fechaPago, VENTANA_DESFASE);
+    if (cercano) {
+      alertas.push({
+        tipo:   'DESFASE_FECHA', modulo: 'Honorarios → Financiero',
+        fecha:  rec.fechaPago, persona: rec.prestador,
+        key:    `DESFASE_HON|${rec.prestador||'?'}|${rec.fechaPago}`,
+        msg:    `${rec.prestador || '?'} (${rec.fechaPago}): posible desfase — existe movimiento en Financiero el ${cercano.fecha} (${cercano.delta} día${cercano.delta!==1?'s':''} ${cercano.dir})`,
+        accion: 'Confirmar que el movimiento del '+cercano.fecha+' en Financiero corresponde a este registro; si es correcto, descartar esta alerta',
+      });
+      return;
+    }
+
+    // D) ±7 días + nombre del prestador en desc (cualquier prefijo — pago manual con fecha distinta)
+    if (prestNorm.length >= 4) {
+      let mejorD = null, mejorDelta = Infinity;
+      movManual.forEach(m => {
+        if (!_normDesc(m.desc).includes(prestNorm)) return;
+        const delta = Math.abs(_diasEntre(rec.fechaPago, m.fecha||''));
+        if (delta > 0 && delta <= VENTANA_DESFASE && delta < mejorDelta) {
+          mejorDelta = delta;
+          mejorD = { fecha: m.fecha, delta,
+                     dir: _diasEntre(rec.fechaPago, m.fecha||'') > 0 ? 'después' : 'antes' };
+        }
+      });
+      if (mejorD) {
+        alertas.push({
+          tipo:   'DESFASE_FECHA', modulo: 'Honorarios → Financiero',
+          fecha:  rec.fechaPago, persona: rec.prestador,
+          key:    `DESFASE_HON|${rec.prestador||'?'}|${rec.fechaPago}`,
+          msg:    `${rec.prestador || '?'} (${rec.fechaPago}): posible desfase — existe movimiento en Financiero el ${mejorD.fecha} (${mejorD.delta} día${mejorD.delta!==1?'s':''} ${mejorD.dir}); el reporte auxiliar y el pago real pueden diferir`,
+          accion: `Confirmar que el pago del ${mejorD.fecha} en Financiero corresponde a este registro (fecha del reporte: ${rec.fechaPago}); si es correcto, descartar esta alerta`,
+        });
+        return;
+      }
+    }
+
+    alertas.push({
+      tipo:   'MOV_FALTANTE', modulo: 'Honorarios → Financiero',
+      fecha:  rec.fechaPago, persona: rec.prestador,
+      key:    `MOV_FALTANTE_HON|${rec.prestador||'?'}|${rec.fechaPago}`,
+      msg:    `${rec.prestador || '?'} (${rec.fechaPago}): sin movimiento en Financiero`,
+      accion: 'Guardar o re-importar el registro de honorarios',
+    });
+  });
+
+  /* ── 6. FORMATO mesFiscal ──────────────────────────────────────*/
+  const EN_DIFF = ['Jan','Apr','Aug','Dec'];
+  [...asimAll, ...honAll].forEach(rec => {
+    if (rec.mesFiscal && EN_DIFF.some(e => rec.mesFiscal.startsWith(e))) info.push({
+      tipo: 'FORMATO_MES', modulo: 'General', fecha: rec.fechaPago,
+      key:  `FORMATO_MES|${rec.fechaPago}`,
+      msg:  `mesFiscal en inglés: "${rec.mesFiscal}" — se corrige automáticamente al cargar la página`,
+    });
+  });
+
+  const resultado = {
+    fecha: new Date().toISOString(), trigger,
+    errores, alertas, info,
+    ok:    errores.length === 0 && alertas.length === 0,
+    total: errores.length + alertas.length + info.length,
+  };
+
+  // Persistir últimos 30 logs
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    logs.unshift(resultado);
+    localStorage.setItem(KEY_VERIF_LOG, JSON.stringify(logs.slice(0, 30)));
+  } catch {}
+
+  return resultado;
+}
+
+function cargarUltimaVerificacion() {
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG) || '[]');
+    return logs[0] || null;
+  } catch { return null; }
+}
+
+function lanzarVerificacion(trigger) {
+  const resultado = ejecutarVerificacion(trigger || 'manual');
+  renderVerificacionBadge(resultado);
+  renderVerificacionPanel(resultado);
+  document.getElementById('verif-panel').classList.add('open');
+}
+
+function toggleVerifPanel() {
+  const panel = document.getElementById('verif-panel');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+  } else {
+    const last = cargarUltimaVerificacion();
+    if (last) renderVerificacionPanel(last);
+    panel.classList.add('open');
+  }
+}
+
+function renderVerificacionBadge(resultado) {
+  const el = document.getElementById('verif-badge');
+  if (!el) return;
+  if (!resultado) {
+    el.innerHTML = `<button onclick="lanzarVerificacion('manual')"
+        style="color:var(--text-dim);border-color:var(--border);">🔍 Verificar</button>`;
+    return;
+  }
+  const { errores, alertas, ok } = filtrarDescartados(resultado);
+  const color = errores.length ? 'var(--red)' : alertas.length ? '#c8801b' : 'var(--green)';
+  const bg    = errores.length ? '#fff5f5'    : alertas.length ? '#fffbeb'  : '#f0fdf4';
+  const icon  = errores.length ? '⚠'          : alertas.length ? '🔔'        : '✓';
+  const label = errores.length ? `${errores.length} error${errores.length>1?'es':''}`
+              : alertas.length ? `${alertas.length} alerta${alertas.length>1?'s':''}`
+              : 'Datos OK';
+  el.innerHTML = `<button onclick="toggleVerifPanel()"
+      style="color:${color};border-color:${color};background:${bg};"
+      title="Ver log de verificación">${icon} ${label}</button>`;
+}
+
+/* ── Sección colapsable "¿Qué verifica este panel?" ── */
+function _renderChecksSection() {
+  const id = 'verif-checks-nom';
+  return `<div class="verif-checks">
+    <button class="verif-checks-toggle" onclick="
+      const b=document.getElementById('${id}');
+      b.classList.toggle('open');
+      this.classList.toggle('open');">
+      <span class="vct-arrow">▶</span> ¿Qué se verifica en este módulo?
+    </button>
+    <div class="verif-checks-body" id="${id}">
+      <div class="verif-check-row">
+        <span class="verif-check-num">1</span>
+        <span><span class="verif-check-name">Completitud de nómina</span> — Todos los colaboradores activos deben tener datos (bruto, ret o neto &gt; 0) en cada lote de CFDIs importado. Si falta alguno, su CFDI no fue incluido en la importación.</span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">2</span>
+        <span><span class="verif-check-name">Consistencia de subtotales</span> — La suma de bruto y retención por persona debe coincidir con el encabezado del lote <span class="verif-check-badge">tolerancia ±$1</span>.</span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">3</span>
+        <span><span class="verif-check-name">Retenciones honorarios</span> — Compara el campo almacenado vs. retISR + retIVA del CFDI. <span class="verif-check-badge" style="background:#fff7e0;color:#7a5700;border-color:#d4a017;">Carácter informativo</span> — las retenciones provienen de CFDIs emitidos por el despacho o contador del cliente; cualquier discrepancia debe verificarse con ellos directamente. La UI usa siempre el cálculo en tiempo real.</span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">4</span>
+        <span><span class="verif-check-name">Doble-captura: Asimilables → Financiero</span> — Cada pago neto debe tener su movimiento registrado en Financiero. Si no hay coincidencia exacta de fecha, busca un movimiento del mismo colaborador en <span class="verif-check-badge">±7 días</span>.</span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">5</span>
+        <span><span class="verif-check-name">Doble-captura: Honorarios → Financiero</span> — Ídem para honorarios, identificando al prestador por nombre con <span class="verif-check-badge">±7 días</span> de tolerancia.</span>
+      </div>
+      <div class="verif-check-row">
+        <span class="verif-check-num">6</span>
+        <span><span class="verif-check-name">Formato mesFiscal</span> — Todos los registros deben usar nombres de mes en español (Ene-24, Feb-24…). Los registros en inglés se migran automáticamente al cargar la página.</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderVerificacionPanel(resultado) {
+  const body   = document.getElementById('verif-body');
+  const footer = document.getElementById('verif-footer');
+  if (!body) return;
+
+  _lastVerifResult = resultado;
+
+  // Sync toggle button label
+  const vistaBtn = document.getElementById('verif-vista-btn');
+  if (vistaBtn) vistaBtn.textContent = _verifVista === 'lista' ? '⊞ Tabla' : '≡ Lista';
+
+  // Conteos antes de filtrar (raw) y después (activos)
+  const totalErrRaw = resultado.errores.length;
+  const totalAltRaw = resultado.alertas.length;
+  const totalInfRaw = resultado.info.length;
+
+  const res = filtrarDescartados(resultado);
+  const { errores, alertas, info, fecha, trigger, ok } = res;
+  const totalDescartados = (totalErrRaw - errores.length) + (totalAltRaw - alertas.length) + (totalInfRaw - info.length);
+
+  const triggerLabel = {load:'carga de página',import:'importación CFDI',save:'guardado',manual:'manual',auto:'automático'}[trigger] || trigger;
+  const ts = new Date(fecha).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
+
+  // Detectar si hay ítems de retenciones (informativos o no) para mostrar el aviso CFDI
+  const tiposRetenciones = new Set(['CAMPO_CALCULADO', 'INCONSISTENCIA']);
+  const keywordsRet = ['INCON_ISR', 'CAMPO_CALC_HON'];
+  const hayItemsRet = [...errores, ...alertas, ...info].some(it =>
+    (tiposRetenciones.has(it.tipo) && (it.modulo === 'Honorarios' || keywordsRet.some(k => (it.key||'').startsWith(k))))
+  );
+  const cfdiDisclaimerHtml = hayItemsRet ? `<div style="
+      background:#fffbeb; border:1px solid #d4a017; border-radius:6px;
+      padding:0.55rem 0.8rem; margin-bottom:0.65rem; font-size:0.71rem; color:#5a3e00;
+      display:flex; gap:0.5rem; align-items:flex-start;">
+    <span style="flex-shrink:0;font-size:0.9rem;">⚠️</span>
+    <span><strong>Cálculos de retención — carácter informativo.</strong>
+    Las retenciones de ISR e IVA provienen de los CFDIs emitidos por el despacho o contador del cliente,
+    sobre los cuales Santaglia no tiene control ni responsabilidad fiscal o legal.
+    En caso de discrepancia, consulta directamente con el contador o despacho del cliente para una revisión más profunda.</span>
+  </div>` : '';
+
+  let html = cfdiDisclaimerHtml;
+
+  if (_verifVista === 'tabla') {
+    // ── Vista tabla: resumen por colaborador (usa resultado ORIGINAL, no filtrado)
+    html += _renderTablaColaboradores(resultado);
+  } else {
+    // ── Vista lista agrupada por persona
+    if (ok && !info.length && totalDescartados === 0) {
+      html += `<div class="verif-ok">✓ Todos los datos están íntegros y consistentes</div>`;
+    } else {
+      if (errores.length) {
+        html += `<div class="verif-section-title">🔴 Errores — acción requerida (${errores.length})</div>`;
+        html += _renderItemsAgrupados(errores, 'error');
+      }
+      if (alertas.length) {
+        html += `<div class="verif-section-title">🟡 Alertas — revisar (${alertas.length})</div>`;
+        html += _renderItemsAgrupados(alertas, 'warning');
+      }
+      if (info.length) {
+        html += `<div class="verif-section-title">ℹ️ Información (${info.length})</div>`;
+        html += _renderItemsAgrupados(info, 'info');
+      }
+    }
+  }
+
+  if (totalDescartados > 0) {
+    html += `<div class="verif-descartados-note">
+      ${totalDescartados} observación${totalDescartados !== 1 ? 'es descartadas' : ' descartada'} en total —
+      <button onclick="restaurarDescartados()">restaurar todas</button>
+    </div>`;
+  }
+
+  html += _renderChecksSection();
+  body.innerHTML = html;
+  footer.innerHTML = `<span>Última verificación: ${ts} · disparador: ${triggerLabel}</span>
+    <span style="margin-left:auto;font-size:0.63rem;">
+      ${errores.length} error${errores.length!==1?'es':''} ·
+      ${alertas.length} alerta${alertas.length!==1?'s':''} ·
+      ${info.length} info
+      ${totalDescartados ? `· <span style="color:var(--text-xs);">${totalDescartados} descartados</span>` : ''}
+    </span>`;
+}
+
 /* ── Init ── */
 /* Limpiar clave legacy de mapeo que puede tener keywords conflictivos */
 localStorage.removeItem(KEY_CFDI_MAP);
@@ -1981,10 +2984,37 @@ localStorage.removeItem(KEY_CFDI_MAP);
 /* Sembrar catálogo si es primera vez */
 loadColaboradores();
 
+/* Migrar mesFiscal de inglés → español en registros existentes */
+migrarMesFiscalAEspañol();
+
+/* Migrar llaves de perPersona para colaboradores sin RFC en catálogo */
+migratePerPersonaKeys();
+
 document.getElementById('h-fecha').value = new Date().toISOString().split('T')[0];
 applyNominaSubfeatures();
 renderHeaderBtns();
 renderAsim();
+
+// Auto-verificación al cargar (diferida para no bloquear el paint inicial)
+setTimeout(() => {
+  try {
+    const res = ejecutarVerificacion('load');
+    renderVerificacionBadge(res);
+    // Si hay errores críticos, mostrar panel automáticamente
+    if (res.errores.length > 0) {
+      renderVerificacionPanel(res);
+      document.getElementById('verif-panel').classList.add('open');
+    }
+  } catch(e) { console.warn('verif:', e); }
+}, 800);
+
+// Re-verificación periódica cada 5 minutos (silenciosa — solo actualiza el badge)
+setInterval(() => {
+  try {
+    const res = ejecutarVerificacion('auto');
+    renderVerificacionBadge(res);
+  } catch {}
+}, 5 * 60 * 1000);
 </script>
 
 <!-- ══ MODAL: Cuenta bancaria para pagos al SAT ══ -->

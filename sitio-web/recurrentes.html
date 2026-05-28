@@ -103,6 +103,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -200,6 +201,7 @@
                 <th class="num">Importe / período</th>
                 <th class="num" style="background:#12205e;">Equiv. MXN/mes</th>
                 <th style="width:54px; text-align:center;">Estado</th>
+                <th style="width:80px; text-align:center;">Próximo pago</th>
                 <th style="width:64px; text-align:center;">Acciones</th>
               </tr>
             </thead>
@@ -231,6 +233,7 @@
                 <th class="num">Importe / período</th>
                 <th class="num" style="background:#12205e;">Equiv. MXN/mes</th>
                 <th style="width:54px; text-align:center;">Estado</th>
+                <th style="width:80px; text-align:center;">Próximo pago</th>
                 <th style="width:64px; text-align:center;">Acciones</th>
               </tr>
             </thead>
@@ -551,6 +554,48 @@ function escH(s) {
 }
 
 /* ══════════════════════════════════════════════════════
+   PRÓXIMO PAGO — cálculo de siguiente fecha futura
+══════════════════════════════════════════════════════ */
+function proximaFechaRec(r) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const per = r.periodicidad || 'Mensual';
+  const dia = Math.min(parseInt(r.diaEstimado || 1), 28);
+
+  if (per === 'Mensual' || per === 'Bimestral' || per === 'Trimestral' || per === 'Semestral' || per === 'Anual') {
+    let d = new Date(hoy.getFullYear(), hoy.getMonth(), dia);
+    if (d < hoy) d = new Date(hoy.getFullYear(), hoy.getMonth() + 1, dia);
+    return d;
+  }
+  if (per === 'Semanal') {
+    const target = parseInt(r.diaSemana ?? 4); // 0=Dom...6=Sáb
+    let d = new Date(hoy);
+    while (d.getDay() !== target) d.setDate(d.getDate() + 1);
+    if (d <= hoy) d.setDate(d.getDate() + 7);
+    return d;
+  }
+  if (per === 'Quincenal') {
+    let d = new Date(hoy.getFullYear(), hoy.getMonth(), dia);
+    if (d < hoy) d = new Date(hoy.getFullYear(), hoy.getMonth(), dia + 15);
+    if (d < hoy) d = new Date(hoy.getFullYear(), hoy.getMonth() + 1, dia);
+    return d;
+  }
+  return null;
+}
+
+function renderProximoPago(r) {
+  if (!r.activo) return '<td style="text-align:center; color:var(--text-xs);">—</td>';
+  const fecha = proximaFechaRec(r);
+  if (!fecha) return '<td style="text-align:center; color:var(--text-xs);">—</td>';
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const dias = Math.round((fecha - hoy) / 86400000);
+  const color = dias <= 3 ? '#dc2626' : dias <= 10 ? '#c67000' : '#15803d';
+  const dia   = fecha.getDate();
+  const mes   = MESES_CORTOS[fecha.getMonth()];
+  const label = `${dia} ${mes} · ${dias}d`;
+  return `<td style="text-align:center; white-space:nowrap; font-family:var(--brand); font-size:0.65rem; font-weight:700; color:${color};">${label}</td>`;
+}
+
+/* ══════════════════════════════════════════════════════
    CRUD
 ══════════════════════════════════════════════════════ */
 function loadRec()     { return loadRegistry(KEY_REC); }
@@ -582,7 +627,7 @@ function renderTablaRec(tab) {
 
   if (!rows.length) {
     document.getElementById(bodyId).innerHTML =
-      `<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text-xs);">
+      `<tr><td colspan="11" style="text-align:center;padding:2.5rem;color:var(--text-xs);">
         Sin registros — usa el botón "+ Agregar recurrente"
       </td></tr>`;
     document.getElementById(footId).innerHTML = '';
@@ -648,6 +693,7 @@ function renderTablaRec(tab) {
           ${r.activo ? 'Activo' : 'Inactivo'}
         </span>
       </td>
+      ${renderProximoPago(r)}
       <td style="text-align:center; white-space:nowrap;">
         <button class="rc-act-btn" onclick="editarRec('${escH(r.id)}')" title="Editar">✏️</button>
         <button class="rc-act-btn" onclick="toggleActivo('${escH(r.id)}')"
@@ -685,7 +731,7 @@ function renderTablaRec(tab) {
       </td>
       <td class="num" style="color:var(--text-xs); font-size:0.67rem;">—</td>
       <td class="num" style="font-size:0.9rem;">${fmtMXN(totalMXN)}</td>
-      <td colspan="2"></td>
+      <td colspan="3"></td>
     </tr>`;
 }
 

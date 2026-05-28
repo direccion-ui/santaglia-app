@@ -10,7 +10,6 @@
 /* ── Configuración Supabase ── */
 const _SB_URL   = 'https://vblazgxsyidxttobiszt.supabase.co';
 const _SB_KEY   = 'sb_publishable_T6iu_Tk9mxxXdBMngfqE8A_hPCH4cXA';
-const _SB_TABLE = 'stgl_kv';
 let _sbClient   = null;
 let _sbReady    = false;
 
@@ -19,7 +18,29 @@ let _stglOrgId    = null;
 let _stglUserRole = null;
 let _stglUserName = null;
 
-function _getOrgId()    { return _stglOrgId    || sessionStorage.getItem('stgl_org_id');    }
+function _getOrgId() {
+  // 1) En-memory (set by _loadUserContext after Supabase auth)
+  if (_stglOrgId) return _stglOrgId;
+  // 2) sessionStorage (persiste mientras la pestaña esté abierta)
+  const ss = sessionStorage.getItem('stgl_org_id');
+  if (ss) return ss;
+  // 3) localStorage (persiste entre sesiones — fuente de verdad local)
+  const ls = localStorage.getItem('stgl_org_id');
+  if (ls) return ls;
+  // 4) Derivar desde el RFC de la empresa (stgl_config) o generar UUID
+  try {
+    const cfg = JSON.parse(localStorage.getItem('stgl_config') || '{}');
+    const rfc = cfg.empresa?.rfc || cfg.empresa?.RFC || '';
+    const id  = rfc
+      ? 'local-' + rfc.toUpperCase().replace(/[^A-Z0-9]/g, '')
+      : 'local-' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('stgl_org_id', id);
+    sessionStorage.setItem('stgl_org_id', id);
+    return id;
+  } catch {
+    return null;
+  }
+}
 function _getUserRole() { return _stglUserRole || sessionStorage.getItem('stgl_user_role'); }
 function _getUserName() { return _stglUserName || sessionStorage.getItem('stgl_user_name'); }
 
@@ -44,40 +65,63 @@ function _initSupabase() {
   });
 }
 
-/* Escribe un par clave/valor en Supabase (fire-and-forget) */
+/* ══════════════════════════════════════════════════════════════
+   Supabase KV — Fase 4 activa
+   Tabla: stgl_data (org_id TEXT, key TEXT, value TEXT, updated_at TIMESTAMPTZ)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Write-through: escribe una clave en Supabase (fire-and-forget) */
 function _sbWrite(key, value) {
-  const orgId = _getOrgId();
-  if (!orgId) return; // sin contexto de org aún
-  _initSupabase().then(sb =>
-    sb.from(_SB_TABLE).upsert({ key, value, org_id: orgId, updated_at: new Date().toISOString() })
-  ).catch(() => {});
+  _initSupabase().then(sb => {
+    const orgId = _getOrgId();
+    if (!orgId || orgId.startsWith('local-')) return; // sin sesión real, silencio
+    sb.from('stgl_data')
+      .upsert({ org_id: orgId, key, value, updated_at: new Date().toISOString() },
+               { onConflict: 'org_id,key' })
+      .then(() => {}).catch(() => {});
+  }).catch(() => {});
 }
 
-/* Lee todos los stgl_* desde Supabase */
+/* Lee todas las claves de la org desde Supabase */
 async function _sbReadAll() {
   try {
-    const sb = await _initSupabase();
-    const { data, error } = await sb.from(_SB_TABLE).select('key, value, updated_at');
-    if (error) return [];
+    const sb    = await _initSupabase();
+    const orgId = _getOrgId();
+    if (!orgId) return [];
+    const { data, error } = await sb
+      .from('stgl_data')
+      .select('key, value')
+      .eq('org_id', orgId);
+    if (error) { console.warn('[stgl] _sbReadAll error:', error.message); return []; }
     return data || [];
-  } catch { return []; }
+  } catch(e) { console.warn('[stgl] _sbReadAll exception:', e); return []; }
 }
 
-/* Sube todos los stgl_* de localStorage a Supabase en lote */
+/* Snapshot completo: vuelca todo localStorage → Supabase */
 async function _sbSnapshot() {
-  const orgId = _getOrgId();
-  if (!orgId) return;
   try {
+    const sb    = await _initSupabase();
+    const orgId = _getOrgId();
+    if (!orgId || orgId.startsWith('local-')) return;
     const rows = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('stgl_'))
-        rows.push({ key: k, value: localStorage.getItem(k), org_id: orgId, updated_at: new Date().toISOString() });
+      if (k?.startsWith('stgl_'))
+        rows.push({ org_id: orgId, key: k, value: localStorage.getItem(k),
+                    updated_at: new Date().toISOString() });
     }
     if (!rows.length) return;
-    const sb = await _initSupabase();
-    await sb.from(_SB_TABLE).upsert(rows);
-  } catch {}
+    // Intentar bulk upsert; si falla, escribir fila por fila
+    const { error } = await sb.from('stgl_data')
+      .upsert(rows, { onConflict: 'org_id,key' });
+    if (error) {
+      console.warn('[stgl] bulk upsert falló, reintentando fila por fila:', error.message);
+      for (const row of rows) {
+        const rowResult = await sb.from('stgl_data').upsert(row, { onConflict: 'org_id,key' });
+        if (rowResult.error) console.warn('[stgl] row upsert error:', row.key, rowResult.error);
+      }
+    }
+  } catch(e) { console.warn('[stgl] _sbSnapshot exception:', e); }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -152,36 +196,43 @@ function _idbSnapshot() {
    Restauración al arrancar — cascada: localStorage → IDB → Supabase
    ══════════════════════════════════════════════════════════════ */
 async function _checkAndRestore() {
-  // ¿localStorage ya tiene datos? No hay nada que restaurar.
-  for (let i = 0; i < localStorage.length; i++) {
-    if (localStorage.key(i)?.startsWith('stgl_')) return;
-  }
+  // stgl_supabase_migrated es la señal de que los datos ya están cargados/sincronizados.
+  // Si existe en localStorage, no hay nada que restaurar.
+  if (localStorage.getItem('stgl_supabase_migrated')) return;
 
-  // Intento 1: IndexedDB (local, rápido, sin red)
+  // Intento 1: IndexedDB — solo si IDB también tiene la señal de sync válida
   const idb = await _idbReadAll();
-  const idbEntries = Object.entries(idb).filter(([k]) => k.startsWith('stgl_'));
-  if (idbEntries.length) {
-    const _orig = localStorage.setItem.bind(localStorage);
-    idbEntries.forEach(([k, v]) => { if (v != null) _orig(k, v); });
+  if (idb['stgl_supabase_migrated']) {
+    const entries = Object.entries(idb).filter(([k]) => k.startsWith('stgl_'));
+    entries.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
     const ts = idb[_STGL_TS_KEY] ? new Date(+idb[_STGL_TS_KEY]).toLocaleString('es-MX') : '—';
-    toast(`✅ Datos restaurados desde respaldo local (${ts}). Recargando…`, 'success');
+    try { toast(`✅ Datos restaurados desde respaldo local (${ts}). Recargando…`, 'success'); } catch {}
     setTimeout(() => location.reload(), 2000);
     return;
   }
 
-  // Intento 2: Supabase (nube)
+  // Intento 2: Supabase — usar session.user.id directamente
   try {
-    const rows = await _sbReadAll();
-    const stglRows = rows.filter(r => r.key.startsWith('stgl_'));
-    if (stglRows.length) {
-      const _orig = localStorage.setItem.bind(localStorage);
-      stglRows.forEach(({ key, value }) => { if (value != null) _orig(key, value); });
-      // También llenar IndexedDB con lo que vino de la nube
-      stglRows.forEach(({ key, value }) => _idbWrite(key, value));
-      toast(`☁️ Datos restaurados desde la nube (${stglRows.length} bloques). Recargando…`, 'success');
-      setTimeout(() => location.reload(), 2000);
-    }
-  } catch {}
+    const sb = await _initSupabase();
+    const { data: authData } = await sb.auth.getSession();
+    const session = authData?.session;
+    if (!session) return;
+    const orgId = session.user.id;
+    const { data, error } = await sb
+      .from('stgl_data').select('key, value').eq('org_id', orgId);
+    if (error) { console.warn('[stgl] restore error:', error.message); return; }
+    const stglRows = (data || []).filter(r => r.key?.startsWith('stgl_'));
+    if (!stglRows.length) return;
+    _stglOrgId = orgId;
+    stglRows.forEach(({ key, value }) => { if (value != null) localStorage.setItem(key, value); });
+    stglRows.forEach(({ key, value }) => _idbWrite(key, value));
+    console.log(`[stgl] Restaurados ${stglRows.length} bloques desde Supabase. Recargando…`);
+    try { toast(`☁️ Datos restaurados desde la nube (${stglRows.length} bloques). Recargando…`, 'success'); } catch {}
+    // Usar location.replace para garantizar el reload en mobile Safari
+    // (setTimeout solo no siempre dispara en contexto post-login mobile)
+    const reloadUrl = location.href.split('?')[0];
+    setTimeout(() => { location.replace(reloadUrl); }, 1500);
+  } catch(e) { console.warn('[stgl] _checkAndRestore exception:', e); }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -193,19 +244,33 @@ async function _loadUserContext() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
 
+    // Cargar perfil + org actual
     const { data: profile } = await sb
-      .from('user_profiles')
-      .select('org_id, role, full_name')
-      .eq('user_id', session.user.id)
+      .from('profiles')
+      .select('nombre, current_org_id')
+      .eq('id', session.user.id)
       .single();
 
-    if (profile) {
-      _stglOrgId    = profile.org_id;
-      _stglUserRole = profile.role;
-      _stglUserName = profile.full_name || session.user.email;
+    if (profile?.current_org_id) {
+      // Cargar rol en la org actual
+      const { data: membership } = await sb
+        .from('user_org')
+        .select('rol')
+        .eq('user_id', session.user.id)
+        .eq('org_id', profile.current_org_id)
+        .single();
+
+      _stglOrgId    = profile.current_org_id;
+      _stglUserRole = membership?.rol || 'owner';
+      _stglUserName = profile.nombre || session.user.email;
+      // Guardar en ambos storage para sobrevivir recargas
+      const _lsOrig = localStorage.setItem.bind(localStorage);
+      _lsOrig('stgl_org_id', _stglOrgId);   // localStorage sin interceptor
       sessionStorage.setItem('stgl_org_id',    _stglOrgId);
       sessionStorage.setItem('stgl_user_role', _stglUserRole);
       sessionStorage.setItem('stgl_user_name', _stglUserName);
+      // Actualizar badge ahora que tenemos org_id real de Supabase
+      _actualizarEstadoSync();
     }
   } catch {}
 }
@@ -261,31 +326,30 @@ async function migrarDatosASupabase() {
   try {
     const orgId = _getOrgId();
     if (!orgId) {
-      toast('Sin contexto de organización. Recarga la página e intenta de nuevo.', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = '☁️ Sincronizar ahora'; }
+      toast('Sin contexto de organización. Inicia sesión e intenta de nuevo.', 'error');
       return;
     }
-    const rows = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('stgl_'))
-        rows.push({ key: k, value: localStorage.getItem(k), org_id: orgId, updated_at: new Date().toISOString() });
-    }
-    if (!rows.length) {
+    // Contar claves disponibles
+    const count = [...Array(localStorage.length)]
+      .map((_, i) => localStorage.key(i))
+      .filter(k => k?.startsWith('stgl_')).length;
+    if (!count) {
       toast('No hay datos locales para migrar. Captura algún dato primero.', 'info');
-      if (btn) { btn.disabled = false; btn.textContent = '☁️ Sincronizar ahora'; }
       return;
     }
-    const sb = await _initSupabase();
-    const { error } = await sb.from(_SB_TABLE).upsert(rows);
-    if (error) throw error;
-    _idbSnapshot(); // también respaldar en IndexedDB local
-    toast(`☁️ ${rows.length} bloques sincronizados en nube e IndexedDB.`, 'success');
+    await _idbSnapshot();   // nivel 2: IndexedDB local (siempre)
+    await _sbSnapshot();    // nivel 3: Supabase nube
+    const esNube = orgId && !orgId.startsWith('local-');
+    toast(esNube
+      ? `☁️ ${count} bloques sincronizados con Supabase.`
+      : `💾 ${count} bloques respaldados en IndexedDB (inicia sesión para sincronizar con la nube).`,
+      'success');
     localStorage.setItem('stgl_supabase_migrated', Date.now().toString());
     _actualizarEstadoSync();
   } catch(e) {
-    toast('Error al migrar: ' + (e.message || e), 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '☁️ Migrar datos a Supabase'; }
+    toast('Error al sincronizar: ' + (e.message || e), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '☁️ Sincronizar ahora'; }
   }
 }
 
@@ -295,25 +359,45 @@ function _actualizarEstadoSync() {
   if (!el) return;
   const ts = localStorage.getItem('stgl_supabase_migrated');
   if (ts) {
-    const fecha = new Date(+ts).toLocaleString('es-MX');
-    el.innerHTML = `<span style="color:var(--green);">☁️ Sincronizado con Supabase · última vez: ${fecha}</span>`;
+    const fecha   = new Date(+ts).toLocaleString('es-MX');
+    const orgId   = _getOrgId() || '';
+    const esLocal = !orgId || orgId.startsWith('local-');
+    const label   = esLocal ? '💾 Respaldo local (IndexedDB)' : '☁️ Sincronizado con Supabase';
+    el.innerHTML  = `<span style="color:var(--green);">${label} · última vez: ${fecha}</span>`;
     const btn = document.getElementById('btn-migrar-supabase');
-    if (btn) btn.textContent = '☁️ Sincronizar ahora';
+    if (btn) btn.textContent = esLocal ? '💾 Respaldar ahora' : '☁️ Sincronizar ahora';
   } else {
-    el.innerHTML = `<span style="color:var(--gold);">⚠️ Datos aún no sincronizados con la nube.</span>`;
+    el.innerHTML = `<span style="color:var(--gold);">⚠️ Datos aún no respaldados en IndexedDB.</span>`;
   }
 }
 
-/* Snapshot a ambos niveles al ocultar/cerrar la página */
+/* ── Sincronización automática de datos ──────────────────────────
+   Safari cancela los fetch en vuelo durante beforeunload/pagehide,
+   por eso sólo usamos visibilitychange (más confiable).
+   Además, sync periódico cada 3 min como red de seguridad.
+   ──────────────────────────────────────────────────────────────── */
+let _periodicSyncTimer = null;
+
 function _snapshotAll() {
   _idbSnapshot();
   _sbSnapshot();
 }
+
+/* Sync al ocultar la pestaña (cambio de tab, minimizar, cerrar).
+   visibilitychange dispara ANTES de pagehide, cuando fetch aún puede completar. */
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') _snapshotAll();
 });
-window.addEventListener('pagehide',     _snapshotAll);
-window.addEventListener('beforeunload', _snapshotAll);
+
+/* Sync periódico cada 3 minutos mientras la página está activa.
+   Garantiza que a lo mucho 3 min de cambios queden sin subir a Supabase,
+   incluso si la pestaña se cierra abruptamente sin disparar visibilitychange. */
+function _startPeriodicSync() {
+  if (_periodicSyncTimer) return;
+  _periodicSyncTimer = setInterval(() => {
+    if (document.visibilityState !== 'hidden') _sbSnapshot();
+  }, 3 * 60 * 1000); // 3 minutos
+}
 
 /* ══════════════════════════════════════════════════════════════
    Utilidades generales
@@ -411,6 +495,124 @@ function _autoCaptureFromRegistry(key, data) {
   } catch {}
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Directorio de contactos — clientes y proveedores
+   stgl_directorio : permanente, sync Supabase
+   stgl_cfdi_index : auto-poblado, auto-purgado (90 días / 3 usos)
+   ══════════════════════════════════════════════════════════════ */
+const _DIR_KEY        = 'stgl_directorio';
+const _CIDX_KEY       = 'stgl_cfdi_index';
+const _CIDX_TTL_DIAS  = 90;
+const _CIDX_MIN_USOS  = 3;
+function _stglHoy() { return new Date().toISOString().substring(0, 10); }
+
+/* Búsqueda unificada en directorio + cfdi_index */
+function _dirBuscar(q) {
+  if (!q || q.length < 2) return [];
+  const qn = q.toLowerCase();
+  const dir = loadRegistry(_DIR_KEY);
+  const idx = loadRegistry(_CIDX_KEY);
+  return [...dir.map(e => ({...e, _f:'dir'})), ...idx.map(e => ({...e, _f:'idx'}))]
+    .filter(e => (e.nombre||'').toLowerCase().includes(qn) || (e.rfc||'').toLowerCase().includes(qn))
+    .sort((a, b) => (b.usos||0) - (a.usos||0))
+    .slice(0, 8);
+}
+
+/* Agregar / actualizar entrada en directorio permanente */
+function _dirAgregar(nombre, concepto, cuentaCont, rfc, tipo) {
+  if (!nombre && !rfc) return;
+  const dir = loadRegistry(_DIR_KEY);
+  const e   = dir.find(x => (rfc && x.rfc === rfc) || (!rfc && x.nombre === nombre));
+  if (e) {
+    e.usos = (e.usos||0) + 1; e.fechaUltimoUso = _stglHoy();
+    if (concepto)                              e.conceptoDefault   = concepto;
+    if (cuentaCont && cuentaCont !== 'No Existe') e.cuentaContDefault = cuentaCont;
+  } else {
+    dir.push({ id: rfc || ('dir_' + Date.now()), rfc: rfc||'', nombre,
+               tipo: tipo||'proveedor', conceptoDefault: concepto||'',
+               cuentaContDefault: cuentaCont||'No Existe',
+               usos: 1, fechaUltimoUso: _stglHoy(), origen: 'manual' });
+  }
+  saveRegistry(_DIR_KEY, dir);
+}
+
+/* Indexar proveedor desde CFDI — promueve automáticamente tras 3 usos */
+function _cfdiIdxAgregar(rfc, nombre, concepto, cuentaCont) {
+  if (!nombre && !rfc) return;
+  const idx = loadRegistry(_CIDX_KEY);
+  const e   = idx.find(x => (rfc && x.rfc === rfc) || (!rfc && x.nombre === nombre));
+  if (e) {
+    e.usos = (e.usos||1) + 1; e.fechaUltimoUso = _stglHoy();
+    if (concepto)                              e.conceptoUltimoUso = concepto;
+    if (cuentaCont && cuentaCont !== 'No Existe') e.cuentaContDefault = cuentaCont;
+    if (e.usos >= _CIDX_MIN_USOS) {
+      _dirAgregar(e.nombre, e.conceptoUltimoUso, e.cuentaContDefault, e.rfc, 'proveedor');
+      saveRegistry(_CIDX_KEY, idx.filter(x => x !== e));
+    } else {
+      saveRegistry(_CIDX_KEY, idx);
+    }
+  } else {
+    idx.push({ rfc: rfc||'', nombre, conceptoUltimoUso: concepto||'',
+               cuentaContDefault: cuentaCont||'', usos: 1,
+               fechaUltimoUso: _stglHoy(), fechaPrimeraVez: _stglHoy() });
+    saveRegistry(_CIDX_KEY, idx);
+  }
+}
+
+/* Purgar entradas de cfdi_index con < 3 usos y > 90 días sin aparecer */
+function _cfdiIdxPurgar() {
+  const idx = loadRegistry(_CIDX_KEY);
+  if (!idx.length) return;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - _CIDX_TTL_DIAS);
+  const clean  = idx.filter(e =>
+    (e.usos||1) >= _CIDX_MIN_USOS ||
+    new Date(e.fechaUltimoUso || e.fechaPrimeraVez || '2000-01-01') > cutoff
+  );
+  if (clean.length < idx.length) saveRegistry(_CIDX_KEY, clean);
+}
+
+/* ── Normalizador de nombre de cuenta ──────────────────────────────
+   Dado cualquier string (p.ej. "Tarjeta de Crédito CLARA"),
+   devuelve el alias canónico de stgl_saldos ("Clara").
+   Orden: exacto → normalizado → contención → palabras comunes.
+   ────────────────────────────────────────────────────────────────── */
+function _normalizarCuenta(raw) {
+  if (!raw) return raw;
+  try {
+    const saldos = JSON.parse(localStorage.getItem('stgl_saldos') || '[]');
+    if (!saldos.length) return raw;
+    const _n = s => (s || '').toLowerCase().normalize('NFD')
+      .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+    const rawN = _n(raw);
+
+    // 1. Exacto
+    const exact = saldos.find(s => s.cuenta === raw);
+    if (exact) return exact.cuenta;
+
+    // 2. Exacto normalizado
+    const normExact = saldos.find(s => _n(s.cuenta) === rawN);
+    if (normExact) return normExact.cuenta;
+
+    // 3. Contención (uno contiene al otro)
+    const partial = saldos.find(s => {
+      const sN = _n(s.cuenta);
+      return rawN.includes(sN) || sN.includes(rawN);
+    });
+    if (partial) return partial.cuenta;
+
+    // 4. Mejor coincidencia por palabras comunes (min 2 chars)
+    const rawWords = rawN.split(' ').filter(w => w.length >= 2);
+    let best = null, bestScore = 0;
+    saldos.forEach(s => {
+      const sWords = _n(s.cuenta).split(' ').filter(w => w.length >= 2);
+      const score  = sWords.filter(w => rawWords.includes(w)).length;
+      if (score > bestScore) { bestScore = score; best = s; }
+    });
+    if (best && bestScore > 0) return best.cuenta;
+  } catch {}
+  return raw; // sin match, devuelve el original
+}
+
 /* ── File size formatter ── */
 function fmtSize(bytes) {
   if (bytes < 1024)    return bytes + ' B';
@@ -473,6 +675,9 @@ async function _checkAuth() {
     const sb = await _initSupabase();
     const { data: { session } } = await sb.auth.getSession();
     if (!session) {
+      // Limpiar cualquier estado de auth local caducado/corrupto
+      // para evitar el loop login→dashboard→login
+      try { await sb.auth.signOut({ scope: 'local' }); } catch {}
       location.href = 'login.html';
       return false;
     }
@@ -514,12 +719,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   _applyRoleUI(_getUserRole());
   _injectUserBadge(_getUserName(), _getUserRole());
 
-  // Auto-sync al arrancar: si hay datos en localStorage, empujarlos a IDB y Supabase
-  // Se corre en background para no bloquear el render
+  // Purgar cfdi_index silencioso (entradas viejas con pocos usos)
+  setTimeout(_cfdiIdxPurgar, 3000);
+
+  // Sync inicial (5 s después de arrancar) + arrancar el timer periódico
   setTimeout(() => {
-    _idbSnapshot();   // nivel 2: IndexedDB local
-    _sbSnapshot();    // nivel 3: Supabase nube
-  }, 3000);
+    _idbSnapshot();        // nivel 2: IndexedDB local
+    _sbSnapshot();         // nivel 3: Supabase nube
+    _startPeriodicSync();  // activa sync cada 3 min
+  }, 5000);
 });
 
 /* ══════════════════════════════════════════════════════════════

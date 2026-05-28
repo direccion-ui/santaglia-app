@@ -157,6 +157,7 @@
 
     <div class="login-footer">
       <button id="toggle-btn" onclick="toggleMode()">¿Primera vez? Crear cuenta</button>
+      <button id="forgot-btn" onclick="toggleForgot()" style="display:block;width:100%;text-align:center;margin-top:0.4rem;">¿Olvidaste tu contraseña?</button>
     </div>
 
     <div class="login-badge">
@@ -174,9 +175,9 @@
 
   let isSignUp = false;
 
-  // Si ya hay sesión activa → ir al dashboard directamente
+  // Si ya hay sesión activa con usuario válido → ir al dashboard
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) location.href = 'dashboard.html';
+    if (session?.user?.id) location.href = 'dashboard.html';
   });
 
   function toggleMode() {
@@ -206,15 +207,62 @@
     el.style.display = text ? 'block' : 'none';
   }
 
+  /* ── Flujo "Olvidé mi contraseña" ── */
+  let isForgot = false;
+
+  function toggleForgot() {
+    isForgot = !isForgot;
+    const passField = document.getElementById('f-pass').closest('.login-field');
+    const btn       = document.getElementById('login-btn');
+    const sub       = document.getElementById('login-subtitle');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const forgotBtn = document.getElementById('forgot-btn');
+    const passInput = document.getElementById('f-pass');
+
+    if (isForgot) {
+      passField.style.display = 'none';
+      passInput.removeAttribute('required');
+      passInput.value         = '';           // limpiar autofill
+      btn.textContent         = 'ENVIAR ENLACE';
+      sub.textContent         = 'Te enviamos un enlace para restablecer tu contraseña';
+      toggleBtn.style.display = 'none';
+      forgotBtn.textContent   = '← Volver al inicio de sesión';
+    } else {
+      passField.style.display = '';
+      passInput.setAttribute('required', '');
+      btn.textContent         = isSignUp ? 'CREAR CUENTA' : 'INICIAR SESIÓN';
+      sub.textContent         = 'Ingresa con tu cuenta para continuar';
+      toggleBtn.style.display = '';
+      forgotBtn.textContent   = '¿Olvidaste tu contraseña?';
+    }
+    showMsg('', '');
+  }
+
   async function handleAuth(e) {
     e.preventDefault();
     const email = document.getElementById('f-email').value.trim();
-    const pass  = document.getElementById('f-pass').value;
     const btn   = document.getElementById('login-btn');
-
-    btn.disabled    = true;
-    btn.textContent = 'Verificando…';
     showMsg('', '');
+
+    // ── Modo: recuperar contraseña ──
+    if (isForgot) {
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      try {
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: 'https://santaglia.app/reset-password.html'
+        });
+        if (error) throw error;
+        showMsg('✓ Enlace enviado. Revisa tu bandeja de entrada (y spam).', 'success');
+      } catch(err) {
+        showMsg('No se pudo enviar el enlace. Verifica el correo e intenta de nuevo.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'ENVIAR ENLACE';
+      return;
+    }
+
+    // ── Modo: login / registro ──
+    const pass = document.getElementById('f-pass').value;
+    btn.disabled = true; btn.textContent = 'Verificando…';
 
     try {
       let result;
@@ -238,7 +286,6 @@
         return;
       }
 
-      // Registro exitoso pero falta confirmar email
       if (isSignUp && !data.session) {
         showMsg('Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.', 'success');
         btn.disabled    = false;
@@ -249,7 +296,6 @@
         return;
       }
 
-      // Sesión activa → dashboard
       location.href = 'dashboard.html';
 
     } catch(err) {

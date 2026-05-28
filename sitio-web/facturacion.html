@@ -125,6 +125,44 @@
 
     @media (max-width: 900px) { .resumen-bar { grid-template-columns: repeat(2, 1fr); } }
 
+    /* ── Verificación automática ── */
+    #verif-badge button {
+      font-family: var(--brand); font-size: 0.7rem; font-weight: 700;
+      padding: 0.22rem 0.55rem; border-radius: 5px; cursor: pointer;
+      border: 1px solid currentColor; background: transparent; transition: opacity .2s;
+    }
+    #verif-badge button:hover { opacity: .8; }
+    #verif-panel {
+      display: none; margin: 0 0 0.75rem; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08); overflow: hidden;
+    }
+    #verif-panel.open { display: block; }
+    .verif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 1rem; background: #f7f8fc; border-bottom: 1px solid var(--border);
+    }
+    .verif-title { font-family: var(--brand); font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+    .verif-body  { padding: 0.75rem 1rem; max-height: 340px; overflow-y: auto; }
+    .verif-section-title {
+      font-family: var(--brand); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-dim); margin: 0.5rem 0 0.3rem;
+    }
+    .verif-item {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.6rem;
+      align-items: start; padding: 0.3rem 0; border-bottom: 1px solid #f0f1f5; font-size: 0.72rem;
+    }
+    .verif-item:last-child { border-bottom: none; }
+    .verif-dot  { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .verif-dot.error   { background: var(--red); }
+    .verif-dot.warning { background: #d97706; }
+    .verif-dot.info    { background: var(--text-dim); }
+    .verif-msg  { color: var(--text-main); line-height: 1.4; }
+    .verif-accion { font-size: 0.65rem; color: var(--text-dim); grid-column: 2; margin-top: -2px; }
+    .verif-ok { text-align: center; padding: 1rem; color: var(--green); font-family: var(--brand); font-weight: 700; }
+    .verif-footer { padding: 0.4rem 1rem; background: #f7f8fc; border-top: 1px solid var(--border);
+                    display: flex; align-items: center; gap: 0.75rem; font-size: 0.68rem; color: var(--text-dim); }
+
     /* ── Campos editables inline ── */
     .inline-input {
       background: transparent;
@@ -209,6 +247,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -216,6 +255,7 @@
         <a class="nav-link" href="ayuda.html">Ayuda</a>
       </nav>
       <div class="header-actions">
+        <span id="verif-badge" style="margin-right:0.5rem;"></span>
         <button class="btn-logout" onclick="logout()">Salir</button>
       </div>
     </div>
@@ -223,6 +263,23 @@
 
   <main>
     <div class="main">
+
+      <!-- ══ PANEL DE AUTO-VERIFICACIÓN ══ -->
+      <div id="verif-panel">
+        <div class="verif-header">
+          <span class="verif-title">🔍 Auto-verificación de Facturación</span>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="lanzarVerificacion('manual')">↻ Re-verificar</button>
+            <button class="btn btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;"
+                    onclick="document.getElementById('verif-panel').classList.remove('open')">✕</button>
+          </div>
+        </div>
+        <div class="verif-body" id="verif-body">
+          <div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.75rem;">Ejecutando verificación…</div>
+        </div>
+        <div class="verif-footer" id="verif-footer"></div>
+      </div>
 
       <!-- Page header -->
       <div class="page-header">
@@ -324,6 +381,7 @@
                 <th>Vendedor</th>
                 <th class="num sortable" onclick="setSort('dias')">Días Disp. <span class="sort-icon" id="si-dias">↕</span></th>
                 <th>Estado</th>
+                <th class="center">Días</th>
                 <th class="center">Pagada</th>
                 <th class="sortable" onclick="setSort('fcobro')">F. Cobro <span class="sort-icon" id="si-fcobro">↕</span></th>
                 <th>Plazo Pago</th>
@@ -358,6 +416,7 @@
                     <option>Vencida</option><option>Cancelada</option>
                   </select>
                 </th>
+                <th></th>
                 <th>
                   <select class="col-filter" id="cf-pagada" onchange="renderTabla()">
                     <option value="">Todas</option><option value="Sí">Sí</option><option value="No">No</option>
@@ -628,6 +687,107 @@
       toast('Ingresos ya registrados en Movimientos', 'info');
       return;
     }
+
+    /* ── Selección de cuenta bancaria si algún movimiento no tiene cuenta ── */
+    const sinCuenta = nuevos.filter(m => !m.cuenta);
+    if (sinCuenta.length > 0) {
+      const saldos = JSON.parse(localStorage.getItem('stgl_saldos') || '[]');
+      const cuentasMXN = saldos.filter(s =>
+        s.moneda === 'MXN' &&
+        s.tipo !== 'Tarjeta' &&
+        s.tipo !== 'Crédito'
+      );
+
+      if (cuentasMXN.length > 0) {
+        /* Mostrar mini-modal de selección de cuenta y continuar de forma asíncrona */
+        _pedirCuentaMXN(cuentasMXN, (cuentaElegida) => {
+          if (cuentaElegida) {
+            nuevos.forEach(m => { if (!m.cuenta) m.cuenta = cuentaElegida; });
+          }
+          _guardarYNotificarMovimientos(nuevos, existing, KEY_MOV, cobradas);
+        });
+        return; /* esperar respuesta del modal */
+      }
+    }
+
+    _guardarYNotificarMovimientos(nuevos, existing, KEY_MOV, cobradas);
+  }
+
+  /* Muestra un mini-modal para elegir cuenta MXN. Llama callback(cuenta|null). */
+  function _pedirCuentaMXN(cuentas, callback) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = [
+      'position:fixed', 'inset:0', 'background:rgba(0,0,0,0.45)',
+      'z-index:9999', 'display:flex', 'align-items:center', 'justify-content:center',
+    ].join(';');
+
+    const card = document.createElement('div');
+    card.style.cssText = [
+      'background:#fff', 'border-radius:10px', 'padding:1.5rem 1.75rem',
+      'width:min(420px,92vw)', 'box-shadow:0 8px 32px rgba(0,0,0,0.18)',
+      'font-family:var(--font)', 'font-size:0.85rem', 'color:var(--text)',
+    ].join(';');
+
+    const titulo = document.createElement('p');
+    titulo.style.cssText = 'margin:0 0 0.25rem; font-family:var(--brand); font-weight:700; font-size:0.95rem; color:var(--navy);';
+    titulo.textContent = 'Asignar cuenta bancaria';
+
+    const sub = document.createElement('p');
+    sub.style.cssText = 'margin:0 0 1rem; color:var(--text-dim); font-size:0.8rem;';
+    sub.textContent = '¿En qué cuenta MXN se recibió el pago?';
+
+    const sel = document.createElement('select');
+    sel.style.cssText = [
+      'width:100%', 'padding:0.5rem 0.6rem', 'border:1.5px solid var(--border)',
+      'border-radius:6px', 'font-size:0.83rem', 'font-family:var(--font)',
+      'background:#fafbff', 'color:var(--text)', 'margin-bottom:1.1rem', 'outline:none',
+    ].join(';');
+    cuentas.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.cuenta;
+      opt.textContent = c.alias ? `${c.alias} — ${c.cuenta}` : c.cuenta;
+      sel.appendChild(opt);
+    });
+
+    const fila = document.createElement('div');
+    fila.style.cssText = 'display:flex; gap:0.6rem; justify-content:flex-end;';
+
+    const btnOmitir = document.createElement('button');
+    btnOmitir.textContent = 'Omitir (asignar después)';
+    btnOmitir.style.cssText = [
+      'padding:0.45rem 1rem', 'border:1.5px solid var(--border)', 'border-radius:6px',
+      'background:transparent', 'color:var(--text-dim)', 'font-size:0.8rem',
+      'cursor:pointer', 'font-family:var(--font)',
+    ].join(';');
+
+    const btnAsignar = document.createElement('button');
+    btnAsignar.textContent = 'Asignar cuenta';
+    btnAsignar.style.cssText = [
+      'padding:0.45rem 1.1rem', 'border:none', 'border-radius:6px',
+      'background:var(--navy)', 'color:#fff', 'font-size:0.8rem',
+      'cursor:pointer', 'font-weight:700', 'font-family:var(--brand)',
+    ].join(';');
+
+    function cerrar(val) {
+      document.body.removeChild(overlay);
+      callback(val);
+    }
+
+    btnOmitir.onclick  = () => cerrar(null);
+    btnAsignar.onclick = () => cerrar(sel.value);
+
+    fila.appendChild(btnOmitir);
+    fila.appendChild(btnAsignar);
+    card.appendChild(titulo);
+    card.appendChild(sub);
+    card.appendChild(sel);
+    card.appendChild(fila);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  }
+
+  /* Guarda los movimientos y notifica al usuario (extrae la parte final de registrarIngresosMovimientos). */
+  function _guardarYNotificarMovimientos(nuevos, existing, KEY_MOV, cobradas) {
     saveRegistry(KEY_MOV, [...existing, ...nuevos]);
 
     /* Registrar en undo stack */
@@ -878,7 +1038,7 @@
     // ── Tbody ──
     const tbody = document.getElementById('fact-tbody');
     if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="21" style="text-align:center; padding:3rem; color:var(--text-xs);">
+      tbody.innerHTML = `<tr><td colspan="22" style="text-align:center; padding:3rem; color:var(--text-xs);">
         Sin resultados — ajusta los filtros o importa facturas
       </td></tr>`;
       document.getElementById('fact-tfoot').innerHTML = '';
@@ -911,6 +1071,32 @@
         <td style="font-size:0.75rem;">${f.vendedor || '—'}</td>
         <td class="num">${f.dias || '—'}</td>
         <td><span class="badge ${BADGE_ESTADO[f.estado]||'badge-gray'}">${f.estado||'—'}</span></td>
+        ${(() => {
+          // Celda "Días de atraso en cobranza"
+          if (f.pagada === 'Sí' || f.fcobro) {
+            return '<td class="center" style="color:#6b7280; font-size:0.72rem;">✓</td>';
+          }
+          if (!f.fecha) {
+            return '<td class="center" style="color:#9ca3af;">—</td>';
+          }
+          // Calcular fecha de vencimiento: fecha + días de crédito (f.dias)
+          const diasCredito = parseInt(f.dias) || 0;
+          const fechaFact = new Date(f.fecha + 'T00:00:00');
+          const fechaVenc = new Date(fechaFact);
+          fechaVenc.setDate(fechaVenc.getDate() + diasCredito);
+          const hoy = new Date(); hoy.setHours(0,0,0,0);
+          const diffMs = hoy - fechaVenc;
+          const diasAtraso = Math.round(diffMs / 86400000);
+          if (diasAtraso <= 0) {
+            const faltan = -diasAtraso;
+            const label = faltan === 0 ? 'Hoy' : '+' + faltan + 'd';
+            return '<td class="center" style="color:#15803d; font-weight:600; font-size:0.72rem;" title="Vence en ' + faltan + ' día(s)">' + label + '</td>';
+          } else if (diasAtraso <= 30) {
+            return '<td class="center" style="color:#c67000; font-weight:600; font-size:0.72rem;" title="' + diasAtraso + ' día(s) de atraso">' + diasAtraso + 'd</td>';
+          } else {
+            return '<td class="center" style="color:#dc2626; font-weight:700; font-size:0.72rem;" title="' + diasAtraso + ' día(s) de atraso">' + diasAtraso + 'd ⚠</td>';
+          }
+        })()}
         <td class="center">
           <input type="checkbox" class="inline-check inline-pagada ${dirtyPg?'dirty':''}"
             ${pagada==='Sí' ? 'checked' : ''}
@@ -960,7 +1146,7 @@
         <td class="num" style="font-size:0.82rem;">$${fmtNum(sumTot)}</td>
         <td></td>
         <td class="num" style="color:var(--gray-bl);">${avgDias > 0 ? '∅ ' + avgDias.toFixed(1) + ' d' : '—'}</td>
-        <td colspan="7"></td>
+        <td colspan="8"></td>
       </tr>
       <tr>
         <td colspan="4" style="color:var(--text-xs); font-size:0.63rem; letter-spacing:0.06em; text-transform:uppercase;">Promedios</td>
@@ -972,7 +1158,7 @@
         <td class="num">${data.length ? '$' + fmtNum(sumTot / data.length) : '—'}</td>
         <td></td>
         <td class="num">${avgDias > 0 ? avgDias.toFixed(1) + ' d' : '—'}</td>
-        <td colspan="7"></td>
+        <td colspan="8"></td>
       </tr>`;
   }
 
@@ -1142,6 +1328,46 @@
   document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
   updateUndoBtn();
   renderTabla();
+
+  /* ── Pre-factura desde Registro de Tiempo ── */
+  (function() {
+    const raw = localStorage.getItem('stgl_prefactura_pending');
+    if (!raw) return;
+    try {
+      const pf = JSON.parse(raw);
+      localStorage.removeItem('stgl_prefactura_pending');
+
+      // Calcular precio unitario por hora (monto / horas) si existe monto
+      const cant   = pf.cant || '';
+      const precio = (cant && pf.total) ? (pf.total / cant).toFixed(2) : '';
+      const tcUsd  = parseFloat(localStorage.getItem('stgl_tc_usd')) || '';
+
+      // Pre-rellenar el formulario
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null && val !== '') el.value = val; };
+      set('f-fecha',    pf.fecha   || new Date().toISOString().split('T')[0]);
+      set('f-cliente',  pf.cliente || '');
+      set('f-servicio', pf.servicio || '');
+      set('f-cant',     cant);
+      set('f-precio',   precio);
+      if (tcUsd) set('f-tcambio', tcUsd);
+      set('f-dias',    String(pf.dias    || 30));
+      set('f-estado',  pf.estado  || 'Pendiente');
+      set('f-pagada',  pf.pagada  || 'No');
+
+      // Recalcular importes derivados
+      calcular();
+
+      // Abrir modal
+      editId = null;
+      document.getElementById('modal-titulo').textContent = 'Nueva factura';
+      openModal('modal-factura');
+
+      // Toast de confirmación
+      toast('Factura pre-rellenada desde Registro de Tiempo', 'success');
+    } catch (e) {
+      localStorage.removeItem('stgl_prefactura_pending');
+    }
+  })();
 
   /* ══════════════════════════════════════════════════════════════
      Importar facturas desde CSV (exportado desde Excel)
@@ -1350,6 +1576,11 @@
         saveRegistry(KEY, todas);
         toast(`✅ ${nuevas.length} facturas importadas correctamente`, 'success');
         _marcarCubiertosDesdeImport(nuevas);
+
+        // Registrar ingresos reales en stgl_mov_manual para las que ya vienen cobradas
+        const yaCobradasImport = nuevas.filter(f => f.pagada === 'Sí' && f.fcobro);
+        if (yaCobradasImport.length) registrarIngresosMovimientos(yaCobradasImport);
+
         renderTabla();
 
       } catch(err) {
@@ -1389,6 +1620,173 @@
     toast(`🗑 ${importadas.length} facturas importadas eliminadas. Ahora puedes re-importar.`, 'success');
     renderTabla();
   }
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-VERIFICACIÓN — Facturación
+   Checks: facturas cobradas sin movimiento, sin fecha de cobro,
+   vencidas con estado incorrecto, sin monto registrado.
+══════════════════════════════════════════════════════════════ */
+const KEY_VERIF_LOG = 'stgl_verificacion_log_facturacion';
+
+function ejecutarVerificacion(trigger) {
+  trigger = trigger || 'auto';
+  const errores = [], alertas = [], info = [];
+  const facturas  = loadRegistry(KEY);
+  const movManual = loadRegistry('stgl_mov_manual');
+  const movIds    = new Set(movManual.map(m => m.id));
+  const hoy       = new Date();
+
+  /* ── 1. Facturas cobradas manuales sin ingreso en Financiero ── */
+  facturas
+    .filter(f => f.pagada === 'Sí' && !f.origenImport && !String(f.id||'').startsWith('csv-'))
+    .forEach(f => {
+      const movId = `ing-${f.id}`;
+      if (!movIds.has(movId)) alertas.push({
+        tipo: 'MOV_FALTANTE', modulo: 'Facturación → Financiero',
+        fecha: f.fcobro || f.fecha,
+        msg:   `${f.cliente||'?'} (Fact. ${f.no||f.id}): cobrada pero sin ingreso en Financiero`,
+        accion:'Re-guarda la factura marcando fecha de cobro para registrar el ingreso',
+      });
+    });
+
+  /* ── 2. Facturas cobradas sin fecha de cobro ── */
+  facturas
+    .filter(f => f.pagada === 'Sí' && !f.fcobro)
+    .forEach(f => alertas.push({
+      tipo: 'CAMPO_FALTANTE', modulo: 'Facturación',
+      fecha: f.fecha,
+      msg:   `${f.cliente||'?'} (Fact. ${f.no||f.id}): marcada como cobrada sin fecha de cobro`,
+      accion:'Edita la factura y agrega la fecha en que se recibió el pago',
+    }));
+
+  /* ── 3. Facturas vencidas con estado incorrecto ── */
+  facturas
+    .filter(f => f.pagada !== 'Sí' && f.estado !== 'Cancelada' && f.fecha)
+    .forEach(f => {
+      const dias  = parseInt(f.dias) || 30;
+      const vence = new Date(f.fecha);
+      vence.setDate(vence.getDate() + dias);
+      if (vence < hoy && f.estado !== 'Vencida') info.push({
+        tipo: 'ESTADO_INCONSISTENTE', modulo: 'Facturación',
+        fecha: f.fecha,
+        msg:   `${f.cliente||'?'} (Fact. ${f.no||f.id}): estado "${f.estado||'Vigente'}" pero venció el ${vence.toLocaleDateString('es-MX')}`,
+        accion:'Actualiza estado a "Vencida" o registra el cobro si ya fue pagada',
+      });
+    });
+
+  /* ── 4. Facturas sin monto registrado ── */
+  const sinMonto = facturas.filter(f =>
+    !parseNum(f.total) && !parseNum(f.impMxn) && !parseNum(f.impUsd)
+  );
+  if (sinMonto.length > 0) info.push({
+    tipo: 'CAMPO_FALTANTE', modulo: 'Facturación',
+    msg:  `${sinMonto.length} factura${sinMonto.length!==1?'s':''} sin importe registrado`,
+    accion:'Edita las facturas y captura el monto correspondiente',
+  });
+
+  const resultado = {
+    fecha: new Date().toISOString(), trigger, errores, alertas, info,
+    ok:    !errores.length && !alertas.length,
+    total: errores.length + alertas.length + info.length,
+  };
+  try {
+    const logs = JSON.parse(localStorage.getItem(KEY_VERIF_LOG)||'[]');
+    logs.unshift(resultado);
+    localStorage.setItem(KEY_VERIF_LOG, JSON.stringify(logs.slice(0, 30)));
+  } catch {}
+  return resultado;
+}
+
+function cargarUltimaVerificacion() {
+  try { return JSON.parse(localStorage.getItem(KEY_VERIF_LOG)||'[]')[0] || null; } catch { return null; }
+}
+
+function lanzarVerificacion(trigger) {
+  const resultado = ejecutarVerificacion(trigger || 'manual');
+  renderVerificacionBadge(resultado);
+  renderVerificacionPanel(resultado);
+  document.getElementById('verif-panel').classList.add('open');
+}
+
+function toggleVerifPanel() {
+  const panel = document.getElementById('verif-panel');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+  } else {
+    const last = cargarUltimaVerificacion();
+    if (last) renderVerificacionPanel(last);
+    panel.classList.add('open');
+  }
+}
+
+function renderVerificacionBadge(resultado) {
+  const el = document.getElementById('verif-badge');
+  if (!el) return;
+  if (!resultado) {
+    el.innerHTML = `<button onclick="lanzarVerificacion('manual')"
+        style="color:var(--text-dim);border-color:var(--border);">🔍 Verificar</button>`;
+    return;
+  }
+  const { errores, alertas } = resultado;
+  const color = errores.length ? 'var(--red)' : alertas.length ? '#c8801b' : 'var(--green)';
+  const bg    = errores.length ? '#fff5f5'    : alertas.length ? '#fffbeb'  : '#f0fdf4';
+  const icon  = errores.length ? '⚠'          : alertas.length ? '🔔'       : '✓';
+  const label = errores.length ? `${errores.length} error${errores.length>1?'es':''}`
+              : alertas.length ? `${alertas.length} alerta${alertas.length>1?'s':''}`
+              : 'Datos OK';
+  el.innerHTML = `<button onclick="toggleVerifPanel()"
+      style="color:${color};border-color:${color};background:${bg};"
+      title="Ver log de verificación">${icon} ${label}</button>`;
+}
+
+function renderVerificacionPanel(resultado) {
+  const body   = document.getElementById('verif-body');
+  const footer = document.getElementById('verif-footer');
+  if (!body) return;
+  const { errores, alertas, info, fecha, trigger, ok } = resultado;
+  const triggerLabel = {load:'carga de página',import:'importación',save:'guardado',manual:'manual',auto:'automático'}[trigger] || trigger;
+  const ts = new Date(fecha).toLocaleString('es-MX', {dateStyle:'short', timeStyle:'short'});
+  const renderItems = (items, cls) => items.map(it => `
+    <div class="verif-item">
+      <div class="verif-dot ${cls}"></div>
+      <div>
+        <div class="verif-msg">${it.msg}</div>
+        ${it.accion ? `<div class="verif-accion">→ ${it.accion}</div>` : ''}
+      </div>
+      ${it.fecha ? `<div style="font-size:0.63rem;color:var(--text-xs);white-space:nowrap;">${it.fecha}</div>` : '<div></div>'}
+    </div>`).join('');
+  let html = '';
+  if (ok && !info.length) {
+    html = `<div class="verif-ok">✓ Todos los datos de facturación están íntegros y consistentes</div>`;
+  } else {
+    if (errores.length) { html += `<div class="verif-section-title">🔴 Errores — acción requerida (${errores.length})</div>`; html += renderItems(errores, 'error'); }
+    if (alertas.length) { html += `<div class="verif-section-title">🟡 Alertas — revisar (${alertas.length})</div>`; html += renderItems(alertas, 'warning'); }
+    if (info.length)    { html += `<div class="verif-section-title">ℹ️ Información (${info.length})</div>`; html += renderItems(info, 'info'); }
+  }
+  body.innerHTML = html;
+  footer.innerHTML = `<span>Última verificación: ${ts} · disparador: ${triggerLabel}</span>
+    <span style="margin-left:auto;font-size:0.63rem;">${errores.length} error${errores.length!==1?'es':''} · ${alertas.length} alerta${alertas.length!==1?'s':''} · ${info.length} info</span>`;
+}
+
+/* ── Init: badge desde última verificación guardada ── */
+renderVerificacionBadge(cargarUltimaVerificacion());
+
+/* ── Auto-verificación al cargar (diferida para no bloquear el paint) ── */
+setTimeout(() => {
+  try {
+    const res = ejecutarVerificacion('load');
+    renderVerificacionBadge(res);
+    if (res.errores.length > 0) {
+      renderVerificacionPanel(res);
+      document.getElementById('verif-panel').classList.add('open');
+    }
+  } catch(e) { console.warn('verif:', e); }
+}, 800);
+
+/* ── Re-verificación periódica cada 5 minutos (silenciosa) ── */
+setInterval(() => {
+  try { renderVerificacionBadge(ejecutarVerificacion('auto')); } catch {}
+}, 5 * 60 * 1000);
 </script>
 </body>
 </html>

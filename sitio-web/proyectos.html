@@ -52,6 +52,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -95,6 +96,9 @@
                 <th>Estado</th>
                 <th>Responsable</th>
                 <th>Fecha inicio</th>
+                <th>Facturado</th>
+                <th>Horas</th>
+                <th>Estado$</th>
                 <th>Notas</th>
                 <th></th>
               </tr>
@@ -173,6 +177,53 @@
       renderTabla();
     }
 
+    // Resuelve el nombre de un servicio dado su ID (compatible con stgl_servicios)
+    function _getServicioNombreLocal(servicioId) {
+      if (!servicioId) return '';
+      try {
+        const servicios = loadRegistry('stgl_servicios');
+        const s = servicios.find(x => x.id === servicioId);
+        if (s) return s.nombre || '';
+      } catch (e) { /* ignore */ }
+      return String(servicioId);
+    }
+
+    function calcRentabilidadProyecto(proyectoNombre) {
+      const norm = s => String(s || '').trim().toLowerCase();
+      const pNorm = norm(proyectoNombre);
+
+      // ── Facturas ──
+      let totalFacturado = 0;
+      let totalCobrado   = 0;
+      let pendienteCobro = false;
+      try {
+        const facturas = loadRegistry('stgl_facturas');
+        const propias  = facturas.filter(f => norm(f.servicio) === pNorm || norm(f.cliente) === pNorm);
+        propias.forEach(f => {
+          const total = parseFloat(String(f.total || '').replace(/[^0-9.-]/g, '')) || 0;
+          totalFacturado += total;
+          if (f.pagada === 'Sí' || f.fcobro) {
+            totalCobrado += total;
+          }
+        });
+        pendienteCobro = propias.some(f => f.pagada !== 'Sí' && !f.fcobro);
+      } catch (e) { /* sin datos */ }
+
+      // ── Tiempo ──
+      let horasTotales = 0;
+      try {
+        const entradas = loadRegistry('stgl_tiempo');
+        entradas.forEach(e => {
+          const srvNombre = _getServicioNombreLocal(e.servicioId);
+          if (norm(srvNombre) === pNorm || norm(e.clienteNombre) === pNorm) {
+            horasTotales += parseFloat(e.horas) || 0;
+          }
+        });
+      } catch (e) { /* sin datos */ }
+
+      return { totalFacturado, totalCobrado, horasTotales, pendienteCobro };
+    }
+
     function renderTabla() {
       const all = loadRegistry('stgl_proyectos');
       const data = filtroActivo === 'todos' ? all : all.filter(p => p.estado === filtroActivo);
@@ -181,12 +232,25 @@
 
       const tbody = document.getElementById('tabla-proyectos');
       if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:3rem; color:var(--text-xs); font-size:0.82rem;">
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:3rem; color:var(--text-xs); font-size:0.82rem;">
           No hay proyectos${filtroActivo !== 'todos' ? ' con este estado' : ''}
         </td></tr>`;
         return;
       }
-      tbody.innerHTML = [...data].reverse().map((p, i) => `
+      tbody.innerHTML = [...data].reverse().map((p, i) => {
+        const rent = calcRentabilidadProyecto(p.nombre);
+        const facturadoTxt = rent.totalFacturado > 0
+          ? rent.totalFacturado.toLocaleString('es-MX', {style:'currency', currency:'MXN', maximumFractionDigits:0})
+          : '—';
+        const horasTxt = rent.horasTotales > 0
+          ? rent.horasTotales.toFixed(1) + ' h'
+          : '—';
+        const estadoDineroCell = rent.totalFacturado === 0
+          ? '<span style="color:var(--text-xs); font-size:0.75rem;">—</span>'
+          : rent.pendienteCobro
+            ? '<span style="background:#fff7ed; color:#c67000; font-size:0.7rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:999px; border:1px solid #fcd34d;">Cobranza pendiente</span>'
+            : '<span style="background:#f0fdf4; color:#15803d; font-size:0.7rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:999px; border:1px solid #86efac;">Al corriente</span>';
+        return `
         <tr>
           <td class="mono" style="color:var(--text-xs); font-size:0.72rem;">${String(data.length - i).padStart(3,'0')}</td>
           <td style="font-weight:600; color:var(--navy);">${p.nombre}</td>
@@ -194,11 +258,15 @@
           <td><span class="badge ${BADGES[p.estado] || 'badge-gray'}">${p.estado}</span></td>
           <td style="color:var(--text-dim);">${p.responsable || '—'}</td>
           <td class="mono" style="font-size:0.75rem; color:var(--text-xs);">${fmtDate(p.fecha)}</td>
+          <td class="mono" style="font-size:0.78rem; color:var(--navy); font-weight:600;">${facturadoTxt}</td>
+          <td class="mono" style="font-size:0.78rem; color:var(--text-dim);">${horasTxt}</td>
+          <td style="white-space:nowrap;">${estadoDineroCell}</td>
           <td style="color:var(--text-dim); font-size:0.8rem; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.notas || '—'}</td>
           <td>
             <button class="file-btn" onclick="eliminar('${p.id}')">Eliminar</button>
           </td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
     }
 
     function guardarProyecto() {

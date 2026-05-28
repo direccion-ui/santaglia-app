@@ -172,6 +172,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -201,6 +202,7 @@
           </label>
           <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="exportarTiempoCSV()">⬆ Exportar CSV</button>
           <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="exportarTiempoFactura()">📄 Reporte para factura</button>
+          <button class="btn btn-ghost" id="btn-facturar-sel" style="font-size:0.72rem;display:none;" onclick="facturarSeleccion()">📄 Facturar selección</button>
           <button class="btn btn-primary" onclick="abrirNuevoTiempo()">+ Registrar tiempo</button>
         </div>
       </div>
@@ -293,6 +295,7 @@
           <table class="log-table">
             <thead>
               <tr>
+                <th style="width:28px;padding:0.45rem 0.4rem;"><input type="checkbox" id="chk-all" title="Seleccionar todos" onchange="toggleSelAll(this.checked)" style="width:13px;height:13px;cursor:pointer;accent-color:#fff;" /></th>
                 <th>Fecha</th>
                 <th>Cliente</th>
                 <th>Servicio</th>
@@ -753,7 +756,7 @@ function renderLog() {
   const foot = document.getElementById('log-foot');
 
   if (filtered.length === 0) {
-    body.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+    body.innerHTML = `<tr><td colspan="9"><div class="empty-state">
       <div class="empty-state-icon">⏱️</div>
       <div class="empty-state-title">Sin registros</div>
       <div class="empty-state-desc">No hay entradas que coincidan con los filtros.<br>Usa <strong>+ Registrar tiempo</strong> para empezar.</div>
@@ -772,6 +775,9 @@ function renderLog() {
     const cName = getClienteNombre(e.clienteId);
     const sName = getServicioNombre(e.servicioId);
     return `<tr>
+      <td class="center" style="padding:0.4rem 0.4rem;">
+        <input type="checkbox" class="chk-row" data-id="${e.id}" style="width:13px;height:13px;cursor:pointer;accent-color:var(--navy);" onchange="actualizarBtnFacturar()" />
+      </td>
       <td>${e.fecha}</td>
       <td>${escH(cName)}</td>
       <td>${escH(sName)}</td>
@@ -787,6 +793,7 @@ function renderLog() {
   }).join('');
 
   foot.innerHTML = `<tr>
+    <td></td>
     <td colspan="5">${filtered.length} registro${filtered.length !== 1 ? 's' : ''}</td>
     <td class="num">${totalHrs.toFixed(1)}</td>
     <td colspan="2">${factHrs.toFixed(1)} h fact.</td>
@@ -1249,6 +1256,90 @@ function toast(msg, type) {
 // Cross-page exposure
 window.getTiempoEntries  = () => loadTms();
 window.getTiempoActivos  = () => loadTms().filter(e => e.facturable !== false);
+
+// ═══════════════════════════════════════════════
+// Selección de filas para facturar
+// ═══════════════════════════════════════════════
+function getIdsSeleccionados() {
+  return [...document.querySelectorAll('.chk-row:checked')].map(c => c.dataset.id);
+}
+
+function actualizarBtnFacturar() {
+  const ids = getIdsSeleccionados();
+  const btn = document.getElementById('btn-facturar-sel');
+  if (!btn) return;
+  btn.style.display = ids.length > 0 ? '' : 'none';
+
+  // Sincronizar estado del checkbox "seleccionar todos"
+  const total  = document.querySelectorAll('.chk-row').length;
+  const chkAll = document.getElementById('chk-all');
+  if (chkAll) {
+    chkAll.indeterminate = ids.length > 0 && ids.length < total;
+    chkAll.checked       = total > 0 && ids.length === total;
+  }
+}
+
+function toggleSelAll(checked) {
+  document.querySelectorAll('.chk-row').forEach(c => { c.checked = checked; });
+  actualizarBtnFacturar();
+}
+
+function facturarSeleccion() {
+  const ids = getIdsSeleccionados();
+  if (ids.length === 0) { toast('Selecciona al menos un registro de tiempo.', 'info'); return; }
+
+  const all = loadTms();
+  const seleccionados = all.filter(e => ids.includes(e.id));
+
+  // Agrupar por clienteId
+  const grupos = {};
+  seleccionados.forEach(e => {
+    const k = e.clienteId || '__sin_cliente';
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(e);
+  });
+
+  // Si hay múltiples clientes, usar el primero y avisar
+  const clienteKeys = Object.keys(grupos);
+  if (clienteKeys.length > 1) {
+    const nombres = clienteKeys.map(k => k === '__sin_cliente' ? 'Sin cliente' : getClienteNombre(k)).join(', ');
+    if (!confirm(`Los registros seleccionados pertenecen a ${clienteKeys.length} clientes: ${nombres}.\n\nSe creará una pre-factura por cliente. ¿Continuar con el primero (${nombres.split(',')[0]})?`)) return;
+  }
+
+  // Tomar el primer grupo (cliente)
+  const primerClienteKey = clienteKeys[0];
+  const grupo = grupos[primerClienteKey];
+
+  const totalHoras = grupo.reduce((s, e) => s + (parseFloat(e.horas) || 0), 0);
+  const totalMonto = grupo.reduce((s, e) => s + ((parseFloat(e.horas) || 0) * (parseFloat(e.tarifa) || 0)), 0);
+
+  // Resolver nombre del cliente
+  const clienteNombre = primerClienteKey === '__sin_cliente'
+    ? ''
+    : getClienteNombre(primerClienteKey);
+
+  // Primer servicio del grupo
+  const primerServicioId = grupo.find(e => e.servicioId)?.servicioId;
+  const servicioNombre   = primerServicioId ? getServicioNombre(primerServicioId) : 'Servicios profesionales';
+
+  // Construir pre-factura
+  const hoy = isoDate(new Date());
+  const prefactura = {
+    cliente:  clienteNombre,
+    servicio: servicioNombre,
+    cant:     totalHoras,
+    total:    totalMonto,
+    fecha:    hoy,
+    dias:     30,
+    estado:   'Pendiente',
+    pagada:   'No',
+    _origen:  'tiempo',
+    _ids:     ids,
+  };
+
+  localStorage.setItem('stgl_prefactura_pending', JSON.stringify(prefactura));
+  window.location.href = 'facturacion.html';
+}
 
 // ═══════════════════════════════════════════════
 // Init

@@ -1,0 +1,11 @@
+# Respaldos con datos sensibles — no subir al repositorio
+*.json
+!vercel.json
+
+# Scripts de utilidad local (no necesarios en producción)
+serve.py
+actualizar_datos.py
+generar_facturas.py
+
+# macOS
+.DS_Store

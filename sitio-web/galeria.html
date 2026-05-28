@@ -52,6 +52,7 @@
           <div class="nav-menu-items">
             <a class="nav-menu-item" href="documentos.html">Documentos</a>
             <a class="nav-menu-item active" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
             <a class="nav-menu-item" href="configuracion.html">Configuración</a>
           </div>
         </div>
@@ -74,6 +75,18 @@
           </div>
           <label for="gal-input" class="btn btn-primary" style="cursor:pointer;">+ Agregar imágenes</label>
           <input type="file" id="gal-input" accept="image/*" multiple style="display:none;" />
+        </div>
+
+        <!-- Barra de almacenamiento -->
+        <div id="storage-bar-wrap" style="margin-bottom:0.75rem; padding:0.75rem 1rem; background:var(--bg-white); border:1px solid var(--border); border-radius:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <span id="storage-bar-label" style="font-size:0.76rem; color:var(--text-xs); font-weight:500;"></span>
+            <span id="storage-bar-pct" style="font-size:0.76rem; font-weight:600;"></span>
+          </div>
+          <div style="height:6px; background:var(--border); border-radius:3px; overflow:hidden;">
+            <div id="storage-bar-fill" style="height:100%; border-radius:3px; transition:width 0.3s ease;"></div>
+          </div>
+          <div id="storage-bar-warn" class="hidden" style="margin-top:0.5rem; font-size:0.74rem; color:#b45309; font-weight:500;">&#9888; Galería casi llena. Elimina imágenes para liberar espacio.</div>
         </div>
 
         <!-- Upload zone -->
@@ -166,6 +179,7 @@
     let pendingImgData = null;
 
     function renderGaleria() {
+      renderStorageBar();
       const all    = loadRegistry('stgl_galeria');
       const buscar = document.getElementById('gal-buscar').value.toLowerCase();
       const cat    = document.getElementById('gal-cat').value;
@@ -268,10 +282,40 @@
       }
     }
 
+    function renderStorageBar() {
+      const raw = localStorage.getItem('stgl_galeria') || '[]';
+      const usedKB  = Math.round(raw.length / 1024);
+      const limitKB = 3000;
+      const pct     = Math.min(100, Math.round((usedKB / limitKB) * 100));
+      const usedMB  = (usedKB / 1024).toFixed(1);
+      const limitMB = (limitKB / 1024).toFixed(0);
+
+      let color = '#22c55e'; // verde
+      if (pct >= 85) color = '#ef4444'; // rojo
+      else if (pct >= 60) color = '#f59e0b'; // naranja
+
+      document.getElementById('storage-bar-label').textContent =
+        `Almacenamiento galería: ${usedMB} MB / ${limitMB} MB`;
+      document.getElementById('storage-bar-pct').textContent = `${pct}%`;
+      document.getElementById('storage-bar-pct').style.color = color;
+      document.getElementById('storage-bar-fill').style.width = `${pct}%`;
+      document.getElementById('storage-bar-fill').style.background = color;
+
+      const warn = document.getElementById('storage-bar-warn');
+      if (pct >= 90) warn.classList.remove('hidden');
+      else warn.classList.add('hidden');
+    }
+
     function handleFiles(files) {
       const arr = [...files].filter(f => f.type.startsWith('image/'));
       if (!arr.length) { toast('Solo se aceptan imágenes', 'error'); return; }
-      abrirModalImg(arr[0]);
+      const file = arr[0];
+      if (file.size > 800 * 1024) {
+        const mb = (file.size / (1024 * 1024)).toFixed(2);
+        toast(`Imagen demasiado grande (${mb} MB). El límite es 800 KB. Redúcela antes de subir.`, 'error');
+        return;
+      }
+      abrirModalImg(file);
     }
 
     initUploadZone('gal-zone', 'gal-zone-input', handleFiles);
