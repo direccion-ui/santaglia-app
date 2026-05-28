@@ -320,6 +320,18 @@
             </div>
           </div>
 
+          <!-- ── Barra de alertas global — visible en Director Y Contador ── -->
+          <div id="mov-alerts-bar" style="display:none;padding:0.35rem 1rem;background:#fffbeb;border-bottom:1px solid #fcd34d;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <button id="btn-dedup-global" onclick="dedupMovimientosRetroactivo()"
+              style="display:none;font-size:0.72rem;padding:0.3rem 0.75rem;
+                     color:#92400e;border:1.5px solid #d97706;border-radius:4px;
+                     background:#fef3c7;cursor:pointer;font-weight:700;font-family:var(--brand);"
+              title="Haz clic para revisar y limpiar los duplicados detectados">
+              🔂 <span id="btn-dedup-global-txt">Duplicados detectados</span>
+            </button>
+            <span id="mov-alerts-detail" style="font-size:0.68rem;color:#92400e;font-family:var(--brand);"></span>
+          </div>
+
           <!-- ── Barra de acciones (QUÉ HACER) — 3 grupos por propósito — oculta en Vista Director ── -->
           <div id="mov-action-bar" style="display:flex;align-items:center;justify-content:flex-end;gap:0.6rem;
                       padding:0.45rem 1rem;border-bottom:1px solid var(--border);
@@ -386,14 +398,7 @@
                   title="Detectados movimientos con fecha incorrecta — haz clic para limpiar y re-importar">
                   🧹
                 </button>
-                <!-- Botón dedup retroactivo — solo visible cuando se detectan duplicados -->
-                <button id="btn-dedup-movs" onclick="dedupMovimientosRetroactivo()"
-                  style="display:none;font-size:0.68rem;padding:0.28rem 0.6rem;
-                         color:#b45309;border:1px solid #b45309;
-                         border-radius:4px;background:none;cursor:pointer;"
-                  title="Se detectaron cargos duplicados — haz clic para limpiar">
-                  🔂 Duplicados
-                </button>
+                <!-- El botón de dedup está en #mov-alerts-bar (visible en Director y Contador) -->
               </div>
             </div>
 
@@ -5704,16 +5709,30 @@ function _dedupKey(m) {
   return `${(m.cuenta||'').trim()}|${amt}|${dir}`;
 }
 
-/* Score de "riqueza de datos": mayor score = más información = se conserva */
+/* Detecta si una cadena parece una fecha (dd/mm/yy, dd/mm/yyyy, yyyy-mm-dd…)
+   Usado para identificar entradas de extracto bancario Clara donde
+   el campo "receptor" trae la fecha del cargo en lugar del nombre del comercio. */
+const _RE_FECHA_REC = /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$|^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/;
+
+/* Score de "riqueza de datos": mayor score = más información = se conserva.
+   REGLA CLAVE: receptor con formato de fecha → entrada de extracto bancario (score bajo).
+   receptor con nombre de negocio → CFDI o mov. con datos completos (score alto). */
 function _dedupScore(m) {
   let s = 0;
   if (m.uuid)                                              s += 10; // CFDI con UUID
+
   const rec = (m.receptor || m.receptorRfc || '').trim();
-  if (rec && rec !== 'Clara' && !/^\d+$/.test(rec))        s += 4;  // receptor real (no folio)
+  const recEsFecha  = _RE_FECHA_REC.test(rec);
+  const recEsFolio  = /^\d+$/.test(rec);                 // solo dígitos (folio bancario)
+  const recEsEmisor = rec === (m.origen || m.emisor || '').trim(); // receptor = emisor = banco
+  if (rec && !recEsFecha && !recEsFolio && !recEsEmisor)  s += 4;  // receptor = nombre real
+  if (recEsFecha)                                         s -= 4;  // penaliza fecha como receptor
+
   const cc = (m.cuentaCont || '').trim();
   if (cc && cc !== 'No Existe' && cc !== '')               s += 3;  // cta. contable mapeada
+
   const conc = (m.concepto || m.desc || '').trim();
-  if (conc && !/^\d{2}\/\d{2}\/\d{2}$/.test(conc))        s += 2;  // concepto ≠ fecha
+  if (conc && !_RE_FECHA_REC.test(conc))                  s += 2;  // concepto ≠ fecha
   if (m.conciliado || m._conciliado)                       s += 1;  // ya conciliado
   return s;
 }
@@ -5768,21 +5787,31 @@ function _detectarDuplicados() {
 
   const total = dupDentroExcel.size + dupDentroManual.size + dupCruzado.size;
 
-  const btn = document.getElementById('btn-dedup-movs');
-  if (btn) {
+  const detalle = [
+    dupDentroExcel.size  ? `${dupDentroExcel.size} en extracto`  : '',
+    dupDentroManual.size ? `${dupDentroManual.size} en CFDI`      : '',
+    dupCruzado.size      ? `${dupCruzado.size} entre registros`   : '',
+  ].filter(Boolean).join(' · ');
+
+  /* ── Barra de alertas global (visible en Director Y Contador) ── */
+  const alertsBar  = document.getElementById('mov-alerts-bar');
+  const btnGlobal  = document.getElementById('btn-dedup-global');
+  const btnTxt     = document.getElementById('btn-dedup-global-txt');
+  const detailSpan = document.getElementById('mov-alerts-detail');
+
+  if (btnGlobal) {
     if (total > 0) {
-      const detalle = [
-        dupDentroExcel.size  ? `${dupDentroExcel.size} en extracto`  : '',
-        dupDentroManual.size ? `${dupDentroManual.size} en CFDI`     : '',
-        dupCruzado.size      ? `${dupCruzado.size} entre registros`  : '',
-      ].filter(Boolean).join(', ');
-      btn.style.display = '';
-      btn.title = `${total} duplicados detectados (${detalle}) — haz clic para limpiar`;
-      btn.textContent = `🔂 ${total} dup.`;
+      if (btnTxt)     btnTxt.textContent    = `${total} cargos duplicados — Limpiar`;
+      if (detailSpan) detailSpan.textContent = detalle;
+      btnGlobal.style.display = '';
+      if (alertsBar)  alertsBar.style.display = 'flex';
     } else {
-      btn.style.display = 'none';
+      btnGlobal.style.display = 'none';
+      if (alertsBar && !alertsBar.querySelector('[style*="display: "]:not([style*="display: none"])'))
+        alertsBar.style.display = 'none';
     }
   }
+
   return total;
 }
 
