@@ -226,7 +226,8 @@ async function _checkAndRestore() {
 
       // Verificación rápida: si todos los módulos clave ya tienen datos locales, salir
       const MODULE_KEYS = ['stgl_mov_excel','stgl_mov_manual','stgl_saldos','stgl_facturas',
-                           'stgl_retenciones','stgl_recurrentes','stgl_egresos','stgl_nomina'];
+                           'stgl_retenciones','stgl_recurrentes','stgl_egresos','stgl_nomina',
+                           'stgl_financiamientos_kpis'];  // Toyota CP + BYD CP
       const localCounts = {};
       MODULE_KEYS.forEach(k => {
         try { const p = JSON.parse(localStorage.getItem(k)); localCounts[k] = Array.isArray(p) ? p.length : (p ? 1 : 0); }
@@ -252,25 +253,37 @@ async function _checkAndRestore() {
         try { const p = JSON.parse(localRaw); localCount = Array.isArray(p) ? p.length : (localRaw ? 1 : 0); } catch {}
         if (sbCount > localCount) {
           try {
-            localStorage.removeItem(key);    // liberar espacio del valor anterior primero
-            localStorage.setItem(key, value); // interceptor → IDB + re-sync SB (idempotente)
-            restored++;
+            localStorage.removeItem(key);     // liberar espacio del valor anterior primero
+            localStorage.setItem(key, value); // interceptor puede absorber QuotaExceededError
+            /* ── Verificar que la escritura realmente ocurrió en localStorage ──
+               El interceptor nunca lanza — si localStorage estaba lleno, la clave
+               quedará null. Contabilizar solo escrituras reales para evitar loop
+               infinito de recarga cuando el almacenamiento local está saturado.      */
+            if (localStorage.getItem(key) !== null) {
+              restored++;
+            } else {
+              _idbWrite(key, value);
+              quotaHit = true;
+              console.warn('[stgl] localStorage lleno al restaurar:', key, '— datos en IDB+Supabase');
+            }
           } catch(e) {
-            // localStorage lleno — el interceptor ya guardó en IDB+Supabase
             _idbWrite(key, value);
             quotaHit = true;
-            console.warn('[stgl] localStorage lleno al restaurar:', key, '— datos en IDB+Supabase');
           }
         }
       }
 
       if (restored > 0) {
         try { _actualizarEstadoSync?.(); } catch {}
-        const msg = quotaHit
-          ? `☁️ ${restored} módulo(s) restaurados. Almacenamiento local limitado — algunos datos solo en IDB. Recargando…`
-          : `☁️ ${restored} módulo(s) actualizados desde la nube. Recargando…`;
-        try { toast(msg, 'success'); } catch {}
-        setTimeout(() => location.replace(location.href.split('?')[0]), 1800);
+        if (!quotaHit) {
+          /* Restauración completa — recargar para que los módulos lean datos frescos */
+          try { toast(`☁️ ${restored} módulo(s) actualizados desde la nube. Recargando…`, 'success'); } catch {}
+          setTimeout(() => location.replace(location.href.split('?')[0]), 1800);
+        } else {
+          /* Restauración parcial — localStorage lleno.
+             NO recargar: evita bucle infinito. Los datos están en IDB+Supabase. */
+          try { toast(`☁️ ${restored} módulo(s) restaurados. Almacenamiento local lleno — datos disponibles en IDB/Supabase. Recarga manual si ves datos incompletos.`, 'warning'); } catch {}
+        }
       }
       return; // Con sesión: no usar la ruta de IDB
     }
