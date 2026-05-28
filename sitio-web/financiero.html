@@ -321,7 +321,7 @@
           </div>
 
           <!-- ── Barra de alertas global — visible en Director Y Contador ── -->
-          <div id="mov-alerts-bar" style="display:none;padding:0.35rem 1rem;background:#fffbeb;border-bottom:1px solid #fcd34d;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <div id="mov-alerts-bar" style="display:none;padding:0.35rem 1rem;background:#fffbeb;border-bottom:1px solid #fcd34d;align-items:center;gap:0.75rem;flex-wrap:wrap;">
             <button id="btn-dedup-global" onclick="dedupMovimientosRetroactivo()"
               style="display:none;font-size:0.72rem;padding:0.3rem 0.75rem;
                      color:#92400e;border:1.5px solid #d97706;border-radius:4px;
@@ -5699,166 +5699,170 @@ function limpiarCSVMalImportado() {
    El gemelo de stgl_mov_manual (CFDI) tiene más datos → se prefiere conservar.
    También detecta duplicados DENTRO de stgl_mov_excel misma cuenta/monto/fecha. */
 
-/* ── Helpers de dedup ─────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   MOTOR DE DEDUPLICACIÓN v3
+   Opera sobre el POOL COMBINADO de todos los movimientos (excel + manual)
+   sin depender de que el campo `cuenta` coincida exactamente entre registros.
+
+   Señal principal de duplicado de extracto bancario Clara:
+     receptor = fecha (dd/mm/yy) mientras el otro tiene receptor = nombre real
+   ══════════════════════════════════════════════════════════════════════════ */
+
 const _DEDUP_WIN_MS = 3 * 86400000; // 3 días — suficiente para posteos de tarjeta
-
-/* Clave de agrupación: misma cuenta + mismo monto + misma dirección */
-function _dedupKey(m) {
-  const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
-  const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
-  return `${(m.cuenta||'').trim()}|${amt}|${dir}`;
-}
-
-/* Detecta si una cadena parece una fecha (dd/mm/yy, dd/mm/yyyy, yyyy-mm-dd…)
-   Usado para identificar entradas de extracto bancario Clara donde
-   el campo "receptor" trae la fecha del cargo en lugar del nombre del comercio. */
 const _RE_FECHA_REC = /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$|^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/;
 
-/* Score de "riqueza de datos": mayor score = más información = se conserva.
-   REGLA CLAVE: receptor con formato de fecha → entrada de extracto bancario (score bajo).
-   receptor con nombre de negocio → CFDI o mov. con datos completos (score alto). */
+/* Clave RELAJADA para el pool combinado: NO incluye cuenta porque puede diferir
+   entre el extracto bancario y el CFDI importado para el mismo cargo.
+   Usa monto exacto + dirección — si el monto coincide a 2 decimales y la fecha
+   está dentro del window, es duplicado. */
+function _dedupAmt(m) {
+  return Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+}
+function _dedupDir(m) { return parseFloat(m.entradas||0) > 0 ? '+' : '-'; }
+
+/* Score de riqueza: receptor con FECHA = extracto bancario (score bajo).
+   receptor con nombre real de negocio = CFDI / mov. con datos completos (score alto). */
 function _dedupScore(m) {
   let s = 0;
-  if (m.uuid)                                              s += 10; // CFDI con UUID
+  if (m.uuid)                                            s += 10; // CFDI timbrado
 
   const rec = (m.receptor || m.receptorRfc || '').trim();
-  const recEsFecha  = _RE_FECHA_REC.test(rec);
-  const recEsFolio  = /^\d+$/.test(rec);                 // solo dígitos (folio bancario)
-  const recEsEmisor = rec === (m.origen || m.emisor || '').trim(); // receptor = emisor = banco
-  if (rec && !recEsFecha && !recEsFolio && !recEsEmisor)  s += 4;  // receptor = nombre real
-  if (recEsFecha)                                         s -= 4;  // penaliza fecha como receptor
+  const recEsFecha = _RE_FECHA_REC.test(rec);
+  const recEsFolio = /^\d{3,6}$/.test(rec);             // folio numérico corto
+  if (recEsFecha)                                        s -= 6;  // señal clara de extracto banco
+  else if (rec && !recEsFolio)                           s += 4;  // nombre real
 
   const cc = (m.cuentaCont || '').trim();
-  if (cc && cc !== 'No Existe' && cc !== '')               s += 3;  // cta. contable mapeada
+  if (cc && cc !== 'No Existe')                          s += 3;  // cta. contable mapeada
 
   const conc = (m.concepto || m.desc || '').trim();
-  if (conc && !_RE_FECHA_REC.test(conc))                  s += 2;  // concepto ≠ fecha
-  if (m.conciliado || m._conciliado)                       s += 1;  // ya conciliado
+  if (conc && !_RE_FECHA_REC.test(conc) && conc.length > 4) s += 2; // concepto real
+  if (m.conciliado || m._conciliado)                     s += 1;
   return s;
 }
 
-/* Encuentra pares duplicados dentro de un array de movimientos.
-   Devuelve array de IDs que se deben ELIMINAR (el de menor score). */
-function _dedupDentroDeRegistro(arr) {
-  const aEliminar = new Set();
-  for (let i = 0; i < arr.length; i++) {
-    if (aEliminar.has(arr[i].id)) continue;
-    const ki  = _dedupKey(arr[i]);
-    const tsi = new Date(arr[i].fecha||'').getTime();
-    for (let j = i + 1; j < arr.length; j++) {
-      if (aEliminar.has(arr[j].id)) continue;
-      if (_dedupKey(arr[j]) !== ki) continue;
-      const tsj = new Date(arr[j].fecha||'').getTime();
-      if (Math.abs(tsi - tsj) > _DEDUP_WIN_MS) continue;
-      /* Son duplicados — eliminar el de menor score (o el más reciente si empatan) */
-      const si = _dedupScore(arr[i]), sj = _dedupScore(arr[j]);
-      aEliminar.add(si >= sj ? arr[j].id : arr[i].id);
-    }
-  }
-  return aEliminar;
-}
+/* Busca duplicados en el pool combinado (excel + manual).
+   Devuelve Map<id, {keepId, eliminateId, razon}> para los pares detectados.
+   La clave: mismo monto + misma dirección + fecha ±3 días.
+   Desambiguación por score; en empate gana el de mayor score. */
+function _dedupEncontrarPares(pool) {
+  /* Indexar por amt|dir → [{m, ts}] */
+  const idx = {};
+  pool.forEach(m => {
+    const k = `${_dedupAmt(m)}|${_dedupDir(m)}`;
+    if (!idx[k]) idx[k] = [];
+    idx[k].push({ m, ts: new Date(m.fecha||'').getTime() });
+  });
 
-/* Encuentra IDs de stgl_mov_excel con gemelo en stgl_mov_manual */
-function _dedupCruzado(excel, manual) {
-  const manIdx = {};
-  manual.forEach(m => {
-    const k = _dedupKey(m);
-    const ts = new Date(m.fecha||'').getTime();
-    if (!manIdx[k]) manIdx[k] = [];
-    manIdx[k].push(ts);
+  const aEliminar = new Set(); // IDs a eliminar
+  const info      = [];        // detalle para confirmación
+
+  Object.values(idx).forEach(bucket => {
+    if (bucket.length < 2) return;
+    /* Comparar todos los pares dentro del bucket */
+    for (let i = 0; i < bucket.length; i++) {
+      if (aEliminar.has(bucket[i].m.id)) continue;
+      for (let j = i + 1; j < bucket.length; j++) {
+        if (aEliminar.has(bucket[j].m.id)) continue;
+        if (Math.abs(bucket[i].ts - bucket[j].ts) > _DEDUP_WIN_MS) continue;
+
+        const mi = bucket[i].m, mj = bucket[j].m;
+        const si = _dedupScore(mi), sj = _dedupScore(mj);
+        const loser = si >= sj ? mj : mi;
+        aEliminar.add(loser.id);
+
+        const recI = (mi.receptor||'').trim(), recJ = (mj.receptor||'').trim();
+        const razon = _RE_FECHA_REC.test(recI)
+          ? `extracto (receptor="${recI}") vs CFDI (receptor="${recJ}")`
+          : _RE_FECHA_REC.test(recJ)
+            ? `extracto (receptor="${recJ}") vs CFDI (receptor="${recI}")`
+            : `mismo monto $${_dedupAmt(mi)} en fechas cercanas`;
+        info.push({ id: loser.id, amt: _dedupAmt(mi), fecha: loser.fecha, razon });
+      }
+    }
   });
-  const aEliminar = new Set();
-  excel.forEach(m => {
-    if (aEliminar.has(m.id)) return;
-    const ts = new Date(m.fecha||'').getTime();
-    if ((manIdx[_dedupKey(m)]||[]).some(t => Math.abs(t - ts) <= _DEDUP_WIN_MS))
-      aEliminar.add(m.id);
-  });
-  return aEliminar;
+  return { aEliminar, info };
 }
 
 function _detectarDuplicados() {
   const excel  = getExcelMovData();
   const manual = loadRegistry('stgl_mov_manual');
+  const pool   = [...excel, ...manual];
 
-  const dupDentroExcel  = _dedupDentroDeRegistro(excel);
-  const dupDentroManual = _dedupDentroDeRegistro(manual);
-  const dupCruzado      = _dedupCruzado(excel, manual);
+  const { aEliminar, info } = _dedupEncontrarPares(pool);
+  const total = aEliminar.size;
 
-  const total = dupDentroExcel.size + dupDentroManual.size + dupCruzado.size;
-
-  const detalle = [
-    dupDentroExcel.size  ? `${dupDentroExcel.size} en extracto`  : '',
-    dupDentroManual.size ? `${dupDentroManual.size} en CFDI`      : '',
-    dupCruzado.size      ? `${dupCruzado.size} entre registros`   : '',
-  ].filter(Boolean).join(' · ');
-
-  /* ── Barra de alertas global (visible en Director Y Contador) ── */
+  /* ── Barra de alertas global ── */
   const alertsBar  = document.getElementById('mov-alerts-bar');
   const btnGlobal  = document.getElementById('btn-dedup-global');
   const btnTxt     = document.getElementById('btn-dedup-global-txt');
   const detailSpan = document.getElementById('mov-alerts-detail');
 
-  if (btnGlobal) {
-    if (total > 0) {
-      if (btnTxt)     btnTxt.textContent    = `${total} cargos duplicados — Limpiar`;
-      if (detailSpan) detailSpan.textContent = detalle;
-      btnGlobal.style.display = '';
-      if (alertsBar)  alertsBar.style.display = 'flex';
-    } else {
-      btnGlobal.style.display = 'none';
-      if (alertsBar && !alertsBar.querySelector('[style*="display: "]:not([style*="display: none"])'))
-        alertsBar.style.display = 'none';
-    }
+  if (total > 0) {
+    /* Mostrar hasta 3 ejemplos en el detalle */
+    const ejemplos = info.slice(0, 3).map(i => `$${i.amt} (${i.fecha})`).join(', ');
+    const txt = total > 3 ? `${ejemplos} y ${total - 3} más` : ejemplos;
+    if (btnTxt)     btnTxt.textContent     = `${total} duplicados detectados — Limpiar`;
+    if (detailSpan) detailSpan.textContent = txt;
+    if (btnGlobal)  btnGlobal.style.display = '';
+    if (alertsBar)  alertsBar.style.display = 'flex';
+  } else {
+    if (btnGlobal)  btnGlobal.style.display = 'none';
+    if (alertsBar)  alertsBar.style.display = 'none';
   }
-
   return total;
 }
 
 function dedupMovimientosRetroactivo() {
   const excel  = getExcelMovData();
   const manual = loadRegistry('stgl_mov_manual');
+  const pool   = [...excel, ...manual];
 
-  const dupDentroExcel  = _dedupDentroDeRegistro(excel);
-  const dupDentroManual = _dedupDentroDeRegistro(manual);
-  const dupCruzado      = _dedupCruzado(excel, manual);
-
-  const total = dupDentroExcel.size + dupDentroManual.size + dupCruzado.size;
+  const { aEliminar, info } = _dedupEncontrarPares(pool);
+  const total = aEliminar.size;
   if (!total) { toast('Sin duplicados detectados', 'info'); return; }
 
-  const lineas = [
-    dupDentroExcel.size  ? `• ${dupDentroExcel.size} dentro del extracto bancario (dos importaciones del mismo CSV)`   : '',
-    dupDentroManual.size ? `• ${dupDentroManual.size} dentro de los movimientos manuales/CFDI`                         : '',
-    dupCruzado.size      ? `• ${dupCruzado.size} entre extracto bancario y CFDI (mismo cargo, ambos registrados)`      : '',
-  ].filter(Boolean).join('\n');
+  /* Mostrar detalle de los primeros casos para que el usuario confirme */
+  const ejemplos = info.slice(0, 5)
+    .map(i => `• $${i.amt} el ${i.fecha} — ${i.razon}`)
+    .join('\n');
+  const resto = total > 5 ? `\n• ...y ${total - 5} más` : '';
 
   const ok = confirm(
-    `Se detectaron ${total} movimiento(s) duplicados:\n\n${lineas}\n\n` +
-    `Se conservará el registro con MÁS información (CFDI > banco, UUID > sin UUID).\n` +
-    `¿Continuar?`
+    `Se detectaron ${total} movimiento(s) duplicados:\n\n${ejemplos}${resto}\n\n` +
+    `Se eliminará el de menor calidad de datos (extracto bancario con fecha como receptor).\n` +
+    `Se conservará el CFDI o el que tiene información más completa.\n\n¿Continuar?`
   );
   if (!ok) return;
 
-  /* ── Limpiar stgl_mov_excel ── */
-  const excelElim = new Set([...dupDentroExcel, ...dupCruzado]);
-  const excelOk   = excel.filter(m => !excelElim.has(m.id));
-  const excelRem  = excel.filter(m => excelElim.has(m.id));
-  excelRem.filter(m => m._saldoAjustado && m.cuenta).forEach(m => {
-    const delta = parseFloat(m.entradas||0) - parseFloat(m.salidas||0);
-    if (delta) ajustarSaldoCuenta(m.cuenta, -delta);
-  });
-  localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excelOk));
+  /* Separar IDs por registro de origen */
+  const excelIds  = new Set(excel.map(m => m.id));
+  const manualIds = new Set(manual.map(m => m.id));
 
-  /* ── Limpiar stgl_mov_manual ── */
-  if (dupDentroManual.size) {
-    const manualOk = manual.filter(m => !dupDentroManual.has(m.id));
-    saveRegistry('stgl_mov_manual', manualOk);
+  const elimExcel  = [...aEliminar].filter(id => excelIds.has(id));
+  const elimManual = [...aEliminar].filter(id => manualIds.has(id));
+
+  /* Limpiar stgl_mov_excel y revertir ajustes de saldo */
+  if (elimExcel.length) {
+    const elimSet = new Set(elimExcel);
+    const excelRem = excel.filter(m => elimSet.has(m.id));
+    excelRem.filter(m => m._saldoAjustado && m.cuenta).forEach(m => {
+      const delta = parseFloat(m.entradas||0) - parseFloat(m.salidas||0);
+      if (delta) ajustarSaldoCuenta(m.cuenta, -delta);
+    });
+    localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(excel.filter(m => !elimSet.has(m.id))));
+  }
+
+  /* Limpiar stgl_mov_manual */
+  if (elimManual.length) {
+    const elimSet = new Set(elimManual);
+    saveRegistry('stgl_mov_manual', manual.filter(m => !elimSet.has(m.id)));
   }
 
   _invalidarSalCache();
   renderSaldos(); filterMovimientos();
   _detectarDuplicados();
-  toast(`🔂 ${total} duplicados eliminados — saldos actualizados`, 'success');
+  toast(`🔂 ${total} duplicados eliminados — saldos recalculados`, 'success');
 }
 
   /* ══════════════════════════════════════════════════════════════════
