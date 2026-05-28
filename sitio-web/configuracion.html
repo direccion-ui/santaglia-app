@@ -379,6 +379,33 @@
             <div style="display:flex; justify-content:flex-end;">
               <button class="btn btn-primary" onclick="saveEmpresa()">Guardar datos de empresa</button>
             </div>
+
+            <!-- ── IVA saldo a favor ── -->
+            <div class="cfg-section">
+              <div class="cfg-section-hdr">Impuestos por Recuperar — IVA a Favor</div>
+              <p style="font-size:0.71rem;color:var(--text-dim);margin:0 0 0.75rem;">
+                Captura aquí el saldo acumulado de IVA a favor por año. Estos datos aparecen en el
+                <strong>Activo Circulante</strong> del módulo Financiero (Capital de Trabajo).
+                <br><span style="color:var(--text-xs);">ℹ️ Solo registra el monto neto pendiente de recuperar. No afecta ningún otro módulo.</span>
+              </p>
+              <div id="iva-favor-list" style="margin-bottom:0.5rem;"></div>
+              <div style="display:grid;grid-template-columns:90px 1fr 2fr auto;gap:0.4rem;align-items:end;margin-bottom:0.5rem;">
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label">Año</label>
+                  <input class="form-input" id="iva-año" type="number" placeholder="2024" min="2018" max="2030" style="text-align:center;" />
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label">Monto ($)</label>
+                  <input class="form-input" id="iva-monto" type="number" placeholder="50,000" min="0" step="0.01" />
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label">Descripción</label>
+                  <input class="form-input" id="iva-desc" placeholder="IVA no acreditado ejercicio 2024" />
+                </div>
+                <button class="btn btn-primary" style="font-size:0.72rem;white-space:nowrap;" onclick="agregarIvaFavor()">+ Agregar</button>
+              </div>
+              <div id="iva-favor-total" style="font-size:0.72rem;color:var(--text-dim);"></div>
+            </div>
           </div>
 
           <!-- ── Panel: Apariencia ── -->
@@ -3663,6 +3690,68 @@ async function tgDetectChatId() {
   btn.textContent = '🔍 Detectar mi Chat ID automáticamente';
   btn.disabled    = false;
 }
+
+/* ── IVA a favor ──────────────────────────────────────────────────────────── */
+const KEY_IVA = 'stgl_iva_favor';
+
+function _loadIvaFavor() {
+  try { return JSON.parse(localStorage.getItem(KEY_IVA) || '[]'); } catch { return []; }
+}
+
+function renderIvaFavor() {
+  const list  = document.getElementById('iva-favor-list');
+  const total = document.getElementById('iva-favor-total');
+  if (!list) return;
+  const rows = _loadIvaFavor();
+  if (!rows.length) {
+    list.innerHTML = '<p style="font-size:0.68rem;color:var(--text-xs);margin:0;">Sin registros aún.</p>';
+    if (total) total.textContent = '';
+    return;
+  }
+  const sum = rows.reduce((s, r) => s + (parseFloat(r.monto)||0), 0);
+  list.innerHTML = `
+    <table style="width:100%;font-size:0.68rem;border-collapse:collapse;">
+      <thead><tr style="background:var(--bg-alt);">
+        <th style="padding:4px 6px;text-align:left;font-weight:700;">Año</th>
+        <th style="padding:4px 6px;text-align:right;font-weight:700;">Monto</th>
+        <th style="padding:4px 6px;text-align:left;font-weight:700;">Descripción</th>
+        <th style="padding:4px 6px;"></th>
+      </tr></thead>
+      <tbody>${rows.map((r, i) => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:4px 6px;">${r.año||'—'}</td>
+          <td style="padding:4px 6px;text-align:right;color:var(--green);font-weight:600;">$${(parseFloat(r.monto)||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td style="padding:4px 6px;color:var(--text-dim);">${r.descripcion||'—'}</td>
+          <td style="padding:4px 6px;text-align:right;"><button class="btn btn-ghost" style="font-size:0.62rem;color:var(--red);padding:2px 6px;" onclick="eliminarIvaFavor(${i})">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  if (total) total.innerHTML = `<b>Total IVA a favor registrado:</b> <span style="color:var(--green);font-weight:700;">$${sum.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
+}
+
+function agregarIvaFavor() {
+  const año   = parseInt(document.getElementById('iva-año')?.value || '0');
+  const monto = parseFloat(document.getElementById('iva-monto')?.value || '0');
+  const desc  = (document.getElementById('iva-desc')?.value || '').trim();
+  if (!año || !monto || monto <= 0) { alert('Captura el año y el monto.'); return; }
+  const rows = _loadIvaFavor();
+  rows.push({ año, monto, descripcion: desc, fechaCaptura: new Date().toISOString().slice(0,10) });
+  localStorage.setItem(KEY_IVA, JSON.stringify(rows));
+  /* Limpiar campos */
+  ['iva-año','iva-monto','iva-desc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  renderIvaFavor();
+}
+
+function eliminarIvaFavor(idx) {
+  if (!confirm('¿Eliminar este registro de IVA a favor?')) return;
+  const rows = _loadIvaFavor();
+  rows.splice(idx, 1);
+  localStorage.setItem(KEY_IVA, JSON.stringify(rows));
+  renderIvaFavor();
+}
+
+/* Inicializar al cargar (si la sección empresa está activa) */
+document.addEventListener('DOMContentLoaded', () => { renderIvaFavor(); });
 </script>
 </body>
 </html>

@@ -517,7 +517,8 @@
               <div id="dir-chart-nota-acido" style="display:none;margin-top:0.5rem;padding:0.4rem 0.75rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;font-size:0.66rem;color:#0369a1;">
                 ℹ️ <strong>Prueba del Ácido no mostrada:</strong> el pasivo circulante actual es mínimo (&lt;$5,000) — la empresa no tiene deudas a corto plazo significativas registradas (tarjetas saldadas, retenciones al corriente). El Capital de Trabajo es el indicador relevante en este contexto.
               </div>
-              <div id="dir-pasivo-breakdown" style="display:none;margin-top:0.5rem;padding:0.5rem 0.75rem;background:#fafafa;border:1px solid var(--border);border-radius:4px;font-size:0.65rem;color:var(--text);"></div>
+              <div id="dir-activo-breakdown" style="display:none;margin-top:0.5rem;padding:0.5rem 0.75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;font-size:0.65rem;color:var(--text);"></div>
+              <div id="dir-pasivo-breakdown" style="display:none;margin-top:0.4rem;padding:0.5rem 0.75rem;background:#fafafa;border:1px solid var(--border);border-radius:4px;font-size:0.65rem;color:var(--text);"></div>
               <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.4rem;text-align:center;font-style:italic;">*Estimaciones basadas en historial de movimientos. Para estados financieros formales consulte su contador.</div>
             </div>
 
@@ -5678,29 +5679,29 @@ function limpiarCSVMalImportado() {
     return '$' + Math.abs(n||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
   }
 
+  /* ── Identificador de tarjeta crédito (scope de módulo) ──────────────────────────
+     Replica la lógica de resolverTipo() del Contador: usa s.tipo si existe, de lo
+     contrario consulta stgl_config.cuentasConfig[cuenta].tipo. Así funciona aunque
+     el campo tipo esté vacío o sea "undefined" en el registro.
+     Usada por _renderCajaEjecutiva, _renderCapitalTrabajo y el desglose de pasivo. */
+  let __cfgCacheDir = null;
+  function _esTarjetaDir(s) {
+    let tipo = (s.tipo && s.tipo !== 'undefined' && s.tipo.trim()) ? s.tipo.trim() : '';
+    if (!tipo) {
+      if (!__cfgCacheDir) {
+        try { __cfgCacheDir = JSON.parse(localStorage.getItem('stgl_config') || '{}'); } catch { __cfgCacheDir = {}; }
+      }
+      tipo = __cfgCacheDir?.cuentasConfig?.[s.cuenta]?.tipo || '';
+    }
+    const lc = tipo.toLowerCase();
+    return tipo === 'Tarjeta Crédito' || tipo === 'Tarjeta de Crédito' ||
+           lc.includes('tarjeta') || lc === 'crédito' || lc === 'credito';
+  }
+
   /* ── 3A: Posición de Caja Ejecutiva (espejo de saldos bancarios) ── */
   function _renderCajaEjecutiva() {
     const saldos = loadRegistry(KEY_SAL);
     const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
-
-    /* Identificador robusto de tarjeta crédito.
-       Replica la lógica de resolverTipo() (Contador): usa s.tipo si existe y no es
-       "undefined", de lo contrario consulta stgl_config.cuentasConfig[cuenta].tipo.
-       Esto evita que cuentas como Clara (cuyo tipo puede estar vacío en el registro)
-       caigan en mxn como valor negativo y distorsionen "Efectivo en Cuentas". */
-    let _cfgCache = null;
-    const _esTarjetaCC = s => {
-      let tipo = (s.tipo && s.tipo !== 'undefined' && s.tipo.trim()) ? s.tipo.trim() : '';
-      if (!tipo) {
-        if (!_cfgCache) { try { _cfgCache = JSON.parse(localStorage.getItem('stgl_config')||'{}'); } catch { _cfgCache = {}; } }
-        const mapped = _cfgCache?.cuentasConfig?.[s.cuenta]?.tipo || '';
-        // _TIPO_MAP_CFG puede no estar accesible desde este scope; usamos el valor directo
-        tipo = mapped;
-      }
-      const lc = tipo.toLowerCase();
-      return tipo === 'Tarjeta Crédito' || tipo === 'Tarjeta de Crédito' ||
-             lc.includes('tarjeta') || lc === 'crédito' || lc === 'credito';
-    };
 
     _invalidarSalCache();
     let mxn = 0, usd = 0, cc = 0;
@@ -5708,7 +5709,7 @@ function limpiarCSVMalImportado() {
       if (s.cancelada) return;
       const saldo = _sal(s);                                         // ← saldo calculado
       const mon   = (s.moneda || 'MXN').toUpperCase();
-      if (_esTarjetaCC(s)) { cc += Math.abs(saldo); return; }       // tarjeta → pasivo
+      if (_esTarjetaDir(s)) { cc += Math.abs(saldo); return; }      // tarjeta → pasivo
       if (mon === 'USD') { usd += saldo; }
       else               { mxn += saldo; }                          // efectivo MXN puro
     });
@@ -5910,34 +5911,103 @@ function limpiarCSVMalImportado() {
       }
     });
 
-    /* ── Desglose Pasivo CP (diagnóstico) ── */
+    /* ── Desgloses Activo y Pasivo CP ── */
     try {
-      const r0 = _calcCapitalTrabajo(0); // período actual
-      const breakdownEl = document.getElementById('dir-pasivo-breakdown');
-      if (breakdownEl) {
-        const saldos = loadRegistry(KEY_SAL);
-        const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
-        /* Tarjetas */
-        let tarjetas = 0;
-        saldos.forEach(s => {
-          if (s.cancelada) return;
-          const tipo = (s.tipo || '').toLowerCase();
-          if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito')
-            tarjetas += Math.abs(_sal(s));
+      const r0  = _calcCapitalTrabajo(0);
+      const tc  = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
+      const sal = loadRegistry(KEY_SAL);
+      const fmt = v => '$' + Math.round(Math.abs(v)).toLocaleString('es-MX');
+      const fmtDec = v => '$' + Math.abs(v||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+      /* ════════════════════ ACTIVO CIRCULANTE ════════════════════ */
+      const activoEl = document.getElementById('dir-activo-breakdown');
+      if (activoEl) {
+        /* 1. Bancos: saldos líquidos (misma lógica que Posición Ejecutiva) */
+        let bancosMXN = 0, bancosUSD = 0;
+        sal.forEach(s => {
+          if (s.cancelada || _esTarjetaDir(s)) return;
+          const saldo = _sal(s);
+          if ((s.moneda||'MXN').toUpperCase() === 'USD') bancosUSD += saldo;
+          else                                           bancosMXN += saldo;
         });
+        const bancosTotal = bancosMXN + bancosUSD * tc;
+
+        /* 2. Clientes y CxC: facturas con estado Pendiente o Vencida */
+        let cxcTotal = 0;
+        const cxcDetalle = [];
+        try {
+          const facts = loadRegistry('stgl_facturas');
+          facts.forEach(f => {
+            const est = (f.estado || '').toLowerCase();
+            if (est === 'pendiente' || est === 'vencida' || est === 'por cobrar') {
+              const imp = parseFloat(f.total || f.impMxn || 0);
+              cxcTotal += imp;
+              cxcDetalle.push({ cliente: f.cliente || f.razonSocial || '—', monto: imp, estado: f.estado });
+            }
+          });
+        } catch {}
+        /* Agrupar CxC por cliente para el resumen */
+        const cxcPorCliente = {};
+        cxcDetalle.forEach(d => { cxcPorCliente[d.cliente] = (cxcPorCliente[d.cliente]||0) + d.monto; });
+        const cxcResumen = Object.entries(cxcPorCliente).sort((a,b)=>b[1]-a[1]).slice(0,3)
+          .map(([c,m]) => `${c}: ${fmt(m)}`).join('; ');
+
+        /* 3. Impuestos por recuperar: IVA saldo a favor (stgl_iva_favor) */
+        let ivaTotal = 0;
+        const ivaDetalle = [];
+        try {
+          const ivaArr = JSON.parse(localStorage.getItem('stgl_iva_favor') || '[]');
+          ivaArr.forEach(r => {
+            const m = parseFloat(r.monto || 0);
+            if (m > 0) { ivaTotal += m; ivaDetalle.push(r); }
+          });
+        } catch {}
+        const sinIVA = ivaTotal === 0;
+
+        /* 4. Inventarios: N/A (modelo de servicios) */
+        const inventarios = 0;
+
+        const activoTotal = bancosTotal + cxcTotal + ivaTotal + inventarios;
+
+        const rowsAC = [
+          `<div style="display:flex;justify-content:space-between;"><span>🏦 <b>Bancos</b></span><span>${fmtDec(bancosTotal)}<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">(MXN ${fmtDec(bancosMXN)} + USD ${bancosUSD.toLocaleString('es-MX',{minimumFractionDigits:2})})</span></span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>📄 <b>Clientes y CxC</b>${cxcTotal>0?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${cxcResumen}</span>`:''}</span><span>${fmtDec(cxcTotal)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;align-items:baseline;"><span>🧾 <b>Impuestos por recuperar (IVA a favor)</b></span><span>${sinIVA?`<a href="configuracion.html" style="color:#b45309;font-size:0.6rem;">⚠️ Sin datos — capturar</a>`:fmtDec(ivaTotal)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>📦 <b>Inventarios</b></span><span style="color:var(--text-xs);">N/A (servicios)</span></div>`,
+          `<div style="display:flex;justify-content:space-between;border-top:1px solid #86efac;margin-top:4px;padding-top:4px;"><b>Total Activo Circulante</b><b style="color:var(--green);">${fmtDec(activoTotal)}</b></div>`,
+        ];
+        activoEl.innerHTML = `<div style="font-weight:700;margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;color:#166534;font-size:0.6rem;">📊 Desglose Activo Circulante (período actual)</div>${rowsAC.map(r=>`<div style="padding:2px 0;">${r}</div>`).join('')}`;
+        activoEl.style.display = '';
+      }
+
+      /* ════════════════════ PASIVO CIRCULANTE ════════════════════ */
+      const pasivoEl = document.getElementById('dir-pasivo-breakdown');
+      if (pasivoEl) {
+        /* Tarjetas — usa _esTarjetaDir (con fallback a stgl_config) */
+        let tarjetas = 0;
+        const tarjetasDetalle = [];
+        sal.forEach(s => {
+          if (s.cancelada || !_esTarjetaDir(s)) return;
+          const saldo = Math.abs(_sal(s));
+          if (saldo > 0) { tarjetas += saldo; tarjetasDetalle.push({ nombre: s.cuenta || s.nombre || s.id, saldo }); }
+        });
+        const tarjRow = tarjetasDetalle.length
+          ? tarjetasDetalle.map(t => `${t.nombre}: ${fmt(t.saldo)}`).join('; ')
+          : '';
+
         /* Retenciones pendientes */
         let retPend = 0;
         try {
           const retExtra = JSON.parse(localStorage.getItem('stgl_retenciones_extra') || '{}');
           const retArray = loadRegistry('stgl_retenciones');
-          const totRet   = {};
+          const totRet = {};
           retArray.forEach(r => {
             if (!r.año && !r.mes) return;
             const k = `${r.año}-${String(r.mes).padStart(2,'0')}`;
             totRet[k] = (totRet[k]||0) + (parseFloat(r.subtotalRet)||0);
           });
-          Object.entries(totRet).forEach(([k, t]) => {
-            const ex = retExtra[k] || {};
+          Object.entries(totRet).forEach(([k,t]) => {
+            const ex = retExtra[k]||{};
             if (ex.pagoBancarioConfirmado) return;
             const pag = (parseFloat(ex.acuseAsim)||0)+(parseFloat(ex.acuseHon)||0)+
                         (parseFloat(ex.acuseArr)||0)+(parseFloat(ex.acuseTotal)||0);
@@ -5945,23 +6015,25 @@ function limpiarCSVMalImportado() {
             if (pend > 0) retPend += pend;
           });
         } catch {}
+
         /* Financiamientos */
         const finKpis  = JSON.parse(localStorage.getItem('stgl_financiamientos_kpis') || 'null');
-        const toyotaCP = finKpis ? (parseFloat(finKpis.pasivo_cp_creditos) || 0) : 0;
-        const bydCP    = finKpis ? (parseFloat(finKpis.pasivo_cp_arrendamiento) || 0) : 94741.68;
+        const toyotaCP = finKpis ? (parseFloat(finKpis.pasivo_cp_creditos)      || 0) : 0;
+        const bydCP    = finKpis ? (parseFloat(finKpis.pasivo_cp_arrendamiento)  || 0) : 94741.68;
         const missingFin = !finKpis;
-        const fmt = v => '$' + Math.round(v).toLocaleString('es-MX');
-        const rows = [
-          `<b>Clara (tarjeta):</b> ${fmt(tarjetas)}`,
-          `<b>Retenciones SAT pendientes:</b> ${fmt(retPend)}`,
-          `<b>Toyota crédito CP (12m):</b> ${missingFin ? `<span style="color:#b45309">${fmt(toyotaCP)} (sin datos — abre Financiamientos)</span>` : fmt(toyotaCP)}`,
-          `<b>BYD arrendamiento CP (12m):</b> ${missingFin ? `<span style="color:#b45309">${fmt(bydCP)} ⚠️ estimado</span>` : fmt(bydCP)}`,
-          `<b style="border-top:1px solid var(--border);display:block;margin-top:4px;padding-top:4px;">Total pasivo CP:</b> ${fmt(r0.pasivoCirc)}`,
+        const warn = txt => `<span style="color:#b45309;">${txt}</span>`;
+
+        const rowsPC = [
+          `<div style="display:flex;justify-content:space-between;"><span>💳 <b>Tarjetas de crédito</b>${tarjRow?`<span style="color:var(--text-xs);font-size:0.6rem;margin-left:4px;">${tarjRow}</span>`:''}</span><span>${tarjetas>0?fmtDec(tarjetas):'$0.00'}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>🏛️ <b>Retenciones SAT pendientes</b></span><span>${fmtDec(retPend)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>🚗 <b>Toyota crédito CP (12 pagos)</b></span><span>${missingFin?warn(`${fmt(toyotaCP)} — sin datos, abre Financiamientos`):fmtDec(toyotaCP)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;"><span>🚙 <b>BYD arrendamiento CP (12 meses)</b></span><span>${missingFin?warn(`${fmt(bydCP)} ⚠️ estimado`):fmtDec(bydCP)}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:4px;"><b>Total Pasivo Circulante</b><b style="color:var(--red);">${fmtDec(r0.pasivoCirc)}</b></div>`,
         ];
-        breakdownEl.innerHTML = `<div style="font-weight:700;margin-bottom:4px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-dim);font-size:0.6rem;">📋 Desglose Pasivo Circulante (período actual)</div>${rows.map(r=>`<div style="padding:1px 0;">${r}</div>`).join('')}`;
-        breakdownEl.style.display = r0.pasivoCirc >= 1000 ? '' : 'none';
+        pasivoEl.innerHTML = `<div style="font-weight:700;margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;color:#7f1d1d;font-size:0.6rem;">📋 Desglose Pasivo Circulante (período actual)</div>${rowsPC.map(r=>`<div style="padding:2px 0;">${r}</div>`).join('')}`;
+        pasivoEl.style.display = r0.pasivoCirc >= 1000 ? '' : 'none';
       }
-    } catch {}
+    } catch(e) { console.error('[stgl] breakdown AC/PC:', e); }
 
     return resultados;
   }
