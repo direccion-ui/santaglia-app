@@ -2489,7 +2489,7 @@
 
       // Pasada 2b: cruzar contra stgl_mov_manual MISMA CUENTA (monto exacto + fecha ±1 día + dirección)
       //   Captura CFDI de nómina y movimientos FX ya registrados que coinciden con el banco
-      const mnlMismaCuenta = loadRegistry('stgl_mov_manual').filter(m => m.cuenta === cuentaSeleccionada);
+      const mnlMismaCuenta = loadRegistry('stgl_mov_manual').filter(m => m.cuenta === cuenta);
       const mnlAmts = mnlMismaCuenta.map(m => ({
         amt: Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2),
         dir: parseFloat(m.entradas||0) > 0 ? '+' : '-',
