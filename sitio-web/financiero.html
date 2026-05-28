@@ -330,9 +330,10 @@
             <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Posición de Caja Ejecutiva</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1.25rem;" id="dir-caja-kpis">
               <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
-                <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Disponible MXN</div>
+                <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Efectivo en Cuentas</div>
                 <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:var(--green);" id="dir-k-mxn">—</div>
-                <div style="font-size:0.65rem;color:var(--text-xs);">Cuentas + efectivo</div>
+                <div style="font-size:0.65rem;color:var(--text-xs);">Saldos bancarios (bruto)</div>
+                <div style="font-size:0.63rem;color:var(--red);margin-top:0.1rem;" id="dir-k-cc"></div>
               </div>
               <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
                 <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Disponible USD</div>
@@ -440,6 +441,16 @@
               Cargando compromisos…
             </div>
             <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.4rem;font-style:italic;margin-bottom:0.5rem;">*Estimaciones basadas en historial de movimientos. Para estados financieros formales consulte su contador.</div>
+
+            <!-- 3G: Agenda del Director -->
+            <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;margin-top:1.25rem;display:flex;align-items:center;gap:0.5rem;">
+              <span>📅 Agenda del Director</span>
+              <span style="font-size:0.6rem;font-weight:400;font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-xs);">acciones e compromisos de los próximos 7 días</span>
+            </div>
+            <div id="dir-agenda" style="background:var(--bg-white);border:1px solid var(--border);border-radius:4px;padding:0.75rem;min-height:3rem;font-size:0.72rem;">
+              Cargando agenda…
+            </div>
+            <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.4rem;font-style:italic;margin-bottom:0.5rem;">*Las estimaciones de nómina y honorarios se basan en patrones históricos del mes anterior. Confirme montos con su área de RRHH.</div>
 
           </div>
 
@@ -5065,7 +5076,7 @@ function limpiarCSVMalImportado() {
       const saldo = parseFloat(s.saldo) || 0;
       const mon   = (s.moneda || 'MXN').toUpperCase();
       const tipo  = (s.tipo   || '').toLowerCase();
-      if (tipo === 'tarjeta') { cc += Math.abs(saldo); return; }
+      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') { cc += Math.abs(saldo); return; }
       if (mon === 'USD') { usd += saldo; }
       else               { mxn += saldo; }
     });
@@ -5105,6 +5116,8 @@ function limpiarCSVMalImportado() {
 
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('dir-k-mxn',  _fmtDir(mxn));
+    const ccEl = document.getElementById('dir-k-cc');
+    if (ccEl) ccEl.textContent = cc > 0 ? `−${_fmtDir(cc)} tarjeta` : '';
     set('dir-k-usd',  usd !== 0 ? `USD ${usd.toLocaleString('es-MX',{minimumFractionDigits:2})}` : '—');
     set('dir-k-usd-mxn', usd !== 0 ? `≈ ${_fmtDir(usd * tc)} MXN @ ${tc}` : '');
     set('dir-k-comp', compromisos > 0 ? _fmtDir(compromisos) : '—');
@@ -5127,7 +5140,7 @@ function limpiarCSVMalImportado() {
       const saldo = parseFloat(s.saldo) || 0;
       const tipo  = (s.tipo || '').toLowerCase();
       const mon   = (s.moneda || 'MXN').toUpperCase();
-      if (tipo === 'tarjeta') return; /* es pasivo */
+      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') return; /* es pasivo */
       const saldoMXN = mon === 'USD' ? saldo * tc : saldo;
       if (saldoMXN > 0) activoCirc += saldoMXN;
     });
@@ -5138,7 +5151,7 @@ function limpiarCSVMalImportado() {
       if (s.cancelada) return;
       const saldo = parseFloat(s.saldo) || 0;
       const tipo  = (s.tipo || '').toLowerCase();
-      if (tipo === 'tarjeta') pasivoCirc += Math.abs(saldo);
+      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') pasivoCirc += Math.abs(saldo);
     });
     try {
       const ret = loadRegistry('stgl_retenciones_extra');
@@ -5355,6 +5368,246 @@ function limpiarCSVMalImportado() {
       </div>`;
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     AGENDA DEL DIRECTOR — detección de patrones y compromisos próximos
+  ══════════════════════════════════════════════════════════════════ */
+  function _renderAgendaDirector() {
+    const el = document.getElementById('dir-agenda');
+    if (!el) return;
+
+    const hoy      = new Date();
+    const isoHoy   = hoy.toISOString().slice(0, 10);
+    const dia      = hoy.getDate();
+    const mesActual = isoHoy.slice(0, 7);
+    const tc       = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
+
+    /* ── Posición de caja ── */
+    const saldos = loadRegistry(KEY_SAL);
+    let mxnBruto = 0, usdTotal = 0, ccTotal = 0;
+    const tarjetasPendientes = [];
+    saldos.forEach(s => {
+      if (s.cancelada) return;
+      const saldo = parseFloat(s.saldo) || 0;
+      const mon   = (s.moneda || 'MXN').toUpperCase();
+      const tipo  = (s.tipo || '').toLowerCase();
+      const nombre = s.nombre || s.banco || 'Tarjeta';
+      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') {
+        if (saldo < 0) { ccTotal += Math.abs(saldo); tarjetasPendientes.push({ nombre, saldo: Math.abs(saldo) }); }
+        return;
+      }
+      if (mon === 'USD') usdTotal += saldo;
+      else               mxnBruto += saldo;
+    });
+    const disponible = mxnBruto;
+
+    /* ── Helpers ── */
+    const mesOffset = offsetMeses => {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() + offsetMeses, 1);
+      return d.toISOString().slice(0, 7);
+    };
+    const mesesRef = [-1, -2, -3].map(mesOffset);
+
+    /* ── Análisis de movimientos ── */
+    const allMovs = getAllMovData();
+
+    /* Nómina */
+    const nomPorMes = {};
+    allMovs.forEach(r => {
+      const t = (r.tipo || '').toLowerCase();
+      if (t.includes('nómina') || t.includes('nomina') || t.includes('n\xf3mina')) {
+        const ym = (r.fecha || '').slice(0, 7);
+        nomPorMes[ym] = (nomPorMes[ym] || 0) + (parseFloat(r.salidas || 0));
+      }
+    });
+    const nomEsteMes  = nomPorMes[mesActual] || 0;
+    const nomRefs     = mesesRef.map(m => nomPorMes[m] || 0).filter(v => v > 0);
+    const nomProm     = nomRefs.length > 0 ? nomRefs.reduce((a, b) => a + b, 0) / nomRefs.length : 0;
+
+    /* Honorarios */
+    const honPorMes = {};
+    allMovs.forEach(r => {
+      const t = (r.tipo || '').toLowerCase();
+      if (t.includes('honorario')) {
+        const ym = (r.fecha || '').slice(0, 7);
+        honPorMes[ym] = (honPorMes[ym] || 0) + (parseFloat(r.salidas || 0));
+      }
+    });
+    const honEsteMes = honPorMes[mesActual] || 0;
+    const honRefs    = mesesRef.map(m => honPorMes[m] || 0).filter(v => v > 0);
+    const honProm    = honRefs.length > 0 ? honRefs.reduce((a, b) => a + b, 0) / honRefs.length : 0;
+
+    /* ── Construir agenda ── */
+    const items = []; /* { tipo, icon, titulo, desc, monto, prioridad } */
+
+    /* --- Nómina --- */
+    if (nomEsteMes > 0) {
+      items.push({ tipo:'ok', icon:'✅', titulo:'Nómina del mes', desc:`Pagada este mes · ${_fmtDir(nomEsteMes)}`, monto:0, prioridad:5 });
+    } else if (nomProm > 0 && dia >= 18) {
+      const rem = disponible - nomProm;
+      items.push({
+        tipo:'warning', icon:'👥', titulo:'Nómina pendiente de pago',
+        desc:`Estimado ~${_fmtDir(nomProm)} (promedio últimos meses) · Después de pagar: ${rem >= 0 ? _fmtDir(rem) : '⚠️ fondos insuficientes'}`,
+        monto:nomProm, prioridad:1
+      });
+    } else if (nomProm > 0 && dia >= 14) {
+      items.push({
+        tipo:'info', icon:'👥', titulo:'Nómina se acerca',
+        desc:`Estimado ~${_fmtDir(nomProm)} · Disponible hoy: ${_fmtDir(disponible)}`,
+        monto:nomProm, prioridad:2
+      });
+    } else if (nomProm > 0) {
+      items.push({ tipo:'ok', icon:'👥', titulo:'Nómina del mes', desc:`Sin pagar aún — estimado ~${_fmtDir(nomProm)} para el día 20-21`, monto:0, prioridad:5 });
+    }
+
+    /* --- Honorarios --- */
+    if (honEsteMes > 0) {
+      items.push({ tipo:'ok', icon:'✅', titulo:'Honorarios del mes', desc:`Pagados · ${_fmtDir(honEsteMes)}`, monto:0, prioridad:5 });
+    } else if (honProm > 0 && dia >= 18) {
+      const rem = disponible - honProm;
+      items.push({
+        tipo:'warning', icon:'🤝', titulo:'Honorarios pendientes',
+        desc:`Estimado ~${_fmtDir(honProm)} (promedio últimos meses) · Después de pagar: ${rem >= 0 ? _fmtDir(rem) : '⚠️ verificar fondos'}`,
+        monto:honProm, prioridad:1
+      });
+    } else if (honProm > 0 && dia >= 14) {
+      items.push({
+        tipo:'info', icon:'🤝', titulo:'Honorarios se acercan',
+        desc:`Estimado ~${_fmtDir(honProm)} · Generalmente alrededor del día 20`,
+        monto:honProm, prioridad:2
+      });
+    }
+
+    /* --- Tarjetas de crédito --- */
+    tarjetasPendientes.forEach(t => {
+      if (t.saldo > 500) {
+        const rem = disponible - t.saldo;
+        items.push({
+          tipo:'warning', icon:'💳',
+          titulo:`${t.nombre} — saldo pendiente`,
+          desc:`${_fmtDir(t.saldo)} por pagar · Después de liquidar tarjeta: ${_fmtDir(rem)}`,
+          monto:t.saldo, prioridad:2
+        });
+      }
+    });
+
+    /* --- Retenciones SAT --- */
+    try {
+      const mesNum  = hoy.getMonth() + 1;          /* mes actual 1-12 */
+      const yearNum = hoy.getFullYear();
+      /* Fecha de vencimiento: día 17 del mes siguiente */
+      const venceMes  = mesNum === 12 ? 1 : mesNum + 1;
+      const venceYear = mesNum === 12 ? yearNum + 1 : yearNum;
+      const venceSAT  = `${venceYear}-${String(venceMes).padStart(2,'0')}-17`;
+      const diasParaVencer = Math.round((new Date(venceSAT + 'T12:00:00') - hoy) / 86400000);
+      if (diasParaVencer >= 0 && diasParaVencer <= 45) {
+        const urgente = diasParaVencer <= 7;
+        items.push({
+          tipo: urgente ? 'error' : (diasParaVencer <= 20 ? 'warning' : 'info'),
+          icon: '🏛️',
+          titulo: `Retenciones SAT — vence ${venceSAT}`,
+          desc: `${diasParaVencer === 0 ? '¡Vence hoy!' : diasParaVencer === 1 ? '¡Vence mañana!' : `En ${diasParaVencer} días`} · Consulte el módulo de Retenciones para el monto exacto`,
+          monto: 0, prioridad: urgente ? 0 : (diasParaVencer <= 20 ? 1 : 3)
+        });
+      }
+    } catch {}
+
+    /* --- USD en cartera --- */
+    if (usdTotal >= 500) {
+      items.push({
+        tipo:'info', icon:'💵',
+        titulo:`USD ${usdTotal.toLocaleString('es-MX', {minimumFractionDigits:0})} en cartera`,
+        desc:`≈ ${_fmtDir(usdTotal * tc)} MXN a T/C ${tc} · Considere vender divisas si el tipo de cambio es favorable`,
+        monto:0, prioridad:4
+      });
+    }
+
+    /* --- Recurrentes próximos 7 días --- */
+    try {
+      const lim7 = new Date(hoy.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+      const rec  = loadRegistry('stgl_recurrentes');
+      rec.filter(r => {
+        const f = r.proxima || r.fecha || '';
+        return f >= isoHoy && f <= lim7;
+      }).forEach(r => {
+        const monto = Math.abs(parseFloat(r.monto || 0));
+        items.push({
+          tipo:'warning', icon:'🔄',
+          titulo: r.descripcion || r.concepto || 'Pago recurrente',
+          desc: `Vence ${r.proxima || r.fecha} · ${_fmtDir(monto)}`,
+          monto, prioridad:1
+        });
+      });
+    } catch {}
+
+    /* --- Proyectados próximos 7 días --- */
+    try {
+      const lim7 = new Date(hoy.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+      const proy = loadRegistry('stgl_mov_proyectados');
+      proy.filter(r => {
+        const f = r.fecha || '';
+        return f >= isoHoy && f <= lim7 && parseFloat(r.salidas || 0) > 0;
+      }).forEach(r => {
+        const monto = Math.abs(parseFloat(r.salidas || 0));
+        items.push({
+          tipo:'info', icon:'📌',
+          titulo: r.desc || r.descripcion || 'Movimiento proyectado',
+          desc: `Fecha ${r.fecha} · ${_fmtDir(monto)}`,
+          monto, prioridad:2
+        });
+      });
+    } catch {}
+
+    /* ── Render ── */
+    if (!items.length) {
+      el.innerHTML = `<div style="color:var(--green);font-family:var(--brand);font-size:0.8rem;font-weight:600;padding:0.5rem 0;">✅ Sin pendientes inmediatos — todo al corriente.</div>`;
+      return;
+    }
+
+    /* Ordenar: error > warning > info > ok */
+    const orden = { error:0, warning:1, info:2, ok:3 };
+    items.sort((a, b) => (orden[a.tipo]||9) - (orden[b.tipo]||9) || a.prioridad - b.prioridad);
+
+    /* Banner resumen */
+    const pendMonto = items.filter(i => i.tipo !== 'ok' && i.monto > 0).reduce((s, i) => s + i.monto, 0);
+    let html = '';
+    if (pendMonto > 0) {
+      const rem = disponible - pendMonto;
+      const okRem = rem >= 0;
+      html += `<div style="display:flex;gap:1.5rem;background:${okRem ? '#f0faf4' : '#fde8e8'};border-radius:4px;padding:0.6rem 0.9rem;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center;border:1px solid ${okRem ? '#a7f3d0' : '#fca5a5'};">
+        <div><div style="font-family:var(--brand);font-size:0.56rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);">Efectivo disponible</div>
+             <div style="font-family:var(--brand);font-size:0.95rem;font-weight:700;color:var(--green);">${_fmtDir(disponible)}</div></div>
+        <div style="font-size:1.1rem;color:var(--text-xs);">−</div>
+        <div><div style="font-family:var(--brand);font-size:0.56rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);">Compromisos detectados</div>
+             <div style="font-family:var(--brand);font-size:0.95rem;font-weight:700;color:var(--red);">${_fmtDir(pendMonto)}</div></div>
+        <div style="font-size:1.1rem;color:var(--text-xs);">=</div>
+        <div><div style="font-family:var(--brand);font-size:0.56rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);">Remanente proyectado</div>
+             <div style="font-family:var(--brand);font-size:0.95rem;font-weight:700;color:${okRem ? 'var(--green)' : 'var(--red)'};">${okRem ? '' : '−'}${_fmtDir(Math.abs(rem))}</div></div>
+      </div>`;
+    }
+
+    const bgMap  = { error:'#fde8e8', warning:'#fff7e0', info:'#f0f4ff', ok:'#f0faf4' };
+    const brdMap = { error:'#f87171', warning:'#f59e0b', info:'#93c5fd', ok:'#6ee7b7' };
+    const txtMap = { error:'var(--red)', warning:'#92400e', info:'var(--navy)', ok:'var(--green)' };
+
+    html += '<div style="display:flex;flex-direction:column;gap:0.45rem;">';
+    for (const item of items) {
+      const bg  = bgMap[item.tipo]  || '#f8f8f8';
+      const brd = brdMap[item.tipo] || '#ccc';
+      const tc2 = txtMap[item.tipo] || 'var(--text)';
+      html += `<div style="background:${bg};border-left:3px solid ${brd};border-radius:0 4px 4px 0;padding:0.5rem 0.75rem;display:grid;grid-template-columns:1.6rem 1fr auto;gap:0.4rem;align-items:start;">
+        <span style="font-size:0.95rem;line-height:1.5;">${escHtml(item.icon)}</span>
+        <div>
+          <div style="font-family:var(--brand);font-size:0.72rem;font-weight:700;color:${tc2};">${escHtml(item.titulo)}</div>
+          <div style="font-size:0.63rem;color:var(--text-dim);margin-top:0.1rem;line-height:1.4;">${item.desc}</div>
+        </div>
+        ${item.monto > 0 ? `<div style="font-family:var(--brand);font-size:0.72rem;font-weight:700;color:${item.tipo==='ok'?'var(--green)':'var(--red)'};white-space:nowrap;margin-top:0.1rem;">${item.tipo!=='ok' ? '−' : ''}${_fmtDir(item.monto)}</div>` : '<div></div>'}
+      </div>`;
+    }
+    html += '</div>';
+
+    el.innerHTML = html;
+  }
+
   /* ── Render completo Vista Director ── */
   function _renderVistaDirector() {
     _renderCajaEjecutiva();
@@ -5362,6 +5615,7 @@ function limpiarCSVMalImportado() {
     _renderGrafico(resultados);
     _renderFlujoMes();
     _renderCompromisos();
+    _renderAgendaDirector();
   }
 
   /* ══════════════════════════════════════════════════════════════════
