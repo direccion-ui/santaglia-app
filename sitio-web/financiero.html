@@ -307,6 +307,155 @@
             </div>
           </div>
 
+          <!-- ── Tabs Director / Contador ── -->
+          <div style="display:flex;gap:0.4rem;padding:0.5rem 1rem 0;background:var(--bg-white);border-bottom:1px solid var(--border);">
+            <button id="tab-fin-director" onclick="_setVistaFinDirector(true)"
+              style="font-family:var(--brand);font-size:0.72rem;font-weight:700;padding:0.3rem 1rem;
+              border-radius:6px;border:none;cursor:pointer;transition:all .15s;
+              background:transparent;color:#64748b;box-shadow:none;">
+              📊 Director
+            </button>
+            <button id="tab-fin-contador" onclick="_setVistaFinDirector(false)"
+              style="font-family:var(--brand);font-size:0.72rem;font-weight:700;padding:0.3rem 1rem;
+              border-radius:6px;border:none;cursor:pointer;transition:all .15s;
+              background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(26,45,128,0.18);">
+              📋 Contador
+            </button>
+          </div>
+
+          <!-- ── Vista Director ── -->
+          <div id="fin-vista-director" style="display:none;padding:1rem;">
+
+            <!-- 3A: Posición de Caja Ejecutiva -->
+            <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Posición de Caja Ejecutiva</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1.25rem;" id="dir-caja-kpis">
+              <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
+                <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Disponible MXN</div>
+                <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:var(--green);" id="dir-k-mxn">—</div>
+                <div style="font-size:0.65rem;color:var(--text-xs);">Cuentas + efectivo</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
+                <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Disponible USD</div>
+                <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:var(--navy);" id="dir-k-usd">—</div>
+                <div style="font-size:0.65rem;color:var(--text-xs);" id="dir-k-usd-mxn"></div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
+                <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Compromisos 30d</div>
+                <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:var(--red);" id="dir-k-comp">—</div>
+                <div style="font-size:0.65rem;color:var(--text-xs);">Retenciones + recurrentes</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.9rem 1.1rem;">
+                <div style="font-family:var(--brand);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.25rem;">Total Neto MXN</div>
+                <div style="font-family:var(--brand);font-size:1.15rem;font-weight:700;color:#8a6800;" id="dir-k-neto">—</div>
+                <div style="font-size:0.65rem;color:var(--text-xs);" id="dir-k-fecha"></div>
+              </div>
+            </div>
+
+            <!-- 3B: Capital de Trabajo -->
+            <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem;">
+              <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Capital de Trabajo</div>
+              <div style="font-size:0.6rem;color:var(--text-xs);font-style:italic;">Activo Circulante − Pasivo Circulante</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0.5rem;" id="dir-wc-grid">
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Actual</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-0">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 3 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-3">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 6 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-6">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 12 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-12">—</div>
+              </div>
+            </div>
+            <details style="margin-bottom:1rem;font-size:0.72rem;color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.75rem;">
+              <summary style="cursor:pointer;font-family:var(--brand);font-size:0.65rem;font-weight:700;color:var(--navy);">¿Qué es el Capital de Trabajo?</summary>
+              <p style="margin:0.5rem 0 0;line-height:1.6;">El Capital de Trabajo es el dinero que tiene invertido en la operación de su negocio. Es la diferencia entre lo que puede cobrar/liquidar rápidamente (activo circulante) y lo que debe pagar a corto plazo (pasivo circulante). Un capital de trabajo positivo y creciente indica salud financiera.</p>
+            </details>
+
+            <!-- 3C: Prueba del Ácido -->
+            <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem;">
+              <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Prueba del Ácido</div>
+              <div style="font-size:0.6rem;color:var(--text-xs);font-style:italic;">Activo Circulante / Pasivo Circulante</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0.5rem;">
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Actual</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-acid-0">—</div>
+                <div style="font-size:0.65rem;" id="dir-acid-0-lbl"></div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 3 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-acid-3">—</div>
+                <div style="font-size:0.65rem;" id="dir-acid-3-lbl"></div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 12 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-acid-12">—</div>
+                <div style="font-size:0.65rem;" id="dir-acid-12-lbl"></div>
+              </div>
+            </div>
+            <details style="margin-bottom:1rem;font-size:0.72rem;color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.75rem;">
+              <summary style="cursor:pointer;font-family:var(--brand);font-size:0.65rem;font-weight:700;color:var(--navy);">¿Qué es la Prueba del Ácido?</summary>
+              <p style="margin:0.5rem 0 0;line-height:1.6;">Por cada $1.00 de deudas a corto plazo, ¿cuántos pesos líquidos tiene disponibles? Un índice ≥ 1.0 significa que puede cubrir todas sus obligaciones inmediatas sin vender activos fijos.</p>
+            </details>
+
+            <!-- 3D: Gráfico Capital de Trabajo + Prueba del Ácido -->
+            <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Tendencia de Liquidez</div>
+            <div style="background:var(--bg-white);border:1px solid var(--border);border-radius:4px;padding:0.75rem;margin-bottom:1.25rem;">
+              <canvas id="fin-wc-chart" style="max-height:220px;"></canvas>
+              <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.4rem;text-align:center;font-style:italic;">*Estimaciones basadas en historial de movimientos. Para estados financieros formales consulte su contador.</div>
+            </div>
+
+            <!-- 3E: Flujo del Mes -->
+            <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Flujo del Mes Actual</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr) 2fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1.25rem;">
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Entradas</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;color:var(--green);" id="dir-flujo-ent">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Salidas</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;color:var(--red);" id="dir-flujo-sal">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Neto</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-flujo-neto">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Top 3 egresos</div>
+                <div style="font-size:0.7rem;line-height:1.6;" id="dir-flujo-top3">—</div>
+              </div>
+            </div>
+
+            <!-- 3F: Compromisos próximos 30 días -->
+            <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Compromisos Próximos 30 Días</div>
+            <div id="dir-compromisos" style="background:var(--bg-white);border:1px solid var(--border);border-radius:4px;padding:0.75rem;min-height:3rem;font-size:0.72rem;color:var(--text-dim);">
+              Cargando compromisos…
+            </div>
+            <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.4rem;font-style:italic;margin-bottom:0.5rem;">*Estimaciones basadas en historial de movimientos. Para estados financieros formales consulte su contador.</div>
+
+          </div>
+
+          <!-- ── Vista Contador: barra de auditoría ── -->
+          <div id="fin-auditoria-bar" style="background:var(--bg-white);border-bottom:1px solid var(--border);padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;font-size:0.7rem;">
+            <span style="font-family:var(--brand);font-size:0.62rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim);">Auditoría:</span>
+            <span id="aud-capturados" style="color:var(--text-dim);">Capturados: —</span>
+            <span style="color:var(--border);">|</span>
+            <span id="aud-verificados" style="color:var(--text-dim);">Verificados: —</span>
+            <span style="color:var(--border);">|</span>
+            <span id="aud-conciliados" style="color:var(--text-dim);">Conciliados: —</span>
+            <span style="color:var(--border);">|</span>
+            <span id="aud-contabilizados" style="color:var(--text-dim);">Contabilizados: —</span>
+            <div id="aud-alertas" style="margin-left:auto;display:flex;gap:0.4rem;flex-wrap:wrap;"></div>
+          </div>
+
           <!-- KPIs filtrados -->
           <div class="mov-kpi" id="mov-kpis">
             <div class="mov-kpi-item"><div class="mov-kpi-label">Movimientos</div><div class="mov-kpi-val" id="mov-k-count">—</div></div>
@@ -1462,10 +1611,9 @@
        AUTO-INIT MOVIMIENTOS
        Se activa si hay histórico guardado O registros manuales
     ══════════════════════════════════════ */
-    if (localStorage.getItem(KEY_MOV_EXCEL) || loadRegistry('stgl_mov_manual').length > 0) {
-      initMovSelect();
-      filterMovimientos();
-    }
+    /* Siempre inicializar — si no hay datos, filterMovimientos() mostrará mensaje amigable */
+    initMovSelect();
+    filterMovimientos();
     /* Sincronizar estilos del pill de vista una vez el DOM esté listo */
     setTimeout(_syncMovVistaButtons, 0);
 
@@ -2296,7 +2444,18 @@
     /* ── Filtrado principal ── */
     function filterMovimientos() {
       const data = getAllMovData();
-      if (!data.length) return;
+      if (!data.length) {
+        __movFiltered = [];
+        updateMovKpis();
+        document.getElementById('mov-tbody').innerHTML =
+          `<tr><td colspan="15" style="text-align:center;padding:2.5rem;color:var(--text-xs);font-size:0.82rem;">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
+            <strong>No hay movimientos registrados.</strong><br>
+            <span style="font-size:0.75rem;">Usa <strong>↑ Importar Excel</strong>, <strong>📄 PDF</strong>, <strong>📊 CSV</strong> o <strong>+ Movimiento</strong> para comenzar.</span>
+          </td></tr>`;
+        document.getElementById('mov-count-label').textContent = 'Sin datos';
+        return;
+      }
 
       const conc      = getConciliados();
       const cont      = getContabilizados();
@@ -3134,39 +3293,69 @@
     function nmSaveCat(cat) { localStorage.setItem(KEY_NM_CAT, JSON.stringify(cat)); }
 
     /* Catálogo base NIF/SAT de cuentas contables — se inyecta siempre en el dropdown cc */
+    /* ── Catálogo extendido de Cuentas Contables / NIF–SAT ── */
     const _NIF_SAT_CC_BASE = [
-      '401 Ingresos por Servicios Prestados',
-      '401 Ventas de Bienes',
-      '402 Devoluciones y Descuentos sobre Ventas',
-      '403 Anticipos de Clientes',
-      '407 Productos Financieros: Intereses Ganados',
-      '501 Costo de lo Vendido / Costo de Servicios',
-      '511 Sueldos, Salarios y Prestaciones',
-      '513 Honorarios y Servicios Profesionales',
-      '601 Gastos de Administración: Por Clasificar',
-      '601 Gastos de Administración: Renta de Oficina / Local',
-      '601 Gastos de Administración: Seguros y Fianzas',
-      '601 Gastos de Administración: Cuotas y Suscripciones TI',
-      '601 Gastos de Administración: Papelería y Útiles de Oficina',
-      '601 Gastos de Administración: Limpieza y Mantenimiento',
-      '601 Gastos de Comunicación: Internet y Telefonía',
-      '601 Gastos de Personal: Salud y Bienestar',
-      '601 Gastos de Transporte: Combustibles y Lubricantes',
-      '601 Gastos de Transporte: Casetas y Peajes',
-      '603 Gastos de Representación: Alimentos y Entretenimiento',
-      '603 Gastos de Representación: Viajes y Hospedaje',
-      '613 Activo Fijo: Equipo de Cómputo',
-      '613 Activo Fijo: Mobiliario y Equipo de Oficina',
-      '613 Activo Fijo: Vehículos',
-      '701 Gastos de Venta: Publicidad y Mercadotecnia',
-      '702 Gastos de Venta: Comisiones a Vendedores',
-      '801 ISR — Pago Provisional / Retención',
-      '801 IVA — Pago / Complemento de Pago',
-      '801 Impuestos y Derechos Gubernamentales',
-      '802 Gastos No Deducibles: Multas y Recargos',
-      '901 Gastos Financieros: Comisiones Bancarias',
-      '901 Gastos Financieros: Intereses a Cargo',
-      '902 Gastos Financieros: Pérdida Cambiaria',
+      /* ACTIVO CIRCULANTE (100) */
+      '101 Efectivo en caja',
+      '102 BBVA Cuenta Maestra MXN',
+      '103 BBVA Cuenta Maestra USD',
+      '104 Hey Banco / HEY Ahorro',
+      '105 Cuentas por cobrar clientes CP',
+      '106 Deudores diversos CP',
+      '107 IVA acreditable',
+      '108 ISR a favor / saldo a favor SAT',
+      /* ACTIVO NO CIRCULANTE (150) */
+      '151 Banco Base Pagaré Bancario (LP)',
+      '152 Cuentas por cobrar LP',
+      '153 Acreedores diversos activo LP',
+      '160 Activo Fijo — Mobiliario y equipo',
+      '161 Activo Fijo — Equipo de cómputo',
+      '162 Activo Fijo — Vehículos',
+      '163 Activo Fijo — Mejoras a locales arrendados',
+      '164 Depreciación acumulada (crédito)',
+      /* PASIVO CIRCULANTE (200) */
+      '201 Proveedores CP',
+      '202 Acreedores diversos CP',
+      '203 Tarjeta CLARA (crédito CP)',
+      '204 ISR Retenciones por pagar',
+      '205 IVA Retenciones por pagar',
+      '206 ISR Honorarios por pagar',
+      '207 Nómina por pagar',
+      '208 Cuentas por pagar instituciones financieras CP',
+      '209 Cuenta Puente (conciliación temporal)',
+      /* PASIVO NO CIRCULANTE (250) */
+      '251 Préstamos bancarios LP',
+      '252 Cuentas por pagar instituciones financieras LP',
+      '253 Acreedores diversos LP',
+      /* CAPITAL (300) */
+      '301 Capital social',
+      '302 Utilidades retenidas',
+      '303 Resultado del ejercicio',
+      /* INGRESOS (400) */
+      '401 Servicios profesionales',
+      '402 Ventas de bienes',
+      '403 Intereses ganados',
+      '404 Otros ingresos',
+      /* GASTOS DEDUCIBLES (500) */
+      '501 Sueldos y salarios asimilados',
+      '502 Honorarios profesionales',
+      '503 Arrendamiento de inmuebles',
+      '504 Servicios públicos',
+      '505 Telecom e internet',
+      '506 Materiales y suministros',
+      '507 Viáticos con comprobante',
+      '508 Publicidad y marketing',
+      '509 Seguros y fianzas',
+      '510 Mantenimiento y reparaciones',
+      '511 Depreciación del período',
+      '512 Impuestos y derechos (ISR/IVA pagados)',
+      '513 Cuotas IMSS / Infonavit',
+      /* GASTOS NO DEDUCIBLES (600) */
+      '601 Gastos de representación sin CFDI',
+      '602 Multas y recargos SAT',
+      '603 Gastos personales',
+      '604 Donaciones sin requisitos fiscales',
+      /* Accesos rápidos legacy */
       'Nómina Asimilable',
       'Pago Tarjeta de Crédito',
       'Por Clasificar',
@@ -4800,6 +4989,486 @@ function limpiarCSVMalImportado() {
   _mostrarBtnLimpiarCSV();
   toast(`🧹 ${malos.length} movimientos eliminados — vuelve a importar el CSV para registrarlos correctamente`, 'success');
 }
+
+  /* ══════════════════════════════════════════════════════════════════
+     TAREA 2–5: TABS DIRECTOR / CONTADOR + VISTA DIRECTOR + AUDITORÍA
+  ══════════════════════════════════════════════════════════════════ */
+
+  /* ── Chart.js se carga bajo demanda al activar Vista Director ── */
+  let _chartJsLoaded = false;
+  let _finWCChart    = null;
+
+  function _loadChartJs(cb) {
+    if (_chartJsLoaded) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    s.onload  = () => { _chartJsLoaded = true; cb(); };
+    s.onerror = () => console.warn('No se pudo cargar Chart.js');
+    document.head.appendChild(s);
+  }
+
+  /* ── Estado de tabs ── */
+  let _vistaFinDirector = false;  /* false = Contador (default), true = Director */
+
+  function _setVistaFinDirector(director) {
+    _vistaFinDirector = director;
+    const dirEl  = document.getElementById('fin-vista-director');
+    const audBar = document.getElementById('fin-auditoria-bar');
+    const kpis   = document.getElementById('mov-kpis');
+    const scroll = document.getElementById('mov-scroll');
+    const pag    = document.getElementById('mov-pagination');
+    const btnDir = document.getElementById('tab-fin-director');
+    const btnCnt = document.getElementById('tab-fin-contador');
+
+    if (director) {
+      /* Mostrar Vista Director, ocultar tabla */
+      if (dirEl)  dirEl.style.display  = '';
+      if (audBar) audBar.style.display = 'none';
+      if (kpis)   kpis.style.display   = 'none';
+      if (scroll) scroll.style.display = 'none';
+      if (pag)    pag.style.display    = 'none';
+      /* Estilos tabs */
+      if (btnDir) { btnDir.style.background = 'var(--navy)'; btnDir.style.color = '#fff'; btnDir.style.boxShadow = '0 1px 4px rgba(26,45,128,0.18)'; }
+      if (btnCnt) { btnCnt.style.background = 'transparent'; btnCnt.style.color = '#64748b'; btnCnt.style.boxShadow = 'none'; }
+      /* Renderizar paneles Director */
+      _renderVistaDirector();
+    } else {
+      /* Mostrar Vista Contador */
+      if (dirEl)  dirEl.style.display  = 'none';
+      if (audBar) audBar.style.display = '';
+      if (kpis)   kpis.style.display   = '';
+      if (scroll) scroll.style.display = '';
+      if (pag)    pag.style.display    = '';
+      /* Estilos tabs */
+      if (btnDir) { btnDir.style.background = 'transparent'; btnDir.style.color = '#64748b'; btnDir.style.boxShadow = 'none'; }
+      if (btnCnt) { btnCnt.style.background = 'var(--navy)'; btnCnt.style.color = '#fff'; btnCnt.style.boxShadow = '0 1px 4px rgba(26,45,128,0.18)'; }
+      /* Actualizar barra de auditoría */
+      _renderAuditoria();
+    }
+  }
+
+  /* ── Formateo rápido ── */
+  function _fmtDir(n) {
+    return '$' + Math.abs(n||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  /* ── 3A: Posición de Caja Ejecutiva (espejo de saldos bancarios) ── */
+  function _renderCajaEjecutiva() {
+    const saldos = loadRegistry(KEY_SAL);
+    const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
+
+    let mxn = 0, usd = 0, cc = 0;
+    saldos.forEach(s => {
+      if (s.cancelada) return;
+      const saldo = parseFloat(s.saldo) || 0;
+      const mon   = (s.moneda || 'MXN').toUpperCase();
+      const tipo  = (s.tipo   || '').toLowerCase();
+      if (tipo === 'tarjeta') { cc += Math.abs(saldo); return; }
+      if (mon === 'USD') { usd += saldo; }
+      else               { mxn += saldo; }
+    });
+
+    const neto = mxn + usd * tc - cc;
+    const fecha = saldos.length ? (saldos.slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''))[0]?.fecha || '') : '';
+
+    /* Compromisos: retenciones + recurrentes próximos 30d */
+    const hoy    = new Date();
+    const lim30  = new Date(hoy.getTime() + 30 * 86400000);
+    const isoLim = lim30.toISOString().slice(0,10);
+    const isoHoy = hoy.toISOString().slice(0,10);
+
+    let compromisos = 0;
+    try {
+      const ret = loadRegistry('stgl_retenciones_extra');
+      ret.forEach(r => {
+        const f = r.fechaVencimiento || r.fecha || '';
+        if (f >= isoHoy && f <= isoLim) compromisos += Math.abs(parseFloat(r.monto||r.total||0));
+      });
+    } catch {}
+    try {
+      const rec = loadRegistry('stgl_recurrentes');
+      rec.forEach(r => {
+        const f = r.proxima || r.fecha || '';
+        if (f >= isoHoy && f <= isoLim) compromisos += Math.abs(parseFloat(r.monto||0));
+      });
+    } catch {}
+    try {
+      const proy = loadRegistry('stgl_mov_proyectados');
+      proy.forEach(r => {
+        const f = r.fecha || '';
+        if (f >= isoHoy && f <= isoLim && (parseFloat(r.salidas||0) > 0))
+          compromisos += Math.abs(parseFloat(r.salidas||0));
+      });
+    } catch {}
+
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('dir-k-mxn',  _fmtDir(mxn));
+    set('dir-k-usd',  usd !== 0 ? `USD ${usd.toLocaleString('es-MX',{minimumFractionDigits:2})}` : '—');
+    set('dir-k-usd-mxn', usd !== 0 ? `≈ ${_fmtDir(usd * tc)} MXN @ ${tc}` : '');
+    set('dir-k-comp', compromisos > 0 ? _fmtDir(compromisos) : '—');
+    const kn = document.getElementById('dir-k-neto');
+    if (kn) { kn.textContent = (neto >= 0 ? '' : '−') + _fmtDir(Math.abs(neto)); kn.style.color = neto >= 0 ? '#8a6800' : 'var(--red)'; }
+    set('dir-k-fecha', fecha ? 'Al ' + fecha : '');
+
+    return { mxn, usd, cc, neto, compromisos, tc };
+  }
+
+  /* ── 3B/3C: Capital de Trabajo + Prueba del Ácido ── */
+  function _calcCapitalTrabajo(offsetDays) {
+    const saldos = loadRegistry(KEY_SAL);
+    const tc     = parseFloat(document.getElementById('sal-tc')?.value || '17.50') || 17.50;
+
+    /* Activo Circulante: saldos positivos en cuentas corrientes/inversión/efectivo */
+    let activoCirc = 0;
+    saldos.forEach(s => {
+      if (s.cancelada) return;
+      const saldo = parseFloat(s.saldo) || 0;
+      const tipo  = (s.tipo || '').toLowerCase();
+      const mon   = (s.moneda || 'MXN').toUpperCase();
+      if (tipo === 'tarjeta') return; /* es pasivo */
+      const saldoMXN = mon === 'USD' ? saldo * tc : saldo;
+      if (saldoMXN > 0) activoCirc += saldoMXN;
+    });
+
+    /* Pasivo Circulante: tarjetas de crédito + retenciones pendientes */
+    let pasivoCirc = 0;
+    saldos.forEach(s => {
+      if (s.cancelada) return;
+      const saldo = parseFloat(s.saldo) || 0;
+      const tipo  = (s.tipo || '').toLowerCase();
+      if (tipo === 'tarjeta') pasivoCirc += Math.abs(saldo);
+    });
+    try {
+      const ret = loadRegistry('stgl_retenciones_extra');
+      ret.forEach(r => { pasivoCirc += Math.abs(parseFloat(r.monto||r.total||0)); });
+    } catch {}
+
+    /* Aproximación histórica: ajustar por flujo neto en el período */
+    if (offsetDays > 0) {
+      const cutoff = new Date(Date.now() - offsetDays * 86400000).toISOString().slice(0,10);
+      const movs   = getAllMovData().filter(r => (r.fecha || '') >= cutoff);
+      const flujoNeto = movs.reduce((s, r) => s + (parseFloat(r.entradas||0) - parseFloat(r.salidas||0)), 0);
+      activoCirc = Math.max(0, activoCirc - flujoNeto); /* restar flujo positivo del período = posición anterior */
+    }
+
+    const capitalTrabajo = activoCirc - pasivoCirc;
+    const pruebAcido     = pasivoCirc > 0 ? activoCirc / pasivoCirc : (activoCirc > 0 ? 9.99 : 0);
+    return { activoCirc, pasivoCirc, capitalTrabajo, pruebAcido };
+  }
+
+  function _labelAcido(ratio) {
+    if (ratio >= 1.5) return { texto: '🟢 Excelente liquidez',    color: 'var(--green)' };
+    if (ratio >= 1.0) return { texto: '🟡 Liquidez adecuada',     color: '#c67000' };
+    if (ratio >= 0.5) return { texto: '🟠 Liquidez ajustada',     color: '#c67000' };
+    return              { texto: '🔴 Alerta: riesgo de liquidez', color: 'var(--red)' };
+  }
+
+  function _renderCapitalTrabajo() {
+    const periodos = [0, 90, 180, 365];
+    const ids      = ['dir-wc-0','dir-wc-3','dir-wc-6','dir-wc-12'];
+    const acidIds  = ['dir-acid-0','dir-acid-3','dir-acid-12'];
+    const acidOff  = [0, 90, 365];
+    const acidLbls = ['dir-acid-0-lbl','dir-acid-3-lbl','dir-acid-12-lbl'];
+
+    const resultados = periodos.map(d => _calcCapitalTrabajo(d));
+
+    resultados.forEach((r, i) => {
+      const el = document.getElementById(ids[i]);
+      if (!el) return;
+      el.textContent  = (r.capitalTrabajo >= 0 ? '' : '−') + _fmtDir(Math.abs(r.capitalTrabajo));
+      el.style.color  = r.capitalTrabajo >= 0 ? 'var(--green)' : 'var(--red)';
+    });
+
+    /* Prueba del ácido (actual, hace 3m, hace 12m) */
+    acidOff.forEach((off, i) => {
+      const r   = _calcCapitalTrabajo(off);
+      const el  = document.getElementById(acidIds[i]);
+      const lbl = document.getElementById(acidLbls[i]);
+      const liq = _labelAcido(r.pruebAcido);
+      if (el)  { el.textContent = r.pruebAcido >= 9 ? '>9.99' : r.pruebAcido.toFixed(2); el.style.color = liq.color; }
+      if (lbl) { lbl.textContent = liq.texto; lbl.style.color = liq.color; }
+    });
+
+    return resultados;
+  }
+
+  /* ── 3D: Gráfico combinado ── */
+  function _renderGrafico(resultados) {
+    _loadChartJs(() => {
+      const ctx = document.getElementById('fin-wc-chart');
+      if (!ctx) return;
+      const labels = ['Hace 12m', 'Hace 6m', 'Hace 3m', 'Actual'];
+      const wc     = [resultados[3], resultados[2], resultados[1], resultados[0]].map(r => Math.round(r.capitalTrabajo));
+      const acid   = [
+        _calcCapitalTrabajo(365).pruebAcido,
+        _calcCapitalTrabajo(180).pruebAcido,
+        _calcCapitalTrabajo(90).pruebAcido,
+        _calcCapitalTrabajo(0).pruebAcido,
+      ].map(v => Math.min(v, 9.99));
+
+      if (_finWCChart) { _finWCChart.destroy(); _finWCChart = null; }
+      _finWCChart = new Chart(ctx, {
+        data: {
+          labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Capital de Trabajo (MXN)',
+              data: wc,
+              backgroundColor: wc.map(v => v >= 0 ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)'),
+              borderColor:     wc.map(v => v >= 0 ? 'rgba(34,197,94,1)'   : 'rgba(239,68,68,1)'),
+              borderWidth: 1,
+              yAxisID: 'y',
+            },
+            {
+              type: 'line',
+              label: 'Prueba del Ácido',
+              data: acid,
+              borderColor: 'rgba(26,45,128,0.85)',
+              backgroundColor: 'rgba(26,45,128,0.08)',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              tension: 0.3,
+              yAxisID: 'y2',
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  if (ctx.datasetIndex === 0) return ' Capital: $' + (ctx.raw||0).toLocaleString('es-MX');
+                  return ' Ácido: ' + (ctx.raw||0).toFixed(2);
+                }
+              }
+            }
+          },
+          scales: {
+            y:  { title: { display: true, text: 'Capital de Trabajo (MXN)', font: { size: 10 } },
+                  ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'k' } },
+            y2: { position: 'right', min: 0, max: 3,
+                  title: { display: true, text: 'Prueba del Ácido', font: { size: 10 } },
+                  grid: { drawOnChartArea: false },
+                  ticks: { stepSize: 0.5 } }
+          }
+        }
+      });
+    });
+  }
+
+  /* ── 3E: Flujo del mes actual ── */
+  function _renderFlujoMes() {
+    const hoy   = new Date().toISOString().slice(0, 7); /* YYYY-MM */
+    const movs  = getAllMovData().filter(r => (r.fecha || '').startsWith(hoy));
+
+    const ent  = movs.reduce((s, r) => s + (parseFloat(r.entradas||0)), 0);
+    const sal  = movs.reduce((s, r) => s + (parseFloat(r.salidas ||0)), 0);
+    const neto = ent - sal;
+
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('dir-flujo-ent',  _fmtDir(ent));
+    set('dir-flujo-sal',  _fmtDir(sal));
+    const kn = document.getElementById('dir-flujo-neto');
+    if (kn) { kn.textContent = (neto >= 0 ? '+' : '−') + _fmtDir(Math.abs(neto)); kn.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+    /* Top 3 categorías de egreso */
+    const egresos = movs.filter(r => parseFloat(r.salidas||0) > 0);
+    const byCat   = {};
+    egresos.forEach(r => {
+      const k = r.concepto || r.tipo || 'Sin categoría';
+      byCat[k] = (byCat[k] || 0) + parseFloat(r.salidas||0);
+    });
+    const top3 = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const top3El = document.getElementById('dir-flujo-top3');
+    if (top3El) {
+      if (top3.length) {
+        top3El.innerHTML = top3.map(([k, v]) =>
+          `<div><span style="font-weight:600;">${escHtml(k)}</span> <span style="color:var(--red);">${_fmtDir(v)}</span></div>`
+        ).join('');
+      } else {
+        top3El.textContent = 'Sin egresos este mes';
+      }
+    }
+  }
+
+  /* ── 3F: Compromisos próximos 30 días ── */
+  function _renderCompromisos() {
+    const hoy    = new Date().toISOString().slice(0, 10);
+    const lim30  = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    const items  = [];
+
+    try {
+      const ret = loadRegistry('stgl_retenciones_extra');
+      ret.forEach(r => {
+        const f = r.fechaVencimiento || r.fecha || '';
+        if (f >= hoy && f <= lim30)
+          items.push({ fecha: f, desc: r.descripcion || r.concepto || 'Retención', monto: Math.abs(parseFloat(r.monto||r.total||0)), fuente: 'Retenciones' });
+      });
+    } catch {}
+    try {
+      const rec = loadRegistry('stgl_recurrentes');
+      rec.forEach(r => {
+        const f = r.proxima || r.fecha || '';
+        if (f >= hoy && f <= lim30)
+          items.push({ fecha: f, desc: r.descripcion || r.concepto || 'Gasto recurrente', monto: Math.abs(parseFloat(r.monto||0)), fuente: 'Recurrentes' });
+      });
+    } catch {}
+    try {
+      const proy = loadRegistry('stgl_mov_proyectados');
+      proy.forEach(r => {
+        const f = r.fecha || '';
+        if (f >= hoy && f <= lim30 && parseFloat(r.salidas||0) > 0)
+          items.push({ fecha: f, desc: r.desc || r.descripcion || 'Proyectado', monto: Math.abs(parseFloat(r.salidas||0)), fuente: 'Proyectado' });
+      });
+    } catch {}
+
+    items.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    const el = document.getElementById('dir-compromisos');
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<span style="color:var(--text-xs);">No se encontraron compromisos registrados en los próximos 30 días.</span>';
+      return;
+    }
+
+    const total = items.reduce((s, i) => s + i.monto, 0);
+    el.innerHTML =
+      `<div style="display:grid;grid-template-columns:90px 1fr auto 80px;gap:0.3rem 0.75rem;align-items:baseline;">
+        <span style="font-family:var(--brand);font-size:0.58rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);">Fecha</span>
+        <span style="font-family:var(--brand);font-size:0.58rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);">Descripción</span>
+        <span style="font-family:var(--brand);font-size:0.58rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);">Fuente</span>
+        <span style="font-family:var(--brand);font-size:0.58rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);text-align:right;">Monto</span>
+        ${items.map(i => `
+          <span style="color:var(--text-dim);">${escHtml(i.fecha)}</span>
+          <span>${escHtml(i.desc)}</span>
+          <span style="font-size:0.65rem;color:var(--text-xs);">${escHtml(i.fuente)}</span>
+          <span style="text-align:right;color:var(--red);font-family:'Courier New',monospace;">${_fmtDir(i.monto)}</span>
+        `).join('')}
+        <span colspan="3" style="grid-column:1/4;font-family:var(--brand);font-size:0.65rem;font-weight:700;color:var(--navy);padding-top:0.4rem;border-top:1px solid var(--border);">Total 30 días</span>
+        <span style="text-align:right;font-family:var(--brand);font-weight:700;color:var(--red);padding-top:0.4rem;border-top:1px solid var(--border);">${_fmtDir(total)}</span>
+      </div>`;
+  }
+
+  /* ── Render completo Vista Director ── */
+  function _renderVistaDirector() {
+    _renderCajaEjecutiva();
+    const resultados = _renderCapitalTrabajo();
+    _renderGrafico(resultados);
+    _renderFlujoMes();
+    _renderCompromisos();
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     TAREA 5: BARRA DE AUDITORÍA (Vista Contador)
+  ══════════════════════════════════════════════════════════════════ */
+
+  /* ── Estados de auditoría: KEY para localStorage ── */
+  const KEY_VERIFICADOS = 'stgl_mov_verificados';
+
+  function getVerificados() {
+    try { return new Set(JSON.parse(localStorage.getItem(KEY_VERIFICADOS) || '[]')); }
+    catch { return new Set(); }
+  }
+  function saveVerificados(set) { localStorage.setItem(KEY_VERIFICADOS, JSON.stringify([...set])); }
+  function toggleVerificado(id) {
+    const set = getVerificados();
+    if (set.has(id)) set.delete(id); else set.add(id);
+    saveVerificados(set);
+    _renderAuditoria();
+    renderMovPagina();
+  }
+
+  /* ── Etapas de auditoría ── */
+  function _etapaMov(r, verifSet, concSet, contSet) {
+    if (contSet.has(r.id)) return 4; /* Contabilizado */
+    if (concSet.has(r.id)) return 3; /* Conciliado */
+    if (verifSet.has(r.id)) return 2; /* Verificado */
+    return 1; /* Capturado */
+  }
+
+  /* ── Alertas de auditoría ── */
+  function _alertasAuditoria(all, verifSet, concSet, contSet) {
+    const alertas = [];
+    const hoy     = new Date().toISOString().slice(0,10);
+    const hace30  = new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
+    const hace7   = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
+
+    /* Contabilizado pero no conciliado */
+    const inccon = all.filter(r => contSet.has(r.id) && !concSet.has(r.id)).length;
+    if (inccon > 0)
+      alertas.push({ tipo:'error', msg: `${inccon} contabilizado${inccon>1?'s':''} sin conciliar` });
+
+    /* > $10k sin CFDI */
+    const sinCFDI10k = all.filter(r =>
+      (parseFloat(r.salidas||0) > 10000) && cfdiStatus(r) === 'pend'
+    ).length;
+    if (sinCFDI10k > 0)
+      alertas.push({ tipo:'warn', msg: `${sinCFDI10k} mov. >$10k sin CFDI` });
+
+    /* Más de 30 días sin contabilizar */
+    const rezago = all.filter(r => !contSet.has(r.id) && (r.fecha || '') < hace30).length;
+    if (rezago > 0)
+      alertas.push({ tipo:'warn', msg: `${rezago} mov. con rezago >30d` });
+
+    /* Cuenta Puente (209) con saldo > 0 más de 7 días */
+    const puente209 = all.filter(r =>
+      (r.cuentaCont || '').startsWith('209') &&
+      !concSet.has(r.id) &&
+      (r.fecha || '') < hace7
+    ).length;
+    if (puente209 > 0)
+      alertas.push({ tipo:'warn', msg: `${puente209} en Cta. Puente >7d sin conciliar` });
+
+    return alertas;
+  }
+
+  /* ── Render barra de auditoría ── */
+  function _renderAuditoria() {
+    const all      = getAllMovData();
+    const verifSet = getVerificados();
+    const concSet  = getConciliados();
+    const contSet  = getContabilizados();
+
+    const capturados    = all.length;
+    const verificados   = all.filter(r => verifSet.has(r.id) || concSet.has(r.id) || contSet.has(r.id)).length;
+    const conciliados   = all.filter(r => concSet.has(r.id) || contSet.has(r.id)).length;
+    const contabilizados= all.filter(r => contSet.has(r.id)).length;
+
+    const pct = n => capturados > 0 ? Math.round(n / capturados * 100) : 0;
+
+    const setEl = (id, txt, color) => {
+      const el = document.getElementById(id); if (!el) return;
+      el.innerHTML = txt; if (color) el.style.color = color;
+    };
+
+    setEl('aud-capturados',    `Capturados: <strong>${capturados}</strong>`, 'var(--text-dim)');
+    setEl('aud-verificados',   `Verificados: <strong>${verificados}</strong> <span style="font-size:0.6rem;">(${pct(verificados)}%)</span>`, verificados < capturados ? '#c67000' : 'var(--green)');
+    setEl('aud-conciliados',   `Conciliados: <strong>${conciliados}</strong> <span style="font-size:0.6rem;">(${pct(conciliados)}%)</span>`, conciliados < capturados ? '#c67000' : 'var(--green)');
+    setEl('aud-contabilizados',`Contabilizados: <strong>${contabilizados}</strong> <span style="font-size:0.6rem;">(${pct(contabilizados)}%)</span>`, contabilizados < capturados ? '#c67000' : 'var(--green)');
+
+    const alertas  = _alertasAuditoria(all, verifSet, concSet, contSet);
+    const alertDiv = document.getElementById('aud-alertas');
+    if (alertDiv) {
+      alertDiv.innerHTML = alertas.map(a => {
+        const bg  = a.tipo === 'error' ? '#fde8e8' : '#fff3e0';
+        const col = a.tipo === 'error' ? 'var(--red)' : '#c67000';
+        return `<span style="font-size:0.62rem;background:${bg};color:${col};padding:0.1rem 0.4rem;border-radius:3px;font-weight:600;">${escHtml(a.msg)}</span>`;
+      }).join('');
+    }
+  }
+
+  /* ── Inicializar barra de auditoría ── */
+  _renderAuditoria();
+
+  /* ── Sincronizar auditoría con toggleConciliado / toggleContabilizado ── */
+  const _origToggleConciliado   = toggleConciliado;
+  const _origToggleContabilizado= toggleContabilizado;
+  window.toggleConciliado = function(id) { _origToggleConciliado(id);    _renderAuditoria(); };
+  window.toggleContabilizado = function(id) { _origToggleContabilizado(id); _renderAuditoria(); };
 
   </script>
 </body>
