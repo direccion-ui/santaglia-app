@@ -386,6 +386,14 @@
                   title="Detectados movimientos con fecha incorrecta — haz clic para limpiar y re-importar">
                   🧹
                 </button>
+                <!-- Botón dedup retroactivo — solo visible cuando se detectan duplicados -->
+                <button id="btn-dedup-movs" onclick="dedupMovimientosRetroactivo()"
+                  style="display:none;font-size:0.68rem;padding:0.28rem 0.6rem;
+                         color:#b45309;border:1px solid #b45309;
+                         border-radius:4px;background:none;cursor:pointer;"
+                  title="Se detectaron cargos duplicados — haz clic para limpiar">
+                  🔂 Duplicados
+                </button>
               </div>
             </div>
 
@@ -2487,8 +2495,10 @@
         return !existConc.some(e => e.k === k && Math.abs(e.ts - ts) <= 3 * 86400000);
       });
 
-      // Pasada 2b: cruzar contra stgl_mov_manual MISMA CUENTA (monto exacto + fecha ±1 día + dirección)
-      //   Captura CFDI de nómina y movimientos FX ya registrados que coinciden con el banco
+      // Pasada 2b: cruzar contra stgl_mov_manual MISMA CUENTA
+      //   - Window ±3 días (tarjetas de crédito pueden diferir hasta 3 días entre fecha de consumo y posteo)
+      //   - Captura CFDIs de Clara, nómina, y movimientos FX ya registrados
+      const _WIN_MS = 3 * 86400000; // 3 días en milisegundos
       const mnlMismaCuenta = loadRegistry('stgl_mov_manual').filter(m => m.cuenta === cuenta);
       const mnlAmts = mnlMismaCuenta.map(m => ({
         amt: Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2),
@@ -2499,7 +2509,23 @@
         const monto = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
         const dir   = parseFloat(m.entradas||0) > 0 ? '+' : '-';
         const ts    = new Date(m.fecha||'').getTime();
-        return !mnlAmts.some(e => e.amt === monto && e.dir === dir && Math.abs(e.ts - ts) <= 86400000);
+        return !mnlAmts.some(e => e.amt === monto && e.dir === dir && Math.abs(e.ts - ts) <= _WIN_MS);
+      });
+
+      // Pasada 2c: cruzar también contra stgl_mov_excel de la MISMA CUENTA
+      //   Evita duplicados cuando el usuario importa el mismo extracto dos veces
+      //   o cuando un CFDI ya estaba en stgl_mov_excel con diferente concepto
+      const excelMismaCuenta = getExcelMovData().filter(m => m.cuenta === cuenta);
+      const excelAmts = excelMismaCuenta.map(m => ({
+        amt: Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2),
+        dir: parseFloat(m.entradas||0) > 0 ? '+' : '-',
+        ts:  new Date(m.fecha||'').getTime()
+      }));
+      sinDupId = sinDupId.filter(m => {
+        const monto = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+        const dir   = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+        const ts    = new Date(m.fecha||'').getTime();
+        return !excelAmts.some(e => e.amt === monto && e.dir === dir && Math.abs(e.ts - ts) <= _WIN_MS);
       });
 
       const nuevos = sinDupId;
@@ -5561,6 +5587,8 @@ setTimeout(() => {
 
     // 3. Detectar movimientos con fecha en el concepto y mostrar botón de limpieza
     _mostrarBtnLimpiarCSV();
+    // 4. Detectar duplicados entre stgl_mov_excel y stgl_mov_manual
+    _detectarDuplicados();
 
     localStorage.setItem('stgl_cuentas_normalized_v2', '1');
   } catch(e) { console.warn('norm-v2:', e); }
@@ -5606,6 +5634,99 @@ function limpiarCSVMalImportado() {
   renderSaldos(); filterMovimientos();
   _mostrarBtnLimpiarCSV();
   toast(`🧹 ${malos.length} movimientos eliminados — vuelve a importar el CSV para registrarlos correctamente`, 'success');
+}
+
+/* ── Dedup retroactivo de movimientos duplicados ─────────────────────────────
+   Detecta y elimina entradas en stgl_mov_excel que tienen un "gemelo" en
+   stgl_mov_manual con misma cuenta + monto + dirección + fecha ±3 días.
+   El gemelo de stgl_mov_manual (CFDI) tiene más datos → se prefiere conservar.
+   También detecta duplicados DENTRO de stgl_mov_excel misma cuenta/monto/fecha. */
+
+function _detectarDuplicados() {
+  const WIN_MS = 3 * 86400000;
+  const excel  = getExcelMovData();
+  const manual = loadRegistry('stgl_mov_manual');
+
+  /* Construir índice de manual: {amt|dir|cuenta → [ts]} */
+  const manualIdx = {};
+  manual.forEach(m => {
+    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+    const k   = `${m.cuenta}|${amt}|${dir}`;
+    if (!manualIdx[k]) manualIdx[k] = [];
+    manualIdx[k].push(new Date(m.fecha||'').getTime());
+  });
+
+  /* Contar cuántos excel tienen gemelo en manual */
+  let gemelos = 0;
+  excel.forEach(m => {
+    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+    const k   = `${m.cuenta}|${amt}|${dir}`;
+    const ts  = new Date(m.fecha||'').getTime();
+    if ((manualIdx[k]||[]).some(t => Math.abs(t - ts) <= WIN_MS)) gemelos++;
+  });
+
+  const btn = document.getElementById('btn-dedup-movs');
+  if (btn) {
+    if (gemelos > 0) {
+      btn.style.display = '';
+      btn.title = `${gemelos} movimiento(s) duplicados detectados — haz clic para limpiar`;
+      btn.textContent = `🔂 ${gemelos} dup.`;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+  return gemelos;
+}
+
+function dedupMovimientosRetroactivo() {
+  const WIN_MS = 3 * 86400000;
+  const excel  = getExcelMovData();
+  const manual = loadRegistry('stgl_mov_manual');
+
+  /* Índice manual */
+  const manualIdx = {};
+  manual.forEach(m => {
+    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+    const k   = `${m.cuenta}|${amt}|${dir}`;
+    if (!manualIdx[k]) manualIdx[k] = [];
+    manualIdx[k].push(new Date(m.fecha||'').getTime());
+  });
+
+  /* Separar: conservar los excel que NO tienen gemelo en manual */
+  const aEliminar = [];
+  const aConservar = excel.filter(m => {
+    const amt = Math.abs(parseFloat(m.entradas||0) - parseFloat(m.salidas||0)).toFixed(2);
+    const dir = parseFloat(m.entradas||0) > 0 ? '+' : '-';
+    const k   = `${m.cuenta}|${amt}|${dir}`;
+    const ts  = new Date(m.fecha||'').getTime();
+    const esGemelo = (manualIdx[k]||[]).some(t => Math.abs(t - ts) <= WIN_MS);
+    if (esGemelo) { aEliminar.push(m); return false; }
+    return true;
+  });
+
+  if (!aEliminar.length) { toast('Sin duplicados detectados', 'info'); return; }
+
+  const ok = confirm(
+    `Se detectaron ${aEliminar.length} movimiento(s) en el extracto bancario que ya están registrados como CFDI.\n\n` +
+    `Se eliminarán los del extracto bancario (stgl_mov_excel) y se conservarán los CFDI.\n\n` +
+    `¿Continuar?`
+  );
+  if (!ok) return;
+
+  /* Revertir ajuste de saldo de los eliminados (si se aplicó) */
+  aEliminar.filter(m => m._saldoAjustado && m.cuenta).forEach(m => {
+    const delta = parseFloat(m.entradas||0) - parseFloat(m.salidas||0);
+    if (delta) ajustarSaldoCuenta(m.cuenta, -delta);
+  });
+
+  localStorage.setItem(KEY_MOV_EXCEL, JSON.stringify(aConservar));
+  renderSaldos(); filterMovimientos();
+  _detectarDuplicados();
+  _invalidarSalCache();
+  toast(`🔂 ${aEliminar.length} duplicados eliminados — saldos actualizados`, 'success');
 }
 
   /* ══════════════════════════════════════════════════════════════════
