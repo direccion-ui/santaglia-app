@@ -443,7 +443,17 @@
             </div>
             <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.4rem;font-style:italic;margin-bottom:0.5rem;">*Estimaciones basadas en historial de movimientos. Para estados financieros formales consulte su contador.</div>
 
-            <!-- 3G: Agenda del Director -->
+            <!-- 3G: Widget Tarjetas Corporativas (TDC) -->
+            <div id="dir-tdc-section" style="margin-top:1.25rem;">
+              <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+                <span>💳 Tarjetas Corporativas</span>
+                <span style="font-size:0.6rem;font-weight:400;font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-xs);">corte · pago · saldo del período</span>
+              </div>
+              <div id="dir-tdc-widget" style="font-size:0.72rem;">Cargando…</div>
+              <div style="font-size:0.6rem;color:var(--text-xs);margin-top:0.3rem;font-style:italic;">*Fechas de corte y pago son estimadas. Día de corte configurable en cada cuenta de Saldos Bancarios.</div>
+            </div>
+
+            <!-- 3H: Agenda del Director -->
             <div style="font-family:var(--brand);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;margin-top:1.25rem;display:flex;align-items:center;gap:0.5rem;">
               <span>📅 Agenda del Director</span>
               <span style="font-size:0.6rem;font-weight:400;font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-xs);">acciones e compromisos de los próximos 7 días</span>
@@ -5381,6 +5391,156 @@ function limpiarCSVMalImportado() {
   /* ══════════════════════════════════════════════════════════════════
      AGENDA DEL DIRECTOR — detección de patrones y compromisos próximos
   ══════════════════════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════════════════════════════
+     SUGERENCIA #5: Widget de Tarjetas Corporativas (TDC)
+     Lee stgl_saldos y el historial de movimientos.
+     Sin captura adicional — el día de corte por defecto es 17;
+     puede personalizarse guardando el campo dia_corte en la cuenta.
+  ══════════════════════════════════════════════════════════════════ */
+  function _renderTDCWidget() {
+    const el = document.getElementById('dir-tdc-widget');
+    const sec = document.getElementById('dir-tdc-section');
+    if (!el) return;
+
+    const hoy    = new Date();
+    const isoHoy = hoy.toISOString().slice(0, 10);
+
+    /* ── Leer TDC activas ── */
+    const saldos = loadRegistry(KEY_SAL);
+    const tdcCuentas = saldos.filter(s => {
+      if (s.cancelada) return false;
+      const tipo = (s.tipo || '').toLowerCase();
+      const nom  = (s.nombre || s.banco || '').toLowerCase();
+      return tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito'
+          || nom.includes('clara');
+    });
+
+    if (!tdcCuentas.length) {
+      if (sec) sec.style.display = 'none';
+      return;
+    }
+    if (sec) sec.style.display = '';
+
+    /* ── Disponible en cuentas de débito/cheques (MXN) ── */
+    const mxnDisp = saldos.reduce((tot, s) => {
+      if (s.cancelada) return tot;
+      const tipo = (s.tipo || '').toLowerCase();
+      const mon  = (s.moneda || 'MXN').toUpperCase();
+      if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') return tot;
+      return mon === 'MXN' ? tot + (parseFloat(s.saldo) || 0) : tot;
+    }, 0);
+
+    /* ── Todos los movimientos para análisis de cargos del período ── */
+    const allMovs = getAllMovData();
+
+    let html = '<div style="display:flex;flex-direction:column;gap:0.6rem;">';
+
+    for (const tdc of tdcCuentas) {
+      const nombre    = tdc.nombre || tdc.banco || 'Tarjeta';
+      const saldoAbs  = Math.abs(parseFloat(tdc.saldo) || 0);
+      const limite    = parseFloat(tdc.limite || tdc.limit || 0);
+
+      /* Día de corte (default 17) y días hasta el pago después del corte (default 20) */
+      const diaCorte   = Math.max(1, Math.min(28, parseInt(tdc.dia_corte   || 17)));
+      const diasPago   = Math.max(1, Math.min(45, parseInt(tdc.dias_pago   || 20)));
+
+      /* ── Próximo corte ── */
+      let fechaCorte;
+      if (hoy.getDate() < diaCorte) {
+        fechaCorte = new Date(hoy.getFullYear(), hoy.getMonth(), diaCorte);
+      } else {
+        fechaCorte = new Date(hoy.getFullYear(), hoy.getMonth() + 1, diaCorte);
+      }
+
+      /* ── Último corte (para medir cargos del período actual) ── */
+      let fechaUltimoCorte;
+      if (hoy.getDate() < diaCorte) {
+        fechaUltimoCorte = new Date(hoy.getFullYear(), hoy.getMonth() - 1, diaCorte);
+      } else {
+        fechaUltimoCorte = new Date(hoy.getFullYear(), hoy.getMonth(), diaCorte);
+      }
+      const isoUltimoCorte = fechaUltimoCorte.toISOString().slice(0, 10);
+
+      /* ── Fecha límite de pago ── */
+      const fechaPago = new Date(fechaCorte.getTime() + diasPago * 86400000);
+
+      const diasParaCorte = Math.round((fechaCorte - hoy) / 86400000);
+      const diasParaPago  = Math.round((fechaPago  - hoy) / 86400000);
+
+      /* ── Cargos del período actual (desde último corte) ── */
+      const nomRef = nombre.toLowerCase();
+      const cargos = allMovs.reduce((sum, r) => {
+        const cta   = (r.cuenta || '').toLowerCase();
+        const fecha = r.fecha || '';
+        const esTDC = cta.includes(nomRef) || cta.includes('clara');
+        if (!esTDC) return sum;
+        if (fecha < isoUltimoCorte || fecha > isoHoy) return sum;
+        return sum + (parseFloat(r.salidas) || 0);
+      }, 0);
+
+      /* ── Cálculo "después de pagar" ── */
+      const despues = mxnDisp - saldoAbs;
+
+      /* ── Colores de urgencia ── */
+      const urgente     = diasParaPago <= 5;
+      const advertencia = diasParaPago <= 14;
+      const colorBorde  = urgente ? 'var(--red)' : advertencia ? '#f59e0b' : 'var(--border)';
+      const bgCard      = urgente ? '#fff5f5' : '#fff';
+      const colorDias   = urgente ? 'var(--red)' : advertencia ? '#92400e' : 'var(--text-dim)';
+
+      /* ── Label de días ── */
+      const lblCorte = diasParaCorte <= 0 ? '¡Hoy corte!' : diasParaCorte === 1 ? 'Mañana' : `En ${diasParaCorte} días`;
+      const lblPago  = diasParaPago  <  0 ? '⚠️ Vencido'  : diasParaPago  === 0 ? '¡Vence hoy!' : diasParaPago === 1 ? '¡Mañana!' : `${diasParaPago} días`;
+
+      /* ── Barra de uso del límite ── */
+      let barraLimite = '';
+      if (limite > 0 && saldoAbs > 0) {
+        const pct = Math.min(100, (saldoAbs / limite * 100)).toFixed(0);
+        const colorBarra = pct >= 80 ? 'var(--red)' : pct >= 50 ? '#f59e0b' : 'var(--green)';
+        barraLimite = `<div style="margin-top:0.45rem;">
+          <div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${colorBarra};border-radius:3px;transition:width .3s;"></div>
+          </div>
+          <div style="font-size:0.58rem;color:var(--text-xs);margin-top:0.15rem;">${pct}% utilizado del límite de ${_fmtDir(limite)}</div>
+        </div>`;
+      }
+
+      html += `<div style="border:1px solid ${colorBorde};border-radius:6px;padding:0.65rem 0.85rem;background:${bgCard};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+          <div style="font-family:var(--brand);font-size:0.73rem;font-weight:700;color:var(--navy);">💳 ${escHtml(nombre)}</div>
+          <div style="font-family:var(--brand);font-size:1rem;font-weight:700;color:var(--red);">${_fmtDir(saldoAbs)}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+          <div style="background:#f8f9fb;border-radius:4px;padding:0.4rem 0.5rem;">
+            <div style="font-size:0.57rem;color:var(--text-xs);text-transform:uppercase;font-weight:700;letter-spacing:0.06em;margin-bottom:0.15rem;">Próximo Corte</div>
+            <div style="font-family:var(--brand);font-size:0.75rem;font-weight:700;">${fechaCorte.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</div>
+            <div style="font-size:0.61rem;color:var(--text-dim);">${lblCorte}</div>
+          </div>
+          <div style="background:${urgente ? '#fde8e8' : advertencia ? '#fff7e0' : '#f8f9fb'};border-radius:4px;padding:0.4rem 0.5rem;">
+            <div style="font-size:0.57rem;color:var(--text-xs);text-transform:uppercase;font-weight:700;letter-spacing:0.06em;margin-bottom:0.15rem;">Límite de Pago</div>
+            <div style="font-family:var(--brand);font-size:0.75rem;font-weight:700;color:${colorDias};">${fechaPago.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</div>
+            <div style="font-size:0.61rem;color:${colorDias};font-weight:${urgente ? '700' : '400'};">${lblPago}</div>
+          </div>
+          <div style="background:#f8f9fb;border-radius:4px;padding:0.4rem 0.5rem;">
+            <div style="font-size:0.57rem;color:var(--text-xs);text-transform:uppercase;font-weight:700;letter-spacing:0.06em;margin-bottom:0.15rem;">Cargos del Período</div>
+            <div style="font-family:var(--brand);font-size:0.75rem;font-weight:700;color:var(--red);">${cargos > 0 ? _fmtDir(cargos) : '—'}</div>
+            <div style="font-size:0.61rem;color:var(--text-dim);">desde ${fechaUltimoCorte.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</div>
+          </div>
+        </div>
+
+        <div style="font-size:0.64rem;color:var(--text-dim);padding-top:0.35rem;border-top:1px solid ${colorBorde === 'var(--border)' ? 'var(--border)' : colorBorde}20;">
+          Al pagar quedarían disponibles: <strong style="color:${despues >= 0 ? 'var(--green)' : 'var(--red)'};">${_fmtDir(despues)}</strong>
+          ${despues < 0 ? '<span style="color:var(--red);font-size:0.6rem;"> ⚠️ fondos insuficientes</span>' : ''}
+        </div>
+        ${barraLimite}
+      </div>`;
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
   function _renderAgendaDirector() {
     const el = document.getElementById('dir-agenda');
     if (!el) return;
@@ -5402,7 +5562,7 @@ function limpiarCSVMalImportado() {
       const tipo  = (s.tipo || '').toLowerCase();
       const nombre = s.nombre || s.banco || 'Tarjeta';
       if (tipo.includes('tarjeta') || tipo === 'crédito' || tipo === 'credito') {
-        if (saldo < 0) { ccTotal += Math.abs(saldo); tarjetasPendientes.push({ nombre, saldo: Math.abs(saldo) }); }
+        if (saldo < 0) { ccTotal += Math.abs(saldo); tarjetasPendientes.push({ nombre, saldo: Math.abs(saldo), dia_corte: s.dia_corte, dias_pago: s.dias_pago }); }
         return;
       }
       if (mon === 'USD') usdTotal += saldo;
@@ -5487,16 +5647,33 @@ function limpiarCSVMalImportado() {
       });
     }
 
-    /* --- Tarjetas de crédito --- */
+    /* --- Tarjetas de crédito (solo alerta si pago vence en ≤ 10 días) --- */
     tarjetasPendientes.forEach(t => {
       if (t.saldo > 500) {
-        const rem = disponible - t.saldo;
-        items.push({
-          tipo:'warning', icon:'💳',
-          titulo:`${t.nombre} — saldo pendiente`,
-          desc:`${_fmtDir(t.saldo)} por pagar · Después de liquidar tarjeta: ${_fmtDir(rem)}`,
-          monto:t.saldo, prioridad:2
-        });
+        const diaCorte  = Math.max(1, Math.min(28, parseInt(t.dia_corte  || 17)));
+        const diasPago  = Math.max(1, Math.min(45, parseInt(t.dias_pago  || 20)));
+        /* Calcular próxima fecha de pago */
+        let fechaCorteT;
+        if (dia < diaCorte) {
+          fechaCorteT = new Date(hoy.getFullYear(), hoy.getMonth(), diaCorte);
+        } else {
+          fechaCorteT = new Date(hoy.getFullYear(), hoy.getMonth() + 1, diaCorte);
+        }
+        const fechaPagoT   = new Date(fechaCorteT.getTime() + diasPago * 86400000);
+        const diasParaPagoT = Math.round((fechaPagoT - hoy) / 86400000);
+        const lblPagoT     = diasParaPagoT <= 0 ? '⚠️ Vencido' : diasParaPagoT === 1 ? '¡Vence mañana!' : `Vence en ${diasParaPagoT} días`;
+        const urgT         = diasParaPagoT <= 3;
+
+        /* Solo incluir en agenda si pago próximo en ≤ 10 días (el widget TDC siempre visible) */
+        if (diasParaPagoT <= 10) {
+          const rem = disponible - t.saldo;
+          items.push({
+            tipo: urgT ? 'error' : 'warning', icon:'💳',
+            titulo:`${t.nombre} — pago ${urgT ? '¡URGENTE!' : 'próximo'}`,
+            desc:`${_fmtDir(t.saldo)} · ${lblPagoT} (${fechaPagoT.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}) · Quedan: ${_fmtDir(rem)}`,
+            monto:t.saldo, prioridad: urgT ? 0 : 1
+          });
+        }
       }
     });
 
@@ -5625,6 +5802,7 @@ function limpiarCSVMalImportado() {
     _renderGrafico(resultados);
     _renderFlujoMes();
     _renderCompromisos();
+    _renderTDCWidget();
     _renderAgendaDirector();
   }
 
