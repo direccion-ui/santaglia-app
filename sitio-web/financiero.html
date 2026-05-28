@@ -470,20 +470,20 @@
             </div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0.5rem;" id="dir-wc-grid">
               <div style="background:var(--bg-white);padding:0.75rem 1rem;">
-                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Actual</div>
-                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-0">—</div>
-              </div>
-              <div style="background:var(--bg-white);padding:0.75rem 1rem;">
-                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 3 meses</div>
-                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-3">—</div>
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 12 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-12">—</div>
               </div>
               <div style="background:var(--bg-white);padding:0.75rem 1rem;">
                 <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 6 meses</div>
                 <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-6">—</div>
               </div>
               <div style="background:var(--bg-white);padding:0.75rem 1rem;">
-                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 12 meses</div>
-                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-12">—</div>
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem;">Hace 3 meses</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-3">—</div>
+              </div>
+              <div style="background:var(--bg-white);padding:0.75rem 1rem;border-left:2px solid var(--navy);">
+                <div style="font-family:var(--brand);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);margin-bottom:0.2rem;">Actual</div>
+                <div style="font-family:var(--brand);font-size:1rem;font-weight:700;" id="dir-wc-0">—</div>
               </div>
             </div>
             <details style="margin-bottom:1rem;font-size:0.72rem;color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.75rem;">
@@ -6134,8 +6134,9 @@ function dedupMovimientosRetroactivo() {
   }
 
   function _renderCapitalTrabajo() {
-    const periodos = [0, 90, 180, 365];
-    const ids      = ['dir-wc-0','dir-wc-3','dir-wc-6','dir-wc-12'];
+    /* Orden izq→der: Hace 12m | Hace 6m | Hace 3m | Actual — igual que la gráfica */
+    const periodos = [365, 180, 90, 0];
+    const ids      = ['dir-wc-12','dir-wc-6','dir-wc-3','dir-wc-0'];
     /* Orden izq→der: Hace 12m | Hace 6m | Hace 3m | Actual — igual que la gráfica */
     const acidIds  = ['dir-acid-12','dir-acid-6','dir-acid-3','dir-acid-0'];
     const acidOff  = [365, 180, 90, 0];
