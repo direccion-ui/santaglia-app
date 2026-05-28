@@ -8,11 +8,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
       - name: Deploy to Vercel
-        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes --no-wait
         working-directory: sitio-web
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
