@@ -711,6 +711,28 @@ async function logout() {
   location.href = 'login.html';
 }
 
+/* ── Purga logs de verificación para prevenir QuotaExceededError ── */
+function _purgarLogsVerificacion() {
+  const MAX = 60; // máximo de entradas por log
+  const LOG_KEYS = [
+    'stgl_verificacion_log',
+    'stgl_verificacion_log_financiero',
+    'stgl_verificacion_log_retenciones',
+  ];
+  LOG_KEYS.forEach(key => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || arr.length <= MAX) return;
+      // Conservar solo las MAX más recientes
+      const trimmed = arr.slice(-MAX);
+      localStorage.setItem(key, JSON.stringify(trimmed));
+      console.log(`[stgl] Purgado ${key}: ${arr.length} → ${trimmed.length} entradas`);
+    } catch {}
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const page = location.pathname.split('/').pop() || 'dashboard.html';
 
@@ -730,6 +752,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Purgar cfdi_index silencioso (entradas viejas con pocos usos)
   setTimeout(_cfdiIdxPurgar, 3000);
+
+  // Purgar logs de verificación para evitar QuotaExceededError (máx 60 entradas c/u)
+  setTimeout(_purgarLogsVerificacion, 4000);
 
   // Sync inicial (5 s después de arrancar) + arrancar el timer periódico
   setTimeout(() => {
