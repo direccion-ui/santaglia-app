@@ -2602,7 +2602,7 @@
       } else if (modo === 'compacto') {
         __movOpenGroups = new Set();
       } else {
-        /* solo-actual: acordeón → abrir solo el mes más reciente */
+        /* solo-actual: acordeón → abrir solo el mes más reciente (primero en orden desc) */
         __movOpenGroups = new Set(todasClaves.length ? [todasClaves[todasClaves.length - 1]] : []);
       }
       renderMovPagina(modo === 'solo-actual');
@@ -2630,9 +2630,8 @@
         if (!grupos[k]) grupos[k] = [];
         grupos[k].push(r);
       }
-      /* Orden cronológico ascendente: los meses más antiguos quedan arriba,
-         el más reciente al fondo — coincide con el scroll invertido */
-      const claves = Object.keys(grupos).sort();
+      /* Orden cronológico descendente: el mes más reciente queda arriba — visible sin scroll */
+      const claves = Object.keys(grupos).sort().reverse();
 
       /* Apertura por defecto según el modo de vista */
       if (__movOpenGroups.size === 0 && claves.length > 0) {
@@ -2641,8 +2640,8 @@
         } else if (__movModoVista === 'compacto') {
           /* nada — todos colapsados */
         } else {
-          /* solo-actual (default): abrir únicamente el mes más reciente */
-          __movOpenGroups.add(claves[claves.length - 1]);
+          /* solo-actual (default): abrir únicamente el mes más reciente (índice 0 en orden desc) */
+          __movOpenGroups.add(claves[0]);
         }
       }
 
@@ -2752,10 +2751,10 @@
       document.getElementById('mov-tbody').innerHTML = html;
       document.getElementById('mov-pagination').innerHTML = '';
 
-      /* Desplazar al fondo sólo cuando se importa o filtra */
+      /* Desplazar al tope: el mes más reciente queda arriba en orden descendente */
       if (scrollEnd) {
         const sc = document.getElementById('mov-scroll');
-        if (sc) sc.scrollTop = sc.scrollHeight;
+        if (sc) sc.scrollTop = 0;
       }
     }
     /* ══════════════════════════════════════
@@ -5042,8 +5041,11 @@ function limpiarCSVMalImportado() {
       /* Estilos tabs */
       if (btnDir) { btnDir.style.background = 'transparent'; btnDir.style.color = '#64748b'; btnDir.style.boxShadow = 'none'; }
       if (btnCnt) { btnCnt.style.background = 'var(--navy)'; btnCnt.style.color = '#fff'; btnCnt.style.boxShadow = '0 1px 4px rgba(26,45,128,0.18)'; }
-      /* Actualizar barra de auditoría */
+      /* Resetear grupos para que el mes actual quede abierto al volver de Director */
+      __movOpenGroups = new Set();
+      /* Actualizar barra de auditoría y re-renderizar tabla */
       _renderAuditoria();
+      renderMovPagina(true);
     }
   }
 
