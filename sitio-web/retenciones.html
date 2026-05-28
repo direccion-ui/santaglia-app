@@ -1259,7 +1259,8 @@ function renderVistaDirector() {
     const est  = (comp.retenidoAsim||0) + (comp.retenidoIsrHon||0) + (comp.retenidoIvaHon||0);
     if (est > 0) proyeccion.push({ m: futM, y: futY, est });
   }
-  const MES_LARGO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const MES_LARGO  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const MES_LARGOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
   // ── Tira 12 meses: dot por mes coloreado según estado ──────────────────────
   const MES_CORTO_VD = ['E','F','M','A','M','J','J','A','S','O','N','D'];
@@ -1284,14 +1285,12 @@ function renderVistaDirector() {
   }).join('');
 
   // ── IVA a Favor acumulado del año ───────────────────────────────────────────
-  const extra = loadExtraObj();
   let ivaFavorTotal = 0; const ivaFavorMeses = [];
   for (let m = 1; m <= 12; m++) {
     const key = `${selectedYear}-${String(m).padStart(2,'0')}`;
     const ex  = extra[key] || {};
     if (ex.ivaFavor > 0) { ivaFavorTotal += ex.ivaFavor; ivaFavorMeses.push(MES_LARGOS[m-1]); }
   }
-  const MES_LARGOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
   panel.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;flex-wrap:wrap;gap:0.5rem;">
