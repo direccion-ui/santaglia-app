@@ -74,6 +74,22 @@ Deno.serve(async (req: Request) => {
     const orgId = prof?.current_org_id;
     if (!orgId) return json({ error: 'Usuario sin organización' }, 400);
 
+    /* ── Guardar e.firma (cifra la .key con AES-GCM y la persiste) ── */
+    if (accion === 'guardar_efirma') {
+      const { rfc, cerB64, keyB64, pass } = body;
+      if (!rfc || !cerB64 || !keyB64 || !pass) return json({ error: 'Faltan datos de la e.firma' }, 400);
+      /* La .key (DER, posiblemente cifrada con su contraseña) + la contraseña se
+         cifran juntas con AES-GCM usando SAT_KEY_ENC_SECRET. El backend la
+         descifra solo en memoria al firmar. */
+      const { cifrado, iv } = await aesEncrypt(JSON.stringify({ keyB64, pass }));
+      const { error } = await sb.from('sat_credenciales').upsert({
+        org_id: orgId, rfc, cer_b64: cerB64, key_cifrada: cifrado, key_iv: iv,
+        modo: 'persistido', actualizado: new Date().toISOString(),
+      }, { onConflict: 'org_id' });
+      if (error) return json({ error: error.message }, 500);
+      return json({ ok: true });
+    }
+
     /* Cargar credenciales e.firma de la org */
     const { data: cred } = await sb.from('sat_credenciales').select('*').eq('org_id', orgId).single();
     if (!cred) return json({ error: 'Sin e.firma configurada. Súbela en Configuración → Conexión SAT.' }, 400);
@@ -122,10 +138,30 @@ Deno.serve(async (req: Request) => {
    Aquí queda la ESTRUCTURA con los sobres SOAP oficiales y los puntos a completar.
    ════════════════════════════════════════════════════════════════════════════ */
 
-async function descifrarKey(_keyCifrada: string, _iv: string): Promise<string> {
-  // TODO: AES-GCM decrypt con SAT_KEY_ENC_SECRET (Deno crypto.subtle).
-  //       Devuelve la .key en PEM para firmar.
-  throw new Error('descifrarKey: pendiente de implementar con la e.firma real');
+/* ── Cifrado AES-GCM de la e.firma (IMPLEMENTADO — testeable) ──────────────── */
+async function _aesKey(): Promise<CryptoKey> {
+  const secret = Deno.env.get('SAT_KEY_ENC_SECRET') ?? '';
+  if (!secret) throw new Error('Falta SAT_KEY_ENC_SECRET en el entorno');
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
+  return crypto.subtle.importKey('raw', hash, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+async function aesEncrypt(plain: string): Promise<{ cifrado: string; iv: string }> {
+  const key = await _aesKey();
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const buf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plain));
+  const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+  return { cifrado: b64(new Uint8Array(buf)), iv: b64(iv) };
+}
+async function aesDecrypt(cifrado: string, ivB64: string): Promise<string> {
+  const key = await _aesKey();
+  const bin = (b: string) => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+  const buf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bin(ivB64) }, key, bin(cifrado));
+  return new TextDecoder().decode(buf);
+}
+
+async function descifrarKey(keyCifrada: string, iv: string): Promise<string> {
+  /* Devuelve { keyB64, pass } de la e.firma (descifrado solo en memoria). */
+  return await aesDecrypt(keyCifrada, iv);
 }
 
 async function autenticar(_cerB64: string, _keyPem: string): Promise<string> {
