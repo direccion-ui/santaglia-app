@@ -25,6 +25,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import forge from 'https://esm.sh/node-forge@1.3.1'
+import { unzipSync, strFromU8 } from 'https://esm.sh/fflate@0.8.2'
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -46,6 +47,23 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  /* ── Modo CRON (desatendido): autenticado por secreto compartido, NO por sesión.
+        Usa el service role para operar sobre todas las orgs conectadas. ── */
+  const cronSecret = req.headers.get('x-cron-secret');
+  if (cronSecret) {
+    if (cronSecret !== (Deno.env.get('SAT_CRON_SECRET') ?? '\0'))
+      return json({ error: 'cron secret inválido' }, 401);
+    const svcKey = Deno.env.get('SAT_SERVICE_KEY') ?? '';
+    if (!svcKey) return json({ error: 'Falta SAT_SERVICE_KEY en el entorno' }, 500);
+    const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', svcKey);
+    try {
+      const resultados = await cronTick(admin);
+      return json({ ok: true, resultados });
+    } catch (e) {
+      return json({ error: String(e?.message || e) }, 500);
+    }
+  }
 
   /* ── Auth: sesión Supabase del usuario ── */
   const authHeader = req.headers.get('Authorization') ?? '';
@@ -138,7 +156,12 @@ Deno.serve(async (req: Request) => {
       case 'descargar': {
         const token = await autenticar(efirma);
         const zipB64 = await descargarPaquete(efirma, token, cred.rfc, body.idPaquete); // ④
-        return json({ ok: true, zipB64 });
+        /* Guardar en Supabase (cfdis) además de devolver el ZIP al navegador. */
+        let almacen = null;
+        try {
+          almacen = await guardarCFDIsDeZip(sbUser, orgId, body.tipo || 'recibidos', zipB64);
+        } catch (e) { almacen = { error: String(e?.message || e) }; }
+        return json({ ok: true, zipB64, almacen });
       }
 
       default:
@@ -399,4 +422,172 @@ async function postSoapAuth(url: string, soap: string, action: string, token: st
   const txt = await r.text();
   if (!r.ok) throw new Error(`SAT ${r.status}: ${txt.slice(0, 300)}`);
   return txt;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PARSEO Y ALMACENAMIENTO DE CFDI (servidor) — guarda en Supabase (cfdis).
+   Permite el flujo desatendido (cron) sin pasar por el navegador.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function _attr(xml: string, re: RegExp): string | null {
+  const m = xml.match(re);
+  return m ? m[1] : null;
+}
+function _num(v: string | null): number | null {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/* Extrae los campos clave de un CFDI 3.3/4.0 (regex; suficiente para almacenar). */
+function parseCFDI(xml: string): any | null {
+  const uuid = _attr(xml, /<(?:tfd:)?TimbreFiscalDigital[^>]*\bUUID="([^"]+)"/i);
+  if (!uuid) return null;
+  const comp     = xml.match(/<(?:cfdi:)?Comprobante\b([^>]*)>/i)?.[1] ?? '';
+  const emisor   = xml.match(/<(?:cfdi:)?Emisor\b([^>]*)\/?>/i)?.[1] ?? '';
+  const receptor = xml.match(/<(?:cfdi:)?Receptor\b([^>]*)\/?>/i)?.[1] ?? '';
+  return {
+    uuid,
+    version:          _attr(comp, /\bVersion="([^"]+)"/i),
+    fecha:            _attr(comp, /\bFecha="([^"]+)"/i),
+    serie:            _attr(comp, /\bSerie="([^"]+)"/i),
+    folio:            _attr(comp, /\bFolio="([^"]+)"/i),
+    subtotal:         _num(_attr(comp, /\bSubTotal="([^"]+)"/i)),
+    total:            _num(_attr(comp, /\bTotal="([^"]+)"/i)),
+    moneda:           _attr(comp, /\bMoneda="([^"]+)"/i),
+    tipo_comprobante: _attr(comp, /\bTipoDeComprobante="([^"]+)"/i),
+    forma_pago:       _attr(comp, /\bFormaPago="([^"]+)"/i),
+    metodo_pago:      _attr(comp, /\bMetodoPago="([^"]+)"/i),
+    rfc_emisor:       _attr(emisor, /\bRfc="([^"]+)"/i),
+    nombre_emisor:    _attr(emisor, /\bNombre="([^"]+)"/i),
+    rfc_receptor:     _attr(receptor, /\bRfc="([^"]+)"/i),
+    nombre_receptor:  _attr(receptor, /\bNombre="([^"]+)"/i),
+  };
+}
+
+/* Descomprime el ZIP (base64), parsea los XML y los UPSERT-ea en cfdis.
+   Dedup por (org_id, uuid). Devuelve { total, guardados }. */
+async function guardarCFDIsDeZip(client: any, orgId: string, tipo: string, zipB64: string):
+  Promise<{ total: number; guardados: number }> {
+  const bin = Uint8Array.from(atob(zipB64), c => c.charCodeAt(0));
+  const archivos = unzipSync(bin);
+  const filas: any[] = [];
+  for (const nombre of Object.keys(archivos)) {
+    if (!/\.xml$/i.test(nombre)) continue;
+    const xml = strFromU8(archivos[nombre]);
+    const c = parseCFDI(xml);
+    if (!c) continue;
+    filas.push({
+      org_id: orgId, uuid: c.uuid,
+      tipo: tipo === 'emitidos' ? 'emitido' : 'recibido',
+      version: c.version, fecha: c.fecha, serie: c.serie, folio: c.folio,
+      subtotal: c.subtotal, total: c.total, moneda: c.moneda,
+      tipo_comprobante: c.tipo_comprobante, forma_pago: c.forma_pago, metodo_pago: c.metodo_pago,
+      rfc_emisor: c.rfc_emisor, nombre_emisor: c.nombre_emisor,
+      rfc_receptor: c.rfc_receptor, nombre_receptor: c.nombre_receptor,
+      xml,
+    });
+  }
+  let guardados = 0;
+  if (filas.length) {
+    const { error, count } = await client.from('cfdis')
+      .upsert(filas, { onConflict: 'org_id,uuid', count: 'exact' });
+    if (error) throw new Error('Guardado cfdis: ' + error.message);
+    guardados = count ?? filas.length;
+  }
+  return { total: filas.length, guardados };
+}
+
+/* Carga la e.firma desde una fila de sat_credenciales (descifra en memoria). */
+async function cargarEfirmaDeCred(cred: any): Promise<Efirma> {
+  if (!cred?.key_encrypted || !cred?.cer_encrypted)
+    throw new Error('e.firma incompleta');
+  const { iv, cifrado } = JSON.parse(cred.key_encrypted);
+  const { keyB64, pass } = JSON.parse(await aesDecrypt(cifrado, iv));
+  return cargarEfirma(cred.cer_encrypted, keyB64, pass);
+}
+
+/* Rango por defecto: del primer día del mes anterior hasta hoy (fechas YYYY-MM-DD). */
+function rangoUltimoMes(): { ini: string; fin: string } {
+  const ahoraMx = new Date(Date.now() - 6 * 3600 * 1000);
+  const y = ahoraMx.getUTCFullYear(), m = ahoraMx.getUTCMonth();
+  const ini = new Date(Date.UTC(y, m - 1, 1)).toISOString().slice(0, 10);
+  const fin = ahoraMx.toISOString().slice(0, 10);
+  return { ini, fin };
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CRON — máquina de estados por org+tipo. Pide 1 vez al día y reintenta la
+   descarga en cada tick hasta que el SAT entregue el paquete.
+   ════════════════════════════════════════════════════════════════════════════ */
+async function cronTick(admin: any): Promise<any[]> {
+  const { data: creds } = await admin.from('sat_credenciales').select('*').eq('conectado', true);
+  const resultados: any[] = [];
+  for (const cred of creds || []) {
+    let efirma: Efirma;
+    try { efirma = await cargarEfirmaDeCred(cred); }
+    catch (e) { resultados.push({ org: cred.org_id, error: 'e.firma: ' + String(e?.message || e) }); continue; }
+    for (const tipo of ['recibidos', 'emitidos']) {
+      try {
+        const r = await procesarTipoCron(admin, cred, efirma, tipo);
+        resultados.push({ org: cred.org_id, tipo, ...r });
+      } catch (e) {
+        resultados.push({ org: cred.org_id, tipo, error: String(e?.message || e) });
+      }
+    }
+  }
+  return resultados;
+}
+
+async function procesarTipoCron(admin: any, cred: any, efirma: Efirma, tipo: string): Promise<any> {
+  const orgId = cred.org_id;
+  // Última solicitud para este tipo
+  const { data: logs } = await admin.from('sat_sync_log')
+    .select('*').eq('org_id', orgId).eq('tipo', tipo)
+    .order('created_at', { ascending: false }).limit(1);
+  const log = logs?.[0];
+  const ageH = log ? (Date.now() - new Date(log.created_at).getTime()) / 3600000 : Infinity;
+
+  // En proceso → verificar (o vencer si lleva demasiado)
+  if (log && log.status === 'processing') {
+    if (ageH > 18) {
+      await admin.from('sat_sync_log').update({ status: 'failed', error_msg: 'Vencida (>18h)' }).eq('id', log.id);
+      return { accion: 'vencida' };
+    }
+    const token = await autenticar(efirma);
+    const v = await verificarSolicitud(efirma, token, cred.rfc, log.solicitud_id);
+    if (v.estado === 'lista') {
+      let guardados = 0;
+      for (const idPaq of v.paquetes) {
+        const t2 = await autenticar(efirma);
+        const zip = await descargarPaquete(efirma, t2, cred.rfc, idPaq);
+        const r = await guardarCFDIsDeZip(admin, orgId, tipo, zip);
+        guardados += r.guardados;
+      }
+      await admin.from('sat_sync_log').update({
+        status: 'completed', completed_at: new Date().toISOString(), cfdi_count: guardados,
+      }).eq('id', log.id);
+      return { accion: 'descargada', guardados };
+    }
+    if (v.estado === 'error') {
+      await admin.from('sat_sync_log').update({ status: 'failed', error_msg: v.mensaje }).eq('id', log.id);
+      return { accion: 'error', msg: v.mensaje };
+    }
+    return { accion: 'en_proceso' };
+  }
+
+  // Completada hace <20h → ya se descargó hoy, no re-solicitar
+  if (log && log.status === 'completed' && ageH < 20) return { accion: 'ya_completada_hoy' };
+  // Fallida hace <2h → enfriamiento corto antes de reintentar (límites del SAT)
+  if (log && log.status === 'failed' && ageH < 2) return { accion: 'fallo_reciente_espera' };
+
+  // Sin solicitud, o fallida (>2h), o completada (>20h) → crear nueva
+  const { ini, fin } = rangoUltimoMes();
+  const token = await autenticar(efirma);
+  const idSol = await solicitarDescarga(efirma, token, cred.rfc, tipo, ini, fin);
+  await admin.from('sat_sync_log').insert({
+    org_id: orgId, rfc: cred.rfc, fecha_inicio: ini, fecha_fin: fin,
+    tipo, status: 'processing', solicitud_id: idSol,
+  });
+  return { accion: 'solicitada', idSol };
 }
