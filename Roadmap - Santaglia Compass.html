@@ -687,7 +687,7 @@
     <div class="header-title">Santaglia Compass — Hoja de Ruta de Desarrollo</div>
     <div class="header-subtitle">Plan maestro de desarrollo &nbsp;·&nbsp; Plataforma SaaS de gestión empresarial</div>
   </div>
-  <div class="header-badge">Actualizado: 26 Mayo 2026 · En Producción · compass.santaglia.app</div>
+  <div class="header-badge">Actualizado: 27 Mayo 2026 · En Producción · compass.santaglia.app</div>
 </header>
 
 <!-- ===================== TOOLBAR ===================== -->
@@ -707,6 +707,62 @@
 
 <!-- ===================== PAGE WRAPPER ===================== -->
 <div class="page-wrapper">
+
+  <!-- ══ LOGROS TÉCNICOS COMPLETADOS — 30 MAYO 2026 ══ -->
+  <div style="background:linear-gradient(135deg,#0c1e3a 0%,#13315c 100%);border-radius:16px;padding:24px 28px;margin-bottom:24px;border:1px solid #2d4a7a;box-shadow:0 4px 24px rgba(0,0,0,0.25);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#3b82f6;box-shadow:0 0 8px #3b82f6;animation:pulse 1.8s ease-in-out infinite;"></div>
+      <span style="font-size:0.78rem;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:0.8px;">Hitos Técnicos Completados · 30 Mayo 2026 · Conexión SAT + Rediseño de Fundación</span>
+      <span style="margin-left:auto;font-size:0.72rem;color:rgba(147,197,253,.7);background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);padding:3px 10px;border-radius:20px;">⭐ Pieza estrella del plan</span>
+    </div>
+    <p style="font-size:0.7rem;color:rgba(147,197,253,.6);margin-bottom:18px;line-height:1.6;">La descarga automática de CFDI directo del SAT —prometida en el plan de negocio— pasó de concepto a producción. En paralelo, se consolidó el rediseño de la fundación que estabiliza saldos, periodos y el almacén central de comprobantes.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🔐</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Conexión Automática con el SAT — Firma FIEL en Producción</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Servicio de <strong style="color:#fff;">Descarga Masiva de CFDI</strong> del SAT implementado de extremo a extremo: autenticación, solicitud, verificación y descarga, firmando cada sobre SOAP con la <strong style="color:#fff;">e.firma (FIEL)</strong> vía node-forge. Validado contra el SAT real. e.firma cifrada (AES-GCM) en el servidor — <strong style="color:#fff;">nunca en el navegador</strong>.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🤖</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Sincronización Desatendida — Cron 24/7</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Job <strong style="color:#fff;">pg_cron</strong> cada 30 min: pide los CFDI <strong style="color:#fff;">1 vez al día</strong> (respeta límites del SAT) y reintenta la descarga hasta que el SAT entregue el paquete asíncrono. Máquina de estados en <code style="color:#93c5fd;">sat_sync_log</code> — corre solo, sin que nadie abra la app.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🗄️</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Almacén Central de CFDI en Supabase</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Tabla <code style="color:#93c5fd;">cfdis</code> con parseo de XML <strong style="color:#fff;">server-side</strong> (emisor, receptor, total, UUID, tipo) y dedup por UUID. Alimentada tanto por el botón manual como por el cron. Base para que Facturación, Egresos y Retenciones lean de la nube.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🧱</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Rediseño de Fundación — Fuente Única de Verdad</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Saldos derivados de una sola función (<strong style="color:#fff;">base + Σ movimientos</strong>), eliminando la corrupción por ajustes superpuestos. Almacén central de CFDI <code style="color:#93c5fd;">StglCFDI</code> (llave UUID) que rompe los silos entre módulos. Detección de duplicados proactiva y no destructiva.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">📅</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Barra de Contexto Global — Periodo + Vista</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Selector de periodo y toggle <strong style="color:#fff;">Director/Contador</strong> compartidos a nivel de menú, en la misma posición en todos los módulos. <strong style="color:#fff;">3 modos</strong> homologados: Año+Mes, Año, y Rango (Desde→Hasta). Reemplaza controles dispersos por módulo.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">⚡</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Rendimiento + Permisos Supabase</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Cacheo de conciliados/contabilizados y tope de render (400 filas) — se acabaron los freezes. GRANTs explícitos a <code style="color:#93c5fd;">authenticated</code> y <code style="color:#93c5fd;">service_role</code>; organización del usuario enlazada en la nube. Bug de orden de carga (tgInitPanel) corregido.</div>
+      </div>
+
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(59,130,246,.15);font-size:0.68rem;color:rgba(147,197,253,.5);display:flex;gap:20px;flex-wrap:wrap;">
+      <span>✅ 30 mayo: Conexión SAT validada contra producción — autenticación ① y solicitud ② aceptadas con la e.firma real</span>
+      <span>✅ 30 mayo: cron <code style="color:#93c5fd;">sat-sync-tick</code> activo — descarga de CFDI 100% desatendida</span>
+      <span>✅ 30 mayo: tabla <code style="color:#93c5fd;">cfdis</code> + parseo server-side — almacén de comprobantes en la nube</span>
+      <span>✅ 30 mayo: rediseño de fundación consolidado — saldos, periodos y CFDI con fuente única de verdad</span>
+      <span>⏳ Pendiente seguro: retiro de llaves API legacy de Supabase (migración a llaves nuevas)</span>
+    </div>
+  </div>
 
   <!-- ══ LOGROS TÉCNICOS COMPLETADOS — 26 MAYO 2026 ══ -->
   <div style="background:linear-gradient(135deg,#0f2d1a 0%,#1a4a2a 100%);border-radius:16px;padding:24px 28px;margin-bottom:24px;border:1px solid #2d6a3f;box-shadow:0 4px 24px rgba(0,0,0,0.25);">
@@ -820,6 +876,10 @@
       <span>✅ Infraestructura lista para escalar a 1,000+ usuarios sin cambios arquitecturales</span>
       <span>✅ 26 mayo: primer lead Beta recibido y respondido automáticamente — pipeline Waitlist CRM operativo</span>
       <span>✅ 26 mayo tarde: 6 mejoras al módulo de Retenciones ISR/IVA + CI/CD pipeline restaurado y conectado a producción</span>
+      <span>✅ 27 mayo: auditoría completa de 15 cuentas bancarias vs estados reales — saldos corregidos (BBVA MXN $61,775 · BBVA USD $5,000 · HEY Ahorro $218.43 · Clara -$22,738) + 33 movimientos correctivos</span>
+      <span>✅ 27 mayo: Supabase Fase 4 activa — 32 bloques sincronizados en nube · persistencia L3 operativa · problema de pérdida por cambio de origen resuelto definitivamente</span>
+      <span>✅ 27 mayo: GRANTs explícitos aplicados — preparado para cambio de defaults API Supabase del 30 mayo 2026</span>
+      <span>✅ 27 mayo tarde: Vista Director en Retenciones — semáforo + recargos/día + proyección 3 meses · panel ejecutivo sin detalle técnico</span>
     </div>
   </div>
 
@@ -903,7 +963,7 @@
           <div style="display:flex;gap:8px;align-items:flex-start;">
             <span style="color:#16a34a;font-size:0.75rem;margin-top:1px;flex-shrink:0;">▶</span>
             <div style="font-size:0.68rem;line-height:1.55;color:var(--text);">
-              <strong>Conciliación CFDI vs. SAT.</strong> El SAT permite consultar vía API (Consulta de CFDI) los folios emitidos y recibidos. Cruzar los CFDIs importados en Compass contra los que el SAT tiene registrados detectaría diferencias antes de que el SAT las detecte — blindaje preventivo ante auditorías.
+              <strong>Conciliación CFDI vs. SAT.</strong> <span style="font-size:0.6rem;background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-weight:700;">🔨 BASE LISTA · 30-MAY</span> El SAT permite consultar vía API (Consulta de CFDI) los folios emitidos y recibidos. Cruzar los CFDIs importados en Compass contra los que el SAT tiene registrados detectaría diferencias antes de que el SAT las detecte — blindaje preventivo ante auditorías. <em style="color:var(--muted);">La Conexión SAT (descarga masiva) ya trae los CFDI autoritativos del SAT a la tabla <code>cfdis</code>; falta el cruce visual contra los importados manualmente.</em>
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:flex-start;">
@@ -1187,7 +1247,7 @@ const TODAY = new Date(); TODAY.setHours(0,0,0,0);
   if (fd) fd.textContent = `${d.getDate()} ${MESES[d.getMonth()].charAt(0).toUpperCase() + MESES[d.getMonth()].slice(1)} ${d.getFullYear()}`;
 })();
 
-// Timeline: Apr 2026 → Dec 2027  (actualizado 26 mayo 2026)
+// Timeline: Apr 2026 → Dec 2027  (actualizado 27 mayo 2026)
 const TIMELINE_START = new Date(2026, 3, 1);  // Apr 1 2026
 const TIMELINE_END   = new Date(2027, 11, 31); // Dec 31 2027
 
@@ -1267,10 +1327,13 @@ const PHASES = [
       { name: '✅ Waitlist CRM — tabla Supabase + 2 Edge Functions + dashboard + email automático Resend', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. Sistema completo de gestión de la lista de espera Beta. Componentes: (1) SUPABASE: tabla waitlist_contacts (email, nombre, fuente, status, timestamps de cada etapa: welcome_sent_at, followup_1_sent_at, followup_2_sent_at, onboarding_at, notas, referido_por). RLS activo — solo usuarios autenticados. (2) EDGE FUNCTION waitlist-inbound: endpoint público (sin JWT); recibe el submit del formulario de la landing, hace upsert del contacto (ignoreDuplicates para re-submissions), envía correo de bienvenida personalizado vía Resend API desde compass@santaglia.app, actualiza welcome_sent_at y status a "bienvenida". (3) EDGE FUNCTION waitlist-send-email: requiere Supabase Auth Bearer token; acepta { contact_id, email_type: followup_1|followup_2|onboarding, mensaje_extra }; envía plantilla correspondiente y actualiza timestamp + status en BD. (4) DASHBOARD waitlist.html: KPI bar (Total/Bienvenida/En seguimiento/Onboarded/Pendiente), tabs de filtro por status, tabla de contactos con fechas, modal de detalle con línea de tiempo de correos, notas y botones de envío de seguimiento. Menú "Waitlist Beta" agregado en la navegación general de todos los módulos Compass. (5) PRIMER LEAD: rpolancomaldonado@gmail.com — registrado el 25 mayo 2026, bienvenida enviada automáticamente, entregado por Resend.' },
       { name: '✅ Landing → Edge Function — registro automático paralelo a Formspree al hacer submit', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. El webhook de Formspree es exclusivo del plan Premium; workaround: se modifica handleForm() en santaglia.app/index.html para hacer dos llamadas en paralelo con Promise.all(): (1) Formspree — conserva la notificación a info@santaglia.com, (2) Edge Function waitlist-inbound — registra el contacto en Supabase y envía el correo de bienvenida. La llamada a la Edge Function es fire-and-forget (.catch(() => {})) — si falla, el submit de Formspree igual termina exitosamente y el usuario ve la confirmación. El formulario ya no depende de Formspree para el CRM de Compass. Push al repo direccion-ui/santaglia-app (GitHub Pages → santaglia.app) autorizado y desplegado.' },
       { name: '✅ Retenciones — Indicador 3 pasos + sync cross-módulo + parser LC + CI/CD restaurado', start: [2026,5,26], end: [2026,5,26], done: true, tooltip: '✅ COMPLETADO 26 mayo 2026. Seis mejoras al módulo de Retenciones ISR/IVA: (1) Indicador visual de 3 pasos (CFDIs → LCs SAT → Banco) en tarjetas del calendario y en la historia detallada por período, con 5 mensajes contextuales de siguiente acción. (2) Sincronización cross-módulo: importar PDF bancario en Retenciones actualiza automáticamente stgl_mov_manual en Movimientos Bancarios — sin recaptura. (3) Parser LC corregido: el prefijo 0426 = forma 04 + año 26, NO mes. Período derivado de fecha de pago (pago en mes M → período M-1). (4) Protección de sobreescritura con diálogo de confirmación cuando hay monto diferente. (5) Botón "Limpiar banco" con descripción contextual en modal de edición. (6) CI/CD pipeline restaurado: remote github.com/direccion-ui/santaglia-app configurado, branch main trackeado, push automático a Vercel operativo. Build automático en cada push a main.' },
+      { name: '✅ Auditoría saldos bancarios — 15 cuentas vs estados de cuenta reales + 33 movimientos correctivos', start: [2026,5,27], end: [2026,5,27], done: true, tooltip: '✅ COMPLETADO 27 mayo 2026. Verificación exhaustiva de todos los saldos del módulo Financiero contra estados de cuenta bancarios reales (PDFs BBVA MXN/USD, Base MXN/USD, HEY Banco) y app Clara. Correcciones aplicadas: BBVA MXN $61,775.15 (antes $103,761.34 — diferencia por nómina mayo, SAT y operación FX posterior al snapshot de referencia); BBVA USD $5,000.00 (antes $9,867.40 — transferencia de $4,867.40 USD a BASE el 21 mayo); HEY Ahorro $218.43 (antes $208.66 — interés acumulado); Clara -$22,737.90 (corrección de estimado vs. saldo real en app). Cuentas canceladas marcadas: AMEX_CRED, Santander PYME. 42 movimientos Efectivo reclasificados a Cta_Puente. 33 movimientos correctivos nuevos agregados (M4897–M4929): 6 pares Cta_Puente balanceadores, 9 movimientos BBVA MXN post-snapshot (nóminas, SAT, FX), 1 transferencia BBVA USD, 17 transacciones Clara 17–26 mayo. Script de consola ejecutado para sincronizar localStorage con saldos reales. cargar_saldos.js actualizado como fuente canónica.' },
+      { name: '✅ Supabase Fase 4 — persistencia cloud activa (stgl_data + profiles + user_org + RLS + GRANTs)', start: [2026,5,27], end: [2026,5,27], done: true, tooltip: '✅ COMPLETADO 27 mayo 2026. Activación de la capa L3 de persistencia cloud (estaba diseñada en app.js como no-op desde la Fase 4 del plan original). Pasos ejecutados: (1) Tablas creadas en Supabase: stgl_data (KV store con org_id+key PRIMARY KEY), profiles (UUID→TEXT para org_id), user_org (membresías). (2) RLS habilitado en las 3 tablas con políticas por org_id. (3) GRANTs explícitos: GRANT SELECT/INSERT/UPDATE/DELETE ON stgl_data TO authenticated; REVOKE ALL FROM anon — preparatorio para el cambio de defaults de Supabase API el 30 mayo 2026. (4) Trigger handle_new_user() para auto-crear perfil al registrar nuevo usuario. (5) Perfil e membresía del usuario existente insertados manualmente con SQL. (6) Primer sync exitoso: 32 bloques stgl_* sincronizados desde localStorage a Supabase a las 15:01:33 del 27 mayo 2026. El interceptor en app.js escribe simultáneamente a L1 (localStorage) + L2 (IndexedDB) + L3 (Supabase) en cada stgl_* setItem. Sync periódico cada 3 min + visibilitychange. Problema de pérdida de datos por cambio de origen file:// vs localhost resuelto definitivamente.' },
       // ── Mejoras Inmediatas — Recomendaciones Expertos Sprint Jun 2026 ──
-      { name: 'Recargos SAT automáticos — cálculo 1.47%/mes + actualización INPC', start: [2026,5,27], end: [2026,6,3], done: false, phase: 2, tooltip: 'Cuando un período de retención está vencido (diasAtraso > 0), calcular y mostrar automáticamente el monto estimado de recargos SAT (tasa actual 1.47% mensual sobre el impuesto no pagado) + actualización por inflación (factor INPC publicado en DOF). Mostrar en: (1) tarjeta del calendario como "⚠️ Recargos est. $X", (2) historia fiscal del período, (3) modal de edición. Fuente de la tasa: constante configurable en stgl_config (actualizable por el contador). Fuente INPC: API Banxico o tabla hardcodeada trimestral. El cálculo es estimado — el SAT calcula el monto exacto al generar la declaración complementaria. Fórmula: recargo = impuesto × (diasAtraso/30) × 0.0147.' },
-      { name: 'Tabla retenciones — vista compacta responsive (5 col + expansión)', start: [2026,5,27], end: [2026,6,3], done: false, phase: 2, tooltip: 'La tabla de retenciones tiene 14 columnas visibles — inusable en pantallas < 1200px. Implementar dos vistas con toggle: (1) COMPACTA (default en tablet/móvil): Mes · Total Retenido · Total Pagado · Diferencia · Estado. Al hacer clic en una fila se expande inline mostrando el desglose por concepto (Asim/ISR Hon/IVA Hon/ISR PM/Arr) con las columnas de RET y PAG. (2) COMPLETA: la tabla actual de 14 columnas, disponible en desktop ≥ 1400px o con toggle "Vista completa". Persistir preferencia en localStorage. El indicador de 3 pasos y el historia row siguen funcionando igual en ambas vistas.' },
-      { name: 'CTA accionable en tarjeta VENCIDO/PENDIENTE — importar comprobante directo', start: [2026,5,27], end: [2026,6,3], done: false, phase: 2, tooltip: 'Las tarjetas del calendario fiscal con estado VENCIDO o PENDIENTE muestran el badge de estado pero no tienen ningún botón de acción. El usuario tiene que saber que debe ir a "🏦 Recibo Bancario" en la barra de botones. Agregar en la tarjeta un botón pequeño "📄 Importar pago" que abra directamente el modal de recibo bancario con el período preseleccionado. Para tarjetas con step2 completado (LCs importadas) pero step3 pendiente (sin banco), mostrar el botón en color azul. Para tarjetas con todos los steps pendientes, mostrar en gris. Regla: solo mostrar cuando totalRet > 0 y !pagoBancarioConfirmado.' },
+      { name: '✅ Recargos SAT automáticos — cálculo 1.47%/mes + costo diario en tarjeta', start: [2026,5,27], end: [2026,5,27], done: true, tooltip: 'Cuando un período de retención está vencido (diasAtraso > 0), calcular y mostrar automáticamente el monto estimado de recargos SAT (tasa actual 1.47% mensual sobre el impuesto no pagado) + actualización por inflación (factor INPC publicado en DOF). Mostrar en: (1) tarjeta del calendario como "⚠️ Recargos est. $X", (2) historia fiscal del período, (3) modal de edición. Fuente de la tasa: constante configurable en stgl_config (actualizable por el contador). Fuente INPC: API Banxico o tabla hardcodeada trimestral. El cálculo es estimado — el SAT calcula el monto exacto al generar la declaración complementaria. Fórmula: recargo = impuesto × (diasAtraso/30) × 0.0147.' },
+      { name: '✅ Tabla retenciones — vista compacta responsive (5 col + expansión)', start: [2026,5,27], end: [2026,5,27], done: true, tooltip: 'La tabla de retenciones tiene 14 columnas visibles — inusable en pantallas < 1200px. Implementar dos vistas con toggle: (1) COMPACTA (default en tablet/móvil): Mes · Total Retenido · Total Pagado · Diferencia · Estado. Al hacer clic en una fila se expande inline mostrando el desglose por concepto (Asim/ISR Hon/IVA Hon/ISR PM/Arr) con las columnas de RET y PAG. (2) COMPLETA: la tabla actual de 14 columnas, disponible en desktop ≥ 1400px o con toggle "Vista completa". Persistir preferencia en localStorage. El indicador de 3 pasos y el historia row siguen funcionando igual en ambas vistas.' },
+      { name: '✅ CTA accionable en tarjeta VENCIDO/PENDIENTE — botón directo en card', start: [2026,5,27], end: [2026,5,27], done: true, tooltip: 'Las tarjetas del calendario fiscal con estado VENCIDO o PENDIENTE muestran el badge de estado pero no tienen ningún botón de acción. El usuario tiene que saber que debe ir a "🏦 Recibo Bancario" en la barra de botones. Agregar en la tarjeta un botón pequeño "📄 Importar pago" que abra directamente el modal de recibo bancario con el período preseleccionado. Para tarjetas con step2 completado (LCs importadas) pero step3 pendiente (sin banco), mostrar el botón en color azul. Para tarjetas con todos los steps pendientes, mostrar en gris. Regla: solo mostrar cuando totalRet > 0 y !pagoBancarioConfirmado.' },
+      { name: '✅ Vista Director — panel ejecutivo retenciones (semáforo + vencidos + proyección)', start: [2026,5,27], end: [2026,5,27], done: true, tooltip: '✅ COMPLETADO 27 mayo 2026. Toggle "👔 Vista Director" en barra de Retenciones. Oculta tabla técnica y calendario, muestra panel ejecutivo con: (1) Semáforo global ✅/⚠️/🔴 con recargos acumulados. (2) Lista de meses vencidos con monto pendiente, días vencidos, recargo +costo/día y botón "📄 Registrar pago" directo. (3) Próximos vencimientos en 15 días. (4) Proyección "Saldrá de tu cuenta" próximos 3 meses. Toggle inverso regresa a Vista Contador. Preferencia persistida en stgl_ret_vista_director. Diseñado para el director/dueño — no para el contador.' },
       // ── Próximo Mes — Junio-Julio 2026 ──
       { name: 'Onboarding interactivo — tour 5 pasos módulo Retenciones', start: [2026,6,4], end: [2026,6,14], done: false, phase: 2, tooltip: 'Tooltip progresivo de 5 pasos al primer acceso al módulo de Retenciones para usuarios nuevos. Pasos: (1) Importa tus CFDIs de nómina u honorarios → (2) El calendario muestra las retenciones calculadas por mes → (3) Sube las líneas de captura SAT cuando el contador las genere → (4) Importa el comprobante bancario de pago → (5) Proceso completo — tu cumplimiento fiscal queda documentado. Trigger: localStorage "stgl_ret_onboarding_done" ausente. Implementar con overlay semitransparente + spotlight en el elemento relevante. Botones: Siguiente / Saltar / No mostrar de nuevo.' },
       { name: 'Declaración complementaria completa — LC nueva + multa + banco vinculado', start: [2026,6,4], end: [2026,6,14], done: false, phase: 2, tooltip: 'El modal de declaración complementaria existe pero está incompleto. Mejoras: (1) Campo para registrar la nueva LC generada por el SAT para el complementario (diferente a la LC original). (2) Campo para registrar el monto de multa aplicada (art. 76 CFF) si el SAT la impuso. (3) Campo para registrar los recargos reales pagados (vs. el estimado del sistema). (4) Vinculación del comprobante bancario del pago de la complementaria al período original — debe aparecer en la historia fiscal como un evento separado con fecha. (5) El acuse de la complementaria debe quedar almacenado y referenciado en la cadena de evidencia del período.' },
