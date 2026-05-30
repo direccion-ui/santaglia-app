@@ -469,10 +469,21 @@ function _num(v: string | null): number | null {
    las retenciones de IVA. Respeta 16% / 8% (frontera) / 0% / exento. */
 function _extraerIVA(xml: string) {
   const r = { iva16: 0, iva8: 0, iva0_base: 0, exento_base: 0, iva_ret: 0 };
+  // ── IMPORTANTE: el IVA aparece DOS veces en el CFDI (por concepto Y en los
+  // totales del comprobante). Para no DUPLICAR, leemos solo el bloque de
+  // impuestos TOTALES del comprobante: lo que está después de </Conceptos> y
+  // antes del <Complemento> (que puede traer impuestos de otros namespaces). ──
+  let scope = xml;
+  const ci = xml.search(/<\/(?:cfdi:)?Conceptos>/i);
+  if (ci >= 0) {
+    scope = xml.slice(ci);
+    const cmp = scope.search(/<(?:cfdi:)?Complemento[\s>]/i);
+    if (cmp >= 0) scope = scope.slice(0, cmp);
+  }
   // Traslados de IVA (Impuesto="002"). Capturamos Base, TasaOCuota e Importe.
   const trasRe = /<(?:cfdi:)?Traslado\b([^>]*?)\/?>/gi;
   let m: RegExpExecArray | null;
-  while ((m = trasRe.exec(xml))) {
+  while ((m = trasRe.exec(scope))) {
     const a = m[1];
     if (!/\bImpuesto="0?0?2"/.test(a) && !/\bImpuesto="002"/.test(a)) continue;
     const tipoFactor = _attr(a, /\bTipoFactor="([^"]+)"/i) || '';
@@ -485,9 +496,9 @@ function _extraerIVA(xml: string) {
     else if (tasa >= 0.07) r.iva8  += imp;        // 8% frontera
     else                   r.iva0_base += base;   // 0% (base, sin IVA)
   }
-  // Retenciones de IVA (Impuesto="002")
+  // Retenciones de IVA (Impuesto="002") — solo del bloque de totales (scope)
   const retRe = /<(?:cfdi:)?Retencion\b([^>]*?)\/?>/gi;
-  while ((m = retRe.exec(xml))) {
+  while ((m = retRe.exec(scope))) {
     const a = m[1];
     if (!/\bImpuesto="0?0?2"/.test(a) && !/\bImpuesto="002"/.test(a)) continue;
     r.iva_ret += _num(_attr(a, /\bImporte="([^"]+)"/i)) || 0;
