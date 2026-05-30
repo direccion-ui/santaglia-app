@@ -29,7 +29,7 @@ import { unzipSync, strFromU8 } from 'https://esm.sh/fflate@0.8.2'
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
   'Content-Type': 'application/json',
 };
 
