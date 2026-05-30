@@ -126,6 +126,31 @@ Deno.serve(async (req: Request) => {
         return json({ ok: true, token: token.slice(0, 24) + '…', autenticado: true });
       }
 
+      case 'reprocesar_iva': {
+        /* Re-extrae el IVA del XML de los CFDIs ya guardados (sin tocar el SAT). */
+        const { data: rows, error } = await sbUser.from('cfdis')
+          .select('org_id,uuid,xml').eq('org_id', orgId);
+        if (error) return json({ error: error.message }, 500);
+        let actualizados = 0;
+        const updates: any[] = [];
+        for (const row of rows || []) {
+          if (!row.xml) continue;
+          const iva = _extraerIVA(row.xml);
+          updates.push({
+            org_id: row.org_id, uuid: row.uuid,
+            iva_16: iva.iva16, iva_8: iva.iva8, iva_0_base: iva.iva0_base,
+            exento_base: iva.exento_base, iva_retenido: iva.iva_ret,
+          });
+        }
+        for (let i = 0; i < updates.length; i += 200) {
+          const lote = updates.slice(i, i + 200);
+          const { error: e2 } = await sbUser.from('cfdis').upsert(lote, { onConflict: 'org_id,uuid' });
+          if (e2) return json({ error: 'Upsert: ' + e2.message, actualizados }, 500);
+          actualizados += lote.length;
+        }
+        return json({ ok: true, total: rows?.length || 0, actualizados });
+      }
+
       case 'solicitar': {
         const { tipo, fechaIni, fechaFin } = body;
         const token = await autenticar(efirma);                          // ①
@@ -439,6 +464,37 @@ function _num(v: string | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/* Extrae el IVA real del CFDI leyendo los nodos de Impuestos (no aproxima con %).
+   IVA = Impuesto "002". Suma el Importe de cada Traslado por su TasaOCuota, y
+   las retenciones de IVA. Respeta 16% / 8% (frontera) / 0% / exento. */
+function _extraerIVA(xml: string) {
+  const r = { iva16: 0, iva8: 0, iva0_base: 0, exento_base: 0, iva_ret: 0 };
+  // Traslados de IVA (Impuesto="002"). Capturamos Base, TasaOCuota e Importe.
+  const trasRe = /<(?:cfdi:)?Traslado\b([^>]*?)\/?>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = trasRe.exec(xml))) {
+    const a = m[1];
+    if (!/\bImpuesto="0?0?2"/.test(a) && !/\bImpuesto="002"/.test(a)) continue;
+    const tipoFactor = _attr(a, /\bTipoFactor="([^"]+)"/i) || '';
+    const tasa  = _num(_attr(a, /\bTasaOCuota="([^"]+)"/i));
+    const base  = _num(_attr(a, /\bBase="([^"]+)"/i)) || 0;
+    const imp   = _num(_attr(a, /\bImporte="([^"]+)"/i)) || 0;
+    if (/exento/i.test(tipoFactor)) { r.exento_base += base; continue; }
+    if (tasa === null) continue;
+    if (tasa >= 0.15)      r.iva16 += imp;        // 16%
+    else if (tasa >= 0.07) r.iva8  += imp;        // 8% frontera
+    else                   r.iva0_base += base;   // 0% (base, sin IVA)
+  }
+  // Retenciones de IVA (Impuesto="002")
+  const retRe = /<(?:cfdi:)?Retencion\b([^>]*?)\/?>/gi;
+  while ((m = retRe.exec(xml))) {
+    const a = m[1];
+    if (!/\bImpuesto="0?0?2"/.test(a) && !/\bImpuesto="002"/.test(a)) continue;
+    r.iva_ret += _num(_attr(a, /\bImporte="([^"]+)"/i)) || 0;
+  }
+  return r;
+}
+
 /* Extrae los campos clave de un CFDI 3.3/4.0 (regex; suficiente para almacenar). */
 function parseCFDI(xml: string): any | null {
   const uuid = _attr(xml, /<(?:tfd:)?TimbreFiscalDigital[^>]*\bUUID="([^"]+)"/i);
@@ -446,6 +502,7 @@ function parseCFDI(xml: string): any | null {
   const comp     = xml.match(/<(?:cfdi:)?Comprobante\b([^>]*)>/i)?.[1] ?? '';
   const emisor   = xml.match(/<(?:cfdi:)?Emisor\b([^>]*)\/?>/i)?.[1] ?? '';
   const receptor = xml.match(/<(?:cfdi:)?Receptor\b([^>]*)\/?>/i)?.[1] ?? '';
+  const iva = _extraerIVA(xml);
   return {
     uuid,
     version:          _attr(comp, /\bVersion="([^"]+)"/i),
@@ -462,6 +519,8 @@ function parseCFDI(xml: string): any | null {
     nombre_emisor:    _attr(emisor, /\bNombre="([^"]+)"/i),
     rfc_receptor:     _attr(receptor, /\bRfc="([^"]+)"/i),
     nombre_receptor:  _attr(receptor, /\bNombre="([^"]+)"/i),
+    iva_16:    iva.iva16, iva_8: iva.iva8, iva_0_base: iva.iva0_base,
+    exento_base: iva.exento_base, iva_retenido: iva.iva_ret,
   };
 }
 
@@ -485,6 +544,8 @@ async function guardarCFDIsDeZip(client: any, orgId: string, tipo: string, zipB6
       tipo_comprobante: c.tipo_comprobante, forma_pago: c.forma_pago, metodo_pago: c.metodo_pago,
       rfc_emisor: c.rfc_emisor, nombre_emisor: c.nombre_emisor,
       rfc_receptor: c.rfc_receptor, nombre_receptor: c.nombre_receptor,
+      iva_16: c.iva_16, iva_8: c.iva_8, iva_0_base: c.iva_0_base,
+      exento_base: c.exento_base, iva_retenido: c.iva_retenido,
       xml,
     });
   }
