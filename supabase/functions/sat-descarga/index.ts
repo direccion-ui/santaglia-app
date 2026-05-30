@@ -59,19 +59,16 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: authErr } = await sbUser.auth.getUser();
   if (authErr || !user) return json({ error: 'Sesión inválida' }, 401);
 
-  /* Cliente con service role para leer credenciales / escribir solicitudes */
-  const sb = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-  );
+  /* Todas las operaciones usan el cliente del usuario (sbUser): RLS garantiza que
+     solo accede a su propia org. No se necesita service role. */
 
   let body: any = {};
   try { body = await req.json(); } catch { /* */ }
   const accion = body.accion;
 
   try {
-    /* Resolver org del usuario */
-    const { data: prof } = await sb.from('profiles').select('current_org_id').eq('id', user.id).single();
+    /* Resolver org del usuario — con el cliente del usuario (RLS: perfil propio) */
+    const { data: prof } = await sbUser.from('profiles').select('current_org_id').eq('id', user.id).single();
     const orgId = prof?.current_org_id;
     if (!orgId) return json({ error: 'Usuario sin organización' }, 400);
 
@@ -83,7 +80,7 @@ Deno.serve(async (req: Request) => {
          con AES-GCM (SAT_KEY_ENC_SECRET). Se guardan en el esquema existente:
          key_encrypted = JSON {iv,cifrado}; cer_encrypted = .cer en base64. */
       const { cifrado, iv } = await aesEncrypt(JSON.stringify({ keyB64, pass }));
-      const { error } = await sb.from('sat_credenciales').upsert({
+      const { error } = await sbUser.from('sat_credenciales').upsert({
         org_id: orgId, rfc,
         cer_encrypted: cerB64,
         key_encrypted: JSON.stringify({ iv, cifrado }),
@@ -95,7 +92,7 @@ Deno.serve(async (req: Request) => {
     }
 
     /* Cargar credenciales e.firma de la org */
-    const { data: cred } = await sb.from('sat_credenciales').select('*').eq('org_id', orgId).single();
+    const { data: cred } = await sbUser.from('sat_credenciales').select('*').eq('org_id', orgId).single();
     if (!cred) return json({ error: 'Sin e.firma configurada. Súbela en Configuración → Conexión SAT.' }, 400);
 
     /* Descifrar la e.firma (AES-GCM) y cargarla en forge — solo en memoria */
@@ -115,11 +112,13 @@ Deno.serve(async (req: Request) => {
         const { tipo, fechaIni, fechaFin } = body;
         const token = await autenticar(efirma);                          // ①
         const idSolicitud = await solicitarDescarga(efirma, token, cred.rfc, tipo, fechaIni, fechaFin); // ②
-        /* Historial en sat_sync_log (esquema existente) */
-        await sb.from('sat_sync_log').insert({
-          org_id: orgId, rfc: cred.rfc, fecha_inicio: fechaIni, fecha_fin: fechaFin,
-          tipo, status: 'processing', solicitud_id: idSolicitud,
-        });
+        /* Historial en sat_sync_log (best-effort, no bloquea el flujo) */
+        try {
+          await sbUser.from('sat_sync_log').insert({
+            org_id: orgId, rfc: cred.rfc, fecha_inicio: fechaIni, fecha_fin: fechaFin,
+            tipo, status: 'processing', solicitud_id: idSolicitud,
+          });
+        } catch (_) { /* el log es opcional */ }
         return json({ ok: true, idSolicitud });
       }
 
@@ -127,10 +126,12 @@ Deno.serve(async (req: Request) => {
         const token = await autenticar(efirma);
         const res = await verificarSolicitud(efirma, token, cred.rfc, body.idSolicitud); // ③
         const statusLog = res.estado === 'lista' ? 'completed' : res.estado === 'error' ? 'failed' : 'processing';
-        await sb.from('sat_sync_log').update({
-          status: statusLog, error_msg: res.estado === 'error' ? res.mensaje : null,
-          completed_at: statusLog === 'completed' ? new Date().toISOString() : null,
-        }).eq('solicitud_id', body.idSolicitud).eq('org_id', orgId);
+        try {
+          await sbUser.from('sat_sync_log').update({
+            status: statusLog, error_msg: res.estado === 'error' ? res.mensaje : null,
+            completed_at: statusLog === 'completed' ? new Date().toISOString() : null,
+          }).eq('solicitud_id', body.idSolicitud).eq('org_id', orgId);
+        } catch (_) { /* el log es opcional */ }
         return json({ ok: true, ...res });
       }
 
@@ -314,11 +315,19 @@ async function solicitarDescarga(ef: Efirma, token: string, rfc: string, tipo: s
   fIni: string, fFin: string): Promise<string> {
   // tipo: 'emitidos' → RfcEmisor=rfc ; 'recibidos' → RfcReceptor=rfc
   const op = tipo === 'emitidos' ? 'SolicitaDescargaEmitidos' : 'SolicitaDescargaRecibidos';
-  const fI = `${fIni}T00:00:00`, fF = `${fFin}T23:59:59`;
-  const attrs = tipo === 'emitidos'
-    ? `FechaInicial="${fI}" FechaFinal="${fF}" RfcEmisor="${rfc}" RfcSolicitante="${rfc}" TipoSolicitud="CFDI"`
-    : `FechaInicial="${fI}" FechaFinal="${fF}" RfcReceptor="${rfc}" RfcSolicitante="${rfc}" TipoSolicitud="CFDI"`;
-  // Nodo solicitud canónico (sin firma) para el digest enveloped
+  const fI = `${fIni}T00:00:00`;
+  /* FechaFinal no puede estar en el futuro respecto al reloj del SAT (México,
+     UTC-6 sin horario de verano). Si el fin solicitado rebasa "ahora" en México,
+     se topa a la hora actual. */
+  const mexNow = new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0, 19);
+  let fF = `${fFin}T23:59:59`;
+  if (fF > mexNow) fF = mexNow;
+  /* Atributos en ORDEN ALFABÉTICO (C14N). EstadoComprobante usa TEXTO:
+     'Vigente' | 'Cancelado' | 'Todos' (NO numérico). La descarga de XML solo
+     admite vigentes. El RFC (emisor o receptor) va como ATRIBUTO. */
+  const rfcAttr = tipo === 'emitidos' ? `RfcEmisor="${rfc}"` : `RfcReceptor="${rfc}"`;
+  const attrs =
+    `EstadoComprobante="Vigente" FechaFinal="${fF}" FechaInicial="${fI}" ${rfcAttr} RfcSolicitante="${rfc}" TipoSolicitud="CFDI"`;
   const solicitudCanon = `<des:solicitud xmlns:des="${NS_DES}" ${attrs}></des:solicitud>`;
   const firma = firmaEnveloped(ef, solicitudCanon);
 
