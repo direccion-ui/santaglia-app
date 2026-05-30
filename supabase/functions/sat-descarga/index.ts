@@ -24,6 +24,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import forge from 'https://esm.sh/node-forge@1.3.1'
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -78,13 +79,16 @@ Deno.serve(async (req: Request) => {
     if (accion === 'guardar_efirma') {
       const { rfc, cerB64, keyB64, pass } = body;
       if (!rfc || !cerB64 || !keyB64 || !pass) return json({ error: 'Faltan datos de la e.firma' }, 400);
-      /* La .key (DER, posiblemente cifrada con su contraseña) + la contraseña se
-         cifran juntas con AES-GCM usando SAT_KEY_ENC_SECRET. El backend la
-         descifra solo en memoria al firmar. */
+      /* La .key (DER, cifrada con su contraseña) + la contraseña se cifran juntas
+         con AES-GCM (SAT_KEY_ENC_SECRET). Se guardan en el esquema existente:
+         key_encrypted = JSON {iv,cifrado}; cer_encrypted = .cer en base64. */
       const { cifrado, iv } = await aesEncrypt(JSON.stringify({ keyB64, pass }));
       const { error } = await sb.from('sat_credenciales').upsert({
-        org_id: orgId, rfc, cer_b64: cerB64, key_cifrada: cifrado, key_iv: iv,
-        modo: 'persistido', actualizado: new Date().toISOString(),
+        org_id: orgId, rfc,
+        cer_encrypted: cerB64,
+        key_encrypted: JSON.stringify({ iv, cifrado }),
+        conectado: true,
+        updated_at: new Date().toISOString(),
       }, { onConflict: 'org_id' });
       if (error) return json({ error: error.message }, 500);
       return json({ ok: true });
@@ -94,34 +98,45 @@ Deno.serve(async (req: Request) => {
     const { data: cred } = await sb.from('sat_credenciales').select('*').eq('org_id', orgId).single();
     if (!cred) return json({ error: 'Sin e.firma configurada. Súbela en Configuración → Conexión SAT.' }, 400);
 
-    /* Descifrar la llave privada (AES-GCM con SAT_KEY_ENC_SECRET) — solo en memoria */
-    const keyPem = await descifrarKey(cred.key_cifrada, cred.key_iv);   // TODO firma real
+    /* Descifrar la e.firma (AES-GCM) y cargarla en forge — solo en memoria */
+    if (!cred.key_encrypted || !cred.cer_encrypted)
+      return json({ error: 'La e.firma no está completa. Vuelve a guardarla en Configuración → Conexión SAT.' }, 400);
+    const { iv, cifrado } = JSON.parse(cred.key_encrypted);
+    const { keyB64, pass } = JSON.parse(await aesDecrypt(cifrado, iv));
+    const efirma = cargarEfirma(cred.cer_encrypted, keyB64, pass);
 
     switch (accion) {
+      case 'autenticar': {   /* paso ① aislado — útil para PROBAR la firma FIEL */
+        const token = await autenticar(efirma);
+        return json({ ok: true, token: token.slice(0, 24) + '…', autenticado: true });
+      }
+
       case 'solicitar': {
         const { tipo, fechaIni, fechaFin } = body;
-        const token = await autenticar(cred.cer_b64, keyPem);            // ① TODO firma FIEL
-        const idSolicitud = await solicitarDescarga(token, cred.rfc, tipo, fechaIni, fechaFin, cred.cer_b64, keyPem); // ②
-        const { data: sol } = await sb.from('sat_solicitudes').insert({
-          org_id: orgId, id_solicitud: idSolicitud, tipo, fecha_ini: fechaIni, fecha_fin: fechaFin, estado: 'solicitada',
-        }).select().single();
-        return json({ ok: true, idSolicitud, solicitud: sol });
+        const token = await autenticar(efirma);                          // ①
+        const idSolicitud = await solicitarDescarga(efirma, token, cred.rfc, tipo, fechaIni, fechaFin); // ②
+        /* Historial en sat_sync_log (esquema existente) */
+        await sb.from('sat_sync_log').insert({
+          org_id: orgId, rfc: cred.rfc, fecha_inicio: fechaIni, fecha_fin: fechaFin,
+          tipo, status: 'processing', solicitud_id: idSolicitud,
+        });
+        return json({ ok: true, idSolicitud });
       }
 
       case 'verificar': {
-        const token = await autenticar(cred.cer_b64, keyPem);
-        const res = await verificarSolicitud(token, cred.rfc, body.idSolicitud, cred.cer_b64, keyPem); // ③
-        await sb.from('sat_solicitudes').update({
-          estado: res.estado, paquetes: res.paquetes, mensaje: res.mensaje, actualizado: new Date().toISOString(),
-        }).eq('id_solicitud', body.idSolicitud).eq('org_id', orgId);
+        const token = await autenticar(efirma);
+        const res = await verificarSolicitud(efirma, token, cred.rfc, body.idSolicitud); // ③
+        const statusLog = res.estado === 'lista' ? 'completed' : res.estado === 'error' ? 'failed' : 'processing';
+        await sb.from('sat_sync_log').update({
+          status: statusLog, error_msg: res.estado === 'error' ? res.mensaje : null,
+          completed_at: statusLog === 'completed' ? new Date().toISOString() : null,
+        }).eq('solicitud_id', body.idSolicitud).eq('org_id', orgId);
         return json({ ok: true, ...res });
       }
 
       case 'descargar': {
-        const token = await autenticar(cred.cer_b64, keyPem);
-        const zipB64 = await descargarPaquete(token, cred.rfc, body.idPaquete, cred.cer_b64, keyPem); // ④
-        /* El cliente descomprime el ZIP y llama StglCFDI.importar() con los XML.
-           (Descomprimir aquí también es posible con una lib de zip de Deno.) */
+        const token = await autenticar(efirma);
+        const zipB64 = await descargarPaquete(efirma, token, cred.rfc, body.idPaquete); // ④
         return json({ ok: true, zipB64 });
       }
 
@@ -159,40 +174,220 @@ async function aesDecrypt(cifrado: string, ivB64: string): Promise<string> {
   return new TextDecoder().decode(buf);
 }
 
-async function descifrarKey(keyCifrada: string, iv: string): Promise<string> {
-  /* Devuelve { keyB64, pass } de la e.firma (descifrado solo en memoria). */
-  return await aesDecrypt(keyCifrada, iv);
+/* ════════════════════════════════════════════════════════════════════════════
+   FIRMA FIEL — implementación con node-forge.
+   ⚠️ Primera iteración. La canonicalización XML es sensible; probar con la
+   acción 'autenticar' contra el SAT e iterar si rechaza la firma.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+type Efirma = { cert: any; privateKey: any; certB64: string };
+
+function cargarEfirma(cerB64: string, keyB64: string, pass: string): Efirma {
+  // .cer (DER X.509)
+  const cerDer = forge.util.decode64(cerB64);
+  const cert   = forge.pki.certificateFromAsn1(forge.asn1.fromDer(cerDer));
+  // .key de la FIEL (EncryptedPrivateKeyInfo, DER, cifrada con su contraseña)
+  const keyDer = forge.util.decode64(keyB64);
+  const encPki = forge.asn1.fromDer(keyDer);
+  const pkInfo = forge.pki.decryptPrivateKeyInfo(encPki, pass);
+  if (!pkInfo) throw new Error('Contraseña de la e.firma incorrecta o .key inválida');
+  const privateKey = forge.pki.privateKeyFromAsn1(pkInfo);
+  return { cert, privateKey, certB64: cerB64 };
 }
 
-async function autenticar(_cerB64: string, _keyPem: string): Promise<string> {
-  // ① Construir sobre SOAP de Autenticación con WS-Security:
-  //    - Timestamp (Created/Expires, 5 min)
-  //    - BinarySecurityToken = certificado
-  //    - Signature (RSA-SHA1) sobre el Timestamp canonicalizado (Exclusive C14N)
-  //    POST a SAT.auth → respuesta contiene el <Token> (xenc) para Authorization.
-  // TODO: firma FIEL + parseo de respuesta.
-  throw new Error('autenticar: pendiente — requiere firma FIEL real');
+function sha1B64(data: string): string {
+  const md = forge.md.sha1.create();
+  md.update(data, 'utf8');
+  return forge.util.encode64(md.digest().bytes());
+}
+function firmarRSASHA1(data: string, privateKey: any): string {
+  const md = forge.md.sha1.create();
+  md.update(data, 'utf8');
+  return forge.util.encode64(privateKey.sign(md));
 }
 
-async function solicitarDescarga(_token: string, _rfc: string, _tipo: string,
-  _fIni: string, _fFin: string, _cerB64: string, _keyPem: string): Promise<string> {
-  // ② SOAP SolicitaDescarga firmado con la FIEL:
-  //    <solicitud RfcSolicitante FechaInicial FechaFinal TipoSolicitud
-  //               RfcEmisor|RfcReceptor> + <Signature>
-  //    POST a SAT.solicita con header Authorization: WRAP access_token="token"
-  //    → devuelve IdSolicitud.
-  throw new Error('solicitarDescarga: pendiente — requiere firma FIEL real');
+/* WS-Security namespaces */
+const NS_U = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd';
+const NS_O = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd';
+const NS_DS = 'http://www.w3.org/2000/09/xmldsig#';
+const VT_X509 = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3';
+const ET_B64  = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary';
+
+/* Construye el bloque <Signature> WS-Security firmando el Timestamp (#_0). */
+function firmaWSSecurity(ef: Efirma, created: string, expires: string): string {
+  // Timestamp canónico (exc-c14n) — namespace u declarado, atributos en orden
+  const tsCanon = `<u:Timestamp xmlns:u="${NS_U}" u:Id="_0"><u:Created>${created}</u:Created><u:Expires>${expires}</u:Expires></u:Timestamp>`;
+  const digest  = sha1B64(tsCanon);
+
+  // SignedInfo canónico (exc-c14n) — namespace por defecto = xmldsig
+  const signedInfo =
+    `<SignedInfo xmlns="${NS_DS}">` +
+    `<CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></CanonicalizationMethod>` +
+    `<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>` +
+    `<Reference URI="#_0">` +
+    `<Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></Transform></Transforms>` +
+    `<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>` +
+    `<DigestValue>${digest}</DigestValue>` +
+    `</Reference></SignedInfo>`;
+  const signature = firmarRSASHA1(signedInfo, ef.privateKey);
+  const certB64   = ef.certB64.replace(/\s+/g, '');
+
+  return (
+    `<o:BinarySecurityToken u:Id="uuid-cert" ValueType="${VT_X509}" EncodingType="${ET_B64}">${certB64}</o:BinarySecurityToken>` +
+    `<Signature xmlns="${NS_DS}">${signedInfo}` +
+    `<SignatureValue>${signature}</SignatureValue>` +
+    `<KeyInfo><o:SecurityTokenReference><o:Reference ValueType="${VT_X509}" URI="#uuid-cert"></o:Reference></o:SecurityTokenReference></KeyInfo>` +
+    `</Signature>`
+  );
 }
 
-async function verificarSolicitud(_token: string, _rfc: string, _idSolicitud: string,
-  _cerB64: string, _keyPem: string): Promise<{ estado: string; paquetes: string[]; mensaje: string }> {
-  // ③ SOAP VerificaSolicitudDescarga firmado → EstadoSolicitud (1..5) + IdsPaquetes.
-  //    Estado 3 = Terminada (lista para descargar).
-  throw new Error('verificarSolicitud: pendiente — requiere firma FIEL real');
+async function postSoap(url: string, soap: string, action?: string): Promise<string> {
+  const headers: Record<string, string> = { 'Content-Type': 'text/xml;charset=UTF-8' };
+  if (action) headers['SOAPAction'] = action;
+  const r = await fetch(url, { method: 'POST', headers, body: soap });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`SAT ${r.status}: ${txt.slice(0, 300)}`);
+  return txt;
 }
 
-async function descargarPaquete(_token: string, _rfc: string, _idPaquete: string,
-  _cerB64: string, _keyPem: string): Promise<string> {
-  // ④ SOAP Descarga firmado → <Paquete> = ZIP en base64.
-  throw new Error('descargarPaquete: pendiente — requiere firma FIEL real');
+/* ① Autenticación → token */
+async function autenticar(ef: Efirma): Promise<string> {
+  const now = new Date();
+  const created = now.toISOString().replace(/\.\d+Z$/, 'Z');
+  const expires = new Date(now.getTime() + 5 * 60000).toISOString().replace(/\.\d+Z$/, 'Z');
+  const firma = firmaWSSecurity(ef, created, expires);
+
+  const soap =
+    `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" xmlns:u="${NS_U}">` +
+    `<s:Header><o:Security xmlns:o="${NS_O}" s:mustUnderstand="1">` +
+    `<u:Timestamp u:Id="_0"><u:Created>${created}</u:Created><u:Expires>${expires}</u:Expires></u:Timestamp>` +
+    firma +
+    `</o:Security></s:Header>` +
+    `<s:Body><Autentica xmlns="http://DescargaMasivaTerceros.gob.mx"></Autentica></s:Body></s:Envelope>`;
+
+  const resp = await postSoap(SAT.auth, soap, 'http://DescargaMasivaTerceros.gob.mx/IAutenticacion/Autentica');
+  const m = resp.match(/<AutenticaResult>([^<]+)<\/AutenticaResult>/);
+  if (!m) throw new Error('No se obtuvo token del SAT: ' + resp.slice(0, 300));
+  return m[1];
+}
+
+const NS_DES = 'http://DescargaMasivaTerceros.sat.gob.mx';
+
+/* Firma ENVELOPED (URI="") sobre el cuerpo de la petición ②③④.
+   El nodo a firmar se entrega ya canónico (exc-c14n) y SIN el bloque Signature;
+   el digest se calcula sobre ese nodo y la Signature se inyecta dentro de él. */
+function firmaEnveloped(ef: Efirma, nodoCanon: string): string {
+  const digest = sha1B64(nodoCanon);
+  const signedInfo =
+    `<SignedInfo xmlns="${NS_DS}">` +
+    `<CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></CanonicalizationMethod>` +
+    `<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>` +
+    `<Reference URI="">` +
+    `<Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms>` +
+    `<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>` +
+    `<DigestValue>${digest}</DigestValue>` +
+    `</Reference></SignedInfo>`;
+  const signature = firmarRSASHA1(signedInfo, ef.privateKey);
+  // Datos del certificado para KeyInfo/X509Data
+  const issuer = ef.cert.issuer.attributes
+    .map((a: any) => `${a.shortName}=${a.value}`).reverse().join(',');
+  const serial = ef.cert.serialNumber
+    ? BigInt('0x' + ef.cert.serialNumber).toString(10) : '';
+  const certB64 = ef.certB64.replace(/\s+/g, '');
+  return (
+    `<Signature xmlns="${NS_DS}">${signedInfo}` +
+    `<SignatureValue>${signature}</SignatureValue>` +
+    `<KeyInfo><X509Data>` +
+    `<X509IssuerSerial><X509IssuerName>${_xml(issuer)}</X509IssuerName>` +
+    `<X509SerialNumber>${serial}</X509SerialNumber></X509IssuerSerial>` +
+    `<X509Certificate>${certB64}</X509Certificate>` +
+    `</X509Data></KeyInfo></Signature>`
+  );
+}
+function _xml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+}
+
+/* ② SolicitaDescarga → IdSolicitud */
+async function solicitarDescarga(ef: Efirma, token: string, rfc: string, tipo: string,
+  fIni: string, fFin: string): Promise<string> {
+  // tipo: 'emitidos' → RfcEmisor=rfc ; 'recibidos' → RfcReceptor=rfc
+  const op = tipo === 'emitidos' ? 'SolicitaDescargaEmitidos' : 'SolicitaDescargaRecibidos';
+  const fI = `${fIni}T00:00:00`, fF = `${fFin}T23:59:59`;
+  const attrs = tipo === 'emitidos'
+    ? `FechaInicial="${fI}" FechaFinal="${fF}" RfcEmisor="${rfc}" RfcSolicitante="${rfc}" TipoSolicitud="CFDI"`
+    : `FechaInicial="${fI}" FechaFinal="${fF}" RfcReceptor="${rfc}" RfcSolicitante="${rfc}" TipoSolicitud="CFDI"`;
+  // Nodo solicitud canónico (sin firma) para el digest enveloped
+  const solicitudCanon = `<des:solicitud xmlns:des="${NS_DES}" ${attrs}></des:solicitud>`;
+  const firma = firmaEnveloped(ef, solicitudCanon);
+
+  const soap =
+    `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" xmlns:des="${NS_DES}">` +
+    `<s:Header/><s:Body><des:${op}><des:solicitud ${attrs}>${firma}</des:solicitud></des:${op}></s:Body></s:Envelope>`;
+
+  const resp = await postSoapAuth(SAT.solicita, soap,
+    `http://DescargaMasivaTerceros.sat.gob.mx/ISolicitaDescargaService/${op}`, token);
+  const cod = resp.match(/CodEstatus="([^"]+)"/)?.[1];
+  const idSol = resp.match(/IdSolicitud="([^"]+)"/)?.[1];
+  const msg = resp.match(/Mensaje="([^"]+)"/)?.[1] || '';
+  if (!idSol) throw new Error(`SAT solicitud rechazada (${cod || '?'}): ${msg || resp.slice(0, 300)}`);
+  return idSol;
+}
+
+/* ③ VerificaSolicitudDescarga → estado + IdsPaquetes */
+async function verificarSolicitud(ef: Efirma, token: string, rfc: string, idSolicitud: string):
+  Promise<{ estado: string; paquetes: string[]; mensaje: string }> {
+  const attrs = `IdSolicitud="${idSolicitud}" RfcSolicitante="${rfc}"`;
+  const solicitudCanon = `<des:solicitud xmlns:des="${NS_DES}" ${attrs}></des:solicitud>`;
+  const firma = firmaEnveloped(ef, solicitudCanon);
+  const soap =
+    `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" xmlns:des="${NS_DES}">` +
+    `<s:Header/><s:Body><des:VerificaSolicitudDescarga><des:solicitud ${attrs}>${firma}</des:solicitud></des:VerificaSolicitudDescarga></s:Body></s:Envelope>`;
+
+  const resp = await postSoapAuth(SAT.verifica, soap,
+    'http://DescargaMasivaTerceros.sat.gob.mx/IVerificaSolicitudDescargaService/VerificaSolicitudDescarga', token);
+  const estadoSol = resp.match(/EstadoSolicitud="([^"]+)"/)?.[1] || '';   // 1..6
+  const codEstatus = resp.match(/CodEstatus="([^"]+)"/)?.[1] || '';
+  const mensaje = resp.match(/Mensaje="([^"]+)"/)?.[1] || '';
+  const paquetes = [...resp.matchAll(/<(?:\w+:)?IdsPaquetes>([^<]+)<\/(?:\w+:)?IdsPaquetes>/g)].map(m => m[1]);
+  // EstadoSolicitud: 1=Aceptada 2=EnProceso 3=Terminada 4=Error 5=Rechazada 6=Vencida
+  const mapa: Record<string, string> = { '1':'solicitada','2':'verificando','3':'lista','4':'error','5':'error','6':'error' };
+  return { estado: mapa[estadoSol] || 'verificando', paquetes, mensaje: mensaje || `EstadoSolicitud=${estadoSol} (${codEstatus})` };
+}
+
+/* ④ Descarga → ZIP base64 */
+async function descargarPaquete(ef: Efirma, token: string, rfc: string, idPaquete: string): Promise<string> {
+  const attrs = `IdPaquete="${idPaquete}" RfcSolicitante="${rfc}"`;
+  const peticionCanon = `<des:peticionDescarga xmlns:des="${NS_DES}" ${attrs}></des:peticionDescarga>`;
+  const firma = firmaEnveloped(ef, peticionCanon);
+  const soap =
+    `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" xmlns:des="${NS_DES}">` +
+    `<s:Header/><s:Body><des:PeticionDescargaMasivaTercerosEntrada><des:peticionDescarga ${attrs}>${firma}</des:peticionDescarga></des:PeticionDescargaMasivaTercerosEntrada></s:Body></s:Envelope>`;
+
+  const resp = await postSoapAuth(SAT.descarga, soap,
+    'http://DescargaMasivaTerceros.sat.gob.mx/IDescargaMasivaTercerosService/Descargar', token);
+  const paquete = resp.match(/<(?:\w+:)?Paquete>([^<]+)<\/(?:\w+:)?Paquete>/)?.[1];
+  if (!paquete) {
+    const cod = resp.match(/CodEstatus="([^"]+)"/)?.[1];
+    const msg = resp.match(/Mensaje="([^"]+)"/)?.[1];
+    throw new Error(`SAT descarga sin paquete (${cod || '?'}): ${msg || resp.slice(0, 300)}`);
+  }
+  return paquete;  // ZIP en base64
+}
+
+/* POST SOAP con token en la cabecera Authorization (pasos ②③④) */
+async function postSoapAuth(url: string, soap: string, action: string, token: string): Promise<string> {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/xml;charset=UTF-8',
+      'SOAPAction': action,
+      'Authorization': `WRAP access_token="${token}"`,
+    },
+    body: soap,
+  });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`SAT ${r.status}: ${txt.slice(0, 300)}`);
+  return txt;
 }
