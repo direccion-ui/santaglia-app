@@ -550,7 +550,7 @@
     <div class="cover-meta">
       <span><strong>Fundador:</strong> Carlos, dueño de Santaglia</span>
       <span><strong>Versión:</strong> 1.0 — Mayo 2026</span>
-      <span><strong>Actualizado:</strong> <span id="updated-date">24 de mayo de 2026</span></span>
+      <span><strong>Actualizado:</strong> <span id="updated-date">27 de mayo de 2026</span></span>
       <span><strong>Clasificación:</strong> CONFIDENCIAL</span>
     </div>
   </div>
@@ -1062,6 +1062,10 @@
     <div class="card green-border">
       <h4>🔄 Conexión SAT automática</h4>
       <p style="font-size:var(--fs-sm)">El sistema descarga directamente del SAT todos los CFDIs emitidos y recibidos del contribuyente usando sus propias credenciales (RFC+CIEC o e.firma). Sincronización automática 2–4 veces al día, configurable. Flujo de caja, retenciones, nómina y proyectos siempre actualizados sin captura manual — y sin el costo ni el riesgo de un PAC.</p>
+    </div>
+    <div class="card green-border">
+      <h4>🔗 Cadena de Evidencia Fiscal</h4>
+      <p style="font-size:var(--fs-sm)">Cada movimiento bancario se vincula automáticamente con sus tres identificadores clave —el <strong>UUID del CFDI</strong> (la factura), la <strong>Línea de Captura del SAT</strong> (el pago de impuestos) y el <strong>folio bancario</strong> (el flujo de efectivo real)— y se concilia banco↔CFDI. El sistema detecta y tipifica cada identificador (🧾 CFDI · 🏛 Línea de Captura · 🏦 Folio banco), organiza y conserva la evidencia documental que respalda la deducibilidad de los gastos, y la deja exportable en una cédula lista para el contador o una revisión del SAT. El resultado: menos trabajo manual en el cierre de mes y menos riesgo de perder deducciones por desorden documental. <em style="color:var(--muted);font-size:0.92em;">Herramienta de trazabilidad y soporte documental; no sustituye el criterio ni la responsabilidad fiscal del contador ni constituye asesoría fiscal — la indispensabilidad del gasto y la mecánica de retenciones/acreditamiento siguen siendo determinación del contador.</em></p>
     </div>
     <div class="card green-border">
       <h4>🛡️ Monitor SAT mensual</h4>
@@ -3357,7 +3361,7 @@
       </div>
     </div>
     <div class="module-group">
-      <h5>✅ Completado anticipadamente (24 mayo 2026) — Infraestructura de producción</h5>
+      <h5>✅ Completado anticipadamente — Infraestructura de producción</h5>
       <div class="module-chips">
         <span class="module-chip chip-live">Despliegue Vercel (santaglia-compass.vercel.app)</span>
         <span class="module-chip chip-live">Dominio propio compass.santaglia.app</span>
@@ -3369,6 +3373,10 @@
         <span class="module-chip chip-live">Reset de contraseña operativo</span>
         <span class="module-chip chip-live">SMTP Resend — correos desde noreply@santaglia.app</span>
         <span class="module-chip chip-live">Supabase schema 9 tablas + RLS multi-tenant</span>
+        <span class="module-chip chip-live">stgl_data cloud KV — 32 bloques sincronizados (27 mayo)</span>
+        <span class="module-chip chip-live">GRANTs API explícitos — preparado para cambio Supabase 30 mayo</span>
+        <span class="module-chip chip-live">Auditoría saldos 15 cuentas vs estados de cuenta reales (27 mayo)</span>
+        <span class="module-chip chip-live">Waitlist CRM + 2 Edge Functions + email automático desde compass@santaglia.app</span>
       </div>
     </div>
     <div class="module-group">
@@ -3420,7 +3428,7 @@
       <div class="roadmap-dot dot-done">✓</div>
       <span class="roadmap-period">Ene–May 2026</span>
       <h5>Fase 0 — MVP Sólido ✅</h5>
-      <p>14 módulos en producción. <strong>Infraestructura cloud completa al 24 mayo 2026:</strong> Supabase (Auth + RBAC + 9 tablas + RLS), persistencia 3 niveles, Vercel CI/CD, dominio compass.santaglia.app activo. Adelantado ~4 meses.</p>
+      <p>14 módulos en producción. <strong>Infraestructura cloud completa al 27 mayo 2026:</strong> Supabase (Auth + RBAC + 9 tablas + RLS + cloud KV activo con 32 bloques), persistencia 3 niveles operativa, Vercel CI/CD, dominio compass.santaglia.app activo, Waitlist CRM + Edge Functions + email transaccional. Saldos bancarios verificados contra estados de cuenta reales. Adelantado ~4 meses.</p>
     </div>
     <div class="roadmap-phase">
       <div class="roadmap-dot dot-active">🔄</div>
@@ -3479,7 +3487,7 @@
 ══════════════════════════════════════════════════════════════ -->
 <div class="doc-footer">
   <div style="margin-bottom:.5rem">
-    <strong>Santaglia Compass</strong> — Plan de Negocio v1.2 · Actualizado 26 Mayo 2026
+    <strong>Santaglia Compass</strong> — Plan de Negocio v1.3 · Actualizado 27 Mayo 2026
   </div>
   <div style="margin-bottom:.3rem">
     Elaborado por <strong>Carlos, dueño de Santaglia</strong> &nbsp;|&nbsp;
