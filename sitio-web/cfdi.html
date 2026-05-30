@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santaglia Compass · CFDI</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .cfdi-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:18px; }
+    .cfdi-card { background:var(--white,#fff); border:1px solid var(--border,#e5e7eb); border-radius:12px; padding:14px 16px; }
+    .cfdi-card .lbl { font-size:0.62rem; color:var(--text-dim,#6b7280); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; }
+    .cfdi-card .val { font-size:1.15rem; font-weight:800; color:var(--navy,#1a2d80); margin-top:3px; }
+    .cfdi-card .sub { font-size:0.62rem; color:var(--text-dim,#9ca3af); margin-top:2px; }
+    /* Tarjetas de dinero — monto protagonista (gastos rojo oscuro, ingresos/positivo azul marino) */
+    .cfdi-card.money { border-width:1.5px; }
+    .cfdi-card.money .amount { font-size:1.7rem; font-weight:800; letter-spacing:-0.02em; margin-top:2px; line-height:1.1; }
+    .cfdi-card.money .cuenta { font-size:0.62rem; color:var(--text-dim,#9ca3af); margin-top:3px; }
+    .cfdi-card.gasto   { border-color:#fecaca; background:#fef6f6; }
+    .cfdi-card.gasto   .amount { color:#b91c1c; }
+    .cfdi-card.ingreso { border-color:#c7d2fe; background:#f5f7ff; }
+    .cfdi-card.ingreso .amount { color:#1e3a8a; }
+    .cfdi-card.balance .amount.pos { color:#1e3a8a; }
+    .cfdi-card.balance .amount.neg { color:#b91c1c; }
+    .cfdi-card.balance { border-color:#cbd5e1; background:#f8fafc; }
+    .cfdi-card .note { font-size:0.55rem; color:#9ca3af; margin-top:4px; font-style:italic; }
+    .cfdi-toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .cfdi-toolbar select { padding:0.3rem 0.6rem; border-radius:8px; border:1.5px solid var(--border,#e5e7eb); font-size:0.72rem; font-family:var(--brand,inherit); }
+    .table-wrap { overflow-x:auto; max-height:64vh; overflow-y:auto; border:1px solid var(--border,#e5e7eb); border-radius:12px; }
+    table.cfdi-tabla { width:100%; border-collapse:collapse; font-size:0.72rem; }
+    table.cfdi-tabla th { position:sticky; top:0; background:var(--navy-faint,#f3f4fb); color:var(--navy,#1a2d80); font-weight:700; text-align:left; padding:8px 10px; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.3px; z-index:1; }
+    table.cfdi-tabla td { padding:7px 10px; border-top:1px solid var(--border,#eef0f4); }
+    table.cfdi-tabla tr:hover td { background:#fafbff; }
+    .badge { font-size:0.58rem; font-weight:700; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+    .badge-ok  { background:#dcfce7; color:#166534; }
+    .badge-sat { background:#fef9c3; color:#854d0e; }
+    .tipo-tag { font-size:0.58rem; font-weight:700; padding:2px 6px; border-radius:6px; }
+    .tipo-emi { background:#dbeafe; color:#1e40af; }
+    .tipo-rec { background:#fae8ff; color:#86198f; }
+    /* Tipo de comprobante (I/E/P/N/T) */
+    .tc-badge { display:inline-block; min-width:18px; text-align:center; font-size:0.6rem; font-weight:800; padding:2px 5px; border-radius:5px; cursor:help; }
+    .tc-i { background:#dcfce7; color:#166534; }
+    .tc-e { background:#fee2e2; color:#991b1b; }
+    .tc-p { background:#e0e7ff; color:#3730a3; }
+    .tc-n { background:#fef3c7; color:#854d0e; }
+    .tc-t { background:#f1f5f9; color:#475569; }
+    .tc-x { background:#f3f4f6; color:#6b7280; }
+    /* Leyenda de nomenclatura */
+    .tc-legend { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin:0 0 14px; padding:9px 14px; background:#f8f9ff; border:1px solid #e0e7ff; border-radius:10px; font-size:0.62rem; color:var(--text-dim,#6b7280); }
+    .tc-legend .li { display:flex; align-items:center; gap:5px; }
+    .tc-legend b { color:var(--navy,#1a2d80); }
+    .num { text-align:right; font-variant-numeric:tabular-nums; }
+    .uuid-short { font-family:monospace; font-size:0.62rem; color:var(--text-dim,#9ca3af); }
+    .empty-state { text-align:center; padding:48px 20px; color:var(--text-dim,#9ca3af); }
+    /* Banner y pills de alerta EFOS (lista 69-B del SAT) */
+    .efos-banner { border-radius:12px; padding:14px 16px; margin-bottom:16px; border:1.5px solid; }
+    .efos-banner-pre { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+    .efos-banner-def { background:#fef2f2; border-color:#fca5a5; color:#991b1b; }
+    .efos-pill { font-size:0.55rem; font-weight:800; padding:1px 5px; border-radius:8px; white-space:nowrap; cursor:help; }
+    .efos-def { background:#fee2e2; color:#991b1b; }
+    .efos-pre { background:#fef3c7; color:#92400e; }
+    .efos-ok  { background:#dcfce7; color:#166534; }
+  </style>
+</head>
+<body>
+<div class="site-wrap">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="dashboard.html"><img src="assets/logo-color.png" alt="Santaglia Compass" class="brand-logo" /></a>
+      </div>
+      <nav class="header-nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clientes.html">Clientes</a>
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Ventas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="facturacion.html">Facturación</a>
+            <a class="nav-menu-item" href="proyectos.html">Proyectos</a>
+            <a class="nav-menu-item" href="servicios.html">Servicios</a>
+            <a class="nav-menu-item" href="tiempo.html">Tiempo</a>
+          </div>
+        </div>
+        <div class="nav-menu">
+          <button class="nav-menu-btn">Operaciones <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="nomina.html">Nómina</a>
+            <a class="nav-menu-item" href="retenciones.html">Retenciones</a>
+          </div>
+        </div>
+        <div class="nav-menu">
+          <button class="nav-menu-btn active">Finanzas <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="financiero.html">Mov. Bancarios</a>
+            <a class="nav-menu-item" href="egresos.html">Egresos</a>
+            <a class="nav-menu-item" href="recurrentes.html">Recurrentes</a>
+            <a class="nav-menu-item" href="proyectados.html">Proyección</a>
+            <a class="nav-menu-item active" href="cfdi.html">CFDI · SAT</a>
+          </div>
+        </div>
+        <div class="nav-menu">
+          <button class="nav-menu-btn">General <span class="nav-chevron">▾</span></button>
+          <div class="nav-menu-items">
+            <a class="nav-menu-item" href="documentos.html">Documentos</a>
+            <a class="nav-menu-item" href="galeria.html">Galería</a>
+            <a class="nav-menu-item" href="waitlist.html">Waitlist Beta</a>
+            <a class="nav-menu-item" href="configuracion.html">Configuración</a>
+          </div>
+        </div>
+        <a class="nav-link" href="ayuda.html">Ayuda</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
+        <h1 style="font-size:1.25rem;font-weight:800;color:var(--navy,#1a2d80);margin:0;">📥 Centro de CFDI · Conexión SAT</h1>
+        <a class="btn btn-ghost" href="configuracion.html#empresa" style="font-size:0.72rem;">⚙️ Conexión SAT</a>
+      </div>
+      <p style="font-size:0.72rem;color:var(--text-dim,#6b7280);margin:0 0 12px;line-height:1.5;">
+        Comprobantes descargados directamente del SAT (recibidos y emitidos), guardados en la nube.
+        Es la fuente autoritativa — siempre disponibles aquí sin captura manual.
+      </p>
+
+      <!-- Banner de alerta EFOS (lista 69-B del SAT) -->
+      <div id="efos-banner" class="efos-banner" style="display:none;"></div>
+
+      <!-- Leyenda de tipo de comprobante (nomenclatura del SAT) -->
+      <div class="tc-legend" id="tc-legend">
+        <span style="font-weight:700;color:var(--navy,#1a2d80);">Tipo de comprobante:</span>
+        <span class="li"><span class="tc-badge tc-i">I</span> <b>Ingreso</b> — venta/cobro</span>
+        <span class="li"><span class="tc-badge tc-e">E</span> <b>Egreso</b> — nota de crédito</span>
+        <span class="li"><span class="tc-badge tc-p">P</span> <b>Pago</b> — complemento (no suma)</span>
+        <span class="li"><span class="tc-badge tc-n">N</span> <b>Nómina</b></span>
+        <span class="li"><span class="tc-badge tc-t">T</span> <b>Traslado</b> — sin importe</span>
+      </div>
+
+      <div class="cfdi-cards" id="cfdi-cards"></div>
+
+      <div class="cfdi-toolbar">
+        <label style="font-size:0.7rem;color:var(--text-dim,#6b7280);font-weight:600;">Tipo:</label>
+        <select id="f-tipo" onchange="renderCFDI()">
+          <option value="todos">Todos</option>
+          <option value="recibido">Recibidos (gastos)</option>
+          <option value="emitido">Emitidos (ingresos)</option>
+        </select>
+        <label style="font-size:0.7rem;color:var(--text-dim,#6b7280);font-weight:600;margin-left:8px;">Comprobante:</label>
+        <select id="f-tc" onchange="renderCFDI()">
+          <option value="todos">Todos</option>
+          <option value="I">I · Ingreso</option>
+          <option value="E">E · Egreso</option>
+          <option value="P">P · Pago</option>
+          <option value="N">N · Nómina</option>
+          <option value="T">T · Traslado</option>
+        </select>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-ghost" style="font-size:0.72rem;" onclick="cargarCFDIs()">↻ Recargar</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="cfdi-tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Dir.</th><th title="Tipo de comprobante (I/E/P/N/T)">Comp.</th><th>Emisor / Receptor</th>
+              <th class="num">Subtotal</th><th class="num">Total</th>
+              <th>UUID</th><th title="Vínculo con un movimiento bancario">Banco</th>
+            </tr>
+          </thead>
+          <tbody id="cfdi-tbody"></tbody>
+        </table>
+      </div>
+      <div id="cfdi-status" style="font-size:0.68rem;color:var(--text-dim,#9ca3af);margin-top:10px;"></div>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════
+   Centro de CFDI — lee la tabla `cfdis` de Supabase (descarga SAT)
+   y la concilia contra el almacén local StglCFDI (UUID).
+   ════════════════════════════════════════════════════════════════ */
+let _cfdis = [];           // filas de Supabase (todas las del rango)
+
+const _fmt = (n) => (n == null ? '—' : '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+const _esc = (s) => (s == null ? '' : String(s).replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c])));
+
+/* Tipo de comprobante CFDI (atributo TipoDeComprobante del SAT) */
+const TC = {
+  I: { sigla: 'I', nombre: 'Ingreso',   desc: 'Factura de venta / cobro',                  cls: 'tc-i' },
+  E: { sigla: 'E', nombre: 'Egreso',    desc: 'Nota de crédito / devolución / descuento',  cls: 'tc-e' },
+  P: { sigla: 'P', nombre: 'Pago',      desc: 'Complemento de pago (no suma al total)',    cls: 'tc-p' },
+  N: { sigla: 'N', nombre: 'Nómina',    desc: 'Recibo de nómina',                          cls: 'tc-n' },
+  T: { sigla: 'T', nombre: 'Traslado',  desc: 'Traslado de mercancías (sin importe)',      cls: 'tc-t' },
+};
+function _tc(code) { return TC[(code || '').toUpperCase()] || { sigla: code || '?', nombre: code || '—', desc: 'Tipo no estándar', cls: 'tc-x' }; }
+
+function _rango() {
+  if (window.StglContext) { const r = StglContext.getRango(); return { desde: r.desde, hasta: r.hasta }; }
+  const hoy = new Date(); const y = hoy.getFullYear(), m = hoy.getMonth();
+  const ym = (yy, mm) => `${yy}-${String(mm + 1).padStart(2, '0')}`;
+  return { desde: ym(y, m - 1), hasta: ym(y, m) };
+}
+
+function _enRango(fecha) {
+  if (!fecha) return true;
+  const ym = String(fecha).slice(0, 7);  // YYYY-MM
+  const { desde, hasta } = _rango();
+  return ym >= desde && ym <= hasta;
+}
+
+async function cargarCFDIs() {
+  const status = document.getElementById('cfdi-status');
+  status.textContent = '⏳ Cargando comprobantes del SAT…';
+  try {
+    const sb = await _initSupabase();
+    if (!sb) { status.textContent = '⚠ Sin conexión a la nube.'; return; }
+    // RLS ya limita las filas a la organización del usuario — no filtramos por org_id
+    // (el _getOrgId del front puede diferir del uuid real). No cargamos el XML aquí
+    // (pesa mucho); se trae bajo demanda solo al "Traer a Compass".
+    const { data, error } = await sb.from('cfdis')
+      .select('uuid,tipo,tipo_comprobante,fecha,rfc_emisor,nombre_emisor,rfc_receptor,nombre_receptor,subtotal,total,mov_vinculado_id')
+      .order('fecha', { ascending: false }).limit(5000);
+    if (error) { status.textContent = '⚠ ' + error.message; return; }
+    _cfdis = data || [];
+    await _cruzarEFOS(sb);   // marca proveedores en lista 69-B del SAT
+    renderCFDI();
+  } catch (e) { status.textContent = '⚠ ' + (e.message || e); }
+}
+
+/* Cruza los RFC emisores (proveedores) de los CFDI recibidos contra la lista
+   69-B del SAT (tabla sat_efos). Llena _efos: { RFC → {situacion, nombre} }. */
+let _efos = {};
+async function _cruzarEFOS(sb) {
+  try {
+    const rfcs = [...new Set(_cfdis.filter(c => c.tipo === 'recibido' && c.rfc_emisor).map(c => c.rfc_emisor.toUpperCase()))];
+    _efos = {};
+    if (!rfcs.length) return;
+    // Consultar en lotes (el IN tiene límite práctico)
+    for (let i = 0; i < rfcs.length; i += 300) {
+      const lote = rfcs.slice(i, i + 300);
+      const { data } = await sb.from('sat_efos').select('rfc,nombre,situacion').in('rfc', lote);
+      (data || []).forEach(e => { _efos[e.rfc] = { situacion: e.situacion, nombre: e.nombre }; });
+    }
+  } catch (_) { _efos = {}; }
+}
+
+/* Severidad de cada situación EFOS (para priorizar la alerta) */
+function _efosSeveridad(sit) {
+  const s = (sit || '').toLowerCase();
+  if (s.includes('definitivo')) return { nivel: 3, label: 'Definitivo', cls: 'efos-def', icon: '🚫' };
+  if (s.includes('presunto'))   return { nivel: 2, label: 'Presunto',   cls: 'efos-pre', icon: '⚠️' };
+  if (s.includes('sentencia'))  return { nivel: 0, label: 'Sentencia favorable', cls: 'efos-ok', icon: '✓' };
+  if (s.includes('desvirtuado'))return { nivel: 0, label: 'Desvirtuado', cls: 'efos-ok', icon: '✓' };
+  return { nivel: 1, label: sit || '—', cls: 'efos-pre', icon: '⚠️' };
+}
+
+function _filtradas() {
+  const tipo = document.getElementById('f-tipo').value;
+  const tc   = document.getElementById('f-tc').value;
+  return _cfdis.filter(c => {
+    if (!_enRango(c.fecha)) return false;
+    if (tipo !== 'todos' && c.tipo !== tipo) return false;
+    if (tc !== 'todos' && (c.tipo_comprobante || '').toUpperCase() !== tc) return false;
+    return true;
+  });
+}
+
+function renderCFDI() {
+  const filas = _filtradas();
+  // Resumen. Montos = lo FACTURADO ante el SAT (no necesariamente cobrado/pagado).
+  // P (Pago) y T (Traslado) no llevan importe → no suman al total facturado.
+  const sumaFacturable = (arr) => arr
+    .filter(c => !['P','T'].includes((c.tipo_comprobante || '').toUpperCase()))
+    .reduce((a, c) => a + (Number(c.total) || 0), 0);
+  const rec = filas.filter(c => c.tipo === 'recibido'), emi = filas.filter(c => c.tipo === 'emitido');
+  const totGastos   = sumaFacturable(rec);
+  const totIngresos = sumaFacturable(emi);
+  const balance     = totIngresos - totGastos;
+  const pagos = filas.filter(c => (c.tipo_comprobante || '').toUpperCase() === 'P').length;
+  const balCls = balance >= 0 ? 'pos' : 'neg';
+  const balSigno = balance >= 0 ? '+' : '−';
+  document.getElementById('cfdi-cards').innerHTML = `
+    <div class="cfdi-card"><div class="lbl">CFDI en el rango</div><div class="val">${filas.length}</div><div class="sub">${_rango().desde} → ${_rango().hasta} · ${pagos} compl. de pago</div></div>
+    <div class="cfdi-card money ingreso"><div class="lbl">↑ Ingresos facturados</div><div class="amount">+${_fmt(totIngresos)}</div><div class="cuenta">${emi.length} comprobantes emitidos</div><div class="note">facturado ante el SAT · no necesariamente cobrado</div></div>
+    <div class="cfdi-card money gasto"><div class="lbl">↓ Gastos facturados</div><div class="amount">−${_fmt(totGastos)}</div><div class="cuenta">${rec.length} comprobantes recibidos</div><div class="note">facturado ante el SAT · no necesariamente pagado</div></div>
+    <div class="cfdi-card money balance"><div class="lbl">Balance facturado</div><div class="amount ${balCls}">${balSigno}${_fmt(Math.abs(balance))}</div><div class="cuenta">ingresos − gastos del rango</div><div class="note">facturado, no es flujo de caja ni utilidad</div></div>`;
+
+  // ── Banner de alerta EFOS (proveedores en lista 69-B del SAT) ──
+  const efosAlertas = {};  // RFC → {sev, nombre, count}
+  filas.forEach(c => {
+    if (c.tipo !== 'recibido' || !c.rfc_emisor) return;
+    const e = _efos[c.rfc_emisor.toUpperCase()];
+    if (!e) return;
+    const sev = _efosSeveridad(e.situacion);
+    if (sev.nivel < 2) return;  // solo alertar Presunto/Definitivo (no desvirtuados)
+    const k = c.rfc_emisor.toUpperCase();
+    if (!efosAlertas[k]) efosAlertas[k] = { sev, nombre: c.nombre_emisor || e.nombre || k, rfc: k, count: 0 };
+    efosAlertas[k].count++;
+  });
+  const alertasArr = Object.values(efosAlertas).sort((a, b) => b.sev.nivel - a.sev.nivel);
+  const bannerEl = document.getElementById('efos-banner');
+  if (alertasArr.length) {
+    const peor = alertasArr[0].sev.nivel;
+    bannerEl.style.display = '';
+    bannerEl.className = 'efos-banner ' + (peor >= 3 ? 'efos-banner-def' : 'efos-banner-pre');
+    bannerEl.innerHTML = `
+      <div style="font-weight:800;font-size:0.78rem;margin-bottom:6px;">${peor >= 3 ? '🚫' : '⚠️'} ${alertasArr.length} proveedor${alertasArr.length>1?'es':''} en la lista 69-B del SAT (factureras)</div>
+      <div style="font-size:0.66rem;line-height:1.6;">
+        ${alertasArr.map(a => `<div>${a.sev.icon} <strong>${_esc(a.nombre)}</strong> <span class="uuid-short">${_esc(a.rfc)}</span> — <strong>${a.sev.label}</strong> · ${a.count} CFDI</div>`).join('')}
+      </div>
+      <div style="font-size:0.6rem;color:var(--text-dim,#9ca3af);margin-top:7px;font-style:italic;">
+        Cruzado contra la lista pública del SAT (art. 69-B CFF). <strong>Consulta a tu contador</strong> — si la operación es real, hay que reunir la evidencia de materialidad; si no, podría afectar la deducibilidad. Compass solo alerta, no califica al proveedor.
+      </div>`;
+  } else {
+    bannerEl.style.display = 'none';
+  }
+
+  // Tabla
+  const tb = document.getElementById('cfdi-tbody');
+  if (!filas.length) {
+    tb.innerHTML = `<tr><td colspan="8"><div class="empty-state">Sin CFDI en este rango.<br><span style="font-size:0.66rem;">El cron sincroniza cada 30 min automáticamente; o usa <b>Sincronizar</b> en Configuración → Conexión SAT.</span></div></td></tr>`;
+  } else {
+    tb.innerHTML = filas.map(c => {
+      const contraparte = c.tipo === 'emitido'
+        ? (c.nombre_receptor || c.rfc_receptor || '—')
+        : (c.nombre_emisor || c.rfc_emisor || '—');
+      const rfc = c.tipo === 'emitido' ? c.rfc_receptor : c.rfc_emisor;
+      const t = _tc(c.tipo_comprobante);
+      const vinc = c.mov_vinculado_id
+        ? '<span class="badge badge-ok" title="Conciliado con un movimiento bancario">🔗 Banco</span>'
+        : (c.tipo === 'recibido' ? '<span class="badge badge-sat" title="Gasto aún sin movimiento bancario asociado">— sin vincular</span>' : '<span style="color:#cbd5e1;">—</span>');
+      // Badge EFOS si el proveedor (emisor de un recibido) está en lista 69-B
+      let efosBadge = '';
+      if (c.tipo === 'recibido' && c.rfc_emisor) {
+        const e = _efos[c.rfc_emisor.toUpperCase()];
+        if (e) { const sv = _efosSeveridad(e.situacion); if (sv.nivel >= 1) efosBadge = ` <span class="efos-pill ${sv.cls}" title="Lista 69-B SAT: ${_esc(sv.label)} — consulta a tu contador">${sv.icon} 69-B</span>`; }
+      }
+      return `<tr>
+        <td>${_esc((c.fecha || '').slice(0, 10))}</td>
+        <td><span class="tipo-tag ${c.tipo === 'emitido' ? 'tipo-emi' : 'tipo-rec'}">${c.tipo === 'emitido' ? 'Emitido' : 'Recibido'}</span></td>
+        <td><span class="tc-badge ${t.cls}" title="${_esc(t.nombre)} — ${_esc(t.desc)}">${_esc(t.sigla)}</span></td>
+        <td>${_esc(contraparte)}${efosBadge}<br><span class="uuid-short">${_esc(rfc || '')}</span></td>
+        <td class="num">${_fmt(c.subtotal)}</td>
+        <td class="num">${_fmt(c.total)}</td>
+        <td><span class="uuid-short" title="${_esc(c.uuid)}">${_esc((c.uuid || '').slice(0, 8))}…</span></td>
+        <td>${vinc}</td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('cfdi-status').textContent = `${_cfdis.length} CFDI en la nube · mostrando ${filas.length} en el rango`;
+}
+
+/* ── Barra de contexto global: rango (desde → hasta) ── */
+if (window.StglContext) {
+  StglContext.register({
+    periodo: 'rango',
+    onRangoChange: () => renderCFDI(),
+  });
+}
+
+document.addEventListener('DOMContentLoaded', cargarCFDIs);
+</script>
+</body>
+</html>
