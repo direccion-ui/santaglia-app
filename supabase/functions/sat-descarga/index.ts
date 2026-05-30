@@ -38,7 +38,7 @@ const SAT = {
   auth:     'https://cfdidescargamasivasolicitud.clouda.sat.gob.mx/Autenticacion/Autenticacion.svc',
   solicita: 'https://cfdidescargamasivasolicitud.clouda.sat.gob.mx/SolicitaDescargaService.svc',
   verifica: 'https://cfdidescargamasivasolicitud.clouda.sat.gob.mx/VerificaSolicitudDescargaService.svc',
-  descarga: 'https://cfdidescargamasiva.clouda.sat.gob.mx/DescargaService.svc',
+  descarga: 'https://cfdidescargamasiva.clouda.sat.gob.mx/DescargaMasivaService.svc',
 };
 
 function json(body: unknown, status = 200) {
