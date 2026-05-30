@@ -754,6 +754,18 @@
         <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Cacheo de conciliados/contabilizados y tope de render (400 filas) — se acabaron los freezes. GRANTs explícitos a <code style="color:#93c5fd;">authenticated</code> y <code style="color:#93c5fd;">service_role</code>; organización del usuario enlazada en la nube. Bug de orden de carga (tgInitPanel) corregido.</div>
       </div>
 
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">📑</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Centro de CFDI + Conciliación vs. SAT</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Nueva vista <code style="color:#93c5fd;">cfdi.html</code> bajo Finanzas: lista los comprobantes que el SAT tiene registrados, los compara con los de Compass por UUID y marca los <strong style="color:#fff;">"Solo SAT"</strong> (pendientes) — un clic los trae al sistema. Blindaje preventivo ante auditorías.</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:14px;">
+        <div style="font-size:1.1rem;margin-bottom:6px;">🧾</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;">Cédula de Retenciones Exportable (PDF/Excel)</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,.6);line-height:1.5;">Documento consolidado anual <strong style="color:#fff;">CFDIs → LCs → Banco</strong> — el que pide el auditor o el SAT. PDF imprimible + CSV para Excel, con totales, líneas de captura, confirmación bancaria y recargo estimado por mes.</div>
+      </div>
+
     </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(59,130,246,.15);font-size:0.68rem;color:rgba(147,197,253,.5);display:flex;gap:20px;flex-wrap:wrap;">
       <span>✅ 30 mayo: Conexión SAT validada contra producción — autenticación ① y solicitud ② aceptadas con la e.firma real</span>
@@ -1069,19 +1081,19 @@
     <div style="margin-top:16px;padding:14px 16px;background:var(--navy-faint);border-radius:8px;border:1px solid var(--gray-200);">
       <div style="font-size:0.7rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">🎯 Priorización Sugerida — Alto Impacto / Bajo Esfuerzo</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-        <div style="background:var(--white);border-radius:6px;padding:10px;border-left:3px solid #dc2626;">
-          <div style="font-size:0.65rem;font-weight:700;color:#dc2626;margin-bottom:4px;">🔴 INMEDIATO (Sprint actual)</div>
+        <div style="background:var(--white);border-radius:6px;padding:10px;border-left:3px solid #059669;">
+          <div style="font-size:0.65rem;font-weight:700;color:#059669;margin-bottom:4px;">✅ INMEDIATO — COMPLETADO</div>
           <div style="font-size:0.63rem;color:var(--text);line-height:1.55;">
-            • Cálculo de recargos y actualizaciones por pago tardío<br>
-            • Tabla retenciones: vista compacta responsive<br>
-            • CTA en tarjeta VENCIDO → botón directo de importar
+            ✓ Cálculo de recargos y actualizaciones por pago tardío<br>
+            ✓ Tabla retenciones: vista compacta responsive<br>
+            ✓ CTA en fila VENCIDO → registrar pago directo
           </div>
         </div>
         <div style="background:var(--white);border-radius:6px;padding:10px;border-left:3px solid #d97706;">
           <div style="font-size:0.65rem;font-weight:700;color:#d97706;margin-bottom:4px;">🟡 PRÓXIMO MES</div>
           <div style="font-size:0.63rem;color:var(--text);line-height:1.55;">
             • Almacenamiento de PDFs en Supabase Storage<br>
-            • Exportación cédula de retenciones PDF/Excel<br>
+            <span style="color:#059669;font-weight:700;">✓ Exportación cédula de retenciones PDF/Excel</span><br>
             • Recordatorio proactivo D-3 antes del día 17<br>
             • Módulo DIOT (generación .txt SAT)
           </div>
@@ -1092,7 +1104,7 @@
             • Conciliación bancaria automatizada<br>
             • Audit Trail inmutable por período<br>
             • Vista director vs. contador diferenciada<br>
-            • Conciliación CFDI vs. SAT (API Buzon-e)
+            <span style="color:#2563eb;font-weight:700;">🔨 Conciliación CFDI vs. SAT — base lista (Centro de CFDI)</span>
           </div>
         </div>
       </div>
